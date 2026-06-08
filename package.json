@@ -1,0 +1,38 @@
+{
+  "name": "bng-library",
+  "version": "0.1.0",
+  "description": "Shared BNG library: synthetic + workbook-driven GeoPackage generation, plus generic gpkg I/O helpers.",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./gpkg-io": "./src/gpkg-io/index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DEFRA/bng-library.git"
+  },
+  "engines": {
+    "node": ">=22.11"
+  },
+  "peerDependencies": {
+    "better-sqlite3": "^12.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "better-sqlite3": "^12.9.0",
+    "prettier": "3.7.4",
+    "vitest": "^3.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write \"**/*.{mjs,js,cjs,json,md}\"",
+    "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\""
+  }
+}

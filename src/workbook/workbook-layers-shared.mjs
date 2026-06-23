@@ -43,9 +43,6 @@ export const SPATIAL_RISK_HABITAT = [
 // ---------------------------------------------------------------------------
 
 export const HECTARES_TO_SQ_M = 10000
-// The boundary diameter must exceed the longest linear feature so it actually
-// fits inside the polygon. 1.2× gives a comfortable margin.
-const BOUNDARY_OVERSIZE_FACTOR = 1.2
 // Sites smaller than this are almost certainly an empty/unparseable workbook
 // rather than a real BNG submission.
 export const MIN_GENERATED_AREA_SQ_M = 100
@@ -57,9 +54,24 @@ const MIN_RLB_AREA_M2 = 1000
 const HULL_AREA_FACTOR = 0.85
 
 /**
- * Compute the redline area for a workbook-driven fixture. Picks the largest
- * of (sum of habitat areas, declared site area, area required to fit the
- * longest linear feature).
+ * Compute the redline area for a workbook-driven fixture: the larger of the
+ * mapped habitat area and the workbook's declared site area.
+ *
+ * Size the redline to the mapped area-habitat footprint, so the habitat
+ * parcels tessellate it exactly with no slack to fill. The declared site area
+ * is only a fallback for the degenerate case of a workbook with no area
+ * habitats at all.
+ *
+ * It deliberately does NOT use the declared site area when habitats exist, nor
+ * inflate the boundary to fit the longest linear feature:
+ *  - declared site area can exceed the mapped habitat sum (e.g. it counts
+ *    linear/point features that carry no polygon area); that surplus would have
+ *    to be filled with synthetic parcels to tessellate.
+ *  - linear features are folded to fit INSIDE this boundary
+ *    (`generateLinestringOfLength`), so oversizing for them is unnecessary.
+ * Both used to leave slack the post-intervention pass couldn't tile, which is
+ * what failed the AREA_SUM_MISMATCH check. See
+ * docs/bng500-pi-gpkg-area-gaps.md.
  */
 export function computeWorkbookFixturePlan(workbook, habitatRows) {
   const habitatTotalM2 =
@@ -67,21 +79,7 @@ export function computeWorkbookFixturePlan(workbook, habitatRows) {
   const declaredSiteM2 =
     (workbook.siteInfo.totalSiteAreaHa ?? 0) * HECTARES_TO_SQ_M
 
-  const linearLengths = [
-    ...workbook.hedgerows.baseline.map((h) => h.lengthM),
-    ...workbook.hedgerows.created.map((h) => h.lengthM),
-    ...workbook.watercourses.baseline.map((r) => r.lengthM),
-    ...workbook.watercourses.created.map((r) => r.lengthM)
-  ]
-  const longestLinearM = linearLengths.length ? Math.max(...linearLengths) : 0
-  const minRadiusM = (longestLinearM * BOUNDARY_OVERSIZE_FACTOR) / 2
-  const minAreaFromDiameterM2 = Math.PI * minRadiusM * minRadiusM
-
-  const totalAreaM2 = Math.max(
-    habitatTotalM2,
-    declaredSiteM2,
-    minAreaFromDiameterM2
-  )
+  const totalAreaM2 = habitatTotalM2 > 0 ? habitatTotalM2 : declaredSiteM2
   return {
     totalAreaM2,
     totalAreaHa: totalAreaM2 / HECTARES_TO_SQ_M,

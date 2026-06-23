@@ -28,6 +28,7 @@ import {
   linestringLength,
   pickInteriorPoint,
   pointInRing,
+  polygonCentroid,
   randBetween,
   randInt,
   randomAngle
@@ -52,18 +53,54 @@ const LINESTRING_MIDPOINT_OFFSET_FRACTION = 0.05
 const LINESTRING_MIDPOINT_EXTRA = 2
 const MIN_SEGMENT_LENGTH_M = 0.5
 
+// How many straight-line attempts to make before falling back to a folded
+// path. A line that fits straight (the common case) is placed exactly as
+// before; only lines too long to fit straight inside the now-compact boundary
+// fold.
+const STRAIGHT_ATTEMPTS_BEFORE_FOLD = 8
+
+// Folded-path tunables. The boundary is no longer oversized to swallow the
+// longest linear feature, so a long line is laid as a path that bends to stay
+// inside it (hedgerows / rivers meander in reality). Because the boundary is
+// convex, every leg between two interior vertices is itself fully interior, so
+// the whole line is guaranteed inside the redline.
+const FOLD_STEP_FRACTION = 0.4
+const FOLD_MIN_STEP_M = 0.5
+const FOLD_HEADING_TRIES = 12
+// When a leg would leave the boundary, redirect back toward the interior
+// (centroid) within ±this spread, then retry.
+const FOLD_REDIRECT_SPREAD = Math.PI / 2
+// Guard against runaway loops for pathological length-to-boundary ratios.
+const FOLD_MAX_SEGMENTS = 256
+
 /**
- * Generate a linestring with vertices inside `boundaryRing` whose total
- * length is approximately `targetLengthM`. Picks a random interior start
- * point, then a random direction, lays the end point at `targetLengthM`
- * along that direction, and inserts 1–2 lightly-offset midpoints. Retries
- * if either endpoint falls outside the boundary.
+ * Generate a linestring with vertices inside `boundaryRing` whose total length
+ * is approximately `targetLengthM`. Tries a straight line first (fast path,
+ * unchanged behaviour); if the line is too long to fit straight, falls back to
+ * a folded path that bends to stay inside the boundary.
  */
 function generateLinestringOfLength(
   boundaryRing,
   targetLengthM,
   maxAttempts = LINESTRING_DEFAULT_MAX_ATTEMPTS
 ) {
+  const straight = generateStraightLinestring(
+    boundaryRing,
+    targetLengthM,
+    Math.min(maxAttempts, STRAIGHT_ATTEMPTS_BEFORE_FOLD)
+  )
+  if (straight) {
+    return straight
+  }
+  return generateFoldedLinestring(boundaryRing, targetLengthM, maxAttempts)
+}
+
+/**
+ * Straight(ish) linestring: random interior start, random direction, end point
+ * laid `targetLengthM` along it, plus 1–2 lightly-offset midpoints. Retries if
+ * any vertex falls outside the boundary; returns null if it never fits.
+ */
+function generateStraightLinestring(boundaryRing, targetLengthM, maxAttempts) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const start = pickInteriorPoint(boundaryRing)
     if (!start) {
@@ -72,6 +109,89 @@ function generateLinestringOfLength(
     const candidate = tryLinestringFromStart(start, targetLengthM, boundaryRing)
     if (candidate) {
       return candidate
+    }
+  }
+  return null
+}
+
+/** Diagonal extent of a ring's bounding box — a cheap "diameter" proxy. */
+function boundaryDiameter(ring) {
+  const [minX, maxX, minY, maxY] = envelopeFromCoords(ring)
+  return Math.hypot(maxX - minX, maxY - minY)
+}
+
+/**
+ * Fold a path of total length `targetLengthM` inside the boundary. Walks in
+ * legs capped at a fraction of the boundary diameter, redirecting toward the
+ * interior whenever a leg would escape, until the full length is laid down.
+ */
+function generateFoldedLinestring(boundaryRing, targetLengthM, maxAttempts) {
+  const centroid = polygonCentroid(boundaryRing)
+  const maxStep = Math.max(
+    FOLD_MIN_STEP_M,
+    boundaryDiameter(boundaryRing) * FOLD_STEP_FRACTION
+  )
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const start = pickInteriorPoint(boundaryRing)
+    if (!start) {
+      return null
+    }
+    const path = tryFoldedFromStart(
+      boundaryRing,
+      start,
+      targetLengthM,
+      maxStep,
+      centroid
+    )
+    if (path) {
+      return path
+    }
+  }
+  return null
+}
+
+function tryFoldedFromStart(ring, start, targetLengthM, maxStep, centroid) {
+  const points = [start]
+  let cur = start
+  let heading = randomAngle()
+  let remaining = targetLengthM
+  let segments = 0
+  while (remaining > FOLD_MIN_STEP_M && segments < FOLD_MAX_SEGMENTS) {
+    const len = Math.min(remaining, maxStep)
+    const next = advanceInside(ring, cur, heading, len, centroid)
+    if (!next) {
+      return null
+    }
+    points.push(next.point)
+    cur = next.point
+    heading = next.heading
+    remaining -= len
+    segments += 1
+  }
+  return remaining <= FOLD_MIN_STEP_M && points.length >= 2 ? points : null
+}
+
+/**
+ * Advance `len` metres from `from`. Continue along `heading` if that stays
+ * inside the ring; otherwise aim back toward the interior (centroid) within a
+ * spread and take the first heading that lands inside. Returns the new point +
+ * heading, or null if no interior-bound leg of this length could be found.
+ */
+function advanceInside(ring, from, heading, len, centroid) {
+  const straight = [
+    from[0] + len * Math.cos(heading),
+    from[1] + len * Math.sin(heading)
+  ]
+  if (pointInRing(straight, ring)) {
+    return { point: straight, heading }
+  }
+  const toInterior = Math.atan2(centroid[1] - from[1], centroid[0] - from[0])
+  for (let k = 0; k < FOLD_HEADING_TRIES; k += 1) {
+    const h =
+      toInterior + randBetween(-FOLD_REDIRECT_SPREAD, FOLD_REDIRECT_SPREAD)
+    const point = [from[0] + len * Math.cos(h), from[1] + len * Math.sin(h)]
+    if (pointInRing(point, ring)) {
+      return { point, heading: h }
     }
   }
   return null

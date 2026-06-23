@@ -5,7 +5,7 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import { envelopeFromCoords } from './gpkg-io/index.mjs'
+import { envelopeFromCoords, filledArray } from './gpkg-io/index.mjs'
 
 // ---------------------------------------------------------------------------
 // Tunables — named so SonarCloud's S109 magic-number rule is satisfied.
@@ -486,21 +486,28 @@ export function partitionPolygonByAreas(ring, targetAreas) {
   // accumulated rounding error.
   indexed.sort((x, y) => y.area - x.area)
 
-  const cells = Array.from({ length: targetAreas.length })
+  const cells = filledArray(targetAreas.length)
   let remaining = ring
 
-  for (let i = 0; i < indexed.length - 1; i++) {
+  let i = 0
+  for (; i < indexed.length - 1; i++) {
     const { area, idx } = indexed[i]
     const carved = carveTargetArea(remaining, area)
     if (!carved) {
-      // Geometry refused to cooperate — give up cleanly. Caller will see a
-      // shorter array.
-      return cells.filter(Boolean)
+      // Geometry refused this carve. Stop carving and let the block below fold
+      // every still-uncarved target's area into a single parcel rather than
+      // dropping it — the returned cells must still tile the whole ring so
+      // callers (habitat partitioning) keep tessellating the redline.
+      break
     }
     cells[idx] = carved.piece
     remaining = carved.rest
   }
-  cells[indexed[indexed.length - 1].idx] = remaining
+  // Whatever's left covers the remaining (un-carved) target(s). Assign it to
+  // the largest of them, keeping index ↔ target correspondence so every caller
+  // can index cells[idx] by its original target. Any targets after this one
+  // stay null; their area is absorbed here, never discarded.
+  cells[indexed[i].idx] = remaining
   return cells
 }
 

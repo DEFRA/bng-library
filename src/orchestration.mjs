@@ -140,16 +140,25 @@ export function generatePostInterventionFile(
   ).run(geom, Math.round(polygonArea(ring)), plan.siteName)
   registerLayer(db, 'Red Line Boundary', 'POLYGON', envelopeFromCoords(ring))
 
-  const habitatCells = derivePostInterventionHabitatCells(
-    baselineGeom.habitatCellsByRef,
-    workbook.habitats.baseline,
-    postRows.habitats,
-    postRows.warnings
-  )
+  const { cells: habitatCells, extraRows: sealedSurfaceRows } =
+    derivePostInterventionHabitatCells(
+      baselineGeom.habitatCellsByRef,
+      workbook.habitats.baseline,
+      postRows.habitats,
+      postRows.warnings
+    )
+  // Sealed-surface parcels cover the leftover lost-area footprint so the
+  // post-intervention file tessellates the redline like its baseline does.
+  // They're appended after the workbook-derived rows; habitatCells already
+  // carries their geometry in the same trailing positions.
+  const habitatRowsToWrite =
+    sealedSurfaceRows.length > 0
+      ? postRows.habitats.concat(sealedSurfaceRows)
+      : postRows.habitats
   const habitatsWritten = writeHabitatsPostIntervention(
     db,
     habitatCells,
-    postRows.habitats
+    habitatRowsToWrite
   )
 
   const hedgeCoords = derivePostInterventionLinearCoords(

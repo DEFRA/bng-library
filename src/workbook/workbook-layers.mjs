@@ -43,7 +43,6 @@ import {
   BASE_MAP,
   HECTARES_TO_SQ_M,
   LOCATION_ON_SITE,
-  MIN_GENERATED_AREA_SQ_M,
   SITE_NAME,
   SPATIAL_RISK_HABITAT,
   SURVEY_DATE,
@@ -51,6 +50,7 @@ import {
   WORKBOOK_SURVEY_DETAILS
 } from './workbook-layers-shared.mjs'
 import { gpkgRetention } from '../retention.mjs'
+import { makeRef } from './workbook-rows.mjs'
 
 // Re-export so callers can keep their existing `import { ... } from "./workbook-layers.mjs"`.
 export {
@@ -206,6 +206,46 @@ export function writeHabitatsPostIntervention(db, cells, rows) {
 const LOST_POOL = 'lostPool'
 const ORPHAN_UNDERSIZE_WARN_RATIO = 0.7
 
+// Post-intervention fate for baseline area that is "lost" without a specific
+// created replacement: the oversize slack the baseline writer folds into its
+// last parcel (so the longest linear feature fits the boundary), plus any
+// lost-area footprint no created row claimed. The baseline tessellates the
+// redline by absorbing this slack; the post-intervention pass must too, so we
+// write the leftover as real "Developed land; sealed surface" parcels rather
+// than dropping it. Without this the file fails the AREA_SUM_MISMATCH check
+// (Σ area-habitat polygons ≠ redline area).
+const SEALED_SURFACE_REF_PREFIX = 'HD'
+const SEALED_SURFACE_BROAD = 'Urban'
+const SEALED_SURFACE_TYPE = 'Developed land; sealed surface'
+const SEALED_SURFACE_CONDITION = 'N/A - Other'
+const SEALED_SURFACE_DISTINCTIVENESS = 'V.Low'
+// Skip leftover crumbs below this — too small to matter against the 0.5 m²
+// area-sum tolerance, and not worth a degenerate parcel.
+const MIN_SEALED_SURFACE_AREA_SQ_M = 1
+
+/**
+ * Build a synthetic post-intervention row for a leftover lost-area parcel.
+ * Shaped to satisfy `habitatPostBindings`: no baseline ancestor, retention
+ * "Lost" (NE-template) with the proposed columns describing the sealed
+ * surface now occupying that ground.
+ */
+function makeSealedSurfaceRow(seq) {
+  const shape = {
+    broad: SEALED_SURFACE_BROAD,
+    type: SEALED_SURFACE_TYPE,
+    distinctiveness: SEALED_SURFACE_DISTINCTIVENESS,
+    condition: SEALED_SURFACE_CONDITION,
+    strategicSig: null
+  }
+  return {
+    ref: makeRef(SEALED_SURFACE_REF_PREFIX, seq),
+    baselineRef: null,
+    retention: 'Lost',
+    baseline: null,
+    proposed: { ...shape, advanceYears: 0, delayYears: 0 }
+  }
+}
+
 /**
  * Group post rows by baselineRef. Assigned-created rows (lineage linkage)
  * carry a baselineRef so they land in their parent baseline's group;
@@ -264,7 +304,11 @@ function planBaselineCellPartition(baseline, cellArea, group) {
 
   const residualLostM2 =
     (baseline.areaLost / baseline.area) * cellArea - assignedCreatedM2
-  if (residualLostM2 > MIN_GENERATED_AREA_SQ_M) {
+  // Capture the lost residual down to the sealed-surface write threshold (not
+  // MIN_GENERATED_AREA_SQ_M): it's now written as a sealed-surface parcel
+  // rather than dropped, so a small fully-lost cell that previously produced no
+  // sub-target — and so leaked its whole area — must still be carved out.
+  if (residualLostM2 > MIN_SEALED_SURFACE_AREA_SQ_M) {
     subTargets.push(residualLostM2)
     subAssignments.push(LOST_POOL)
   }
@@ -303,7 +347,10 @@ function distributeBaselineCell(
 
 /**
  * Allocate geometry for unmatched created rows from the orphan lost pool.
- * Pushes warnings when the pool can't satisfy a request (fragmented).
+ * Pushes warnings when the pool can't satisfy a request (fragmented). Returns
+ * the pool polygons (and carve remainders) left over once every unassigned
+ * created row has been served — the caller turns those into sealed-surface
+ * parcels so no lost-area footprint is dropped.
  */
 function fillUnassignedCreatedFromOrphanPool(
   unassignedCreated,
@@ -312,7 +359,8 @@ function fillUnassignedCreatedFromOrphanPool(
   warnings
 ) {
   if (unassignedCreated.length === 0) {
-    return
+    // Nothing claims the lost footprint — all of it is leftover.
+    return orphanedLostPool
   }
   if (orphanedLostPool.length === 0) {
     for (const u of unassignedCreated) {
@@ -320,10 +368,10 @@ function fillUnassignedCreatedFromOrphanPool(
         `created habitat ${u.row.ref}: no lost-area pool available — geometry omitted`
       )
     }
-    return
+    return []
   }
   const targets = unassignedCreated.map((u) => u.row.area * HECTARES_TO_SQ_M)
-  const allocated = allocateAcrossPool(orphanedLostPool, targets)
+  const { allocated, leftover } = allocateAcrossPool(orphanedLostPool, targets)
   for (let i = 0; i < unassignedCreated.length; i += 1) {
     warnOrAssignOrphanCell(
       unassignedCreated[i],
@@ -333,6 +381,7 @@ function fillUnassignedCreatedFromOrphanPool(
       warnings
     )
   }
+  return leftover
 }
 
 function warnOrAssignOrphanCell(
@@ -365,6 +414,12 @@ function warnOrAssignOrphanCell(
  * partition as their parent baseline (lineage preservation); unmatched
  * created rows fall back to the orphan lost pool with a warning when
  * fragmentation produces undersized cells.
+ *
+ * Returns `{ cells, extraRows }`: `cells` is parallel to `postRows` with any
+ * sealed-surface cells appended; `extraRows` are the synthetic rows for those
+ * appended cells, which the caller writes alongside `postRows` so the indices
+ * stay aligned. Appending sealed-surface parcels for the leftover lost-area
+ * footprint is what keeps the post-intervention file tessellating the redline.
  */
 export function derivePostInterventionHabitatCells(
   baselineCellsByRef,
@@ -398,19 +453,39 @@ export function derivePostInterventionHabitatCells(
     )
   }
 
-  fillUnassignedCreatedFromOrphanPool(
+  const leftoverLostPool = fillUnassignedCreatedFromOrphanPool(
     unassignedCreated,
     orphanedLostPool,
     cellsForPost,
     warnings
   )
-  return cellsForPost
+  const extraRows = emitSealedSurfaceParcels(leftoverLostPool, cellsForPost)
+  return { cells: cellsForPost, extraRows }
+}
+
+/**
+ * Turn every leftover lost-area polygon into a written sealed-surface parcel.
+ * Each cell is appended to `cellsForPost`; one synthetic row is returned per
+ * appended cell so the caller can write rows and cells as aligned arrays.
+ */
+function emitSealedSurfaceParcels(leftoverLostPool, cellsForPost) {
+  const extraRows = []
+  for (const cell of leftoverLostPool) {
+    if (!cell || polygonArea(cell) <= MIN_SEALED_SURFACE_AREA_SQ_M) {
+      continue
+    }
+    extraRows.push(makeSealedSurfaceRow(extraRows.length + 1))
+    cellsForPost.push(cell)
+  }
+  return extraRows
 }
 
 /**
  * Distribute carve targets across a pool of polygons. For each target, picks
  * the largest available pool polygon, carves the target out, and pushes the
- * remainder back. Returns one cell per target, or null if unsatisfiable.
+ * remainder back. Returns `{ allocated, leftover }`: `allocated` is one cell
+ * per target (null if unsatisfiable); `leftover` is the pool polygons and
+ * carve remainders no target consumed.
  */
 function allocateAcrossPool(pool, targets) {
   const out = filledArray(targets.length)
@@ -424,7 +499,7 @@ function allocateAcrossPool(pool, targets) {
       allocateOneTarget(live, targets[i], out, i)
     }
   }
-  return out
+  return { allocated: out, leftover: live }
 }
 
 function allocateOneTarget(live, target, out, idx) {

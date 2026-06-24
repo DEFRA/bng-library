@@ -5,11 +5,13 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import { envelopeFromCoords } from './gpkg-io/index.mjs'
+import { envelopeFromCoords, filledArray } from './gpkg-io/index.mjs'
 
-// ---------------------------------------------------------------------------
-// Tunables — named so SonarCloud's S109 magic-number rule is satisfied.
-// ---------------------------------------------------------------------------
+/**
+* @typedef {[number, number]} Point
+* @typedef {Point[]} Linestring
+* @typedef {Point[]} Ring
+*/
 
 // Inner / outer radius scalars for the annulus sampled by
 // generateIrregularPolygon. 0.65 → 1.35 of `radius` keeps the hull convex
@@ -69,6 +71,8 @@ export function pointInRing(point, ring) {
 /**
  * Test whether every vertex of a linestring lies strictly inside the
  * boundary ring.
+ * @param {Linestring} coords
+ * @param {Ring} boundary
  */
 export function lineInsideRing(coords, boundary) {
   for (const p of coords) {
@@ -101,9 +105,8 @@ export function linestringLength(coords) {
 /**
  * Signed area of a closed polygon ring via the shoelace formula.
  * Sign indicates orientation; we take the absolute value.
- *
- * @param {number[][]} ring - Closed ring of [x, y] pairs (first === last)
- * @returns {number} Polygon area in the ring's coordinate units
+ * @param {Ring} ring
+ * @returns {number}
  */
 export function polygonArea(ring) {
   let sum = 0
@@ -464,44 +467,49 @@ export function carveTargetArea(ring, targetArea) {
 }
 
 /**
- * Partition a convex polygon into pieces whose areas approximate the input
- * `targetAreas` array (in the same units as `polygonArea(ring)`). Returns
- * cells in the same order as `targetAreas`.
+ * Partition a convex polygon into cells with approximately the requested
+ * areas.
  *
- * Algorithm: process targets largest-first, each iteration carving one piece
- * of that size off the remaining polygon. The last target gets whatever is
- * left over (its actual area may differ slightly from the request, since we
- * scale the boundary up front to make the numbers work).
+ * Cells are returned in the same order as `targetAreas`. If a carve fails,
+ * the remaining polygon is assigned to the current target and subsequent
+ * cells remain `null`.
+ *
+ * @param {Ring} ring Convex polygon boundary.
+ * @param {number[]} targetAreas Requested cell areas.
+ * @returns {(Ring|null)[]} Partitioned cells.
  */
 export function partitionPolygonByAreas(ring, targetAreas) {
+
   if (targetAreas.length === 0) {
     return []
   }
-  if (targetAreas.length === 1) {
-    return [ring]
-  }
 
-  const indexed = targetAreas.map((a, i) => ({ area: a, idx: i }))
-  // Carve largest first so the last (smallest) carve is least sensitive to
-  // accumulated rounding error.
-  indexed.sort((x, y) => y.area - x.area)
+  const targets = targetAreas
+    .map((area, idx) => ({ area, idx }))
+    .toSorted((a, b) => b.area - a.area)
 
-  const cells = Array.from({ length: targetAreas.length })
+  const cells = filledArray(targetAreas.length)
+
   let remaining = ring
+  let remainderIdx = targets[targets.length - 1].idx
 
-  for (let i = 0; i < indexed.length - 1; i++) {
-    const { area, idx } = indexed[i]
+  for (let i = 0; i < targets.length - 1; i++) {
+    const { area, idx } = targets[i]
     const carved = carveTargetArea(remaining, area)
+
     if (!carved) {
-      // Geometry refused to cooperate — give up cleanly. Caller will see a
-      // shorter array.
-      return cells.filter(Boolean)
+      remainderIdx = idx
+      break
     }
+
     cells[idx] = carved.piece
     remaining = carved.rest
   }
-  cells[indexed[indexed.length - 1].idx] = remaining
+
+  cells[remainderIdx] = remaining
+
   return cells
+
 }
 
 /**
@@ -522,6 +530,11 @@ export function scaleRingToArea(ring, targetArea) {
  * that exactly tile the input. On each step, splits the largest current
  * piece by a random chord. Stops short if no valid split is found after
  * a few retries (the returned array may then be smaller than `n`).
+ * @param {Ring} ring Convex polygon boundary.
+ * @param {number} n Target number of parcels.
+ * @param {number} [maxRetriesPerSplit=DEFAULT_PARTITION_RETRIES_PER_SPLIT] 
+ * Split attempts before giving up on a parcel.
+ * @returns {Ring[]} Partitioned parcels.
  */
 export function partitionPolygon(
   ring,
@@ -584,6 +597,7 @@ export function pickInteriorPoint(
  * 1–3 midpoints with a small perpendicular offset so the line bends
  * slightly. May still produce vertices outside the boundary on concave
  * regions — the caller is expected to validate and reject.
+ * @returns {Linestring|null}
  */
 export function generateLinestring(boundaryRing) {
   const start = pickInteriorPoint(boundaryRing)

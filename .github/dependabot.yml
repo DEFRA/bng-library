@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  # Update npm packages
+  #
+  # npm is the only ecosystem here: bng-library has no Dockerfile and no GitHub
+  # Actions workflows, so the docker / github-actions ecosystems are omitted.
+  # Add them if those manifests are introduced later.
+  - package-ecosystem: npm
+    directory: /
+    open-pull-requests-limit: 10
+
+    # Group low-risk updates into shared PRs
+    groups:
+      types:
+        patterns:
+          - '@types/*'
+      dev-dependencies:
+        dependency-type: development
+
+    # Schedule run every Monday, local time
+    schedule:
+      interval: weekly
+      time: '10:30'
+      timezone: 'Europe/London'
+
+    versioning-strategy: increase
+
+    allow:
+      # Include direct package.json updates
+      - dependency-type: direct

@@ -87,6 +87,27 @@ describe('synthetic generateOne', () => {
       db.close()
     }
   })
+
+  it('emits at least one Urban Tree of every size band', () => {
+    // The first trees are seeded one-per-band, so the default fixture covers
+    // the full set of engine size bands (incl. "Very large") for downstream
+    // per-tree-area testing. DEFAULT_TREE_COUNT guarantees enough trees.
+    const EXPECTED_TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const sizes = db
+        .prepare(
+          `SELECT DISTINCT "Baseline Tree Size" AS size FROM "Urban Trees"`
+        )
+        .all()
+        .map((r) => r.size)
+      for (const size of EXPECTED_TREE_SIZES) {
+        expect(sizes, `expected a tree of size "${size}"`).toContain(size)
+      }
+    } finally {
+      db.close()
+    }
+  })
 })
 
 describe('synthetic generateOne — geometric flaws', () => {
@@ -272,5 +293,48 @@ describe('synthetic generateOne — duplicate Parcel Ref override', () => {
     } finally {
       db.close()
     }
+  })
+})
+
+describe('synthetic generateOne — explicit numTrees', () => {
+  let outDir
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-trees-'))
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  function treeCount(plan, filename) {
+    const outPath = path.join(outDir, filename)
+    generateOne(outPath, CENTRE, { numParcels: NUM_PARCELS, ...plan })
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      return db.prepare(`SELECT COUNT(*) AS n FROM "Urban Trees"`).get().n
+    } finally {
+      db.close()
+    }
+  }
+
+  it('honours an explicit numTrees above the default', () => {
+    const REQUESTED = 12
+    expect(treeCount({ numTrees: REQUESTED }, 'trees-explicit.gpkg')).toBe(
+      REQUESTED
+    )
+  })
+
+  it('honours an explicit numTrees below the default count', () => {
+    // Smaller-than-default counts are no longer bumped up; the fixture just
+    // covers fewer size bands.
+    const REQUESTED = 2
+    expect(treeCount({ numTrees: REQUESTED }, 'trees-small.gpkg')).toBe(
+      REQUESTED
+    )
+  })
+
+  it('produces an empty Urban Trees layer for numTrees: 0', () => {
+    expect(treeCount({ numTrees: 0 }, 'trees-zero.gpkg')).toBe(0)
   })
 })

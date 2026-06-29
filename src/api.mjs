@@ -64,6 +64,8 @@ function defaultCentre(centre) {
  *
  * options:
  *   numParcels   number of habitat parcels (default 50)
+ *   numTrees     explicit urban-tree count (honoured as-is, incl. 0);
+ *                omitted → derived from numParcels
  *   centre       [easting, northing] in BNG (default Maidenhead)
  *   bad          shorthand for --bad (apply every composable geometric flaw)
  *   flaws        array of flaw names to apply (geometric | empty | attribute)
@@ -71,6 +73,7 @@ function defaultCentre(centre) {
 export function generateSyntheticGpkg(options = {}) {
   const {
     numParcels = DEFAULT_SYNTHETIC_PARCELS,
+    numTrees,
     centre,
     bad = false,
     flaws = []
@@ -83,7 +86,11 @@ export function generateSyntheticGpkg(options = {}) {
     const filenameHint = syntheticFilenameHint({ selection, bad })
     const outPath = path.join(dir, filenameHint)
     const { messages } = captureMessages(() => {
-      generateOne(outPath, resolvedCentre, { numParcels, ...selection })
+      generateOne(outPath, resolvedCentre, {
+        numParcels,
+        numTrees,
+        ...selection
+      })
     })
     return {
       buffer: readFileSync(outPath),

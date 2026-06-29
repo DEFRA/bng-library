@@ -62,7 +62,7 @@ import {
   MAPPED_BY,
   MIN_HEDGEROW_COUNT,
   MIN_RIVER_COUNT,
-  MIN_TREE_COUNT,
+  DEFAULT_TREE_COUNT,
   RETENTION_CATEGORIES,
   RIVER_PER_PARCEL_RATIO,
   RIVER_TYPES,
@@ -355,7 +355,7 @@ const URBAN_TREES_SQL_SYNTH = `
   ) VALUES (${placeholders(URBAN_TREES_INSERT_COLUMNS)})
 `
 
-const TREE_SIZES = ['Small', 'Medium', 'Large']
+const TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
 const TREE_TYPES = [
   TREE_TYPE_STREET,
   'Park/garden tree',
@@ -374,7 +374,12 @@ function generateUrbanTrees(db, boundaryRing, count) {
     }
     const [x, y] = point
     expandEnvelope(allEnvelope, [x, x, y, y])
-    const size = pick(TREE_SIZES)
+    // Deterministically seed one tree of each size band before falling back to
+    // random sizes, so a fixture covers all bands (incl. "Very large") as long
+    // as it has at least TREE_SIZES.length trees. A smaller explicit count
+    // simply covers the first few bands.
+    const size =
+      produced < TREE_SIZES.length ? TREE_SIZES[produced] : pick(TREE_SIZES)
     const type = pick(TREE_TYPES)
     const retention = pick(['Retained', 'Enhanced', 'Lost'])
     stmt.run(
@@ -430,7 +435,24 @@ function reportContents(outPath) {
  * Generate one synthetic GeoPackage (default mode). Pass `bad=true` to emit
  * the intentionally-invalid fixture instead.
  */
-function computeLayerCounts(numParcels, emptyLayers) {
+/**
+ * Resolve the urban-tree count. An explicit `numTrees` (e.g. from the
+ * prototype's input box) is honoured as-is — even below DEFAULT_TREE_COUNT, in
+ * which case the fixture simply covers fewer size bands (a request for 0
+ * yields an empty layer). When absent it derives from the parcel count,
+ * floored at DEFAULT_TREE_COUNT. Negatives are clamped to 0.
+ */
+function resolveTreeCount(numParcels, numTrees) {
+  if (Number.isFinite(numTrees)) {
+    return Math.max(0, Math.floor(numTrees))
+  }
+  return Math.max(
+    DEFAULT_TREE_COUNT,
+    Math.floor(numParcels / TREE_PER_PARCEL_RATIO)
+  )
+}
+
+function computeLayerCounts(numParcels, emptyLayers, numTrees) {
   const ifEmpty = (key, value) => (emptyLayers.has(key) ? 0 : value)
   return {
     numHabitats: ifEmpty('habitats', numParcels),
@@ -445,10 +467,7 @@ function computeLayerCounts(numParcels, emptyLayers) {
       'rivers',
       Math.max(MIN_RIVER_COUNT, Math.floor(numParcels / RIVER_PER_PARCEL_RATIO))
     ),
-    numTrees: ifEmpty(
-      'trees',
-      Math.max(MIN_TREE_COUNT, Math.floor(numParcels / TREE_PER_PARCEL_RATIO))
-    )
+    numTrees: ifEmpty('trees', resolveTreeCount(numParcels, numTrees))
   }
 }
 
@@ -509,6 +528,8 @@ function runLayerGenerators(db, ring, ctx) {
  * Writes one synthetic GeoPackage at `outPath`. The plan controls the
  * fixture shape:
  *   numParcels           how many habitat parcels to partition
+ *   numTrees             explicit urban-tree count (honoured as-is, incl. 0);
+ *                        omitted → derived from numParcels
  *   geometricFlawNames   non-empty → routes to the bad-fixture builder;
  *                        the rest of the plan is ignored
  *   emptyLayers          Set of layer keys to leave empty (table is still
@@ -518,6 +539,7 @@ function runLayerGenerators(db, ring, ctx) {
 export function generateOne(outPath, centre, plan) {
   const {
     numParcels,
+    numTrees,
     geometricFlawNames = [],
     emptyLayers = new Set(),
     attributeOverrides = {}
@@ -528,7 +550,7 @@ export function generateOne(outPath, centre, plan) {
     return
   }
 
-  const counts = computeLayerCounts(numParcels, emptyLayers)
+  const counts = computeLayerCounts(numParcels, emptyLayers, numTrees)
   const ctx = { counts, emptyLayers, attributeOverrides }
 
   logSyntheticBanner(outPath, centre, ctx)

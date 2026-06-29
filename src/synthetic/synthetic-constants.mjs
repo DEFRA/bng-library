@@ -23,7 +23,7 @@ export const TREE_TYPE_STREET = 'Street tree'
 // with each layer represented.
 export const MIN_HEDGEROW_COUNT = 3
 export const MIN_RIVER_COUNT = 1
-export const MIN_TREE_COUNT = 5
+export const DEFAULT_TREE_COUNT = 5
 export const HEDGEROW_PER_PARCEL_RATIO = 3
 export const RIVER_PER_PARCEL_RATIO = 15
 export const TREE_PER_PARCEL_RATIO = 2

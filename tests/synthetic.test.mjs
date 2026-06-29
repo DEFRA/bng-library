@@ -87,6 +87,27 @@ describe('synthetic generateOne', () => {
       db.close()
     }
   })
+
+  it('emits at least one Urban Tree of every size band', () => {
+    // The first trees are seeded one-per-band, so every fixture covers the
+    // full set of engine size bands (incl. "Very large") for downstream
+    // per-tree-area testing. MIN_TREE_COUNT guarantees enough trees.
+    const EXPECTED_TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const sizes = db
+        .prepare(
+          `SELECT DISTINCT "Baseline Tree Size" AS size FROM "Urban Trees"`
+        )
+        .all()
+        .map((r) => r.size)
+      for (const size of EXPECTED_TREE_SIZES) {
+        expect(sizes, `expected a tree of size "${size}"`).toContain(size)
+      }
+    } finally {
+      db.close()
+    }
+  })
 })
 
 describe('synthetic generateOne — geometric flaws', () => {
@@ -272,5 +293,43 @@ describe('synthetic generateOne — duplicate Parcel Ref override', () => {
     } finally {
       db.close()
     }
+  })
+})
+
+describe('synthetic generateOne — explicit numTrees', () => {
+  let outDir
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-trees-'))
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  function treeCount(plan, filename) {
+    const outPath = path.join(outDir, filename)
+    generateOne(outPath, CENTRE, { numParcels: NUM_PARCELS, ...plan })
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      return db.prepare(`SELECT COUNT(*) AS n FROM "Urban Trees"`).get().n
+    } finally {
+      db.close()
+    }
+  }
+
+  it('honours an explicit numTrees above the minimum', () => {
+    const REQUESTED = 12
+    expect(treeCount({ numTrees: REQUESTED }, 'trees-explicit.gpkg')).toBe(
+      REQUESTED
+    )
+  })
+
+  it('floors a too-small numTrees at MIN_TREE_COUNT (so all bands fit)', () => {
+    // 2 trees couldn't cover all four size bands; the generator bumps it up.
+    const MIN_TREE_COUNT = 5
+    expect(treeCount({ numTrees: 2 }, 'trees-floored.gpkg')).toBe(
+      MIN_TREE_COUNT
+    )
   })
 })

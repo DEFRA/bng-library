@@ -89,9 +89,9 @@ describe('synthetic generateOne', () => {
   })
 
   it('emits at least one Urban Tree of every size band', () => {
-    // The first trees are seeded one-per-band, so every fixture covers the
-    // full set of engine size bands (incl. "Very large") for downstream
-    // per-tree-area testing. MIN_TREE_COUNT guarantees enough trees.
+    // The first trees are seeded one-per-band, so the default fixture covers
+    // the full set of engine size bands (incl. "Very large") for downstream
+    // per-tree-area testing. DEFAULT_TREE_COUNT guarantees enough trees.
     const EXPECTED_TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
     const db = openGeoPackageReadonly(outPath)
     try {
@@ -318,18 +318,23 @@ describe('synthetic generateOne — explicit numTrees', () => {
     }
   }
 
-  it('honours an explicit numTrees above the minimum', () => {
+  it('honours an explicit numTrees above the default', () => {
     const REQUESTED = 12
     expect(treeCount({ numTrees: REQUESTED }, 'trees-explicit.gpkg')).toBe(
       REQUESTED
     )
   })
 
-  it('floors a too-small numTrees at MIN_TREE_COUNT (so all bands fit)', () => {
-    // 2 trees couldn't cover all four size bands; the generator bumps it up.
-    const MIN_TREE_COUNT = 5
-    expect(treeCount({ numTrees: 2 }, 'trees-floored.gpkg')).toBe(
-      MIN_TREE_COUNT
+  it('honours an explicit numTrees below the default count', () => {
+    // Smaller-than-default counts are no longer bumped up; the fixture just
+    // covers fewer size bands.
+    const REQUESTED = 2
+    expect(treeCount({ numTrees: REQUESTED }, 'trees-small.gpkg')).toBe(
+      REQUESTED
     )
+  })
+
+  it('produces an empty Urban Trees layer for numTrees: 0', () => {
+    expect(treeCount({ numTrees: 0 }, 'trees-zero.gpkg')).toBe(0)
   })
 })

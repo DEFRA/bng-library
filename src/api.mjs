@@ -64,8 +64,8 @@ function defaultCentre(centre) {
  *
  * options:
  *   numParcels   number of habitat parcels (default 50)
- *   numTrees     explicit urban-tree count (floored at MIN_TREE_COUNT in the
- *                generator); omitted → derived from numParcels
+ *   numTrees     explicit urban-tree count (honoured as-is, incl. 0);
+ *                omitted → derived from numParcels
  *   centre       [easting, northing] in BNG (default Maidenhead)
  *   bad          shorthand for --bad (apply every composable geometric flaw)
  *   flaws        array of flaw names to apply (geometric | empty | attribute)

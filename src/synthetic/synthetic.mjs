@@ -62,7 +62,7 @@ import {
   MAPPED_BY,
   MIN_HEDGEROW_COUNT,
   MIN_RIVER_COUNT,
-  MIN_TREE_COUNT,
+  DEFAULT_TREE_COUNT,
   RETENTION_CATEGORIES,
   RIVER_PER_PARCEL_RATIO,
   RIVER_TYPES,
@@ -375,8 +375,9 @@ function generateUrbanTrees(db, boundaryRing, count) {
     const [x, y] = point
     expandEnvelope(allEnvelope, [x, x, y, y])
     // Deterministically seed one tree of each size band before falling back to
-    // random sizes, so every synthetic gpkg covers all bands (incl. "Very
-    // large"). MIN_TREE_COUNT guarantees count >= TREE_SIZES.length.
+    // random sizes, so a fixture covers all bands (incl. "Very large") as long
+    // as it has at least TREE_SIZES.length trees. A smaller explicit count
+    // simply covers the first few bands.
     const size =
       produced < TREE_SIZES.length ? TREE_SIZES[produced] : pick(TREE_SIZES)
     const type = pick(TREE_TYPES)
@@ -436,16 +437,17 @@ function reportContents(outPath) {
  */
 /**
  * Resolve the urban-tree count. An explicit `numTrees` (e.g. from the
- * prototype's input box) wins but is floored at MIN_TREE_COUNT so every
- * fixture keeps at least one tree of each size band; when absent it derives
- * from the parcel count, as before.
+ * prototype's input box) is honoured as-is — even below DEFAULT_TREE_COUNT, in
+ * which case the fixture simply covers fewer size bands (a request for 0
+ * yields an empty layer). When absent it derives from the parcel count,
+ * floored at DEFAULT_TREE_COUNT. Negatives are clamped to 0.
  */
 function resolveTreeCount(numParcels, numTrees) {
   if (Number.isFinite(numTrees)) {
-    return Math.max(MIN_TREE_COUNT, Math.floor(numTrees))
+    return Math.max(0, Math.floor(numTrees))
   }
   return Math.max(
-    MIN_TREE_COUNT,
+    DEFAULT_TREE_COUNT,
     Math.floor(numParcels / TREE_PER_PARCEL_RATIO)
   )
 }
@@ -526,7 +528,7 @@ function runLayerGenerators(db, ring, ctx) {
  * Writes one synthetic GeoPackage at `outPath`. The plan controls the
  * fixture shape:
  *   numParcels           how many habitat parcels to partition
- *   numTrees             explicit urban-tree count (floored at MIN_TREE_COUNT);
+ *   numTrees             explicit urban-tree count (honoured as-is, incl. 0);
  *                        omitted → derived from numParcels
  *   geometricFlawNames   non-empty → routes to the bad-fixture builder;
  *                        the rest of the plan is ignored

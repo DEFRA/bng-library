@@ -356,6 +356,12 @@ const URBAN_TREES_SQL_SYNTH = `
 `
 
 const TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
+// The two individual-tree habitat types. Despite its name, the "Urban Trees"
+// layer (a fixed name from the NE template) holds ALL individual trees — there
+// is no separate rural layer — so it carries both 'Urban' and 'Rural' rows.
+// Each row's type comes from the "Rural or Urban Tree" column, not the layer
+// name, which is what the engine reads to classify a tree as urban or rural.
+const TREE_RURAL_URBAN = ['Urban', 'Rural']
 const TREE_TYPES = [
   TREE_TYPE_STREET,
   'Park/garden tree',
@@ -380,6 +386,9 @@ function generateUrbanTrees(db, boundaryRing, count) {
     // simply covers the first few bands.
     const size =
       produced < TREE_SIZES.length ? TREE_SIZES[produced] : pick(TREE_SIZES)
+    // Alternate urban/rural so both habitat types appear once there are at
+    // least two trees (the engine keys area/units off this, not the layer).
+    const ruralOrUrban = TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
     const type = pick(TREE_TYPES)
     const retention = pick(['Retained', 'Enhanced', 'Lost'])
     stmt.run(
@@ -407,8 +416,8 @@ function generateUrbanTrees(db, boundaryRing, count) {
       SURVEY_COMPANY,
       BASE_MAP,
       TREE_COUNT_DEFAULT,
-      'Urban',
-      'Urban'
+      ruralOrUrban,
+      ruralOrUrban
     )
     produced += 1
   }

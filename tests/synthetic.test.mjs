@@ -110,6 +110,42 @@ describe('synthetic generateOne', () => {
   })
 })
 
+describe('synthetic generateOne — rural and urban trees', () => {
+  let outDir
+  let outPath
+  // Two trees is enough for the urban/rural alternation to surface both types.
+  const NUM_TREES = 2
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-trees-'))
+    outPath = path.join(outDir, 'trees.gpkg')
+    generateOne(outPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      numTrees: NUM_TREES
+    })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('emits both rural and urban trees on the proposed (post-intervention) side', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const types = db
+        .prepare(
+          `SELECT DISTINCT "Proposed Rural or Urban Tree" AS t FROM "Urban Trees"`
+        )
+        .all()
+        .map((r) => r.t)
+      expect(types).toContain('Urban')
+      expect(types).toContain('Rural')
+    } finally {
+      db.close()
+    }
+  })
+})
+
 describe('synthetic generateOne — geometric flaws', () => {
   let outDir
   let outPath

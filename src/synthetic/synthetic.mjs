@@ -46,14 +46,14 @@ import { EMPTYABLE_LAYERS } from './flaws.mjs'
 import { gpkgRetention } from '../retention.mjs'
 import {
   BASE_MAP,
-  BROAD_HABITAT_TYPES,
   CONDITIONS,
   DISTINCTIVENESS,
   ENCROACHMENT_RIPARIAN,
   ENCROACHMENT_WATERCOURSE,
   HABITATS,
-  HABITATS_BY_BROAD,
+  IN_SCOPE_BROAD_HABITAT_TYPES,
   IN_SCOPE_HABITATS,
+  IN_SCOPE_HABITATS_BY_BROAD,
   HEDGE_CONDITIONS,
   HEDGEROW_PER_PARCEL_RATIO,
   HEDGE_TYPES,
@@ -114,8 +114,8 @@ function pickProposedHabitat(baseline, retention) {
     return baseline
   }
   const proposedBroad =
-    retention === 'Lost' ? pick(BROAD_HABITAT_TYPES) : baseline.broad
-  return pick(HABITATS_BY_BROAD[proposedBroad])
+    retention === 'Lost' ? pick(IN_SCOPE_BROAD_HABITAT_TYPES) : baseline.broad
+  return pick(IN_SCOPE_HABITATS_BY_BROAD[proposedBroad])
 }
 
 function findHabitatByFullName(fullName) {

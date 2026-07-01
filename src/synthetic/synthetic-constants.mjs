@@ -121,7 +121,7 @@ for (const fullName of Object.keys(metricDistinctiveness)) {
   HABITATS.push(habitat)
 }
 
-// Distinctiveness bands the backend accepts (BMD-352). Both baseline and
+// Distinctiveness bands the backend accepts. Both baseline and
 // proposed picks are constrained to these so synthetic fixtures don't trip the
 // distinctiveness validator — the backend derives the band from the habitat
 // type (not the geopackage column) and applies the High/V.High rejection to the

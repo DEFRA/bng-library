@@ -1,3 +1,16 @@
+// Area habitat distinctiveness reference — band scores/actions plus the
+// habitat type → distinctiveness band map.
+//
+// Vendored copy of bng-metric-engine's `habitat-area-distinctiveness-scores`
+// and `habitat-area-distinctiveness-categories` tables. As with hedgerows and
+// watercourses, the backend derives an area habitat's band from its TYPE (not
+// the GeoPackage distinctiveness column), so the synthetic generator must pick
+// types from the in-scope subset of this table. Keep in sync with the engine
+// reference.
+//
+// TODO(engine-move): when bng-metric-engine moves into this library (see
+// docs/move-engine-into-bng-lib.md), delete this vendored copy and import the
+// engine's canonical habitat-area-distinctiveness tables directly.
 export const distinctivenesScores = {
   'V.High': {
     Score: 8,

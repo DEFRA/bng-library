@@ -9,6 +9,8 @@
 
 import { conditionScores as metricConditionScores } from '../data/metric-values-habitat-condition.mjs'
 import { distinctivenessCategories as metricDistinctiveness } from '../data/metric-values-habitat-distinctiveness.mjs'
+import { hedgerowDistinctivenessCategories } from '../data/metric-values-hedgerow-distinctiveness.mjs'
+import { watercourseDistinctivenessCategories } from '../data/metric-values-watercourse-distinctiveness.mjs'
 
 export const SITE_NAME = 'Oakwood Regional Development'
 export const SURVEY_DATE = '2025-06-15'
@@ -149,9 +151,34 @@ export const IN_SCOPE_BROAD_HABITAT_TYPES = Object.keys(
   IN_SCOPE_HABITATS_BY_BROAD
 )
 
-// Hedgerows / Rivers / Urban Trees use their own metric tables; the prototype
-// validates them separately. Until the same wiring is added for those layers,
-// keep the generic enum lists used previously.
+// Hedgerow / watercourse distinctiveness bands, keyed on the type string. The
+// backend derives a linear feature's band from its TYPE (not the GeoPackage
+// distinctiveness column) when applying the High/V.High scope rejection, so the
+// synthetic generator must draw hedge/river types from the in-scope subsets
+// below — exactly as area habitats draw from IN_SCOPE_HABITATS. The full maps
+// are re-exported so the generator can stamp each row's distinctiveness column
+// with the band its type actually implies.
+export const HEDGEROW_DISTINCTIVENESS = hedgerowDistinctivenessCategories
+export const WATERCOURSE_DISTINCTIVENESS = watercourseDistinctivenessCategories
+
+// In-scope hedge types: everything except High/V.High (e.g. "Species-rich
+// native hedgerow with trees"). Mirrors IN_SCOPE_HABITATS.
+export const IN_SCOPE_HEDGE_TYPES = Object.keys(
+  HEDGEROW_DISTINCTIVENESS
+).filter((type) =>
+  IN_SCOPE_DISTINCTIVENESS_BANDS.has(HEDGEROW_DISTINCTIVENESS[type])
+)
+
+// In-scope river types: excludes "Priority habitat" (V.High) and "Other rivers
+// and streams" (High). Mirrors IN_SCOPE_HABITATS.
+export const IN_SCOPE_RIVER_TYPES = Object.keys(
+  WATERCOURSE_DISTINCTIVENESS
+).filter((type) =>
+  IN_SCOPE_DISTINCTIVENESS_BANDS.has(WATERCOURSE_DISTINCTIVENESS[type])
+)
+
+// Urban Trees use their own metric tables and aren't distinctiveness-gated by
+// the scope check; keep the generic enum lists used previously.
 export const CONDITIONS = [
   'Good',
   'Fairly Good',

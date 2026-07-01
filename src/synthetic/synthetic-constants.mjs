@@ -84,7 +84,6 @@ const TYPE_NAME_SEP_LENGTH = TYPE_NAME_SEPARATOR.length
 
 /** @type {{ fullName: string, broad: string, type: string, validConditions: string[], distinctiveness: string }[]} */
 export const HABITATS = []
-export const HABITATS_BY_BROAD = {}
 
 function tryParseInlandHabitat(fullName) {
   const sepIdx = fullName.indexOf(TYPE_NAME_SEPARATOR)
@@ -120,22 +119,34 @@ for (const fullName of Object.keys(metricDistinctiveness)) {
     continue
   }
   HABITATS.push(habitat)
-  if (!HABITATS_BY_BROAD[habitat.broad]) {
-    HABITATS_BY_BROAD[habitat.broad] = []
-  }
-  HABITATS_BY_BROAD[habitat.broad].push(habitat)
 }
 
-export const BROAD_HABITAT_TYPES = Object.keys(HABITATS_BY_BROAD)
-
-// Distinctiveness bands the backend accepts (BMD-352). Random baseline picks
-// are constrained to these so synthetic fixtures don't accidentally trip the
-// distinctiveness validator. Flaws that need an out-of-scope habitat (e.g.
+// Distinctiveness bands the backend accepts. Both baseline and
+// proposed picks are constrained to these so synthetic fixtures don't trip the
+// distinctiveness validator — the backend derives the band from the habitat
+// type (not the geopackage column) and applies the High/V.High rejection to the
+// post-intervention document too, so an out-of-scope proposed habitat would be
+// rejected on the PI upload. Flaws that need an out-of-scope habitat (e.g.
 // distinctiveness-out-of-scope) pin it explicitly via habitatFullName and
 // look it up against the full HABITATS list.
 const IN_SCOPE_DISTINCTIVENESS_BANDS = new Set(['Medium', 'Low', 'V.Low'])
 export const IN_SCOPE_HABITATS = HABITATS.filter((h) =>
   IN_SCOPE_DISTINCTIVENESS_BANDS.has(h.distinctiveness)
+)
+
+// In-scope habitats grouped by broad type. `pickProposedHabitat` draws proposed
+// / created habitats from here so they stay within scope (and, for enhancements,
+// within the baseline's broad type) without ever selecting a High/V.High type.
+export const IN_SCOPE_HABITATS_BY_BROAD = {}
+for (const habitat of IN_SCOPE_HABITATS) {
+  if (!IN_SCOPE_HABITATS_BY_BROAD[habitat.broad]) {
+    IN_SCOPE_HABITATS_BY_BROAD[habitat.broad] = []
+  }
+  IN_SCOPE_HABITATS_BY_BROAD[habitat.broad].push(habitat)
+}
+
+export const IN_SCOPE_BROAD_HABITAT_TYPES = Object.keys(
+  IN_SCOPE_HABITATS_BY_BROAD
 )
 
 // Hedgerows / Rivers / Urban Trees use their own metric tables; the prototype

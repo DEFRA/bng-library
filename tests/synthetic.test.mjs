@@ -374,3 +374,49 @@ describe('synthetic generateOne — explicit numTrees', () => {
     expect(treeCount({ numTrees: 0 }, 'trees-zero.gpkg')).toBe(0)
   })
 })
+
+describe('synthetic generateOne — habitat distinctiveness stays in scope', () => {
+  // A larger fixture reliably exercises the non-Retained retention branches
+  // (Enhanced / Lost / Created), where the proposed habitat is drawn from a
+  // different set than the baseline.
+  const SCOPE_PARCELS = 60
+  const OUT_OF_SCOPE_BANDS = ['High', 'V.High']
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-scope-'))
+    outPath = path.join(outDir, 'scope.gpkg')
+    generateOne(outPath, CENTRE, { numParcels: SCOPE_PARCELS })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('never emits a High or V.High baseline or proposed distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Retention Category" AS retention,
+                  "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Habitats"`
+        )
+        .all()
+
+      // Guard the guard: confirm the fixture actually contains non-Retained
+      // rows, so the proposed-side branch is genuinely exercised.
+      const nonRetained = rows.filter((r) => r.retention !== 'Retained')
+      expect(nonRetained.length).toBeGreaterThan(0)
+
+      for (const row of rows) {
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+})

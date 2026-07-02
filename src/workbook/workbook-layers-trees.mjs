@@ -1,14 +1,16 @@
 /**
  * Workbook-driven writers for the Urban Trees (point) layer. Baseline and
  * post-intervention paths share the writer loop helper.
+ *
+ * The metric workbook records individual trees by numeric area, not by size.
+ * Each tree row is therefore expanded into one or more points whose size bands
+ * sum to ≈ the workbook area (see tree-area-bands.mjs), so the backend — which
+ * derives a tree's area from its band — reconstructs the workbook's tree units.
+ * Retained/enhanced post-intervention trees reuse the baseline expansion (same
+ * sub-refs, points and bands) so a tree keeps its identity across both files.
  */
 
-import {
-  expandEnvelope,
-  filledArray,
-  gpkgPoint,
-  placeholders
-} from '../gpkg-io/index.mjs'
+import { expandEnvelope, gpkgPoint, placeholders } from '../gpkg-io/index.mjs'
 import {
   SRS_ID,
   URBAN_TREES_INSERT_COLUMNS,
@@ -22,10 +24,10 @@ import {
   SITE_NAME,
   SPATIAL_RISK_INSIDE_LPA,
   SURVEY_DATE,
-  TREE_SIZE_DEFAULT,
   WORKBOOK_IMPORT_LABEL,
   WORKBOOK_SURVEY_DETAILS
 } from './workbook-layers-shared.mjs'
+import { decomposeAreaToTreeBands } from './tree-area-bands.mjs'
 import { gpkgRetention } from '../retention.mjs'
 
 const URBAN_TREES_SQL = `
@@ -43,47 +45,69 @@ const URBAN_TREES_SQL = `
   ) VALUES (${placeholders(URBAN_TREES_INSERT_COLUMNS)})
 `
 
+// Each expanded point is a single tree of one size band.
 const TREE_COUNT_DEFAULT = 1
 
-export function generateBaselineTreePoints(boundaryRing, baselineRows) {
-  const points = []
-  const byRef = new Map()
-  for (const row of baselineRows) {
-    const point = pickInteriorPoint(boundaryRing)
-    points.push(point)
-    if (point) {
-      byRef.set(row.baselineRef, point)
-    }
-  }
-  return { points, byRef }
+// A sub-ref distinguishes the N points a single tree row expands into. A row
+// that yields exactly one point keeps its original ref unchanged.
+function treeSubRef(rowRef, bandIndex, bandCount) {
+  return bandCount === 1 ? rowRef : `${rowRef}-${bandIndex + 1}`
 }
 
 /**
- * Shared point-feature writer loop. Each per-mode writer just supplies a
- * `bindings(row, point)` function that maps to the INSERT placeholder order.
+ * Expand one tree row (area → size bands) into per-point instances, each with
+ * its own interior point, size band and sub-ref. `rowIndex` links the instance
+ * back to its row so the writer can read the row's shared attributes.
  */
-function writePointFeatureLayer(db, sql, tableName, points, rows, bindings) {
+function expandTreeRow(boundaryRing, row, rowIndex) {
+  const bands = decomposeAreaToTreeBands(row.area)
+  return bands.map((band, bandIndex) => ({
+    rowIndex,
+    subRef: treeSubRef(row.ref, bandIndex, bands.length),
+    band,
+    point: pickInteriorPoint(boundaryRing)
+  }))
+}
+
+export function generateBaselineTreePoints(boundaryRing, baselineRows) {
+  const instances = []
+  const byRef = new Map()
+  for (let i = 0; i < baselineRows.length; i += 1) {
+    const rowInstances = expandTreeRow(boundaryRing, baselineRows[i], i)
+    instances.push(...rowInstances)
+    byRef.set(baselineRows[i].baselineRef, rowInstances)
+  }
+  return { instances, byRef }
+}
+
+/**
+ * Shared point-feature writer loop. Each per-mode writer supplies a
+ * `bindings(row, instance)` function that maps to the INSERT placeholder order.
+ * Instances whose point could not be placed (null) are skipped.
+ */
+function writePointFeatureLayer(db, sql, tableName, instances, rows, bindings) {
   const stmt = db.prepare(sql)
   const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
   let written = 0
-  for (let i = 0; i < rows.length; i += 1) {
-    const point = points[i]
-    if (point) {
-      const [x, y] = point
-      expandEnvelope(allEnvelope, [x, x, y, y])
-      stmt.run(...bindings(rows[i], point))
-      written += 1
+  for (const instance of instances) {
+    if (!instance.point) {
+      continue
     }
+    const [x, y] = instance.point
+    expandEnvelope(allEnvelope, [x, x, y, y])
+    stmt.run(...bindings(rows[instance.rowIndex], instance))
+    written += 1
   }
   registerLayer(db, tableName, 'POINT', written > 0 ? allEnvelope : null)
   return written
 }
 
-function treeBaselineBindings(r, [x, y]) {
+function treeBaselineBindings(r, instance) {
+  const [x, y] = instance.point
   return [
     gpkgPoint(SRS_ID, x, y),
-    r.ref,
-    TREE_SIZE_DEFAULT, // workbook doesn't carry a tree size
+    instance.subRef,
+    instance.band,
     r.condition,
     r.strategicSig,
     r.type,
@@ -110,17 +134,18 @@ function treeBaselineBindings(r, [x, y]) {
   ]
 }
 
-function treePostBindings(r, [x, y]) {
+function treePostBindings(r, instance) {
+  const [x, y] = instance.point
   return [
     gpkgPoint(SRS_ID, x, y),
-    r.ref,
-    TREE_SIZE_DEFAULT,
+    instance.subRef,
+    instance.baselineBand,
     r.baseline?.condition ?? null,
     r.baseline?.strategicSig ?? null,
     r.baseline?.type ?? null,
     gpkgRetention(r.retention),
     gpkgRetention(r.retention) === 'Lost' ? 'Lost' : 'Retained',
-    TREE_SIZE_DEFAULT,
+    instance.proposedBand,
     r.proposed.condition,
     r.proposed.strategicSig,
     r.proposed.type,
@@ -141,47 +166,63 @@ function treePostBindings(r, [x, y]) {
   ]
 }
 
-export function writeUrbanTreesBaseline(db, points, rows) {
+export function writeUrbanTreesBaseline(db, instances, rows) {
   return writePointFeatureLayer(
     db,
     URBAN_TREES_SQL,
     'Urban Trees',
-    points,
+    instances,
     rows,
     treeBaselineBindings
   )
 }
 
 /**
- * Derive post-intervention tree points — retained/enhanced rows reuse the
- * baseline point at the same baseline ref; Created rows get a fresh
- * interior point.
+ * Derive post-intervention tree instances. Retained/enhanced rows reuse the
+ * baseline expansion at the same baseline ref (same points, sub-refs and bands,
+ * so the tree keeps its identity and size across files); Created rows expand
+ * their own proposed area into fresh points.
  */
 export function derivePostInterventionTreePoints(
   boundaryRing,
   baselinePointsByRef,
   postRows
 ) {
-  const out = filledArray(postRows.length)
+  const instances = []
   for (let i = 0; i < postRows.length; i += 1) {
     const r = postRows[i]
     if (r.retention === 'Created') {
-      out[i] = pickInteriorPoint(boundaryRing)
+      for (const inst of expandTreeRow(boundaryRing, r, i)) {
+        instances.push({
+          rowIndex: i,
+          subRef: inst.subRef,
+          baselineBand: null,
+          proposedBand: inst.band,
+          point: inst.point
+        })
+      }
     } else if (r.baselineRef && baselinePointsByRef.has(r.baselineRef)) {
-      out[i] = baselinePointsByRef.get(r.baselineRef)
-    } else {
-      // baseline ref not present in geometry — leave point null (writer skips)
+      for (const base of baselinePointsByRef.get(r.baselineRef)) {
+        instances.push({
+          rowIndex: i,
+          subRef: base.subRef,
+          baselineBand: base.band,
+          proposedBand: base.band,
+          point: base.point
+        })
+      }
     }
+    // else: baseline ref not present in geometry — emit nothing (writer skips).
   }
-  return out
+  return instances
 }
 
-export function writeUrbanTreesPostIntervention(db, points, rows) {
+export function writeUrbanTreesPostIntervention(db, instances, rows) {
   return writePointFeatureLayer(
     db,
     URBAN_TREES_SQL,
     'Urban Trees',
-    points,
+    instances,
     rows,
     treePostBindings
   )

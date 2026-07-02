@@ -93,11 +93,11 @@ export function generateBaselineFile(
     baselineRows.rivers
   )
 
-  const { points: treePoints, byRef: treePointsByRef } =
+  const { instances: treeInstances, byRef: treePointsByRef } =
     generateBaselineTreePoints(ring, baselineRows.trees)
   const treesWritten = writeUrbanTreesBaseline(
     db,
-    treePoints,
+    treeInstances,
     baselineRows.trees
   )
 
@@ -183,14 +183,14 @@ export function generatePostInterventionFile(
     postRows.rivers
   )
 
-  const treePoints = derivePostInterventionTreePoints(
+  const treeInstances = derivePostInterventionTreePoints(
     ring,
     baselineGeom.treePointsByRef,
     postRows.trees
   )
   const treesWritten = writeUrbanTreesPostIntervention(
     db,
-    treePoints,
+    treeInstances,
     postRows.trees
   )
 

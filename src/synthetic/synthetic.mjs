@@ -47,16 +47,17 @@ import { gpkgRetention } from '../retention.mjs'
 import {
   BASE_MAP,
   CONDITIONS,
-  DISTINCTIVENESS,
   ENCROACHMENT_RIPARIAN,
   ENCROACHMENT_WATERCOURSE,
   HABITATS,
+  HEDGEROW_DISTINCTIVENESS,
   IN_SCOPE_BROAD_HABITAT_TYPES,
   IN_SCOPE_HABITATS,
   IN_SCOPE_HABITATS_BY_BROAD,
+  IN_SCOPE_HEDGE_TYPES,
+  IN_SCOPE_RIVER_TYPES,
   HEDGE_CONDITIONS,
   HEDGEROW_PER_PARCEL_RATIO,
-  HEDGE_TYPES,
   LINE_FEATURE_REJECTION_BUDGET_FACTOR,
   LOCATIONS,
   MAPPED_BY,
@@ -65,7 +66,6 @@ import {
   DEFAULT_TREE_COUNT,
   RETENTION_CATEGORIES,
   RIVER_PER_PARCEL_RATIO,
-  RIVER_TYPES,
   SITE_NAME,
   SPATIAL_RISK_HABITAT,
   SPATIAL_RISK_RIVER,
@@ -74,7 +74,8 @@ import {
   SURVEY_DATE,
   SYNTHETIC_RLB_RADIUS_M,
   TREE_PER_PARCEL_RATIO,
-  TREE_TYPE_STREET
+  TREE_TYPE_STREET,
+  WATERCOURSE_DISTINCTIVENESS
 } from './synthetic-constants.mjs'
 
 // ---------------------------------------------------------------------------
@@ -245,8 +246,14 @@ function generateHedgerows(db, boundaryRing, count) {
     tableName: 'Hedgerows',
     sql: HEDGEROWS_SQL_SYNTH,
     buildRow: (coords, i) => {
-      const hedgeType = pick(HEDGE_TYPES)
+      const hedgeType = pick(IN_SCOPE_HEDGE_TYPES)
       const retention = pick(RETENTION_CATEGORIES)
+      // A lost hedgerow's proposed type is drawn afresh, so it must also stay
+      // in scope. The distinctiveness columns are stamped with the band each
+      // chosen type actually implies (the backend derives the band from the
+      // type, not from these columns).
+      const proposedHedgeType =
+        retention === 'Lost' ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('HG', i),
@@ -254,7 +261,7 @@ function generateHedgerows(db, boundaryRing, count) {
         pick(HEDGE_CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         gpkgRetention(retention),
-        retention === 'Lost' ? pick(HEDGE_TYPES) : hedgeType,
+        proposedHedgeType,
         pick(HEDGE_CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         linestringLength(coords),
@@ -273,8 +280,8 @@ function generateHedgerows(db, boundaryRing, count) {
         MAPPED_BY,
         SURVEY_COMPANY,
         BASE_MAP,
-        pick(DISTINCTIVENESS),
-        pick(DISTINCTIVENESS)
+        HEDGEROW_DISTINCTIVENESS[hedgeType],
+        HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
       ]
     }
   })
@@ -304,7 +311,7 @@ function generateRivers(db, boundaryRing, count) {
     tableName: 'Rivers',
     sql: RIVERS_SQL_SYNTH,
     buildRow: (coords, i) => {
-      const riverType = pick(RIVER_TYPES)
+      const riverType = pick(IN_SCOPE_RIVER_TYPES)
       const retention = pick(['Retained', 'Enhanced'])
       return [
         gpkgLineString(SRS_ID, coords),
@@ -333,8 +340,8 @@ function generateRivers(db, boundaryRing, count) {
         SURVEY_COMPANY,
         BASE_MAP,
         null,
-        pick(DISTINCTIVENESS),
-        pick(DISTINCTIVENESS)
+        WATERCOURSE_DISTINCTIVENESS[riverType],
+        WATERCOURSE_DISTINCTIVENESS[riverType]
       ]
     }
   })

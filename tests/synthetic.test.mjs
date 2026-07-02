@@ -4,6 +4,8 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
 import { generateOne } from '../index.mjs'
+import { hedgerowDistinctivenessCategories } from '../src/data/metric-values-hedgerow-distinctiveness.mjs'
+import { watercourseDistinctivenessCategories } from '../src/data/metric-values-watercourse-distinctiveness.mjs'
 
 // Small but non-trivial: 5 parcels exercises partition + line + point pipelines
 // without making the test slow.
@@ -412,6 +414,79 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
       expect(nonRetained.length).toBeGreaterThan(0)
 
       for (const row of rows) {
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+
+  // The backend derives a hedgerow's band from its TYPE, so an out-of-scope
+  // hedge type (e.g. "Species-rich native hedgerow with trees" → High) is
+  // rejected even if the distinctiveness column reads Medium. Assert both the
+  // derived band and the stored column stay in scope, on baseline and proposed.
+  it('never emits an out-of-scope hedgerow type or distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Retention Category" AS retention,
+                  "Baseline Hedge Type" AS baselineType,
+                  "Proposed Hedge Type" AS proposedType,
+                  "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Hedgerows"`
+        )
+        .all()
+
+      expect(rows.length).toBeGreaterThan(0)
+
+      // Guard the guard: the proposed type is only redrawn (and can therefore
+      // differ from the baseline) when retention is 'Lost'. Confirm the fixture
+      // actually contains a Lost row, so that branch is genuinely exercised
+      // rather than passing vacuously.
+      const lostRows = rows.filter((r) => r.retention === 'Lost')
+      expect(lostRows.length).toBeGreaterThan(0)
+
+      for (const row of rows) {
+        expect(hedgerowDistinctivenessCategories[row.baselineType]).toBe(
+          row.baseline
+        )
+        expect(hedgerowDistinctivenessCategories[row.proposedType]).toBe(
+          row.proposed
+        )
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+
+  // Same for watercourses: "Priority habitat" (V.High) and "Other rivers and
+  // streams" (High) must never appear.
+  it('never emits an out-of-scope river type or distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Baseline River Type" AS baselineType,
+                  "Proposed River Type" AS proposedType,
+                  "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Rivers"`
+        )
+        .all()
+
+      expect(rows.length).toBeGreaterThan(0)
+      for (const row of rows) {
+        expect(watercourseDistinctivenessCategories[row.baselineType]).toBe(
+          row.baseline
+        )
+        expect(watercourseDistinctivenessCategories[row.proposedType]).toBe(
+          row.proposed
+        )
         expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
         expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
       }

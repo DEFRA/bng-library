@@ -8,11 +8,19 @@ updates:
 
     # Group low-risk updates into shared PRs
     groups:
-      types:
-        patterns:
-          - '@types/*'
+      # @types/* packages are usually devDependencies, so they typically fall
+      # into this group. (If declared under "dependencies" — e.g. a library that
+      # re-exports them — they'd instead land in the npm-minor-patch group.)
       dev-dependencies:
         dependency-type: development
+      # Roll all remaining minor/patch bumps into one PR so they merge
+      # together — avoids competing lockfile updates across many PRs.
+      npm-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
 
     # Schedule run every Monday, local time
     schedule:
@@ -22,6 +30,30 @@ updates:
 
     versioning-strategy: increase
 
+    # Hold new PRs for a few days after a release so auto-merge does not pull in
+    # a version that gets yanked shortly after publishing. Longer hold for the
+    # riskier bumps.
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+
     allow:
       # Include direct package.json updates
       - dependency-type: direct
+
+  # Update GitHub Actions (keeps the auto-merge workflow's actions current)
+  - package-ecosystem: github-actions
+    directory: /
+
+    # Schedule run every Monday, local time
+    schedule:
+      interval: weekly
+      time: '10:30'
+      timezone: 'Europe/London'
+
+    # Hold new PRs for a few days after a release (see npm block above).
+    # GitHub Actions is not semver-versioned, so only default-days is supported.
+    cooldown:
+      default-days: 7

@@ -431,7 +431,8 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
     try {
       const rows = db
         .prepare(
-          `SELECT "Baseline Hedge Type" AS baselineType,
+          `SELECT "Retention Category" AS retention,
+                  "Baseline Hedge Type" AS baselineType,
                   "Proposed Hedge Type" AS proposedType,
                   "Baseline Distinctiveness" AS baseline,
                   "Proposed Distinctiveness" AS proposed
@@ -440,6 +441,14 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
         .all()
 
       expect(rows.length).toBeGreaterThan(0)
+
+      // Guard the guard: the proposed type is only redrawn (and can therefore
+      // differ from the baseline) when retention is 'Lost'. Confirm the fixture
+      // actually contains a Lost row, so that branch is genuinely exercised
+      // rather than passing vacuously.
+      const lostRows = rows.filter((r) => r.retention === 'Lost')
+      expect(lostRows.length).toBeGreaterThan(0)
+
       for (const row of rows) {
         expect(hedgerowDistinctivenessCategories[row.baselineType]).toBe(
           row.baseline

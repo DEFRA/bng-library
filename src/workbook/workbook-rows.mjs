@@ -177,7 +177,10 @@ function mapBaselineTree(t) {
     type: t.type,
     distinctiveness: t.distinctiveness,
     condition: t.condition,
-    strategicSig: t.strategicSignificance
+    strategicSig: t.strategicSignificance,
+    // Total baseline area (hectares). The tree writer decomposes this into
+    // size bands so each emitted point carries a realistic size.
+    area: t.area
   }
 }
 
@@ -678,6 +681,8 @@ function makeCreatedTreeRow(c, freshRefIndex) {
     ref: makeRef('T', freshRefIndex),
     baselineRef: null,
     retention: 'Created',
+    // Created area (hectares) — decomposed into proposed-side size bands.
+    area: c.area,
     baseline: linearAttributeShape(c),
     proposed: linearProposedFromCreated(c)
   }

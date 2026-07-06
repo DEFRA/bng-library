@@ -119,7 +119,9 @@ function linearAttributeShape(b) {
     type: b.type,
     distinctiveness: b.distinctiveness,
     condition: b.condition,
-    strategicSig: b.strategicSignificance
+    strategicSig: b.strategicSignificance,
+    waterEncroachment: b.waterEncroachment ?? null,
+    riparianEncroachment: b.riparianEncroachment ?? null
   }
 }
 
@@ -166,7 +168,9 @@ function mapBaselineLinear(prefix, row) {
     lengthM: row.lengthM,
     distinctiveness: row.distinctiveness,
     condition: row.condition,
-    strategicSig: row.strategicSignificance
+    strategicSig: row.strategicSignificance,
+    waterEncroachment: row.waterEncroachment ?? null,
+    riparianEncroachment: row.riparianEncroachment ?? null
   }
 }
 

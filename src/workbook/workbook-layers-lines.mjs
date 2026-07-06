@@ -547,12 +547,15 @@ export function generateBaselineRiverGeometry(boundaryRing, baselineRows) {
 }
 
 function riverBaselineBindings(r, coords) {
-  // A culvert's encroachment is the fixed "N/A - Culvert" category; other river
-  // types are left blank (the workbook does not carry a baseline encroachment,
-  // and the backend treats blank as the default multiplier).
+  // Prefer the real encroachment read from the workbook. Fall back to the
+  // fixed "N/A - Culvert" category for culverts (the workbook stores that same
+  // literal, so this only matters if the column was blank), and otherwise leave
+  // it null — the backend treats blank as the default multiplier.
   const isCulvert = r.type === CULVERT_TYPE
-  const baselineWaterEncroachment = isCulvert ? CULVERT_ENCROACHMENT : null
-  const baselineRiparianEncroachment = isCulvert ? CULVERT_ENCROACHMENT : null
+  const baselineWaterEncroachment =
+    r.waterEncroachment ?? (isCulvert ? CULVERT_ENCROACHMENT : null)
+  const baselineRiparianEncroachment =
+    r.riparianEncroachment ?? (isCulvert ? CULVERT_ENCROACHMENT : null)
   return [
     gpkgLineString(SRS_ID, coords),
     r.ref,
@@ -586,17 +589,21 @@ function riverBaselineBindings(r, coords) {
 }
 
 function riverPostBindings(r, coords) {
-  // Culverts take the fixed "N/A - Culvert" encroachment on both axes; other
-  // river types keep the "No Encroachment" defaults. Baseline and proposed are
-  // resolved from their own type, since retention may change it.
+  // Baseline side: prefer the real encroachment carried from the baseline
+  // workbook row, then culvert-by-type, then the "No Encroachment" default.
+  // Proposed side: the workbook does not carry a proposed encroachment, so keep
+  // the culvert-by-type override over the "No Encroachment" default. Baseline
+  // and proposed are resolved from their own type, since retention may change it.
   const baselineIsCulvert = r.baseline?.type === CULVERT_TYPE
   const proposedIsCulvert = r.proposed.type === CULVERT_TYPE
-  const baselineWaterEncroachment = baselineIsCulvert
-    ? CULVERT_ENCROACHMENT
-    : RIVER_ENCROACHMENT_NONE
-  const baselineRiparianEncroachment = baselineIsCulvert
-    ? CULVERT_ENCROACHMENT
-    : RIVER_ENCROACHMENT_RIPARIAN_NONE
+  const baselineWaterEncroachment =
+    r.baseline?.waterEncroachment ??
+    (baselineIsCulvert ? CULVERT_ENCROACHMENT : RIVER_ENCROACHMENT_NONE)
+  const baselineRiparianEncroachment =
+    r.baseline?.riparianEncroachment ??
+    (baselineIsCulvert
+      ? CULVERT_ENCROACHMENT
+      : RIVER_ENCROACHMENT_RIPARIAN_NONE)
   const proposedWaterEncroachment = proposedIsCulvert
     ? CULVERT_ENCROACHMENT
     : RIVER_ENCROACHMENT_NONE

@@ -11,6 +11,13 @@ import { conditionScores as metricConditionScores } from '../data/metric-values-
 import { distinctivenessCategories as metricDistinctiveness } from '../data/metric-values-habitat-distinctiveness.mjs'
 import { hedgerowDistinctivenessCategories } from '../data/metric-values-hedgerow-distinctiveness.mjs'
 import { watercourseDistinctivenessCategories } from '../data/metric-values-watercourse-distinctiveness.mjs'
+// Culvert encroachment values live in the shared data module (used by the
+// workbook generator too). Re-exported so synthetic callers keep one import
+// site. Non-culvert rows never use CULVERT_ENCROACHMENT.
+export {
+  CULVERT_TYPE,
+  CULVERT_ENCROACHMENT
+} from '../data/watercourse-encroachment.mjs'
 
 export const SITE_NAME = 'Oakwood Regional Development'
 export const SURVEY_DATE = '2025-06-15'
@@ -24,7 +31,9 @@ export const TREE_TYPE_STREET = 'Street tree'
 // count with sensible floors so a small `--size` still produces a fixture
 // with each layer represented.
 export const MIN_HEDGEROW_COUNT = 3
-export const MIN_RIVER_COUNT = 1
+// Floor of 2 so every fixture carries both a culvert and a non-culvert
+// watercourse (see the river coverage seed in synthetic.mjs / BMD-597).
+export const MIN_RIVER_COUNT = 2
 export const DEFAULT_TREE_COUNT = 5
 export const HEDGEROW_PER_PARCEL_RATIO = 3
 export const RIVER_PER_PARCEL_RATIO = 15

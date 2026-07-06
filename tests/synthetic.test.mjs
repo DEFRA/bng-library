@@ -6,6 +6,10 @@ import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
 import { generateOne } from '../index.mjs'
 import { hedgerowDistinctivenessCategories } from '../src/data/metric-values-hedgerow-distinctiveness.mjs'
 import { watercourseDistinctivenessCategories } from '../src/data/metric-values-watercourse-distinctiveness.mjs'
+import {
+  CULVERT_ENCROACHMENT,
+  CULVERT_TYPE
+} from '../src/data/watercourse-encroachment.mjs'
 
 // Small but non-trivial: 5 parcels exercises partition + line + point pipelines
 // without making the test slow.
@@ -492,6 +496,83 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
       }
     } finally {
       db.close()
+    }
+  })
+})
+
+describe('synthetic generateOne — culvert watercourse encroachment', () => {
+  // A minimal fixture still yields MIN_RIVER_COUNT (2) rivers, seeded as one
+  // culvert + one non-culvert, so every generated file exercises both the
+  // culvert and non-culvert watercourse dropdown branches (BMD-597).
+  const ENCROACHMENT_COLUMNS = [
+    'Baseline Encroachment into Watercourse',
+    'Baseline Encroachment into riparian zone',
+    'Proposed Encroachment into Watercourse',
+    'Proposed Encroachment into riparian zone'
+  ]
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-culvert-'))
+    outPath = path.join(outDir, 'culvert.gpkg')
+    generateOne(outPath, CENTRE, { numParcels: NUM_PARCELS })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const readRivers = () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      return db
+        .prepare(
+          `SELECT "Baseline River Type" AS type,
+                  "Baseline Encroachment into Watercourse" AS baseWater,
+                  "Baseline Encroachment into riparian zone" AS baseRiparian,
+                  "Proposed Encroachment into Watercourse" AS propWater,
+                  "Proposed Encroachment into riparian zone" AS propRiparian
+           FROM "Rivers"`
+        )
+        .all()
+    } finally {
+      db.close()
+    }
+  }
+
+  it('seeds both a culvert and a non-culvert watercourse', () => {
+    const rivers = readRivers()
+    expect(rivers.length).toBeGreaterThanOrEqual(2)
+    expect(rivers.some((r) => r.type === CULVERT_TYPE)).toBe(true)
+    expect(rivers.some((r) => r.type !== CULVERT_TYPE)).toBe(true)
+  })
+
+  it('stamps every culvert row with "N/A - Culvert" on all encroachment columns', () => {
+    const culverts = readRivers().filter((r) => r.type === CULVERT_TYPE)
+    expect(culverts.length).toBeGreaterThan(0)
+    for (const row of culverts) {
+      expect(row.baseWater).toBe(CULVERT_ENCROACHMENT)
+      expect(row.baseRiparian).toBe(CULVERT_ENCROACHMENT)
+      expect(row.propWater).toBe(CULVERT_ENCROACHMENT)
+      expect(row.propRiparian).toBe(CULVERT_ENCROACHMENT)
+    }
+  })
+
+  it('never stamps a non-culvert row with the culvert encroachment value', () => {
+    const nonCulverts = readRivers().filter((r) => r.type !== CULVERT_TYPE)
+    expect(nonCulverts.length).toBeGreaterThan(0)
+    for (const row of nonCulverts) {
+      for (const column of ENCROACHMENT_COLUMNS) {
+        // column names map to the aliased fields above
+        const aliased = {
+          'Baseline Encroachment into Watercourse': row.baseWater,
+          'Baseline Encroachment into riparian zone': row.baseRiparian,
+          'Proposed Encroachment into Watercourse': row.propWater,
+          'Proposed Encroachment into riparian zone': row.propRiparian
+        }[column]
+        expect(aliased).not.toBe(CULVERT_ENCROACHMENT)
+      }
     }
   })
 })

@@ -313,7 +313,7 @@ const NON_CULVERT_IN_SCOPE_RIVER_TYPES = IN_SCOPE_RIVER_TYPES.filter(
   (type) => type !== CULVERT_TYPE
 )
 
-// Guarantee both watercourse dropdown branches are represented (BMD-597): the
+// Guarantee both watercourse dropdown branches are represented: the
 // first river is always a Culvert and the second a non-culvert, so any file
 // with at least two rivers exercises the culvert and non-culvert cases.
 // Remaining rivers are random.

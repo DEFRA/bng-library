@@ -32,7 +32,7 @@ export const TREE_TYPE_STREET = 'Street tree'
 // with each layer represented.
 export const MIN_HEDGEROW_COUNT = 3
 // Floor of 2 so every fixture carries both a culvert and a non-culvert
-// watercourse (see the river coverage seed in synthetic.mjs / BMD-597).
+// watercourse (see the river coverage seed in synthetic.mjs).
 export const MIN_RIVER_COUNT = 2
 export const DEFAULT_TREE_COUNT = 5
 export const HEDGEROW_PER_PARCEL_RATIO = 3

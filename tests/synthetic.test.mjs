@@ -503,7 +503,7 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
 describe('synthetic generateOne — culvert watercourse encroachment', () => {
   // A minimal fixture still yields MIN_RIVER_COUNT (2) rivers, seeded as one
   // culvert + one non-culvert, so every generated file exercises both the
-  // culvert and non-culvert watercourse dropdown branches (BMD-597).
+  // culvert and non-culvert watercourse dropdown branches.
   const ENCROACHMENT_COLUMNS = [
     'Baseline Encroachment into Watercourse',
     'Baseline Encroachment into riparian zone',

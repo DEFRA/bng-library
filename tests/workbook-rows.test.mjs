@@ -393,3 +393,48 @@ describe('buildBaselineRows', () => {
     expect(trees).toHaveLength(1)
   })
 })
+
+describe('watercourse encroachment read-through', () => {
+  const culvert = hedgeBaseline({
+    ref: 1,
+    type: 'Culvert',
+    waterEncroachment: 'N/A - Culvert',
+    riparianEncroachment: 'N/A - Culvert'
+  })
+  const ditch = hedgeBaseline({
+    ref: 2,
+    type: 'Ditches',
+    waterEncroachment: 'No Encroachment',
+    riparianEncroachment: 'Major/Major'
+  })
+
+  it('carries the workbook encroachment onto baseline river rows', () => {
+    const { rivers } = buildBaselineRows(
+      wb({ watercourses: { baseline: [culvert, ditch] } })
+    )
+    expect(rivers[0]).toMatchObject({
+      type: 'Culvert',
+      waterEncroachment: 'N/A - Culvert',
+      riparianEncroachment: 'N/A - Culvert'
+    })
+    expect(rivers[1]).toMatchObject({
+      type: 'Ditches',
+      waterEncroachment: 'No Encroachment',
+      riparianEncroachment: 'Major/Major'
+    })
+  })
+
+  it('carries the workbook encroachment onto the post-intervention baseline side', () => {
+    const { rivers } = buildPostInterventionRows(
+      wb({ watercourses: { baseline: [culvert, ditch] } })
+    )
+    expect(rivers[0].baseline).toMatchObject({
+      waterEncroachment: 'N/A - Culvert',
+      riparianEncroachment: 'N/A - Culvert'
+    })
+    expect(rivers[1].baseline).toMatchObject({
+      waterEncroachment: 'No Encroachment',
+      riparianEncroachment: 'Major/Major'
+    })
+  })
+})

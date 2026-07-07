@@ -47,6 +47,8 @@ import { gpkgRetention } from '../retention.mjs'
 import {
   BASE_MAP,
   CONDITIONS,
+  CULVERT_ENCROACHMENT,
+  CULVERT_TYPE,
   ENCROACHMENT_RIPARIAN,
   ENCROACHMENT_WATERCOURSE,
   HABITATS,
@@ -306,21 +308,55 @@ const RIVERS_SQL_SYNTH = `
   ) VALUES (${placeholders(RIVERS_INSERT_COLUMNS)})
 `
 
+// In-scope river types excluding culverts, used to seed the non-culvert row.
+const NON_CULVERT_IN_SCOPE_RIVER_TYPES = IN_SCOPE_RIVER_TYPES.filter(
+  (type) => type !== CULVERT_TYPE
+)
+
+// Guarantee both watercourse dropdown branches are represented: the
+// first river is always a Culvert and the second a non-culvert, so any file
+// with at least two rivers exercises the culvert and non-culvert cases.
+// Remaining rivers are random.
+function pickRiverType(index) {
+  if (index === 0) {
+    return CULVERT_TYPE
+  }
+  if (index === 1) {
+    return pick(NON_CULVERT_IN_SCOPE_RIVER_TYPES)
+  }
+  return pick(IN_SCOPE_RIVER_TYPES)
+}
+
+// Encroachment does not apply to a culvert: both columns take the fixed
+// "N/A - Culvert" category. Non-culverts draw a random degree, and baseline vs
+// proposed are resolved independently so they can differ (as before).
+function riverEncroachment(riverType) {
+  if (riverType === CULVERT_TYPE) {
+    return { water: CULVERT_ENCROACHMENT, riparian: CULVERT_ENCROACHMENT }
+  }
+  return {
+    water: pick(ENCROACHMENT_WATERCOURSE),
+    riparian: pick(ENCROACHMENT_RIPARIAN)
+  }
+}
+
 function generateRivers(db, boundaryRing, count) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Rivers',
     sql: RIVERS_SQL_SYNTH,
     buildRow: (coords, i) => {
-      const riverType = pick(IN_SCOPE_RIVER_TYPES)
+      const riverType = pickRiverType(i)
       const retention = pick(['Retained', 'Enhanced'])
+      const baselineEncroachment = riverEncroachment(riverType)
+      const proposedEncroachment = riverEncroachment(riverType)
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('R', i),
         riverType,
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
-        pick(ENCROACHMENT_WATERCOURSE),
-        pick(ENCROACHMENT_RIPARIAN),
+        baselineEncroachment.water,
+        baselineEncroachment.riparian,
         gpkgRetention(retention),
         riverType,
         pick(CONDITIONS),
@@ -330,8 +366,8 @@ function generateRivers(db, boundaryRing, count) {
         ZERO_YEARS,
         pick(SPATIAL_RISK_RIVER),
         pick(LOCATIONS),
-        pick(ENCROACHMENT_WATERCOURSE),
-        pick(ENCROACHMENT_RIPARIAN),
+        proposedEncroachment.water,
+        proposedEncroachment.riparian,
         SITE_NAME,
         SURVEY_DATE,
         'River corridor survey',

@@ -16,7 +16,9 @@ import {
   HDR_PROPOSED_BROAD_HABITAT,
   HDR_PROPOSED_HABITAT,
   HDR_REF,
+  HDR_RIPARIAN_ENCROACHMENT,
   HDR_STRATEGIC_SIGNIFICANCE,
+  HDR_WATERCOURSE_ENCROACHMENT,
   buildColumnIndex,
   col,
   findColAfter,
@@ -47,7 +49,10 @@ function resolveLinearCols(header, typeHeader, withFate) {
       cLen: col(idx, HDR_LENGTH_KM),
       cDist: col(idx, HDR_DISTINCTIVENESS),
       cCond: col(idx, HDR_CONDITION),
-      cStrat: findStrategicSignificanceCol(header)
+      cStrat: findStrategicSignificanceCol(header),
+      // Watercourse-only; -1 (→ null) on hedge sheets.
+      cWaterEncroach: col(idx, HDR_WATERCOURSE_ENCROACHMENT),
+      cRiparianEncroach: col(idx, HDR_RIPARIAN_ENCROACHMENT)
     },
     // B-1 / C-1 carry the same per-row fate split as A-1, in length units (km).
     // C-1 uses "Length Lost" (title-case) while B-1 uses "Length lost" — col()
@@ -105,7 +110,8 @@ function buildLinearEntry(
   fateCols,
   withFate
 ) {
-  const { cRef, cDist, cCond, cStrat } = baseCols
+  const { cRef, cDist, cCond, cStrat, cWaterEncroach, cRiparianEncroach } =
+    baseCols
   const ref = readString(row[cRef])
   const entry = {
     ref: ref ?? String(outIndex + 1),
@@ -114,7 +120,12 @@ function buildLinearEntry(
     lengthM: Math.round(lenKm * KM_TO_M),
     distinctiveness: readString(row[cDist]),
     condition: readString(row[cCond]),
-    strategicSignificance: optString(row, cStrat)
+    strategicSignificance: optString(row, cStrat),
+    // Watercourse encroachment from the workbook (null for hedgerows). Read
+    // through so the generated GeoPackage reflects the real values rather than
+    // a hardcoded default.
+    waterEncroachment: optString(row, cWaterEncroach),
+    riparianEncroachment: optString(row, cRiparianEncroach)
   }
   if (withFate) {
     const { cLenRetained, cLenEnhanced, cLenLost } = fateCols

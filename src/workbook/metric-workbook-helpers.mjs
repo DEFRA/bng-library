@@ -39,6 +39,14 @@ export const HDR_PROPOSED_BROAD_HABITAT = 'Proposed Broad Habitat'
 export const HDR_PROPOSED_HABITAT = 'Proposed habitat'
 export const HDR_BROAD_HABITAT = 'Broad Habitat'
 
+// Watercourse-only encroachment columns on C-1. The "Watercourse encroachment"
+// / "Riparian encroachment" group labels sit on the top header row, but
+// findHeader merges the two-row header preferring the bottom row, so the
+// resolved header carries the bottom-row labels below — these are what col()
+// matches. Absent on hedge sheets (col() returns -1 there).
+export const HDR_WATERCOURSE_ENCROACHMENT = 'Extent of encroachment'
+export const HDR_RIPARIAN_ENCROACHMENT = 'Extent of encroachment for both banks'
+
 const MAX_HEADER_SCAN_ROWS = 30
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,36 @@
+name: Tests
+
+# Runs on every PR (including dependabot PRs) and on pushes to main, so a
+# dependency bump that breaks a covered code path is caught before merge.
+# Make this a required status check in branch protection to gate merges.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  # Re-run the required checks when the merge queue tests a PR against the
+  # latest main. Without this trigger the queue has no status to wait on and
+  # nothing ever merges.
+  merge_group:
+    branches:
+      - main
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test

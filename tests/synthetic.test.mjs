@@ -500,6 +500,109 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
   })
 })
 
+// Bad fixtures pin every attribute to a fixed value rather than drawing at
+// random, so they used to bypass the in-scope pools entirely and emit
+// "Species-rich native hedgerow with trees" (High) and "Priority habitat"
+// (V.High). The backend surfaces the distinctiveness error ahead of the
+// geometry errors, so that masked the very flaw each fixture exists to prove.
+describe('synthetic generateOne — bad fixtures stay in distinctiveness scope', () => {
+  const OUT_OF_SCOPE_BANDS = ['High', 'V.High']
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-bad-scope-'))
+    outPath = path.join(outDir, 'bad-scope.gpkg')
+    generateOne(outPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      geometricFlawNames: ['overlapping-parcels']
+    })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('never emits an out-of-scope hedgerow type or distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Baseline Hedge Type" AS baselineType,
+                  "Proposed Hedge Type" AS proposedType,
+                  "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Hedgerows"`
+        )
+        .all()
+
+      expect(rows.length).toBeGreaterThan(0)
+      for (const row of rows) {
+        expect(hedgerowDistinctivenessCategories[row.baselineType]).toBe(
+          row.baseline
+        )
+        expect(hedgerowDistinctivenessCategories[row.proposedType]).toBe(
+          row.proposed
+        )
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+
+  it('never emits an out-of-scope river type or distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Baseline River Type" AS baselineType,
+                  "Proposed River Type" AS proposedType,
+                  "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Rivers"`
+        )
+        .all()
+
+      expect(rows.length).toBeGreaterThan(0)
+      for (const row of rows) {
+        expect(watercourseDistinctivenessCategories[row.baselineType]).toBe(
+          row.baseline
+        )
+        expect(watercourseDistinctivenessCategories[row.proposedType]).toBe(
+          row.proposed
+        )
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+
+  it('never emits an out-of-scope habitat distinctiveness', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Baseline Distinctiveness" AS baseline,
+                  "Proposed Distinctiveness" AS proposed
+           FROM "Habitats"`
+        )
+        .all()
+
+      expect(rows.length).toBeGreaterThan(0)
+      for (const row of rows) {
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
+      }
+    } finally {
+      db.close()
+    }
+  })
+})
+
 describe('synthetic generateOne — culvert watercourse encroachment', () => {
   // A minimal fixture still yields MIN_RIVER_COUNT (2) rivers, seeded as one
   // culvert + one non-culvert, so every generated file exercises both the

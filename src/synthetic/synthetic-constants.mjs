@@ -187,7 +187,7 @@ export const IN_SCOPE_RIVER_TYPES = Object.keys(
 )
 
 // Urban Trees use their own metric tables and aren't distinctiveness-gated by
-// the scope check; keep the generic enum lists used previously.
+// the scope check; keep the generic enum list used previously.
 export const CONDITIONS = [
   'Good',
   'Fairly Good',
@@ -195,7 +195,6 @@ export const CONDITIONS = [
   'Fairly Poor',
   'Poor'
 ]
-export const DISTINCTIVENESS = ['V.High', 'High', 'Medium', 'Low', 'V.Low']
 
 export const STRATEGIC_SIGNIFICANCE = [
   'Formally identified in local strategy',
@@ -212,25 +211,7 @@ export const SPATIAL_RISK_HABITAT = [
   'Compensation outside LPA or NCA of impact site, but in neighbouring LPA or NCA'
 ]
 
-export const HEDGE_TYPES = [
-  'Species-rich native hedgerow with trees',
-  'Species-rich native hedgerow',
-  'Native hedgerow with trees',
-  'Native hedgerow',
-  'Native hedgerow - associated with bank or ditch',
-  'Line of trees',
-  'Non-native and ornamental hedgerow'
-]
-
 export const HEDGE_CONDITIONS = ['Good', 'Moderate', 'Poor']
-
-export const RIVER_TYPES = [
-  'Priority habitat',
-  'Other rivers and streams',
-  'Ditches',
-  'Canals',
-  'Culvert'
-]
 
 export const ENCROACHMENT_WATERCOURSE = ['No Encroachment', 'Minor', 'Major']
 

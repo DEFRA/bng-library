@@ -35,29 +35,40 @@ import {
   BAD_REDLINE_HALF,
   BASE_MAP,
   CONDITIONS,
-  DISTINCTIVENESS,
   ENCROACHMENT_RIPARIAN,
   ENCROACHMENT_WATERCOURSE,
   FLAW_BANNER_ERRCODE_WIDTH,
-  HABITATS,
+  HEDGEROW_DISTINCTIVENESS,
   HEDGE_CONDITIONS,
-  HEDGE_TYPES,
+  IN_SCOPE_HABITATS,
+  IN_SCOPE_HEDGE_TYPES,
+  IN_SCOPE_RIVER_TYPES,
   MAPPED_BY,
   RIVERS_COLUMN_COUNT,
-  RIVER_TYPES,
   SITE_NAME,
   SPATIAL_RISK_HABITAT,
   SPATIAL_RISK_RIVER,
   STRATEGIC_SIGNIFICANCE,
   SURVEY_COMPANY,
   SURVEY_DATE,
-  TREE_TYPE_STREET
+  TREE_TYPE_STREET,
+  WATERCOURSE_DISTINCTIVENESS
 } from './synthetic-constants.mjs'
 import { FLAWS, badSquareRing } from './flaws.mjs'
 
 const LOCATION_ON_SITE = 'On-site'
 const TREE_SIZE_DEFAULT = 'Medium'
 const ZERO_YEARS = '0'
+
+// Bad fixtures exist to exercise one geometry or empty-layer validator each, so
+// every attribute is pinned to a fixed in-scope value: the fixture must fail on
+// the flaw it targets and nothing else. Drawing from the IN_SCOPE_* pools (not
+// the full type lists) keeps the High/V.High scope check from firing ahead of
+// the geometry errors and masking them.
+const BAD_HEDGE_TYPE = IN_SCOPE_HEDGE_TYPES[0]
+const BAD_RIVER_TYPE = IN_SCOPE_RIVER_TYPES[0]
+const BAD_HEDGE_DISTINCTIVENESS = HEDGEROW_DISTINCTIVENESS[BAD_HEDGE_TYPE]
+const BAD_RIVER_DISTINCTIVENESS = WATERCOURSE_DISTINCTIVENESS[BAD_RIVER_TYPE]
 const TREE_COUNT_DEFAULT = 1
 
 function badRef(prefix, i) {
@@ -122,7 +133,7 @@ function insertBadHabitats(db, parcels) {
   const env = [Infinity, -Infinity, Infinity, -Infinity]
   parcels.forEach((ring, i) => {
     expandEnvelope(env, envelopeFromCoords(ring))
-    const baseline = HABITATS[0]
+    const baseline = IN_SCOPE_HABITATS[0]
     stmt.run(
       gpkgPolygon(SRS_ID, ring),
       badRef('H', i),
@@ -175,11 +186,11 @@ function insertBadHedgerows(db, hedgerows) {
     stmt.run(
       gpkgLineString(SRS_ID, coords),
       badRef('HG', i),
-      HEDGE_TYPES[0],
+      BAD_HEDGE_TYPE,
       HEDGE_CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
       'Retained',
-      HEDGE_TYPES[0],
+      BAD_HEDGE_TYPE,
       HEDGE_CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
       Math.round(linestringLength(coords)),
@@ -194,8 +205,8 @@ function insertBadHedgerows(db, hedgerows) {
       MAPPED_BY,
       SURVEY_COMPANY,
       BASE_MAP,
-      DISTINCTIVENESS[0],
-      DISTINCTIVENESS[0]
+      BAD_HEDGE_DISTINCTIVENESS,
+      BAD_HEDGE_DISTINCTIVENESS
     )
   })
   registerLayer(db, 'Hedgerows', 'LINESTRING', env)
@@ -228,13 +239,13 @@ function insertBadRivers(db, rivers) {
     stmt.run(
       gpkgLineString(SRS_ID, coords),
       badRef('R', i),
-      RIVER_TYPES[0],
+      BAD_RIVER_TYPE,
       CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
       ENCROACHMENT_WATERCOURSE[0],
       ENCROACHMENT_RIPARIAN[0],
       'Retained',
-      RIVER_TYPES[0],
+      BAD_RIVER_TYPE,
       CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
       Math.round(linestringLength(coords)),
@@ -252,8 +263,8 @@ function insertBadRivers(db, rivers) {
       SURVEY_COMPANY,
       BASE_MAP,
       null,
-      DISTINCTIVENESS[0],
-      DISTINCTIVENESS[0]
+      BAD_RIVER_DISTINCTIVENESS,
+      BAD_RIVER_DISTINCTIVENESS
     )
   })
   registerLayer(db, 'Rivers', 'LINESTRING', env)

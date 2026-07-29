@@ -679,3 +679,66 @@ describe('synthetic generateOne — culvert watercourse encroachment', () => {
     }
   })
 })
+
+describe('synthetic generateOne — watercourse retention categories', () => {
+  // Watercourses draw from the same four-value internal vocabulary as
+  // habitats and hedgerows, so a synthetic fixture can exercise a created
+  // watercourse. `gpkgRetention` persists the internal Created as Lost, so
+  // the column only ever holds the three NE-template values.
+  //
+  // Enough parcels to yield 20 rivers: with Lost persisted from two of the
+  // four internal categories, the odds of it being absent are ~1e-6.
+  const RIVER_SAMPLE_PARCELS = 300
+  const PERSISTED_RETENTION = ['Retained', 'Enhanced', 'Lost']
+  const NO_YEARS = '0'
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-river-retention-'))
+    outPath = path.join(outDir, 'rivers.gpkg')
+    generateOne(outPath, CENTRE, { numParcels: RIVER_SAMPLE_PARCELS })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const readRivers = () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      return db
+        .prepare(
+          `SELECT "Retention Category" AS retention,
+                  "Habitat created in advance/years" AS advance,
+                  "Delay in starting habitat creation/years" AS delay
+           FROM "Rivers"`
+        )
+        .all()
+    } finally {
+      db.close()
+    }
+  }
+
+  it('only ever persists the three NE-template retention values', () => {
+    const rivers = readRivers()
+    expect(rivers.length).toBeGreaterThan(0)
+    for (const row of rivers) {
+      expect(PERSISTED_RETENTION).toContain(row.retention)
+    }
+  })
+
+  it('emits watercourses that are not merely retained or enhanced', () => {
+    const rivers = readRivers()
+    expect(rivers.some((r) => r.retention === 'Lost')).toBe(true)
+  })
+
+  it('leaves advance and delay years at zero unless the row is Lost', () => {
+    const rivers = readRivers().filter((r) => r.retention !== 'Lost')
+    expect(rivers.length).toBeGreaterThan(0)
+    for (const row of rivers) {
+      expect(row.advance).toBe(NO_YEARS)
+      expect(row.delay).toBe(NO_YEARS)
+    }
+  })
+})

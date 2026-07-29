@@ -88,6 +88,8 @@ const MAX_CREATED_ADVANCE_YEARS = 5
 const MAX_CREATED_DELAY_YEARS = 3
 const MAX_HEDGE_ADVANCE_YEARS = 3
 const MAX_HEDGE_DELAY_YEARS = 2
+const MAX_RIVER_ADVANCE_YEARS = 3
+const MAX_RIVER_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
 
@@ -346,7 +348,11 @@ function generateRivers(db, boundaryRing, count) {
     sql: RIVERS_SQL_SYNTH,
     buildRow: (coords, i) => {
       const riverType = pickRiverType(i)
-      const retention = pick(['Retained', 'Enhanced'])
+      const retention = pick(RETENTION_CATEGORIES)
+      // Unlike a hedgerow, a watercourse keeps its baseline type through the
+      // intervention: both encroachment columns and the distinctiveness band
+      // are derived from the type, and the encroachment sentinel must stay
+      // culvert-valued on exactly the culvert rows.
       const baselineEncroachment = riverEncroachment(riverType)
       const proposedEncroachment = riverEncroachment(riverType)
       return [
@@ -362,8 +368,12 @@ function generateRivers(db, boundaryRing, count) {
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         linestringLength(coords),
-        ZERO_YEARS,
-        ZERO_YEARS,
+        retention === 'Created'
+          ? String(randInt(0, MAX_RIVER_ADVANCE_YEARS))
+          : ZERO_YEARS,
+        retention === 'Created'
+          ? String(randInt(0, MAX_RIVER_DELAY_YEARS))
+          : ZERO_YEARS,
         pick(SPATIAL_RISK_RIVER),
         pick(LOCATIONS),
         proposedEncroachment.water,

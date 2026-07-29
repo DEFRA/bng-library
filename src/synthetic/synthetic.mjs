@@ -132,10 +132,23 @@ function findHabitatByFullName(fullName) {
 }
 
 /**
+ * Draw the advance/delay pair for a created feature. At most one of the two
+ * is non-zero: the statutory metric (and the backend's
+ * ADVANCE_AND_DELAY_BOTH_SET check) rejects a habitat carrying both, so a
+ * random fixture must never produce the pair.
+ */
+function randomAdvanceDelay(maxAdvance, maxDelay) {
+  if (randInt(0, 1) === 0) {
+    return [String(randInt(0, maxAdvance)), ZERO_YEARS]
+  }
+  return [ZERO_YEARS, String(randInt(0, maxDelay))]
+}
+
+/**
  * Inserts one habitat row per partitioned parcel. `perRowOverrides[i]`,
  * if provided, pins column values on row i (currently `habitatFullName`,
- * `retention`, and `parcelRef`); fields not set there are randomised as
- * normal. Used by attribute-override flaws.
+ * `retention`, `parcelRef`, `advanceYears`, and `delayYears`); fields not
+ * set there are randomised as normal. Used by attribute-override flaws.
  */
 function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
   const parcels = partitionPolygon(boundaryRing, numParcels)
@@ -162,6 +175,10 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       : pick(IN_SCOPE_HABITATS)
     const retention = override?.retention ?? pick(RETENTION_CATEGORIES)
     const proposed = pickProposedHabitat(baseline, retention)
+    const [advanceYears, delayYears] =
+      retention === 'Created'
+        ? randomAdvanceDelay(MAX_CREATED_ADVANCE_YEARS, MAX_CREATED_DELAY_YEARS)
+        : [ZERO_YEARS, ZERO_YEARS]
     stmt.run(
       gpkgPolygon(SRS_ID, ring),
       override?.parcelRef ?? syntheticRef('H', i),
@@ -175,12 +192,8 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       proposed.type,
       pick(proposed.validConditions),
       pick(STRATEGIC_SIGNIFICANCE),
-      retention === 'Created'
-        ? String(randInt(0, MAX_CREATED_ADVANCE_YEARS))
-        : ZERO_YEARS,
-      retention === 'Created'
-        ? String(randInt(0, MAX_CREATED_DELAY_YEARS))
-        : ZERO_YEARS,
+      override?.advanceYears ?? advanceYears,
+      override?.delayYears ?? delayYears,
       pick(SPATIAL_RISK_HABITAT),
       pick(LOCATIONS),
       SITE_NAME,
@@ -256,6 +269,10 @@ function generateHedgerows(db, boundaryRing, count) {
       // type, not from these columns).
       const proposedHedgeType =
         retention === 'Lost' ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType
+      const [advanceYears, delayYears] =
+        retention === 'Created'
+          ? randomAdvanceDelay(MAX_HEDGE_ADVANCE_YEARS, MAX_HEDGE_DELAY_YEARS)
+          : [ZERO_YEARS, ZERO_YEARS]
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('HG', i),
@@ -267,12 +284,8 @@ function generateHedgerows(db, boundaryRing, count) {
         pick(HEDGE_CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         linestringLength(coords),
-        retention === 'Created'
-          ? String(randInt(0, MAX_HEDGE_ADVANCE_YEARS))
-          : ZERO_YEARS,
-        retention === 'Created'
-          ? String(randInt(0, MAX_HEDGE_DELAY_YEARS))
-          : ZERO_YEARS,
+        advanceYears,
+        delayYears,
         pick(SPATIAL_RISK_HABITAT),
         pick(LOCATIONS),
         SITE_NAME,

@@ -338,6 +338,105 @@ describe('synthetic generateOne — duplicate Parcel Ref override', () => {
   })
 })
 
+describe('synthetic generateOne — advance/delay both set override', () => {
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-adv-delay-'))
+    outPath = path.join(outDir, 'adv-delay.gpkg')
+    generateOne(outPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      attributeOverrides: {
+        habitats: [{ retention: 'Created', advanceYears: '2', delayYears: '3' }]
+      }
+    })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('pins both advance and delay years on the overridden created row', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Retention Category" AS retention,
+                  "Habitat created in advance/years" AS advance,
+                  "Delay in starting habitat creation/years" AS delay
+           FROM "Habitats"
+           WHERE "Habitat created in advance/years" = '2'
+             AND "Delay in starting habitat creation/years" = '3'`
+        )
+        .all()
+      expect(rows).toHaveLength(1)
+      // Created is persisted as Lost in the NE-template column (gpkgRetention)
+      expect(rows[0].retention).toBe('Lost')
+    } finally {
+      db.close()
+    }
+  })
+
+  it('leaves every un-overridden row free of the pair', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM "Habitats"
+           WHERE CAST("Habitat created in advance/years" AS INTEGER) > 0
+             AND CAST("Delay in starting habitat creation/years" AS INTEGER) > 0`
+        )
+        .get()
+      expect(rows.n).toBe(1)
+    } finally {
+      db.close()
+    }
+  })
+})
+
+describe('synthetic generateOne — advance/delay exclusivity', () => {
+  // Enough parcels that Created retention is drawn with overwhelming
+  // probability, so the exclusivity rule is actually exercised.
+  const MANY_PARCELS = 20
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-excl-'))
+    outPath = path.join(outDir, 'exclusive.gpkg')
+    generateOne(outPath, CENTRE, { numParcels: MANY_PARCELS })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const CASES = [
+    ['Habitats', 'Habitat created in advance/years'],
+    ['Hedgerows', 'Habitat created in advance/years']
+  ]
+
+  it.each(CASES)(
+    'never emits a %s row with both advance and delay years set',
+    (table, advanceColumn) => {
+      const db = openGeoPackageReadonly(outPath)
+      try {
+        const { n } = db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM "${table}"
+             WHERE CAST("${advanceColumn}" AS INTEGER) > 0
+               AND CAST("Delay in starting habitat creation/years" AS INTEGER) > 0`
+          )
+          .get()
+        expect(n).toBe(0)
+      } finally {
+        db.close()
+      }
+    }
+  )
+})
+
 describe('synthetic generateOne — explicit numTrees', () => {
   let outDir
 

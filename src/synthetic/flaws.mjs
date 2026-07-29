@@ -239,6 +239,20 @@ export const FLAWS = {
       perRow: [{ parcelRef: 'DUP-1' }, { parcelRef: 'DUP-1' }]
     }
   },
+  'advance-delay-both-set': {
+    description:
+      'a created habitat carries both advance and delayed creation years',
+    errorCode: 'ADVANCE_AND_DELAY_BOTH_SET',
+    category: CATEGORY_ATTRIBUTE,
+    // The statutory metric rejects the pair outright: staggered creation is
+    // modelled as two rows, never one row carrying both. Retention is pinned
+    // to Created because advance/delay only apply to created habitats; the
+    // years are pinned non-zero so exactly this validator fires.
+    attributeOverride: {
+      layer: 'habitats',
+      perRow: [{ retention: 'Created', advanceYears: '2', delayYears: '3' }]
+    }
+  },
   'no-hedgerows': {
     description: 'Hedgerows layer present with zero rows',
     errorCode: NO_SPECIFIC_ERROR,

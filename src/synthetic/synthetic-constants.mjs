@@ -61,12 +61,13 @@ export const TREE_OUTSIDE_OFFSET = 700
 export const IGGI_OUTSIDE_OFFSET = 500
 export const IGGI_HALF = 40
 export const AREA_MISMATCH_PARCEL_DXY = -100
-// The `sliver` flaw's hairline parcel: 2 m × 0.4 m = 0.8 m², under the
-// backend's 1 m² sliver threshold. Sits in the top-right quadrant of the
-// redline, clear of the seeded parcel and of every other flaw's parcels so the
-// flaw composes without also tripping PARCEL_OVERLAPS.
-export const SLIVER_PARCEL_LENGTH = 2
-export const SLIVER_PARCEL_WIDTH = 0.4
+// The `sliver` flaw's undersized parcel: a 0.9 m square = 0.81 m², under the
+// backend's 1 m² minimum parcel area. Square rather than a thin strip because
+// the backend judges area alone — a compact parcel this small is rejected just
+// the same. Sits in the top-right quadrant of the redline, clear of the seeded
+// parcel and of every other flaw's parcels, so the flaw composes without also
+// tripping PARCEL_OVERLAPS.
+export const SLIVER_PARCEL_SIDE = 0.9
 export const SLIVER_PARCEL_DX = 100
 export const SLIVER_PARCEL_DY = 150
 

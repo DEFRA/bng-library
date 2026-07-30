@@ -25,8 +25,7 @@ import {
   OVERLAP_B_DY,
   SLIVER_PARCEL_DX,
   SLIVER_PARCEL_DY,
-  SLIVER_PARCEL_LENGTH,
-  SLIVER_PARCEL_WIDTH,
+  SLIVER_PARCEL_SIDE,
   SNOWDONIA_E,
   SNOWDONIA_N,
   TOO_LARGE_HALF,
@@ -111,13 +110,13 @@ export const FLAWS = {
     }
   },
   sliver: {
-    description: 'a hairline habitat parcel too small to be a real habitat',
+    description: 'a habitat parcel under the 1 m² minimum area',
     errorCode: 'AREA_PARCELS_TOO_SMALL',
     apply(s) {
       const x = s.cx + SLIVER_PARCEL_DX
       const y = s.cy + SLIVER_PARCEL_DY
       s.parcels.push(
-        rectRing(x, y, x + SLIVER_PARCEL_LENGTH, y + SLIVER_PARCEL_WIDTH)
+        rectRing(x, y, x + SLIVER_PARCEL_SIDE, y + SLIVER_PARCEL_SIDE)
       )
     }
   },

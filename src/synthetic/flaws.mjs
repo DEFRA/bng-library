@@ -23,7 +23,9 @@ import {
   OVERLAP_A_DY,
   OVERLAP_B_DX,
   OVERLAP_B_DY,
-  SLIVER_GAP,
+  SLIVER_PARCEL_DX,
+  SLIVER_PARCEL_DY,
+  SLIVER_PARCEL_SIDE,
   SNOWDONIA_E,
   SNOWDONIA_N,
   TOO_LARGE_HALF,
@@ -108,20 +110,13 @@ export const FLAWS = {
     }
   },
   sliver: {
-    description: 'two parcels almost tile the redline, leaving a hairline gap',
-    errorCode: 'SLIVERS_INSIDE_REDLINE',
-    ownsLayer: 'parcels',
-    conflictsWith: [
-      'bowtie-parcel',
-      'overlapping-parcels',
-      'parcel-outside-redline',
-      'area-sum-mismatch'
-    ],
+    description: 'a habitat parcel under the 1 m² minimum area',
+    errorCode: 'AREA_PARCELS_TOO_SMALL',
     apply(s) {
-      const r = BAD_REDLINE_HALF
+      const x = s.cx + SLIVER_PARCEL_DX
+      const y = s.cy + SLIVER_PARCEL_DY
       s.parcels.push(
-        rectRing(s.cx - r, s.cy - r, s.cx + r, s.cy),
-        rectRing(s.cx - r, s.cy + SLIVER_GAP, s.cx + r, s.cy + r)
+        rectRing(x, y, x + SLIVER_PARCEL_SIDE, y + SLIVER_PARCEL_SIDE)
       )
     }
   },
@@ -285,20 +280,13 @@ export const EMPTYABLE_LAYERS = {
 
 export const ALL_FLAW_NAMES = Object.keys(FLAWS)
 
-/** Flaws that `--bad` expands to. Only geometric, non-standalone flaws — and
- *  `sliver` is excluded because it conflicts with the parcel-modifying flaws. */
+/** Flaws that `--bad` expands to: every geometric, non-standalone flaw. */
 export const BAD_DEFAULT_FLAWS = ALL_FLAW_NAMES.filter((n) => {
   const f = FLAWS[n]
   if (categoryOf(f) !== CATEGORY_GEOMETRIC) {
     return false
   }
-  if (f.standalone) {
-    return false
-  }
-  if (n === 'sliver') {
-    return false
-  }
-  return true
+  return !f.standalone
 })
 
 // Category pairs that cannot coexist in a single selection. Attribute and

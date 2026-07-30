@@ -61,7 +61,14 @@ export const TREE_OUTSIDE_OFFSET = 700
 export const IGGI_OUTSIDE_OFFSET = 500
 export const IGGI_HALF = 40
 export const AREA_MISMATCH_PARCEL_DXY = -100
-export const SLIVER_GAP = 0.002 // 2mm — under 1m² sliver area threshold, above GEOS grid
+// The `sliver` flaw's hairline parcel: 2 m × 0.4 m = 0.8 m², under the
+// backend's 1 m² sliver threshold. Sits in the top-right quadrant of the
+// redline, clear of the seeded parcel and of every other flaw's parcels so the
+// flaw composes without also tripping PARCEL_OVERLAPS.
+export const SLIVER_PARCEL_LENGTH = 2
+export const SLIVER_PARCEL_WIDTH = 0.4
+export const SLIVER_PARCEL_DX = 100
+export const SLIVER_PARCEL_DY = 150
 
 // Wales (Snowdonia) centre — inside BNG envelope but outside England.
 export const SNOWDONIA_E = 262000

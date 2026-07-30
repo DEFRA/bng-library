@@ -90,8 +90,8 @@ describe('resolveFlawSelection — happy paths', () => {
     expect(sel.geometricFlawNames.length).toBeGreaterThan(0)
     expect(sel.emptyFlawNames).toEqual([])
     expect(sel.attributeFlawNames).toEqual([])
-    // sliver is excluded because it conflicts with the parcel-modifying flaws
-    expect(sel.geometricFlawNames).not.toContain('sliver')
+    // sliver composes with the other parcel flaws, so --bad includes it
+    expect(sel.geometricFlawNames).toContain('sliver')
     // Standalone flaws are excluded
     expect(sel.geometricFlawNames).not.toContain('redline-not-in-england')
     // Non-geometric flaws are excluded
@@ -152,11 +152,24 @@ describe('resolveFlawSelection — conflicts', () => {
     )
   })
 
+  // No shipped flaw declares conflictsWith any more, so the pair is registered
+  // here to keep the mechanism itself covered.
   it('rejects pairwise-conflicting geometric flaws', () => {
-    expectConflict(
-      { bad: false, flaws: ['sliver', 'bowtie-parcel'] },
-      'conflict and cannot be combined'
-    )
+    const TEST_FLAW = '__test_conflicts_with_bowtie'
+    FLAWS[TEST_FLAW] = {
+      description: 'test-only flaw that conflicts with bowtie-parcel',
+      errorCode: 'TEST',
+      conflictsWith: ['bowtie-parcel'],
+      apply() {}
+    }
+    try {
+      expectConflict(
+        { bad: false, flaws: [TEST_FLAW, 'bowtie-parcel'] },
+        'conflict and cannot be combined'
+      )
+    } finally {
+      delete FLAWS[TEST_FLAW]
+    }
   })
 
   it('rejects unknown flaw names', () => {

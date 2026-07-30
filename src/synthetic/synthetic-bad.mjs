@@ -441,7 +441,7 @@ export function generateOneBad(outPath, centre, flawNames) {
   }
 
   // Seed one valid feature per required layer, skipping any layer a flaw
-  // claims to own (sliver wholly replaces the parcel layer).
+  // declares it replaces wholesale via `ownsLayer`.
   const ownedLayers = new Set(
     flawNames.map((n) => FLAWS[n].ownsLayer).filter(Boolean)
   )

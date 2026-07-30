@@ -28,7 +28,7 @@ import {
   WORKBOOK_SURVEY_DETAILS
 } from './workbook-layers-shared.mjs'
 import { decomposeAreaToTreeBands } from './tree-area-bands.mjs'
-import { gpkgRetention } from '../retention.mjs'
+import { baselineLinearAttribute, treeCategory } from '../retention.mjs'
 
 const URBAN_TREES_SQL = `
   INSERT INTO "Urban Trees" (
@@ -134,17 +134,19 @@ function treeBaselineBindings(r, instance) {
   ]
 }
 
+// A newly planted tree has no baseline, so the template drives every baseline
+// column to "N/A" and marks the row "Newly Planted" rather than "Existing".
 function treePostBindings(r, instance) {
   const [x, y] = instance.point
   return [
     gpkgPoint(SRS_ID, x, y),
     instance.subRef,
-    instance.baselineBand,
-    r.baseline?.condition ?? null,
-    r.baseline?.strategicSig ?? null,
-    r.baseline?.type ?? null,
-    gpkgRetention(r.retention),
-    gpkgRetention(r.retention) === 'Lost' ? 'Lost' : 'Retained',
+    baselineLinearAttribute(r.retention, instance.baselineBand),
+    baselineLinearAttribute(r.retention, r.baseline?.condition),
+    baselineLinearAttribute(r.retention, r.baseline?.strategicSig),
+    baselineLinearAttribute(r.retention, r.baseline?.type),
+    r.retention,
+    treeCategory(r.retention),
     instance.proposedBand,
     r.proposed.condition,
     r.proposed.strategicSig,
@@ -161,7 +163,10 @@ function treePostBindings(r, instance) {
     WORKBOOK_IMPORT_LABEL,
     BASE_MAP,
     TREE_COUNT_DEFAULT,
-    r.baseline ? RURAL_OR_URBAN_TREE_URBAN : null,
+    baselineLinearAttribute(
+      r.retention,
+      r.baseline ? RURAL_OR_URBAN_TREE_URBAN : null
+    ),
     RURAL_OR_URBAN_TREE_URBAN
   ]
 }

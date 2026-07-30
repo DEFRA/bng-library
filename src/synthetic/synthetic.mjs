@@ -43,7 +43,12 @@ import {
 } from '../workbook/workbook-rows.mjs'
 import { generateOneBad } from './synthetic-bad.mjs'
 import { EMPTYABLE_LAYERS } from './flaws.mjs'
-import { gpkgRetention } from '../retention.mjs'
+import {
+  baselineLinearAttribute,
+  baselineLinearType,
+  gpkgAreaRetention,
+  treeCategory
+} from '../retention.mjs'
 import {
   BASE_MAP,
   CONDITIONS,
@@ -189,7 +194,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       Math.round(polygonArea(ring)),
       pick(baseline.validConditions),
       pick(STRATEGIC_SIGNIFICANCE),
-      gpkgRetention(retention),
+      gpkgAreaRetention(retention),
       proposed.broad,
       proposed.type,
       pick(proposed.validConditions),
@@ -268,7 +273,9 @@ function generateHedgerows(db, boundaryRing, count) {
       // A lost hedgerow's proposed type is drawn afresh, so it must also stay
       // in scope. The distinctiveness columns are stamped with the band each
       // chosen type actually implies (the backend derives the band from the
-      // type, not from these columns).
+      // type, not from these columns). A created hedgerow has no baseline: the
+      // drawn type describes what is being planted, and the baseline columns
+      // fall back to the template's "To be created" / "N/A" placeholders.
       const proposedHedgeType =
         retention === 'Lost' ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType
       const [advanceYears, delayYears] =
@@ -278,10 +285,10 @@ function generateHedgerows(db, boundaryRing, count) {
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('HG', i),
-        hedgeType,
-        pick(HEDGE_CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        gpkgRetention(retention),
+        baselineLinearType(retention, hedgeType),
+        baselineLinearAttribute(retention, pick(HEDGE_CONDITIONS)),
+        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+        retention,
         proposedHedgeType,
         pick(HEDGE_CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
@@ -297,7 +304,7 @@ function generateHedgerows(db, boundaryRing, count) {
         MAPPED_BY,
         SURVEY_COMPANY,
         BASE_MAP,
-        HEDGEROW_DISTINCTIVENESS[hedgeType],
+        baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedgeType]),
         HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
       ]
     }
@@ -371,12 +378,12 @@ function generateRivers(db, boundaryRing, count) {
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('R', i),
-        riverType,
-        pick(CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        baselineEncroachment.water,
-        baselineEncroachment.riparian,
-        gpkgRetention(retention),
+        baselineLinearType(retention, riverType),
+        baselineLinearAttribute(retention, pick(CONDITIONS)),
+        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+        baselineLinearAttribute(retention, baselineEncroachment.water),
+        baselineLinearAttribute(retention, baselineEncroachment.riparian),
+        retention,
         riverType,
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
@@ -399,7 +406,10 @@ function generateRivers(db, boundaryRing, count) {
         SURVEY_COMPANY,
         BASE_MAP,
         null,
-        WATERCOURSE_DISTINCTIVENESS[riverType],
+        baselineLinearAttribute(
+          retention,
+          WATERCOURSE_DISTINCTIVENESS[riverType]
+        ),
         WATERCOURSE_DISTINCTIVENESS[riverType]
       ]
     }
@@ -460,12 +470,12 @@ function generateUrbanTrees(db, boundaryRing, count) {
     stmt.run(
       gpkgPoint(SRS_ID, x, y),
       syntheticRef('T', produced),
-      size,
-      pick(CONDITIONS),
-      pick(STRATEGIC_SIGNIFICANCE),
-      type,
-      gpkgRetention(retention),
-      gpkgRetention(retention) === 'Lost' ? 'Lost' : 'Retained',
+      baselineLinearAttribute(retention, size),
+      baselineLinearAttribute(retention, pick(CONDITIONS)),
+      baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+      baselineLinearAttribute(retention, type),
+      retention,
+      treeCategory(retention),
       retention === 'Lost' ? pick(TREE_SIZES) : size,
       pick(CONDITIONS),
       pick(STRATEGIC_SIGNIFICANCE),
@@ -482,7 +492,7 @@ function generateUrbanTrees(db, boundaryRing, count) {
       SURVEY_COMPANY,
       BASE_MAP,
       TREE_COUNT_DEFAULT,
-      ruralOrUrban,
+      baselineLinearAttribute(retention, ruralOrUrban),
       ruralOrUrban
     )
     produced += 1

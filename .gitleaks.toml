@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Library allowlist"
+paths = [
+  '''node_modules/''',
+  '''coverage/''',
+  '''package-lock\.json''',
+]

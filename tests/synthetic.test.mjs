@@ -586,7 +586,8 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
     try {
       const rows = db
         .prepare(
-          `SELECT "Baseline River Type" AS baselineType,
+          `SELECT "Retention Category" AS retention,
+                  "Baseline River Type" AS baselineType,
                   "Proposed River Type" AS proposedType,
                   "Baseline Distinctiveness" AS baseline,
                   "Proposed Distinctiveness" AS proposed
@@ -596,13 +597,20 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
 
       expect(rows.length).toBeGreaterThan(0)
       for (const row of rows) {
-        expect(watercourseDistinctivenessCategories[row.baselineType]).toBe(
-          row.baseline
-        )
+        if (row.retention === 'Created') {
+          // No baseline to derive a band from: the template's placeholder type
+          // carries "N/A" through every dependent baseline column.
+          expect(row.baselineType).toBe('To be created')
+          expect(row.baseline).toBe('N/A')
+        } else {
+          expect(watercourseDistinctivenessCategories[row.baselineType]).toBe(
+            row.baseline
+          )
+          expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
+        }
         expect(watercourseDistinctivenessCategories[row.proposedType]).toBe(
           row.proposed
         )
-        expect(OUT_OF_SCOPE_BANDS).not.toContain(row.baseline)
         expect(OUT_OF_SCOPE_BANDS).not.toContain(row.proposed)
       }
     } finally {
@@ -890,15 +898,18 @@ describe('synthetic generateOne — culvert watercourse encroachment', () => {
 })
 
 describe('synthetic generateOne — watercourse retention categories', () => {
-  // Watercourses draw from the same four-value internal vocabulary as
-  // habitats and hedgerows, so a synthetic fixture can exercise a created
-  // watercourse. `gpkgRetention` persists the internal Created as Lost, so
-  // the column only ever holds the three NE-template values.
+  // Watercourses draw from the same four-value internal vocabulary as habitats
+  // and hedgerows. Unlike an area habitat — whose Created is persisted as Lost
+  // — a linear feature writes Created straight through and takes the template's
+  // "To be created" / "N/A" placeholders, so the column holds all four values.
+  // Only a Created row carries creation-in-advance / delay years; every other
+  // retention leaves both at zero.
   //
-  // Enough parcels to yield 20 rivers: with Lost persisted from two of the
-  // four internal categories, the odds of it being absent are ~1e-6.
+  // Enough parcels to yield 20 rivers: one river (index 2) is seeded Created, so
+  // the created branch is exercised deterministically, while the sample size
+  // keeps a Lost row near-certain (each remaining river is Lost with p = 1/4).
   const RIVER_SAMPLE_PARCELS = 300
-  const PERSISTED_RETENTION = ['Retained', 'Enhanced', 'Lost']
+  const PERSISTED_RETENTION = ['Retained', 'Enhanced', 'Lost', 'Created']
   const NO_YEARS = '0'
   let outDir
   let outPath
@@ -929,7 +940,7 @@ describe('synthetic generateOne — watercourse retention categories', () => {
     }
   }
 
-  it('only ever persists the three NE-template retention values', () => {
+  it('only ever persists the four NE-template linear retention values', () => {
     const rivers = readRivers()
     expect(rivers.length).toBeGreaterThan(0)
     for (const row of rivers) {
@@ -940,10 +951,11 @@ describe('synthetic generateOne — watercourse retention categories', () => {
   it('emits watercourses that are not merely retained or enhanced', () => {
     const rivers = readRivers()
     expect(rivers.some((r) => r.retention === 'Lost')).toBe(true)
+    expect(rivers.some((r) => r.retention === 'Created')).toBe(true)
   })
 
-  it('leaves advance and delay years at zero unless the row is Lost', () => {
-    const rivers = readRivers().filter((r) => r.retention !== 'Lost')
+  it('leaves advance and delay years at zero unless the row is Created', () => {
+    const rivers = readRivers().filter((r) => r.retention !== 'Created')
     expect(rivers.length).toBeGreaterThan(0)
     for (const row of rivers) {
       expect(row.advance).toBe(NO_YEARS)

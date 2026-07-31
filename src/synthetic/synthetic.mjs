@@ -47,6 +47,7 @@ import {
   baselineLinearAttribute,
   baselineLinearType,
   gpkgAreaRetention,
+  RETENTION_CREATED,
   treeCategory
 } from '../retention.mjs'
 import {
@@ -97,6 +98,15 @@ const MAX_RIVER_ADVANCE_YEARS = 3
 const MAX_RIVER_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
+
+// The first two rivers are deterministically seeded (culvert + non-culvert) to
+// exercise both baseline watercourse branches; see `pickRiverType`.
+const SEEDED_RIVER_COUNT = 2
+// The next river (index 2, present once a fixture has three or more) is seeded
+// Created, so any fixture large enough to reach it exercises the created
+// watercourse branch without relying on the retention draw; see
+// `pickRiverRetention`.
+const CREATED_RIVER_INDEX = 2
 
 // ---------------------------------------------------------------------------
 // Synthetic generators
@@ -349,6 +359,25 @@ function pickRiverType(index) {
   return pick(IN_SCOPE_RIVER_TYPES)
 }
 
+// The seeded culvert and non-culvert rows exist to exercise their baseline
+// dropdown branches, so they must carry a real baseline. A Created watercourse
+// has none — it blanks the baseline type to "To be created" and every baseline
+// attribute (including the "N/A - Culvert" encroachment sentinel) to "N/A" —
+// so the seeded rows draw retention from the baseline-bearing categories only.
+const RETENTION_WITH_BASELINE = RETENTION_CATEGORIES.filter(
+  (retention) => retention !== RETENTION_CREATED
+)
+
+function pickRiverRetention(index) {
+  if (index < SEEDED_RIVER_COUNT) {
+    return pick(RETENTION_WITH_BASELINE)
+  }
+  if (index === CREATED_RIVER_INDEX) {
+    return RETENTION_CREATED
+  }
+  return pick(RETENTION_CATEGORIES)
+}
+
 // Encroachment does not apply to a culvert: both columns take the fixed
 // "N/A - Culvert" category. Non-culverts draw a random degree, and baseline vs
 // proposed are resolved independently so they can differ (as before).
@@ -368,7 +397,7 @@ function generateRivers(db, boundaryRing, count) {
     sql: RIVERS_SQL_SYNTH,
     buildRow: (coords, i) => {
       const riverType = pickRiverType(i)
-      const retention = pick(RETENTION_CATEGORIES)
+      const retention = pickRiverRetention(i)
       // Unlike a hedgerow, a watercourse keeps its baseline type through the
       // intervention: both encroachment columns and the distinctiveness band
       // are derived from the type, and the encroachment sentinel must stay

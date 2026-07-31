@@ -43,7 +43,13 @@ import {
 } from '../workbook/workbook-rows.mjs'
 import { generateOneBad } from './synthetic-bad.mjs'
 import { EMPTYABLE_LAYERS } from './flaws.mjs'
-import { gpkgRetention } from '../retention.mjs'
+import {
+  baselineLinearAttribute,
+  baselineLinearType,
+  gpkgAreaRetention,
+  RETENTION_CREATED,
+  treeCategory
+} from '../retention.mjs'
 import {
   BASE_MAP,
   CONDITIONS,
@@ -92,6 +98,15 @@ const MAX_RIVER_ADVANCE_YEARS = 3
 const MAX_RIVER_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
+
+// The first two rivers are deterministically seeded (culvert + non-culvert) to
+// exercise both baseline watercourse branches; see `pickRiverType`.
+const SEEDED_RIVER_COUNT = 2
+// The next river (index 2, present once a fixture has three or more) is seeded
+// Created, so any fixture large enough to reach it exercises the created
+// watercourse branch without relying on the retention draw; see
+// `pickRiverRetention`.
+const CREATED_RIVER_INDEX = 2
 
 // ---------------------------------------------------------------------------
 // Synthetic generators
@@ -189,7 +204,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       Math.round(polygonArea(ring)),
       pick(baseline.validConditions),
       pick(STRATEGIC_SIGNIFICANCE),
-      gpkgRetention(retention),
+      gpkgAreaRetention(retention),
       proposed.broad,
       proposed.type,
       pick(proposed.validConditions),
@@ -268,7 +283,9 @@ function generateHedgerows(db, boundaryRing, count) {
       // A lost hedgerow's proposed type is drawn afresh, so it must also stay
       // in scope. The distinctiveness columns are stamped with the band each
       // chosen type actually implies (the backend derives the band from the
-      // type, not from these columns).
+      // type, not from these columns). A created hedgerow has no baseline: the
+      // drawn type describes what is being planted, and the baseline columns
+      // fall back to the template's "To be created" / "N/A" placeholders.
       const proposedHedgeType =
         retention === 'Lost' ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType
       const [advanceYears, delayYears] =
@@ -278,10 +295,10 @@ function generateHedgerows(db, boundaryRing, count) {
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('HG', i),
-        hedgeType,
-        pick(HEDGE_CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        gpkgRetention(retention),
+        baselineLinearType(retention, hedgeType),
+        baselineLinearAttribute(retention, pick(HEDGE_CONDITIONS)),
+        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+        retention,
         proposedHedgeType,
         pick(HEDGE_CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
@@ -297,7 +314,7 @@ function generateHedgerows(db, boundaryRing, count) {
         MAPPED_BY,
         SURVEY_COMPANY,
         BASE_MAP,
-        HEDGEROW_DISTINCTIVENESS[hedgeType],
+        baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedgeType]),
         HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
       ]
     }
@@ -342,6 +359,25 @@ function pickRiverType(index) {
   return pick(IN_SCOPE_RIVER_TYPES)
 }
 
+// The seeded culvert and non-culvert rows exist to exercise their baseline
+// dropdown branches, so they must carry a real baseline. A Created watercourse
+// has none — it blanks the baseline type to "To be created" and every baseline
+// attribute (including the "N/A - Culvert" encroachment sentinel) to "N/A" —
+// so the seeded rows draw retention from the baseline-bearing categories only.
+const RETENTION_WITH_BASELINE = RETENTION_CATEGORIES.filter(
+  (retention) => retention !== RETENTION_CREATED
+)
+
+function pickRiverRetention(index) {
+  if (index < SEEDED_RIVER_COUNT) {
+    return pick(RETENTION_WITH_BASELINE)
+  }
+  if (index === CREATED_RIVER_INDEX) {
+    return RETENTION_CREATED
+  }
+  return pick(RETENTION_CATEGORIES)
+}
+
 // Encroachment does not apply to a culvert: both columns take the fixed
 // "N/A - Culvert" category. Non-culverts draw a random degree, and baseline vs
 // proposed are resolved independently so they can differ (as before).
@@ -361,7 +397,7 @@ function generateRivers(db, boundaryRing, count) {
     sql: RIVERS_SQL_SYNTH,
     buildRow: (coords, i) => {
       const riverType = pickRiverType(i)
-      const retention = pick(RETENTION_CATEGORIES)
+      const retention = pickRiverRetention(i)
       // Unlike a hedgerow, a watercourse keeps its baseline type through the
       // intervention: both encroachment columns and the distinctiveness band
       // are derived from the type, and the encroachment sentinel must stay
@@ -371,12 +407,12 @@ function generateRivers(db, boundaryRing, count) {
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('R', i),
-        riverType,
-        pick(CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        baselineEncroachment.water,
-        baselineEncroachment.riparian,
-        gpkgRetention(retention),
+        baselineLinearType(retention, riverType),
+        baselineLinearAttribute(retention, pick(CONDITIONS)),
+        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+        baselineLinearAttribute(retention, baselineEncroachment.water),
+        baselineLinearAttribute(retention, baselineEncroachment.riparian),
+        retention,
         riverType,
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
@@ -399,7 +435,10 @@ function generateRivers(db, boundaryRing, count) {
         SURVEY_COMPANY,
         BASE_MAP,
         null,
-        WATERCOURSE_DISTINCTIVENESS[riverType],
+        baselineLinearAttribute(
+          retention,
+          WATERCOURSE_DISTINCTIVENESS[riverType]
+        ),
         WATERCOURSE_DISTINCTIVENESS[riverType]
       ]
     }
@@ -460,12 +499,12 @@ function generateUrbanTrees(db, boundaryRing, count) {
     stmt.run(
       gpkgPoint(SRS_ID, x, y),
       syntheticRef('T', produced),
-      size,
-      pick(CONDITIONS),
-      pick(STRATEGIC_SIGNIFICANCE),
-      type,
-      gpkgRetention(retention),
-      gpkgRetention(retention) === 'Lost' ? 'Lost' : 'Retained',
+      baselineLinearAttribute(retention, size),
+      baselineLinearAttribute(retention, pick(CONDITIONS)),
+      baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+      baselineLinearAttribute(retention, type),
+      retention,
+      treeCategory(retention),
       retention === 'Lost' ? pick(TREE_SIZES) : size,
       pick(CONDITIONS),
       pick(STRATEGIC_SIGNIFICANCE),
@@ -482,7 +521,7 @@ function generateUrbanTrees(db, boundaryRing, count) {
       SURVEY_COMPANY,
       BASE_MAP,
       TREE_COUNT_DEFAULT,
-      ruralOrUrban,
+      baselineLinearAttribute(retention, ruralOrUrban),
       ruralOrUrban
     )
     produced += 1

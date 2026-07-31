@@ -46,7 +46,7 @@ import {
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE
 } from '../data/watercourse-encroachment.mjs'
-import { gpkgRetention } from '../retention.mjs'
+import { baselineLinearAttribute, baselineLinearType } from '../retention.mjs'
 
 // ---------------------------------------------------------------------------
 // Tunables for the random linestring sampler.
@@ -469,10 +469,10 @@ function hedgerowPostBindings(r, coords) {
   return [
     gpkgLineString(SRS_ID, coords),
     r.ref,
-    r.baseline?.type ?? null,
-    r.baseline?.condition ?? null,
-    r.baseline?.strategicSig ?? null,
-    gpkgRetention(r.retention),
+    baselineLinearType(r.retention, r.baseline?.type),
+    baselineLinearAttribute(r.retention, r.baseline?.condition),
+    baselineLinearAttribute(r.retention, r.baseline?.strategicSig),
+    r.retention,
     r.proposed.type,
     r.proposed.condition,
     r.proposed.strategicSig,
@@ -488,7 +488,7 @@ function hedgerowPostBindings(r, coords) {
     WORKBOOK_IMPORT_LABEL,
     WORKBOOK_IMPORT_LABEL,
     BASE_MAP,
-    r.baseline?.distinctiveness ?? null,
+    baselineLinearAttribute(r.retention, r.baseline?.distinctiveness),
     r.proposed.distinctiveness
   ]
 }
@@ -590,7 +590,9 @@ function riverBaselineBindings(r, coords) {
 
 function riverPostBindings(r, coords) {
   // Baseline side: prefer the real encroachment carried from the baseline
-  // workbook row, then culvert-by-type, then the "No Encroachment" default.
+  // workbook row, then culvert-by-type, then the "No Encroachment" default. A
+  // created watercourse has no baseline at all, so both baseline encroachment
+  // columns end up "N/A" whatever is resolved here.
   // Proposed side: the workbook does not carry a proposed encroachment, so keep
   // the culvert-by-type override over the "No Encroachment" default. Baseline
   // and proposed are resolved from their own type, since retention may change it.
@@ -613,12 +615,12 @@ function riverPostBindings(r, coords) {
   return [
     gpkgLineString(SRS_ID, coords),
     r.ref,
-    r.baseline?.type ?? null,
-    r.baseline?.condition ?? null,
-    r.baseline?.strategicSig ?? null,
-    baselineWaterEncroachment,
-    baselineRiparianEncroachment,
-    gpkgRetention(r.retention),
+    baselineLinearType(r.retention, r.baseline?.type),
+    baselineLinearAttribute(r.retention, r.baseline?.condition),
+    baselineLinearAttribute(r.retention, r.baseline?.strategicSig),
+    baselineLinearAttribute(r.retention, baselineWaterEncroachment),
+    baselineLinearAttribute(r.retention, baselineRiparianEncroachment),
+    r.retention,
     r.proposed.type,
     r.proposed.condition,
     r.proposed.strategicSig,
@@ -637,7 +639,7 @@ function riverPostBindings(r, coords) {
     WORKBOOK_IMPORT_LABEL,
     BASE_MAP,
     null,
-    r.baseline?.distinctiveness ?? null,
+    baselineLinearAttribute(r.retention, r.baseline?.distinctiveness),
     r.proposed.distinctiveness
   ]
 }

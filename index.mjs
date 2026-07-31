@@ -41,6 +41,7 @@ export {
 // Domain primitives the CLI still uses around the orchestration entry points
 // (centre defaulting, workbook --inspect, etc).
 export { generateOne } from './src/synthetic/synthetic.mjs'
+export { deriveBaselineFromSynthetic } from './src/synthetic/synthetic-baseline.mjs'
 export {
   ALL_FLAW_NAMES,
   CATEGORY_ATTRIBUTE,

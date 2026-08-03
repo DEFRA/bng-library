@@ -10,7 +10,8 @@
   },
   "files": [
     "index.mjs",
-    "src/"
+    "src/",
+    "scripts/"
   ],
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "better-sqlite3": "^12.11.1",
+    "husky": "9.1.7",
     "prettier": "3.9.6",
     "vitest": "^4.1.10",
     "xlsx": "^0.18.5"
@@ -33,6 +35,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{mjs,js,cjs,json,md}\"",
-    "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\""
+    "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\"",
+    "postinstall": "node scripts/postinstall.mjs",
+    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
+    "install:gitleaks": "node scripts/install-gitleaks.mjs"
   }
 }

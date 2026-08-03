@@ -61,15 +61,17 @@ export const TREE_OUTSIDE_OFFSET = 700
 export const IGGI_OUTSIDE_OFFSET = 500
 export const IGGI_HALF = 40
 export const AREA_MISMATCH_PARCEL_DXY = -100
-// The `sliver` flaw's undersized parcel: a 0.9 m square = 0.81 m², under the
-// backend's 1 m² minimum parcel area. Square rather than a thin strip because
-// the backend judges area alone — a compact parcel this small is rejected just
-// the same. Sits in the top-right quadrant of the redline, clear of the seeded
-// parcel and of every other flaw's parcels, so the flaw composes without also
-// tripping PARCEL_OVERLAPS.
-export const SLIVER_PARCEL_SIDE = 0.9
-export const SLIVER_PARCEL_DX = 100
-export const SLIVER_PARCEL_DY = 150
+// The `parcel-too-small` flaw's undersized parcel: a 0.9 m square = 0.81 m²,
+// under the backend's 1 m² minimum parcel area. Square rather than a thin strip
+// because the backend judges area alone — a compact parcel this small is
+// rejected just the same. (Note this is distinct from the backend's SLIVERS_*
+// checks, which detect genuine thin strips / hairline gaps.) Sits in the
+// top-right quadrant of the redline, clear of the seeded parcel and of every
+// other flaw's parcels, so the flaw composes without also tripping
+// PARCEL_OVERLAPS.
+export const PARCEL_TOO_SMALL_SIDE = 0.9
+export const PARCEL_TOO_SMALL_DX = 100
+export const PARCEL_TOO_SMALL_DY = 150
 
 // Wales (Snowdonia) centre — inside BNG envelope but outside England.
 export const SNOWDONIA_E = 262000

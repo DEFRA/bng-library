@@ -90,8 +90,8 @@ describe('resolveFlawSelection — happy paths', () => {
     expect(sel.geometricFlawNames.length).toBeGreaterThan(0)
     expect(sel.emptyFlawNames).toEqual([])
     expect(sel.attributeFlawNames).toEqual([])
-    // sliver composes with the other parcel flaws, so --bad includes it
-    expect(sel.geometricFlawNames).toContain('sliver')
+    // parcel-too-small composes with the other parcel flaws, so --bad includes it
+    expect(sel.geometricFlawNames).toContain('parcel-too-small')
     // Standalone flaws are excluded
     expect(sel.geometricFlawNames).not.toContain('redline-not-in-england')
     // Non-geometric flaws are excluded

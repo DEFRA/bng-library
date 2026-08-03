@@ -73,6 +73,14 @@ export const PARCEL_TOO_SMALL_SIDE = 0.9
 export const PARCEL_TOO_SMALL_DX = 100
 export const PARCEL_TOO_SMALL_DY = 150
 
+// The `tiny-gap` fixture's notch: the habitat parcels tile the redline exactly
+// except for a 0.8 m × 0.4 m = 0.32 m² rectangle left uncovered where the two
+// parcels meet the redline's top edge. The gap is below the 0.5 m² area-sum
+// tolerance, so the service accepts the file — this is the fixture that proves
+// hairline digitising gaps between parcels no longer fail validation.
+export const TINY_GAP_WIDTH_M = 0.8
+export const TINY_GAP_DEPTH_M = 0.4
+
 // Wales (Snowdonia) centre — inside BNG envelope but outside England.
 export const SNOWDONIA_E = 262000
 export const SNOWDONIA_N = 354000

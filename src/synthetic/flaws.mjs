@@ -28,6 +28,8 @@ import {
   PARCEL_TOO_SMALL_SIDE,
   SNOWDONIA_E,
   SNOWDONIA_N,
+  TINY_GAP_DEPTH_M,
+  TINY_GAP_WIDTH_M,
   TOO_LARGE_HALF,
   TREE_OUTSIDE_OFFSET,
   WATERCOURSE_INSIDE_OFFSET,
@@ -66,6 +68,8 @@ export function badSquareRing(cx, cy, half = BAD_PARCEL_HALF) {
  *                dispatch and selects which payload field is read
  *   standalone   true → cannot be combined with any other flaw
  *   apply(state) (geometric) mutates the bad-fixture state in place
+ *   ownsLayer    (geometric) layer key whose seeded baseline feature the
+ *                builder must skip — the flaw supplies that layer wholesale
  *   emptyLayer   (empty) key into EMPTYABLE_LAYERS; that layer is registered
  *                as an empty table instead of being populated
  *   attributeOverride
@@ -170,6 +174,34 @@ export const FLAWS = {
           s.cy + AREA_MISMATCH_PARCEL_DXY
         )
       )
+    }
+  },
+  'tiny-gap': {
+    description:
+      'parcels tile the redline except a sub-tolerance gap — file is accepted',
+    errorCode: NO_SPECIFIC_ERROR,
+    standalone: true,
+    ownsLayer: 'parcels',
+    apply(s) {
+      const x0 = s.cx - BAD_REDLINE_HALF
+      const y0 = s.cy - BAD_REDLINE_HALF
+      const x2 = s.cx + BAD_REDLINE_HALF
+      const y2 = s.cy + BAD_REDLINE_HALF
+      // Left half of the redline square, covered exactly.
+      s.parcels.push(rectRing(x0, y0, s.cx, y2))
+      // Right half, minus a TINY_GAP_WIDTH_M × TINY_GAP_DEPTH_M notch at its
+      // top-left corner. The uncovered rectangle sits inside the redline,
+      // flush against the left parcel's shared edge — the classic unsnapped
+      // digitising sliver, but too small for the area-sum check to flag.
+      s.parcels.push([
+        [s.cx, y0],
+        [x2, y0],
+        [x2, y2],
+        [s.cx + TINY_GAP_WIDTH_M, y2],
+        [s.cx + TINY_GAP_WIDTH_M, y2 - TINY_GAP_DEPTH_M],
+        [s.cx, y2 - TINY_GAP_DEPTH_M],
+        [s.cx, y0]
+      ])
     }
   },
   'redline-not-in-england': {

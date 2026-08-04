@@ -115,10 +115,17 @@ describe('tiny-gap flaw', () => {
     expect(sel.attributeFlawNames).toEqual([])
   })
 
-  it('supplies the parcels layer itself and tiles the redline bar a sub-tolerance gap', () => {
-    expect(FLAWS['tiny-gap'].ownsLayer).toBe('parcels')
-    const state = { cx: 530000, cy: 180000, parcels: [] }
+  it('replaces any seeded parcels and tiles the redline bar a sub-tolerance gap', () => {
+    const seededParcel = [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, 0]
+    ]
+    const state = { cx: 530000, cy: 180000, parcels: [seededParcel] }
     FLAWS['tiny-gap'].apply(state)
+    expect(state.parcels).not.toContain(seededParcel)
+    expect(state.parcels).toHaveLength(2)
 
     const redlineArea = (2 * BAD_REDLINE_HALF) ** 2
     const covered = state.parcels.reduce(

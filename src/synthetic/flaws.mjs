@@ -68,8 +68,6 @@ export function badSquareRing(cx, cy, half = BAD_PARCEL_HALF) {
  *                dispatch and selects which payload field is read
  *   standalone   true → cannot be combined with any other flaw
  *   apply(state) (geometric) mutates the bad-fixture state in place
- *   ownsLayer    (geometric) layer key whose seeded baseline feature the
- *                builder must skip — the flaw supplies that layer wholesale
  *   emptyLayer   (empty) key into EMPTYABLE_LAYERS; that layer is registered
  *                as an empty table instead of being populated
  *   attributeOverride
@@ -181,8 +179,11 @@ export const FLAWS = {
       'parcels tile the redline except a sub-tolerance gap — file is accepted',
     errorCode: NO_SPECIFIC_ERROR,
     standalone: true,
-    ownsLayer: 'parcels',
     apply(s) {
+      // The tiling must be exact, so replace the seeded parcel wholesale.
+      // Safe because this flaw is standalone: no other flaw's parcels can
+      // be in the array.
+      s.parcels.length = 0
       const x0 = s.cx - BAD_REDLINE_HALF
       const y0 = s.cy - BAD_REDLINE_HALF
       const x2 = s.cx + BAD_REDLINE_HALF

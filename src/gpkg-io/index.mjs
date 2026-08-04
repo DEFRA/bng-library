@@ -6,6 +6,7 @@
  */
 
 export {
+  decodeGpkgBinary,
   encodeWkbPoint,
   encodeWkbLineString,
   encodeWkbPolygon,
@@ -16,6 +17,14 @@ export {
   gpkgPoint,
   gpkgPolygon
 } from './src/wkb.mjs'
+
+export {
+  polygonAreaSqm,
+  readFeatures,
+  readGeoPackage,
+  readLayers,
+  wkbToGeoJSON
+} from './src/read.mjs'
 
 export {
   REQUIRED_SRS,

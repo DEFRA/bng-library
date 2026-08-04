@@ -5,6 +5,12 @@ import {
   FlawSelectionError,
   resolveFlawSelection
 } from '../index.mjs'
+import { polygonArea } from '../src/geometry.mjs'
+import {
+  BAD_REDLINE_HALF,
+  TINY_GAP_DEPTH_M,
+  TINY_GAP_WIDTH_M
+} from '../src/synthetic/synthetic-constants.mjs'
 
 describe('resolveFlawSelection — happy paths', () => {
   it('returns empty buckets when nothing is requested', () => {
@@ -94,9 +100,43 @@ describe('resolveFlawSelection — happy paths', () => {
     expect(sel.geometricFlawNames).toContain('parcel-too-small')
     // Standalone flaws are excluded
     expect(sel.geometricFlawNames).not.toContain('redline-not-in-england')
+    expect(sel.geometricFlawNames).not.toContain('tiny-gap')
     // Non-geometric flaws are excluded
     expect(sel.geometricFlawNames).not.toContain('no-habitats')
     expect(sel.geometricFlawNames).not.toContain('distinctiveness-out-of-scope')
+  })
+})
+
+describe('tiny-gap flaw', () => {
+  it('routes to the geometric bucket', () => {
+    const sel = resolveFlawSelection({ bad: false, flaws: ['tiny-gap'] })
+    expect(sel.geometricFlawNames).toEqual(['tiny-gap'])
+    expect(sel.emptyFlawNames).toEqual([])
+    expect(sel.attributeFlawNames).toEqual([])
+  })
+
+  it('replaces any seeded parcels and tiles the redline bar a sub-tolerance gap', () => {
+    const seededParcel = [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, 0]
+    ]
+    const state = { cx: 530000, cy: 180000, parcels: [seededParcel] }
+    FLAWS['tiny-gap'].apply(state)
+    expect(state.parcels).not.toContain(seededParcel)
+    expect(state.parcels).toHaveLength(2)
+
+    const redlineArea = (2 * BAD_REDLINE_HALF) ** 2
+    const covered = state.parcels.reduce(
+      (sum, ring) => sum + Math.abs(polygonArea(ring)),
+      0
+    )
+    const gap = redlineArea - covered
+    expect(gap).toBeCloseTo(TINY_GAP_WIDTH_M * TINY_GAP_DEPTH_M, 3)
+    // Under the backend's 0.5 m² area-sum tolerance, so the file is accepted.
+    expect(gap).toBeGreaterThan(0)
+    expect(gap).toBeLessThan(0.5)
   })
 })
 

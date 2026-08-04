@@ -381,28 +381,20 @@ const SEED_RIVER_DY_END = 100
 const SEED_TREE_DX = -150
 const SEED_TREE_DY = 30
 
-function seedBaselineContent(state, ownedLayers) {
+function seedBaselineContent(state) {
   const { cx, cy } = state
-  if (!ownedLayers.has('parcels')) {
-    state.parcels.push(
-      badSquareRing(cx + SEED_PARCEL_DX, cy + SEED_PARCEL_DY, SEED_PARCEL_HALF)
-    )
-  }
-  if (!ownedLayers.has('hedgerows')) {
-    state.hedgerows.push([
-      [cx + SEED_HEDGE_DX, cy + SEED_HEDGE_DY_START],
-      [cx + SEED_HEDGE_DX, cy + SEED_HEDGE_DY_END]
-    ])
-  }
-  if (!ownedLayers.has('rivers')) {
-    state.rivers.push([
-      [cx + SEED_RIVER_DX, cy + SEED_RIVER_DY_START],
-      [cx + SEED_RIVER_DX, cy + SEED_RIVER_DY_END]
-    ])
-  }
-  if (!ownedLayers.has('trees')) {
-    state.trees.push([cx + SEED_TREE_DX, cy + SEED_TREE_DY])
-  }
+  state.parcels.push(
+    badSquareRing(cx + SEED_PARCEL_DX, cy + SEED_PARCEL_DY, SEED_PARCEL_HALF)
+  )
+  state.hedgerows.push([
+    [cx + SEED_HEDGE_DX, cy + SEED_HEDGE_DY_START],
+    [cx + SEED_HEDGE_DX, cy + SEED_HEDGE_DY_END]
+  ])
+  state.rivers.push([
+    [cx + SEED_RIVER_DX, cy + SEED_RIVER_DY_START],
+    [cx + SEED_RIVER_DX, cy + SEED_RIVER_DY_END]
+  ])
+  state.trees.push([cx + SEED_TREE_DX, cy + SEED_TREE_DY])
 }
 
 function writeBadLayers(db, state) {
@@ -440,12 +432,8 @@ export function generateOneBad(outPath, centre, flawNames) {
     }
   }
 
-  // Seed one valid feature per required layer, skipping any layer a flaw
-  // declares it replaces wholesale via `ownsLayer`.
-  const ownedLayers = new Set(
-    flawNames.map((n) => FLAWS[n].ownsLayer).filter(Boolean)
-  )
-  seedBaselineContent(state, ownedLayers)
+  // Seed one valid feature per required layer.
+  seedBaselineContent(state)
 
   // Then layer the content-mutating flaws on top of the seeded baseline.
   for (const name of flawNames) {

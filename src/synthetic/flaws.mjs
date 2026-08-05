@@ -8,12 +8,12 @@
 import { error, warn } from '../log.mjs'
 import { bowtieRing, rectRing } from '../geometry.mjs'
 import {
+  ALL_HABITATS,
   AREA_MISMATCH_PARCEL_DXY,
   BAD_PARCEL_HALF,
   BAD_REDLINE_HALF,
   BOWTIE_PARCEL_DY,
   BOWTIE_PARCEL_HALF,
-  HABITATS,
   HEDGEROW_INSIDE_OFFSET,
   HEDGEROW_OUTSIDE_OFFSET,
   IGGI_HALF,
@@ -402,7 +402,7 @@ function assertAttributeLayerNotEmptied(attributeNames, emptyNames) {
 // gpkg file is opened. Without this the generator would still throw later,
 // but only after the output file and schema had been created.
 function assertAttributeOverridesValid(attributeNames) {
-  const knownFullNames = new Set(HABITATS.map((h) => h.fullName))
+  const knownFullNames = new Set(ALL_HABITATS.map((h) => h.fullName))
   for (const name of attributeNames) {
     const { perRow } = FLAWS[name].attributeOverride
     perRow.forEach((row, idx) => {
@@ -413,7 +413,7 @@ function assertAttributeOverridesValid(attributeNames) {
         error(
           `Flaw "${name}" override row ${idx} references unknown ` +
             `habitatFullName "${row.habitatFullName}". ` +
-            `Must match a fullName in HABITATS reference data.`
+            `Must match a fullName in ALL_HABITATS reference data.`
         )
       }
     })

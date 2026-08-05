@@ -287,6 +287,89 @@ describe('synthetic generateOne — attribute overrides', () => {
   })
 })
 
+describe('synthetic generateOne — non-inland habitat override', () => {
+  // The random pools are inland-only, so IGGI — which the metric files under
+  // the "Intertidal hard structures" broad type — can only ever reach a
+  // fixture by being pinned. Its broad type has no in-scope pool to enhance
+  // or create into, which is the case pickProposedHabitat has to survive.
+  const IGGI_FULL_NAME =
+    'Intertidal hard structures - Artificial hard structures with integrated greening of grey infrastructure (IGGI)'
+  const IGGI_TYPE =
+    'Artificial hard structures with integrated greening of grey infrastructure (IGGI)'
+  const IGGI_BROAD = 'Intertidal hard structures'
+
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-iggi-'))
+    outPath = path.join(outDir, 'iggi.gpkg')
+    generateOne(outPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      attributeOverrides: {
+        habitats: [{ habitatFullName: IGGI_FULL_NAME, retention: 'Retained' }]
+      }
+    })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('writes the pinned habitat with its own broad type and V.Low band', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const row = db
+        .prepare(
+          `SELECT "Baseline Broad Habitat Type" AS broad,
+                  "Baseline Habitat Type" AS type,
+                  "Baseline Distinctiveness" AS band,
+                  "Baseline Condition" AS condition
+           FROM "Habitats" ORDER BY "Parcel Ref" LIMIT 1`
+        )
+        .get()
+      expect(row.broad).toBe(IGGI_BROAD)
+      expect(row.type).toBe(IGGI_TYPE)
+      // V.Low keeps the fixture inside the service's distinctiveness scope.
+      expect(row.band).toBe('V.Low')
+      // Must be a condition the metric actually scores, not "Not Possible".
+      expect(row.condition).toBeTruthy()
+    } finally {
+      db.close()
+    }
+  })
+
+  it('mirrors the pinned habitat into the proposed columns', () => {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const row = db
+        .prepare(
+          `SELECT "Proposed Broad Habitat Type" AS broad,
+                  "Proposed Habitat Type" AS type,
+                  "Proposed Distinctiveness" AS band
+           FROM "Habitats" ORDER BY "Parcel Ref" LIMIT 1`
+        )
+        .get()
+      expect(row.broad).toBe(IGGI_BROAD)
+      expect(row.type).toBe(IGGI_TYPE)
+      expect(row.band).toBe('V.Low')
+    } finally {
+      db.close()
+    }
+  })
+
+  it('rejects a habitat name that is in no reference table at all', () => {
+    expect(() =>
+      generateOne(path.join(outDir, 'unknown.gpkg'), CENTRE, {
+        numParcels: 1,
+        attributeOverrides: {
+          habitats: [{ habitatFullName: 'Nonsense - Not a habitat' }]
+        }
+      })
+    ).toThrow(/not found in ALL_HABITATS/)
+  })
+})
+
 describe('synthetic generateOne — duplicate Parcel Ref override', () => {
   let outDir
   let outPath

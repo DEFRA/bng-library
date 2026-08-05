@@ -5,6 +5,11 @@
  * `HABITATS` is filtered to inland broad types (the synthetic site is land-
  * based, so coastal / intertidal / non-area types are excluded) and indexed
  * by broad type for proposed-habitat sampling.
+ *
+ * `ALL_HABITATS` is the same table without that filter. Random draws never
+ * use it — it exists so a caller can *pin* a habitat the random pools leave
+ * out, e.g. the IGGI type, which the statutory metric files under the
+ * "Intertidal hard structures" broad type.
  */
 
 import { conditionScores as metricConditionScores } from '../data/metric-values-habitat-condition.mjs'
@@ -114,13 +119,16 @@ const TYPE_NAME_SEP_LENGTH = TYPE_NAME_SEPARATOR.length
 /** @type {{ fullName: string, broad: string, type: string, validConditions: string[], distinctiveness: string }[]} */
 export const HABITATS = []
 
-function tryParseInlandHabitat(fullName) {
+/**
+ * Every area habitat the metric can score, inland or not. Pin-only — see the
+ * module header.
+ * @type {{ fullName: string, broad: string, type: string, validConditions: string[], distinctiveness: string }[]}
+ */
+export const ALL_HABITATS = []
+
+function tryParseHabitat(fullName) {
   const sepIdx = fullName.indexOf(TYPE_NAME_SEPARATOR)
   if (sepIdx < 0) {
-    return null
-  }
-  const broad = fullName.slice(0, sepIdx)
-  if (!INLAND_BROAD_TYPES.has(broad)) {
     return null
   }
   const conds = metricConditionScores[fullName]
@@ -135,7 +143,7 @@ function tryParseInlandHabitat(fullName) {
   }
   return {
     fullName,
-    broad,
+    broad: fullName.slice(0, sepIdx),
     type: fullName.slice(sepIdx + TYPE_NAME_SEP_LENGTH),
     validConditions,
     distinctiveness: metricDistinctiveness[fullName]
@@ -143,11 +151,14 @@ function tryParseInlandHabitat(fullName) {
 }
 
 for (const fullName of Object.keys(metricDistinctiveness)) {
-  const habitat = tryParseInlandHabitat(fullName)
+  const habitat = tryParseHabitat(fullName)
   if (!habitat) {
     continue
   }
-  HABITATS.push(habitat)
+  ALL_HABITATS.push(habitat)
+  if (INLAND_BROAD_TYPES.has(habitat.broad)) {
+    HABITATS.push(habitat)
+  }
 }
 
 // Distinctiveness bands the backend accepts. Both baseline and

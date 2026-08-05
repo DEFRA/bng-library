@@ -51,13 +51,13 @@ import {
   treeCategory
 } from '../retention.mjs'
 import {
+  ALL_HABITATS,
   BASE_MAP,
   CONDITIONS,
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE,
   ENCROACHMENT_RIPARIAN,
   ENCROACHMENT_WATERCOURSE,
-  HABITATS,
   HEDGEROW_DISTINCTIVENESS,
   IN_SCOPE_BROAD_HABITAT_TYPES,
   IN_SCOPE_HABITATS,
@@ -135,14 +135,19 @@ function pickProposedHabitat(baseline, retention) {
   }
   const proposedBroad =
     retention === 'Lost' ? pick(IN_SCOPE_BROAD_HABITAT_TYPES) : baseline.broad
-  return pick(IN_SCOPE_HABITATS_BY_BROAD[proposedBroad])
+  const pool = IN_SCOPE_HABITATS_BY_BROAD[proposedBroad]
+  // A pinned habitat can sit in a broad type the random pools exclude (e.g.
+  // "Intertidal hard structures"). Enhancing or creating within that broad
+  // type has nothing to draw from, so the baseline habitat carries through —
+  // the row stays internally consistent either way.
+  return pool ? pick(pool) : baseline
 }
 
 function findHabitatByFullName(fullName) {
-  const habitat = HABITATS.find((h) => h.fullName === fullName)
+  const habitat = ALL_HABITATS.find((h) => h.fullName === fullName)
   if (!habitat) {
     throw new Error(
-      `habitatFullName "${fullName}" not found in HABITATS reference data`
+      `habitatFullName "${fullName}" not found in ALL_HABITATS reference data`
     )
   }
   return habitat

@@ -42,6 +42,9 @@ export {
 // (centre defaulting, workbook --inspect, etc).
 export { generateOne } from './src/synthetic/synthetic.mjs'
 export { deriveBaselineFromSynthetic } from './src/synthetic/synthetic-baseline.mjs'
+// The full area-habitat vocabulary, so a caller can validate a pinned
+// `habitatFullName` (see `generateOne`'s attributeOverrides) before generating.
+export { ALL_HABITATS } from './src/synthetic/synthetic-constants.mjs'
 export {
   ALL_FLAW_NAMES,
   CATEGORY_ATTRIBUTE,

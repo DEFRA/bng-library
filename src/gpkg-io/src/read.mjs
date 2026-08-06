@@ -129,11 +129,13 @@ export function readFeatures(db, tableName, geometryColumn) {
     .all()
     .map((col) => col.name)
   const selectList = columns.map((col) => `"${col}"`).join(', ')
+  const fetchStart = performance.now()
   const rows = db
     .prepare(
       `SELECT ${selectList} FROM "${tableName}" WHERE "${geometryColumn}" IS NOT NULL`
     )
     .all()
+  const afterFetch = performance.now()
 
   const features = []
   let totalAreaSqm = 0
@@ -153,11 +155,31 @@ export function readFeatures(db, tableName, geometryColumn) {
     features.push({ type: 'Feature', properties, geometry })
   })
 
+  logGpkgReadEvidence({
+    table: tableName,
+    tableRowCount: featureCount,
+    fetchedRowCount: rows.length,
+    decodedFeatureCount: features.length,
+    fetchMs: Math.round(afterFetch - fetchStart),
+    decodeMs: Math.round(performance.now() - afterFetch)
+  })
+
   return {
     featureCollection: { type: 'FeatureCollection', features },
     featureCount,
     totalAreaSqm
   }
+}
+
+// Always-on structured evidence line for the "all features + geometries loaded
+// synchronously" spike issue (Item 2, library reader). readFeatures pulls the
+// whole table into memory with .all(), then decodes every geometry in a
+// synchronous forEach — better-sqlite3 is synchronous, so the caller is blocked
+// for fetchMs + decodeMs, both growing with the row count and neither streamed
+// nor batched. Emitted as one JSON line carrying a `perfEvidence` marker so it
+// can be grepped out of the logs.
+function logGpkgReadEvidence(fields) {
+  console.info(JSON.stringify({ perfEvidence: 'gpkg-read-sync', ...fields }))
 }
 
 function tryDecodeGeometry(value) {

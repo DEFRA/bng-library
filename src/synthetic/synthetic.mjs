@@ -411,6 +411,14 @@ function generateRivers(db, boundaryRing, count) {
       // culvert-valued on exactly the culvert rows.
       const baselineEncroachment = riverEncroachment(riverType)
       const proposedEncroachment = riverEncroachment(riverType)
+      // Only a created watercourse carries creation years, and at most one of
+      // advance / delay — the statutory metric (and the backend's
+      // ADVANCE_AND_DELAY_BOTH_SET check) rejects a feature setting both, so
+      // they must be drawn as a mutually-exclusive pair, as for hedgerows.
+      const [advanceYears, delayYears] =
+        retention === RETENTION_CREATED
+          ? randomAdvanceDelay(MAX_RIVER_ADVANCE_YEARS, MAX_RIVER_DELAY_YEARS)
+          : [ZERO_YEARS, ZERO_YEARS]
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('R', i),
@@ -424,12 +432,8 @@ function generateRivers(db, boundaryRing, count) {
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         linestringLength(coords),
-        retention === 'Created'
-          ? String(randInt(0, MAX_RIVER_ADVANCE_YEARS))
-          : ZERO_YEARS,
-        retention === 'Created'
-          ? String(randInt(0, MAX_RIVER_DELAY_YEARS))
-          : ZERO_YEARS,
+        advanceYears,
+        delayYears,
         pick(SPATIAL_RISK_RIVER),
         pick(LOCATIONS),
         proposedEncroachment.water,

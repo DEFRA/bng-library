@@ -482,8 +482,10 @@ describe('synthetic generateOne — advance/delay both set override', () => {
 
 describe('synthetic generateOne — advance/delay exclusivity', () => {
   // Enough parcels that Created retention is drawn with overwhelming
-  // probability, so the exclusivity rule is actually exercised.
-  const MANY_PARCELS = 20
+  // probability for habitats and hedgerows, and — at one river per fifteen
+  // parcels — that the deterministically seeded Created river at index 2 is
+  // present, so the rule is exercised on every scanned linear layer.
+  const MANY_PARCELS = 45
   let outDir
   let outPath
 
@@ -497,9 +499,14 @@ describe('synthetic generateOne — advance/delay exclusivity', () => {
     rmSync(outDir, { recursive: true, force: true })
   })
 
+  // The three layers the backend's ADVANCE_AND_DELAY_BOTH_SET check scans
+  // (areas, hedgerows, watercourses). Urban Trees is excluded there — its
+  // columns are spelled differently and never reach the engine — so it is not
+  // scanned here either.
   const CASES = [
     ['Habitats', 'Habitat created in advance/years'],
-    ['Hedgerows', 'Habitat created in advance/years']
+    ['Hedgerows', 'Habitat created in advance/years'],
+    ['Rivers', 'Habitat created in advance/years']
   ]
 
   it.each(CASES)(

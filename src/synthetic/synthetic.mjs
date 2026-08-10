@@ -96,6 +96,8 @@ const MAX_HEDGE_ADVANCE_YEARS = 3
 const MAX_HEDGE_DELAY_YEARS = 2
 const MAX_RIVER_ADVANCE_YEARS = 3
 const MAX_RIVER_DELAY_YEARS = 2
+const MAX_TREE_ADVANCE_YEARS = 3
+const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
 
@@ -409,6 +411,14 @@ function generateRivers(db, boundaryRing, count) {
       // culvert-valued on exactly the culvert rows.
       const baselineEncroachment = riverEncroachment(riverType)
       const proposedEncroachment = riverEncroachment(riverType)
+      // Only a created watercourse carries creation years, and at most one of
+      // advance / delay — the statutory metric (and the backend's
+      // ADVANCE_AND_DELAY_BOTH_SET check) rejects a feature setting both, so
+      // they must be drawn as a mutually-exclusive pair, as for hedgerows.
+      const [advanceYears, delayYears] =
+        retention === RETENTION_CREATED
+          ? randomAdvanceDelay(MAX_RIVER_ADVANCE_YEARS, MAX_RIVER_DELAY_YEARS)
+          : [ZERO_YEARS, ZERO_YEARS]
       return [
         gpkgLineString(SRS_ID, coords),
         syntheticRef('R', i),
@@ -422,12 +432,8 @@ function generateRivers(db, boundaryRing, count) {
         pick(CONDITIONS),
         pick(STRATEGIC_SIGNIFICANCE),
         linestringLength(coords),
-        retention === 'Created'
-          ? String(randInt(0, MAX_RIVER_ADVANCE_YEARS))
-          : ZERO_YEARS,
-        retention === 'Created'
-          ? String(randInt(0, MAX_RIVER_DELAY_YEARS))
-          : ZERO_YEARS,
+        advanceYears,
+        delayYears,
         pick(SPATIAL_RISK_RIVER),
         pick(LOCATIONS),
         proposedEncroachment.water,
@@ -479,6 +485,27 @@ const TREE_TYPES = [
   'Hedgerow tree'
 ]
 
+// An individual tree's retention values that carry a real baseline. Unlike an
+// area habitat — whose Created is persisted as Lost — a created tree writes
+// Created straight through, with Category "Newly Planted" and every baseline
+// column "N/A" (see `treeCategory` / `baselineLinearAttribute`), so the seeded
+// non-created trees draw from the baseline-bearing categories only.
+const TREE_RETENTION_WITH_BASELINE = ['Retained', 'Enhanced', 'Lost']
+
+// One tree is deterministically seeded Created, so any fixture large enough to
+// reach it exercises the "Newly Planted" branch without relying on the
+// retention draw — the individual-tree mirror of the seeded Created river. It
+// sits just past the size-band seeds (indices 0..TREE_SIZES.length-1), which
+// keep a real baseline so every size band is still covered.
+const CREATED_TREE_INDEX = TREE_SIZES.length
+
+function pickTreeRetention(index) {
+  if (index === CREATED_TREE_INDEX) {
+    return RETENTION_CREATED
+  }
+  return pick(TREE_RETENTION_WITH_BASELINE)
+}
+
 function generateUrbanTrees(db, boundaryRing, count) {
   const stmt = db.prepare(URBAN_TREES_SQL_SYNTH)
   const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
@@ -500,7 +527,13 @@ function generateUrbanTrees(db, boundaryRing, count) {
     // least two trees (the engine keys area/units off this, not the layer).
     const ruralOrUrban = TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
     const type = pick(TREE_TYPES)
-    const retention = pick(['Retained', 'Enhanced', 'Lost'])
+    const retention = pickTreeRetention(produced)
+    // Only a newly planted (Created) tree carries creation-in-advance / delay
+    // years, and at most one of the pair — as with hedgerows and habitats.
+    const [treeAdvanceYears, treeDelayYears] =
+      retention === RETENTION_CREATED
+        ? randomAdvanceDelay(MAX_TREE_ADVANCE_YEARS, MAX_TREE_DELAY_YEARS)
+        : [ZERO_YEARS, ZERO_YEARS]
     stmt.run(
       gpkgPoint(SRS_ID, x, y),
       syntheticRef('T', produced),
@@ -515,8 +548,8 @@ function generateUrbanTrees(db, boundaryRing, count) {
       pick(STRATEGIC_SIGNIFICANCE),
       retention === 'Lost' ? pick(TREE_TYPES) : type,
       pick(LOCATIONS),
-      ZERO_YEARS,
-      ZERO_YEARS,
+      treeAdvanceYears,
+      treeDelayYears,
       pick(SPATIAL_RISK_HABITAT),
       SITE_NAME,
       SURVEY_DATE,

@@ -482,8 +482,10 @@ describe('synthetic generateOne — advance/delay both set override', () => {
 
 describe('synthetic generateOne — advance/delay exclusivity', () => {
   // Enough parcels that Created retention is drawn with overwhelming
-  // probability, so the exclusivity rule is actually exercised.
-  const MANY_PARCELS = 20
+  // probability for habitats and hedgerows, and — at one river per fifteen
+  // parcels — that the deterministically seeded Created river at index 2 is
+  // present, so the rule is exercised on every scanned linear layer.
+  const MANY_PARCELS = 45
   let outDir
   let outPath
 
@@ -497,9 +499,14 @@ describe('synthetic generateOne — advance/delay exclusivity', () => {
     rmSync(outDir, { recursive: true, force: true })
   })
 
+  // The three layers the backend's ADVANCE_AND_DELAY_BOTH_SET check scans
+  // (areas, hedgerows, watercourses). Urban Trees is excluded there — its
+  // columns are spelled differently and never reach the engine — so it is not
+  // scanned here either.
   const CASES = [
     ['Habitats', 'Habitat created in advance/years'],
-    ['Hedgerows', 'Habitat created in advance/years']
+    ['Hedgerows', 'Habitat created in advance/years'],
+    ['Rivers', 'Habitat created in advance/years']
   ]
 
   it.each(CASES)(
@@ -786,14 +793,50 @@ describe('synthetic generateOne — created retention by layer type', () => {
     }
   })
 
-  it('marks every synthetic tree Existing, since none are newly planted', () => {
+  // The tree mirror of the hedgerow biconditional above: a newly planted tree
+  // keys its "no baseline" state off the Category column ("Newly Planted")
+  // rather than a placeholder type, driving every baseline column to "N/A". An
+  // existing tree keeps a real baseline. Checked over every tree, in both
+  // directions, so a created tree is always tellable apart from a retained one.
+  it('pairs a Newly Planted tree with the placeholder baseline columns, and only Created', () => {
     const db = openGeoPackageReadonly(outPath)
     try {
-      const values = db
-        .prepare(`SELECT DISTINCT "Category" AS category FROM "Urban Trees"`)
+      const rows = db
+        .prepare(
+          `SELECT "Retention Category" AS retention,
+                  "Category" AS category,
+                  "Baseline Tree Size" AS baselineSize,
+                  "Baseline Condition" AS baselineCondition,
+                  "Baseline Strategic Significance" AS baselineSignificance,
+                  "Baseline Tree Type" AS baselineType,
+                  "Baseline Rural or Urban Tree" AS baselineRuralUrban,
+                  "Proposed Tree Size" AS proposedSize,
+                  "Proposed Tree Type" AS proposedType
+           FROM "Urban Trees"`
+        )
         .all()
-        .map((row) => row.category)
-      expect(values).toEqual(['Existing'])
+
+      // Guard the guard: a fixture with no newly planted tree would leave the
+      // Created branch below unexercised.
+      const created = rows.filter((row) => row.retention === 'Created')
+      expect(created.length).toBeGreaterThan(0)
+
+      for (const row of rows) {
+        if (row.retention === 'Created') {
+          expect(row.category).toBe('Newly Planted')
+          expect(row.baselineSize).toBe('N/A')
+          expect(row.baselineCondition).toBe('N/A')
+          expect(row.baselineSignificance).toBe('N/A')
+          expect(row.baselineType).toBe('N/A')
+          expect(row.baselineRuralUrban).toBe('N/A')
+          // Units come entirely from the proposed side, so it must be real.
+          expect(row.proposedSize).not.toBe('N/A')
+          expect(row.proposedType).not.toBe('N/A')
+        } else {
+          expect(row.category).toBe('Existing')
+          expect(row.baselineSize).not.toBe('N/A')
+        }
+      }
     } finally {
       db.close()
     }

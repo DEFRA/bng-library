@@ -79,3 +79,15 @@ export {
   buildBaselineRows,
   buildPostInterventionRows
 } from './src/workbook/workbook-rows.mjs'
+
+// Permutations: a declarative catalogue of BNG test scenarios and a buffer-out
+// generator, so both the harness CLI and the prototype web form draw from one
+// source. `derivePermutationSeed` is exported so a path-based caller reproduces
+// the same seeded files the buffer API produces.
+export {
+  DEFAULT_SIZE as PERMUTATION_DEFAULT_SIZE,
+  PURPOSES as PERMUTATION_PURPOSES,
+  SCENARIOS as PERMUTATION_SCENARIOS,
+  generatePermutations
+} from './src/permutations/generate.mjs'
+export { derivePermutationSeed } from './src/permutations/seed.mjs'

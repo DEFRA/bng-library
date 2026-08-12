@@ -9,6 +9,7 @@
  */
 
 import Database from 'better-sqlite3'
+import { currentTimestamp } from './clock.mjs'
 
 /**
  * @typedef {object} SrsRow
@@ -142,10 +143,10 @@ export function registerLayer(
   db.prepare(
     `
     INSERT OR REPLACE INTO gpkg_contents
-      (table_name, data_type, identifier, description, min_x, min_y, max_x, max_y, srs_id)
-    VALUES (?, 'features', ?, '', ?, ?, ?, ?, ?)
+      (table_name, data_type, identifier, description, last_change, min_x, min_y, max_x, max_y, srs_id)
+    VALUES (?, 'features', ?, '', ?, ?, ?, ?, ?, ?)
   `
-  ).run(tableName, tableName, minX, minY, maxX, maxY, srsId)
+  ).run(tableName, tableName, currentTimestamp(), minX, minY, maxX, maxY, srsId)
 
   db.prepare(
     `

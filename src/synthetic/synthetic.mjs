@@ -7,13 +7,15 @@
 
 import { color, header, info } from '../log.mjs'
 import {
+  clearFixedTimestamp,
   envelopeFromCoords,
   expandEnvelope,
   gpkgLineString,
   gpkgPoint,
   gpkgPolygon,
   openGeoPackageReadonly,
-  placeholders
+  placeholders,
+  setFixedTimestamp
 } from '../gpkg-io/index.mjs'
 import {
   HABITATS_INSERT_COLUMNS,
@@ -27,6 +29,7 @@ import {
   registerLayer
 } from '../bng-schema.mjs'
 import {
+  clearSeed,
   generateIrregularPolygon,
   generateLinestring,
   lineInsideRing,
@@ -35,7 +38,8 @@ import {
   pick,
   pickInteriorPoint,
   polygonArea,
-  randInt
+  randInt,
+  setSeed
 } from '../geometry.mjs'
 import {
   FEATURE_REF_PAD,
@@ -101,6 +105,9 @@ const MAX_TREE_ADVANCE_YEARS = 3
 const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
+// Fixed metadata timestamp used for seeded (reproducible) generation, so the
+// gpkg_contents / layer_styles times don't reintroduce per-run byte differences.
+const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
 
 // The first two rivers are deterministically seeded (culvert + non-culvert) to
 // exercise both baseline watercourse branches; see `pickRiverType`.
@@ -832,6 +839,10 @@ function runLayerGenerators(db, ring, ctx) {
  *                        `incomplete: true` blanks the row's proposed-side
  *                        attribute cells to model unfinished post-intervention
  *                        data.
+ *   seed                 optional 32-bit integer. When set, every random draw
+ *                        (geometry and attributes) is drawn from a deterministic
+ *                        sequence, so the same seed + plan yields a
+ *                        byte-identical file. Omit for non-reproducible output.
  */
 export function generateOne(outPath, centre, plan) {
   const {
@@ -839,7 +850,40 @@ export function generateOne(outPath, centre, plan) {
     numTrees,
     geometricFlawNames = [],
     emptyLayers = new Set(),
-    attributeOverrides = {}
+    attributeOverrides = {},
+    seed
+  } = plan
+
+  const seeded = Number.isInteger(seed)
+  if (seeded) {
+    // Pin both randomness and the metadata clock so the whole file — geometry,
+    // attributes and gpkg_contents/layer_styles timestamps — is reproducible.
+    setSeed(seed)
+    setFixedTimestamp(DETERMINISTIC_TIMESTAMP)
+  }
+  try {
+    generateOneInner(outPath, centre, {
+      numParcels,
+      numTrees,
+      geometricFlawNames,
+      emptyLayers,
+      attributeOverrides
+    })
+  } finally {
+    if (seeded) {
+      clearSeed()
+      clearFixedTimestamp()
+    }
+  }
+}
+
+function generateOneInner(outPath, centre, plan) {
+  const {
+    numParcels,
+    numTrees,
+    geometricFlawNames,
+    emptyLayers,
+    attributeOverrides
   } = plan
 
   if (geometricFlawNames.length > 0) {

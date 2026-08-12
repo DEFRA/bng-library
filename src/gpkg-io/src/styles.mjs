@@ -5,6 +5,8 @@
  * `createLayerStylesTable` / `insertLayerStyle`.
  */
 
+import { currentTimestamp } from './clock.mjs'
+
 // ---------------------------------------------------------------------------
 // SLD (Styled Layer Descriptor) — portable XML used by many GIS tools.
 // ---------------------------------------------------------------------------
@@ -213,7 +215,7 @@ export function insertLayerStyle(
   geomColumn = 'geometry'
 ) {
   db.prepare(
-    `INSERT INTO layer_styles (f_table_name, f_geometry_column, styleName, styleQML, styleSLD, useAsDefault)
-     VALUES (?, ?, ?, ?, ?, 1)`
-  ).run(table, geomColumn, table, qmlXml, sldXml)
+    `INSERT INTO layer_styles (f_table_name, f_geometry_column, styleName, styleQML, styleSLD, useAsDefault, update_time)
+     VALUES (?, ?, ?, ?, ?, 1, ?)`
+  ).run(table, geomColumn, table, qmlXml, sldXml, currentTimestamp())
 }

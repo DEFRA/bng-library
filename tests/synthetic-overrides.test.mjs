@@ -49,7 +49,9 @@ describe('attributeOverrides — per-layer pinning', () => {
             proposedStrategicSignificance: SS_OTHER
           },
           { retention: 'Created', advanceYears: '4', delayYears: '0' },
-          { retention: 'Enhanced', incomplete: true }
+          { retention: 'Enhanced', incomplete: true },
+          { retention: 'Created', delayYears: '2' },
+          { retention: 'Created', advanceYears: '3' }
         ],
         hedgerows: [
           {
@@ -115,6 +117,18 @@ describe('attributeOverrides — per-layer pinning', () => {
     // A created area habitat is persisted with retention "Lost".
     expect(row['Retention Category']).toBe('Lost')
     expect(row['Habitat created in advance/years']).toBe('4')
+    expect(row['Delay in starting habitat creation/years']).toBe('0')
+  })
+
+  it('zeroes advance when an override names only delay on a created row', () => {
+    const row = readRow('Habitats', 'H004')
+    expect(row['Delay in starting habitat creation/years']).toBe('2')
+    expect(row['Habitat created in advance/years']).toBe('0')
+  })
+
+  it('zeroes delay when an override names only advance on a created row', () => {
+    const row = readRow('Habitats', 'H005')
+    expect(row['Habitat created in advance/years']).toBe('3')
     expect(row['Delay in starting habitat creation/years']).toBe('0')
   })
 

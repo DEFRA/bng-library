@@ -213,14 +213,25 @@ function resolveProposed(override, key, fallback) {
   return override?.[key] ?? fallback
 }
 
-// The advance/delay pair: an explicit override wins, otherwise the random
-// Created-only default (zeros for every other retention).
+// The advance/delay pair. The statutory metric allows at most one of the two
+// to be non-zero, so the pair always resolves as a unit: an override naming
+// either field pins the whole pair (the un-named side stays zero) — merging a
+// single overridden field with the random draw could set both. Only a fully
+// un-overridden Created row takes the random draw.
 function resolveAdvanceDelay(override, retention, maxAdvance, maxDelay) {
-  const [advance, delay] =
-    retention === RETENTION_CREATED
-      ? randomAdvanceDelay(maxAdvance, maxDelay)
-      : [ZERO_YEARS, ZERO_YEARS]
-  return [override?.advanceYears ?? advance, override?.delayYears ?? delay]
+  if (
+    override?.advanceYears !== undefined ||
+    override?.delayYears !== undefined
+  ) {
+    return [
+      override.advanceYears ?? ZERO_YEARS,
+      override.delayYears ?? ZERO_YEARS
+    ]
+  }
+  if (retention === RETENTION_CREATED) {
+    return randomAdvanceDelay(maxAdvance, maxDelay)
+  }
+  return [ZERO_YEARS, ZERO_YEARS]
 }
 
 /**

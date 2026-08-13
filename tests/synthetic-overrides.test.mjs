@@ -4,6 +4,10 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
 import {
+  CULVERT_ENCROACHMENT,
+  CULVERT_TYPE
+} from '../src/synthetic/synthetic-constants.mjs'
+import {
   ALL_HABITATS,
   HEDGE_CONDITIONS,
   IN_SCOPE_HEDGE_TYPES,
@@ -49,7 +53,14 @@ describe('attributeOverrides — per-layer pinning', () => {
             proposedStrategicSignificance: SS_OTHER
           },
           { retention: 'Created', advanceYears: '4', delayYears: '0' },
-          { retention: 'Enhanced', incomplete: true }
+          { retention: 'Enhanced', incomplete: true },
+          { retention: 'Created', delayYears: '2' },
+          { retention: 'Created', advanceYears: '3' },
+          {
+            retention: 'Enhanced',
+            incomplete: true,
+            proposedCondition: MEDIUM_HABITAT.validConditions[0]
+          }
         ],
         hedgerows: [
           {
@@ -118,9 +129,27 @@ describe('attributeOverrides — per-layer pinning', () => {
     expect(row['Delay in starting habitat creation/years']).toBe('0')
   })
 
+  it('zeroes advance when an override names only delay on a created row', () => {
+    const row = readRow('Habitats', 'H004')
+    expect(row['Delay in starting habitat creation/years']).toBe('2')
+    expect(row['Habitat created in advance/years']).toBe('0')
+  })
+
+  it('zeroes delay when an override names only advance on a created row', () => {
+    const row = readRow('Habitats', 'H005')
+    expect(row['Habitat created in advance/years']).toBe('3')
+    expect(row['Delay in starting habitat creation/years']).toBe('0')
+  })
+
   it('blanks proposed cells on an incomplete habitat row', () => {
     const row = readRow('Habitats', 'H003')
     expect(row['Proposed Condition']).toBeNull()
+    expect(row['Proposed Strategic Significance']).toBeNull()
+  })
+
+  it('keeps an explicitly pinned proposed cell on an incomplete row', () => {
+    const row = readRow('Habitats', 'H006')
+    expect(row['Proposed Condition']).toBe(MEDIUM_HABITAT.validConditions[0])
     expect(row['Proposed Strategic Significance']).toBeNull()
   })
 
@@ -177,6 +206,126 @@ describe('attributeOverrides — per-layer pinning', () => {
         )
         .get()
       expect(nulls.n).toBe(0)
+    } finally {
+      db.close()
+    }
+  })
+})
+
+// A partial override must never break a cross-field invariant the random draw
+// maintains: retention vs a differing proposed type, and the culvert
+// encroachment sentinel. (The advance/delay pair is covered above.)
+describe('attributeOverrides — coupled-field resolution', () => {
+  let outDir
+  let gpkgPath
+
+  beforeAll(() => {
+    setMode('silent')
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-coupled-'))
+    gpkgPath = path.join(outDir, 'coupled.gpkg')
+    generateOne(gpkgPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      attributeOverrides: {
+        // Every parcel pins a proposed habitat that differs from the baseline
+        // but leaves retention to the random draw.
+        habitats: Array.from({ length: NUM_PARCELS }, () => ({
+          habitatFullName: LOW_HABITAT.fullName,
+          proposedHabitatFullName: MEDIUM_HABITAT.fullName
+        })),
+        hedgerows: Array.from({ length: 4 }, () => ({
+          hedgeType: IN_SCOPE_HEDGE_TYPES[0],
+          proposedHedgeType: IN_SCOPE_HEDGE_TYPES[1]
+        })),
+        rivers: [
+          // Row 0 is normally the seeded culvert; pinning an encroachment
+          // degree without a type must steer the draw away from it.
+          { baselineWaterEncroachment: 'Minor' },
+          { riverType: 'Canals', proposedRiverType: 'Ditches' }
+        ]
+      }
+    })
+  })
+
+  afterAll(() => {
+    setMode('cli')
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const allRows = (table) => {
+    const db = openGeoPackageReadonly(gpkgPath)
+    try {
+      return db.prepare(`SELECT * FROM "${table}"`).all()
+    } finally {
+      db.close()
+    }
+  }
+
+  it('never draws Retained for a habitat pinned to a differing proposed type', () => {
+    const rows = allRows('Habitats')
+    expect(rows.length).toBe(NUM_PARCELS)
+    for (const row of rows) {
+      expect(row['Proposed Habitat Type']).toBe(MEDIUM_HABITAT.type)
+      expect(row['Retention Category']).not.toBe('Retained')
+    }
+  })
+
+  it('never draws Retained for a hedgerow pinned to a differing proposed type', () => {
+    const rows = allRows('Hedgerows')
+    expect(rows.length).toBeGreaterThan(0)
+    for (const row of rows) {
+      expect(row['Proposed Hedge Type']).toBe(IN_SCOPE_HEDGE_TYPES[1])
+      expect(row['Retention Category']).not.toBe('Retained')
+    }
+  })
+
+  it('never draws Retained for a watercourse pinned to a differing proposed type', () => {
+    const row = allRows('Rivers').find((r) => r['Parcel Ref'] === 'R002')
+    expect(row['Baseline River Type']).toBe('Canals')
+    expect(row['Proposed River Type']).toBe('Ditches')
+    expect(row['Retention Category']).not.toBe('Retained')
+  })
+
+  it('steers an encroachment-pinned row away from the seeded culvert', () => {
+    const row = allRows('Rivers').find((r) => r['Parcel Ref'] === 'R001')
+    expect(row['Baseline River Type']).not.toBe(CULVERT_TYPE)
+    expect(row['Baseline Encroachment into Watercourse']).toBe('Minor')
+  })
+
+  it('rejects a culvert pinned with a non-sentinel encroachment', () => {
+    expect(() =>
+      generateOne(path.join(outDir, 'culvert-conflict.gpkg'), CENTRE, {
+        numParcels: 4,
+        attributeOverrides: {
+          rivers: [
+            { riverType: CULVERT_TYPE, baselineWaterEncroachment: 'Minor' }
+          ]
+        }
+      })
+    ).toThrow(/culvert/i)
+  })
+
+  it('accepts a culvert pinned with the sentinel encroachment', () => {
+    const okPath = path.join(outDir, 'culvert-ok.gpkg')
+    generateOne(okPath, CENTRE, {
+      numParcels: 4,
+      attributeOverrides: {
+        rivers: [
+          {
+            riverType: CULVERT_TYPE,
+            baselineWaterEncroachment: CULVERT_ENCROACHMENT
+          }
+        ]
+      }
+    })
+    const db = openGeoPackageReadonly(okPath)
+    try {
+      const row = db
+        .prepare(`SELECT * FROM "Rivers" WHERE "Parcel Ref" = 'R001'`)
+        .get()
+      expect(row['Baseline River Type']).toBe(CULVERT_TYPE)
+      expect(row['Baseline Encroachment into Watercourse']).toBe(
+        CULVERT_ENCROACHMENT
+      )
     } finally {
       db.close()
     }

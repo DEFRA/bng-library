@@ -8,10 +8,10 @@ import { randomBytes } from 'node:crypto'
 import { envelopeFromCoords, filledArray } from './gpkg-io/index.mjs'
 
 /**
-* @typedef {[number, number]} Point
-* @typedef {Point[]} Linestring
-* @typedef {Point[]} Ring
-*/
+ * @typedef {[number, number]} Point
+ * @typedef {Point[]} Linestring
+ * @typedef {Point[]} Ring
+ */
 
 // Inner / outer radius scalars for the annulus sampled by
 // generateIrregularPolygon. 0.65 → 1.35 of `radius` keeps the hull convex
@@ -163,16 +163,63 @@ const HIGH_OFFSET = 0
 const LOW_OFFSET = 4
 
 /**
- * Return a uniformly-distributed float in `[0, 1)`. Equivalent distribution
- * to `Math.random()` but sourced from `crypto.randomBytes` so SonarCloud's
- * S2245 rule is satisfied. ~30× slower than `Math.random()`; still
- * microseconds per call, negligible at fixture-generation scale.
+ * Crypto-backed uniform float in `[0, 1)`. Equivalent distribution to
+ * `Math.random()` but sourced from `crypto.randomBytes` so SonarCloud's S2245
+ * rule is satisfied. ~30× slower than `Math.random()`; still microseconds per
+ * call, negligible at fixture-generation scale.
  */
-export function randomFraction() {
+function cryptoFraction() {
   const buf = randomBytes(RNG_BYTES)
   const high = buf.readUInt32BE(HIGH_OFFSET) & HIGH_MASK_20_BITS
   const low = buf.readUInt32BE(LOW_OFFSET)
   return (high * SCALE_LOW_WORD + low) / SCALE_MANTISSA
+}
+
+// mulberry32 constants — a small, well-distributed deterministic PRNG. It is
+// pseudo-random *by design*: seeding is opt-in reproducibility for test
+// fixtures, never security-sensitive, which is exactly why it does not draw
+// from crypto.
+const MULBERRY32_INCREMENT = 0x6d2b79f5
+const M32_SHIFT_A = 15
+const M32_SHIFT_B = 7
+const M32_SHIFT_C = 14
+const M32_MIX_ODD = 61
+
+/**
+ * Build a seeded fraction source. Same seed → same sequence, so a whole
+ * fixture (geometry and every attribute draw) becomes byte-reproducible.
+ */
+function mulberry32(seed) {
+  let state = seed >>> 0
+  return function seededFraction() {
+    state = (state + MULBERRY32_INCREMENT) | 0
+    let t = Math.imul(state ^ (state >>> M32_SHIFT_A), 1 | state)
+    t = (t + Math.imul(t ^ (t >>> M32_SHIFT_B), M32_MIX_ODD | t)) ^ t
+    return ((t ^ (t >>> M32_SHIFT_C)) >>> 0) / SCALE_LOW_WORD
+  }
+}
+
+// The active source. Defaults to crypto; setSeed() swaps in a deterministic
+// sequence, clearSeed() restores non-deterministic output.
+let fractionSource = cryptoFraction
+
+/**
+ * Return a uniformly-distributed float in `[0, 1)` from the active source.
+ * Every random draw in the generator (picks, angles, geometry) funnels through
+ * here, so seeding this one function makes the whole output reproducible.
+ */
+export function randomFraction() {
+  return fractionSource()
+}
+
+/** Switch to a deterministic sequence seeded by `seed` (a 32-bit integer). */
+export function setSeed(seed) {
+  fractionSource = mulberry32(seed)
+}
+
+/** Restore the default non-deterministic (crypto-backed) source. */
+export function clearSeed() {
+  fractionSource = cryptoFraction
 }
 
 export function pick(arr) {
@@ -479,7 +526,6 @@ export function carveTargetArea(ring, targetArea) {
  * @returns {(Ring|null)[]} Partitioned cells.
  */
 export function partitionPolygonByAreas(ring, targetAreas) {
-
   if (targetAreas.length === 0) {
     return []
   }
@@ -509,7 +555,6 @@ export function partitionPolygonByAreas(ring, targetAreas) {
   cells[remainderIdx] = remaining
 
   return cells
-
 }
 
 /**
@@ -532,7 +577,7 @@ export function scaleRingToArea(ring, targetArea) {
  * a few retries (the returned array may then be smaller than `n`).
  * @param {Ring} ring Convex polygon boundary.
  * @param {number} n Target number of parcels.
- * @param {number} [maxRetriesPerSplit=DEFAULT_PARTITION_RETRIES_PER_SPLIT] 
+ * @param {number} [maxRetriesPerSplit=DEFAULT_PARTITION_RETRIES_PER_SPLIT]
  * Split attempts before giving up on a parcel.
  * @returns {Ring[]} Partitioned parcels.
  */

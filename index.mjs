@@ -42,9 +42,25 @@ export {
 // (centre defaulting, workbook --inspect, etc).
 export { generateOne } from './src/synthetic/synthetic.mjs'
 export { deriveBaselineFromSynthetic } from './src/synthetic/synthetic-baseline.mjs'
-// The full area-habitat vocabulary, so a caller can validate a pinned
-// `habitatFullName` (see `generateOne`'s attributeOverrides) before generating.
-export { ALL_HABITATS } from './src/synthetic/synthetic-constants.mjs'
+// Attribute vocabularies, so a caller building `generateOne`'s
+// attributeOverrides can validate or draw from the same value sets the random
+// generator uses. `ALL_HABITATS` is the full area-habitat vocabulary (each
+// entry carries its distinctiveness band and valid conditions); the linear
+// distinctiveness maps key a hedge/river type to its band.
+export {
+  ALL_HABITATS,
+  CONDITIONS,
+  CULVERT_TYPE,
+  ENCROACHMENT_RIPARIAN,
+  ENCROACHMENT_WATERCOURSE,
+  HEDGEROW_DISTINCTIVENESS,
+  HEDGE_CONDITIONS,
+  IN_SCOPE_HEDGE_TYPES,
+  IN_SCOPE_RIVER_TYPES,
+  RETENTION_CATEGORIES,
+  STRATEGIC_SIGNIFICANCE,
+  WATERCOURSE_DISTINCTIVENESS
+} from './src/synthetic/synthetic-constants.mjs'
 export {
   ALL_FLAW_NAMES,
   CATEGORY_ATTRIBUTE,
@@ -63,3 +79,15 @@ export {
   buildBaselineRows,
   buildPostInterventionRows
 } from './src/workbook/workbook-rows.mjs'
+
+// Permutations: a declarative catalogue of BNG test scenarios and a buffer-out
+// generator, so both the harness CLI and the prototype web form draw from one
+// source. `derivePermutationSeed` is exported so a path-based caller reproduces
+// the same seeded files the buffer API produces.
+export {
+  DEFAULT_SIZE as PERMUTATION_DEFAULT_SIZE,
+  PURPOSES as PERMUTATION_PURPOSES,
+  SCENARIOS as PERMUTATION_SCENARIOS,
+  generatePermutations
+} from './src/permutations/generate.mjs'
+export { derivePermutationSeed } from './src/permutations/seed.mjs'

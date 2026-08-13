@@ -46,3 +46,9 @@ export {
 } from './src/styles.mjs'
 
 export { filledArray, placeholders } from './src/sql.mjs'
+
+export {
+  clearFixedTimestamp,
+  currentTimestamp,
+  setFixedTimestamp
+} from './src/clock.mjs'

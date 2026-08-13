@@ -7,13 +7,15 @@
 
 import { color, header, info } from '../log.mjs'
 import {
+  clearFixedTimestamp,
   envelopeFromCoords,
   expandEnvelope,
   gpkgLineString,
   gpkgPoint,
   gpkgPolygon,
   openGeoPackageReadonly,
-  placeholders
+  placeholders,
+  setFixedTimestamp
 } from '../gpkg-io/index.mjs'
 import {
   HABITATS_INSERT_COLUMNS,
@@ -27,6 +29,7 @@ import {
   registerLayer
 } from '../bng-schema.mjs'
 import {
+  clearSeed,
   generateIrregularPolygon,
   generateLinestring,
   lineInsideRing,
@@ -35,7 +38,8 @@ import {
   pick,
   pickInteriorPoint,
   polygonArea,
-  randInt
+  randInt,
+  setSeed
 } from '../geometry.mjs'
 import {
   FEATURE_REF_PAD,
@@ -48,6 +52,7 @@ import {
   baselineLinearType,
   gpkgAreaRetention,
   RETENTION_CREATED,
+  RETENTION_LOST,
   treeCategory
 } from '../retention.mjs'
 import {
@@ -100,6 +105,9 @@ const MAX_TREE_ADVANCE_YEARS = 3
 const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
+// Fixed metadata timestamp used for seeded (reproducible) generation, so the
+// gpkg_contents / layer_styles times don't reintroduce per-run byte differences.
+const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
 
 // The first two rivers are deterministically seeded (culvert + non-culvert) to
 // exercise both baseline watercourse branches; see `pickRiverType`.
@@ -155,6 +163,16 @@ function findHabitatByFullName(fullName) {
   return habitat
 }
 
+// The proposed area habitat: a pinned `proposedHabitatFullName` wins (this is
+// how a scenario forces, say, a Low→Medium distinctiveness uplift), otherwise
+// it is derived from the baseline and retention as before.
+function resolveProposedHabitat(override, baseline, retention) {
+  if (override?.proposedHabitatFullName) {
+    return findHabitatByFullName(override.proposedHabitatFullName)
+  }
+  return pickProposedHabitat(baseline, retention)
+}
+
 /**
  * Draw the advance/delay pair for a created feature. At most one of the two
  * is non-zero: the statutory metric (and the backend's
@@ -168,11 +186,48 @@ function randomAdvanceDelay(maxAdvance, maxDelay) {
   return [ZERO_YEARS, String(randInt(0, maxDelay))]
 }
 
+// ---------------------------------------------------------------------------
+// Per-row attribute overrides
+//
+// Every layer builder consults `perRowOverrides[i]` (see `generateOne`'s
+// `attributeOverrides` contract). A field left unset falls back to the random
+// draw, so a partial override pins only what it names and the rest of the row
+// stays coherent. Baseline-side values still pass through
+// `baselineLinearType` / `baselineLinearAttribute`, so a `Created` linear row
+// keeps its "To be created" / "N/A" placeholders even when overridden.
+// ---------------------------------------------------------------------------
+
+// An explicit override for `key` wins over the random `fallback`; used for the
+// baseline-side cells, which are never blanked by `incomplete`.
+function overrideOr(override, key, fallback) {
+  return override?.[key] ?? fallback
+}
+
+// A proposed-side cell. An `incomplete` row leaves it blank to model
+// post-intervention data a user has not finished entering; otherwise an
+// explicit override wins over the random `fallback`.
+function resolveProposed(override, key, fallback) {
+  if (override?.incomplete) {
+    return null
+  }
+  return override?.[key] ?? fallback
+}
+
+// The advance/delay pair: an explicit override wins, otherwise the random
+// Created-only default (zeros for every other retention).
+function resolveAdvanceDelay(override, retention, maxAdvance, maxDelay) {
+  const [advance, delay] =
+    retention === RETENTION_CREATED
+      ? randomAdvanceDelay(maxAdvance, maxDelay)
+      : [ZERO_YEARS, ZERO_YEARS]
+  return [override?.advanceYears ?? advance, override?.delayYears ?? delay]
+}
+
 /**
- * Inserts one habitat row per partitioned parcel. `perRowOverrides[i]`,
- * if provided, pins column values on row i (currently `habitatFullName`,
- * `retention`, `parcelRef`, `advanceYears`, and `delayYears`); fields not
- * set there are randomised as normal. Used by attribute-override flaws.
+ * Inserts one habitat row per partitioned parcel. `perRowOverrides[i]`, if
+ * provided, pins column values on row i; fields not set there are randomised as
+ * normal. See `generateOne`'s `attributeOverrides` contract for the recognised
+ * fields. Used by attribute-override flaws and the permutations runner.
  */
 function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
   const parcels = partitionPolygon(boundaryRing, numParcels)
@@ -198,26 +253,40 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       ? findHabitatByFullName(override.habitatFullName)
       : pick(IN_SCOPE_HABITATS)
     const retention = override?.retention ?? pick(RETENTION_CATEGORIES)
-    const proposed = pickProposedHabitat(baseline, retention)
-    const [advanceYears, delayYears] =
-      retention === 'Created'
-        ? randomAdvanceDelay(MAX_CREATED_ADVANCE_YEARS, MAX_CREATED_DELAY_YEARS)
-        : [ZERO_YEARS, ZERO_YEARS]
+    const proposed = resolveProposedHabitat(override, baseline, retention)
+    const [advanceYears, delayYears] = resolveAdvanceDelay(
+      override,
+      retention,
+      MAX_CREATED_ADVANCE_YEARS,
+      MAX_CREATED_DELAY_YEARS
+    )
     stmt.run(
       gpkgPolygon(SRS_ID, ring),
       override?.parcelRef ?? syntheticRef('H', i),
       baseline.broad,
       baseline.type,
       Math.round(polygonArea(ring)),
-      pick(baseline.validConditions),
-      pick(STRATEGIC_SIGNIFICANCE),
+      overrideOr(override, 'baselineCondition', pick(baseline.validConditions)),
+      overrideOr(
+        override,
+        'baselineStrategicSignificance',
+        pick(STRATEGIC_SIGNIFICANCE)
+      ),
       gpkgAreaRetention(retention),
       proposed.broad,
       proposed.type,
-      pick(proposed.validConditions),
-      pick(STRATEGIC_SIGNIFICANCE),
-      override?.advanceYears ?? advanceYears,
-      override?.delayYears ?? delayYears,
+      resolveProposed(
+        override,
+        'proposedCondition',
+        pick(proposed.validConditions)
+      ),
+      resolveProposed(
+        override,
+        'proposedStrategicSignificance',
+        pick(STRATEGIC_SIGNIFICANCE)
+      ),
+      advanceYears,
+      delayYears,
       pick(SPATIAL_RISK_HABITAT),
       pick(LOCATIONS),
       SITE_NAME,
@@ -280,51 +349,70 @@ const HEDGEROWS_SQL_SYNTH = `
   ) VALUES (${placeholders(HEDGEROWS_INSERT_COLUMNS)})
 `
 
-function generateHedgerows(db, boundaryRing, count) {
+// A lost hedgerow's proposed type is drawn afresh, so it must also stay in
+// scope. The distinctiveness columns are stamped with the band each chosen type
+// actually implies (the backend derives the band from the type, not from these
+// columns). A created hedgerow has no baseline: the drawn type describes what is
+// being planted, and the baseline columns fall back to the template's "To be
+// created" / "N/A" placeholders.
+function buildHedgerowRow(coords, i, override) {
+  const hedgeType = override?.hedgeType ?? pick(IN_SCOPE_HEDGE_TYPES)
+  const retention = override?.retention ?? pick(RETENTION_CATEGORIES)
+  const proposedHedgeType =
+    override?.proposedHedgeType ??
+    (retention === RETENTION_LOST ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType)
+  const [advanceYears, delayYears] = resolveAdvanceDelay(
+    override,
+    retention,
+    MAX_HEDGE_ADVANCE_YEARS,
+    MAX_HEDGE_DELAY_YEARS
+  )
+  return [
+    gpkgLineString(SRS_ID, coords),
+    syntheticRef('HG', i),
+    baselineLinearType(retention, hedgeType),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(override, 'baselineCondition', pick(HEDGE_CONDITIONS))
+    ),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(
+        override,
+        'baselineStrategicSignificance',
+        pick(STRATEGIC_SIGNIFICANCE)
+      )
+    ),
+    retention,
+    proposedHedgeType,
+    resolveProposed(override, 'proposedCondition', pick(HEDGE_CONDITIONS)),
+    resolveProposed(
+      override,
+      'proposedStrategicSignificance',
+      pick(STRATEGIC_SIGNIFICANCE)
+    ),
+    linestringLength(coords),
+    advanceYears,
+    delayYears,
+    pick(SPATIAL_RISK_HABITAT),
+    pick(LOCATIONS),
+    SITE_NAME,
+    SURVEY_DATE,
+    'Hedgerow survey',
+    null,
+    MAPPED_BY,
+    SURVEY_COMPANY,
+    BASE_MAP,
+    baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedgeType]),
+    HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
+  ]
+}
+
+function generateHedgerows(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Hedgerows',
     sql: HEDGEROWS_SQL_SYNTH,
-    buildRow: (coords, i) => {
-      const hedgeType = pick(IN_SCOPE_HEDGE_TYPES)
-      const retention = pick(RETENTION_CATEGORIES)
-      // A lost hedgerow's proposed type is drawn afresh, so it must also stay
-      // in scope. The distinctiveness columns are stamped with the band each
-      // chosen type actually implies (the backend derives the band from the
-      // type, not from these columns). A created hedgerow has no baseline: the
-      // drawn type describes what is being planted, and the baseline columns
-      // fall back to the template's "To be created" / "N/A" placeholders.
-      const proposedHedgeType =
-        retention === 'Lost' ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType
-      const [advanceYears, delayYears] =
-        retention === 'Created'
-          ? randomAdvanceDelay(MAX_HEDGE_ADVANCE_YEARS, MAX_HEDGE_DELAY_YEARS)
-          : [ZERO_YEARS, ZERO_YEARS]
-      return [
-        gpkgLineString(SRS_ID, coords),
-        syntheticRef('HG', i),
-        baselineLinearType(retention, hedgeType),
-        baselineLinearAttribute(retention, pick(HEDGE_CONDITIONS)),
-        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
-        retention,
-        proposedHedgeType,
-        pick(HEDGE_CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        linestringLength(coords),
-        advanceYears,
-        delayYears,
-        pick(SPATIAL_RISK_HABITAT),
-        pick(LOCATIONS),
-        SITE_NAME,
-        SURVEY_DATE,
-        'Hedgerow survey',
-        null,
-        MAPPED_BY,
-        SURVEY_COMPANY,
-        BASE_MAP,
-        baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedgeType]),
-        HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
-      ]
-    }
+    buildRow: (coords, i) => buildHedgerowRow(coords, i, perRowOverrides?.[i])
   })
 }
 
@@ -398,61 +486,99 @@ function riverEncroachment(riverType) {
   }
 }
 
-function generateRivers(db, boundaryRing, count) {
+// Unlike a hedgerow, a watercourse keeps its baseline type through the
+// intervention by default, so `proposedRiverType` defaults to the baseline
+// type; a scenario can still pin a different proposed type. Both encroachment
+// columns and the distinctiveness band are derived from the type, and the
+// encroachment sentinel must stay culvert-valued on exactly the culvert rows.
+// Only a created watercourse carries creation years, and at most one of advance
+// / delay — the statutory metric (and the backend's ADVANCE_AND_DELAY_BOTH_SET
+// check) rejects a feature setting both.
+function buildRiverRow(coords, i, override) {
+  const riverType = override?.riverType ?? pickRiverType(i)
+  const retention = override?.retention ?? pickRiverRetention(i)
+  const proposedRiverType = override?.proposedRiverType ?? riverType
+  const baselineEncroachment = riverEncroachment(riverType)
+  const proposedEncroachment = riverEncroachment(proposedRiverType)
+  const [advanceYears, delayYears] = resolveAdvanceDelay(
+    override,
+    retention,
+    MAX_RIVER_ADVANCE_YEARS,
+    MAX_RIVER_DELAY_YEARS
+  )
+  return [
+    gpkgLineString(SRS_ID, coords),
+    syntheticRef('R', i),
+    baselineLinearType(retention, riverType),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(override, 'baselineCondition', pick(CONDITIONS))
+    ),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(
+        override,
+        'baselineStrategicSignificance',
+        pick(STRATEGIC_SIGNIFICANCE)
+      )
+    ),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(
+        override,
+        'baselineWaterEncroachment',
+        baselineEncroachment.water
+      )
+    ),
+    baselineLinearAttribute(
+      retention,
+      overrideOr(
+        override,
+        'baselineRiparianEncroachment',
+        baselineEncroachment.riparian
+      )
+    ),
+    retention,
+    proposedRiverType,
+    resolveProposed(override, 'proposedCondition', pick(CONDITIONS)),
+    resolveProposed(
+      override,
+      'proposedStrategicSignificance',
+      pick(STRATEGIC_SIGNIFICANCE)
+    ),
+    linestringLength(coords),
+    advanceYears,
+    delayYears,
+    pick(SPATIAL_RISK_RIVER),
+    pick(LOCATIONS),
+    resolveProposed(
+      override,
+      'proposedWaterEncroachment',
+      proposedEncroachment.water
+    ),
+    resolveProposed(
+      override,
+      'proposedRiparianEncroachment',
+      proposedEncroachment.riparian
+    ),
+    SITE_NAME,
+    SURVEY_DATE,
+    'River corridor survey',
+    null,
+    MAPPED_BY,
+    SURVEY_COMPANY,
+    BASE_MAP,
+    null,
+    baselineLinearAttribute(retention, WATERCOURSE_DISTINCTIVENESS[riverType]),
+    WATERCOURSE_DISTINCTIVENESS[proposedRiverType]
+  ]
+}
+
+function generateRivers(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Rivers',
     sql: RIVERS_SQL_SYNTH,
-    buildRow: (coords, i) => {
-      const riverType = pickRiverType(i)
-      const retention = pickRiverRetention(i)
-      // Unlike a hedgerow, a watercourse keeps its baseline type through the
-      // intervention: both encroachment columns and the distinctiveness band
-      // are derived from the type, and the encroachment sentinel must stay
-      // culvert-valued on exactly the culvert rows.
-      const baselineEncroachment = riverEncroachment(riverType)
-      const proposedEncroachment = riverEncroachment(riverType)
-      // Only a created watercourse carries creation years, and at most one of
-      // advance / delay — the statutory metric (and the backend's
-      // ADVANCE_AND_DELAY_BOTH_SET check) rejects a feature setting both, so
-      // they must be drawn as a mutually-exclusive pair, as for hedgerows.
-      const [advanceYears, delayYears] =
-        retention === RETENTION_CREATED
-          ? randomAdvanceDelay(MAX_RIVER_ADVANCE_YEARS, MAX_RIVER_DELAY_YEARS)
-          : [ZERO_YEARS, ZERO_YEARS]
-      return [
-        gpkgLineString(SRS_ID, coords),
-        syntheticRef('R', i),
-        baselineLinearType(retention, riverType),
-        baselineLinearAttribute(retention, pick(CONDITIONS)),
-        baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
-        baselineLinearAttribute(retention, baselineEncroachment.water),
-        baselineLinearAttribute(retention, baselineEncroachment.riparian),
-        retention,
-        riverType,
-        pick(CONDITIONS),
-        pick(STRATEGIC_SIGNIFICANCE),
-        linestringLength(coords),
-        advanceYears,
-        delayYears,
-        pick(SPATIAL_RISK_RIVER),
-        pick(LOCATIONS),
-        proposedEncroachment.water,
-        proposedEncroachment.riparian,
-        SITE_NAME,
-        SURVEY_DATE,
-        'River corridor survey',
-        null,
-        MAPPED_BY,
-        SURVEY_COMPANY,
-        BASE_MAP,
-        null,
-        baselineLinearAttribute(
-          retention,
-          WATERCOURSE_DISTINCTIVENESS[riverType]
-        ),
-        WATERCOURSE_DISTINCTIVENESS[riverType]
-      ]
-    }
+    buildRow: (coords, i) => buildRiverRow(coords, i, perRowOverrides?.[i])
   })
 }
 
@@ -665,8 +791,15 @@ function runLayerGenerators(db, ring, ctx) {
         counts.numHabitats,
         attributeOverrides.habitats
       ),
-    hedgerows: () => generateHedgerows(db, ring, counts.numHedgerows),
-    rivers: () => generateRivers(db, ring, counts.numRivers),
+    hedgerows: () =>
+      generateHedgerows(
+        db,
+        ring,
+        counts.numHedgerows,
+        attributeOverrides.hedgerows
+      ),
+    rivers: () =>
+      generateRivers(db, ring, counts.numRivers, attributeOverrides.rivers),
     trees: () => generateUrbanTrees(db, ring, counts.numTrees)
   }
   for (const [key, generate] of Object.entries(generators)) {
@@ -686,7 +819,30 @@ function runLayerGenerators(db, ring, ctx) {
  *                        the rest of the plan is ignored
  *   emptyLayers          Set of layer keys to leave empty (table is still
  *                        registered, just has zero rows)
- *   attributeOverrides   per-layer row data to pin on the first N rows
+ *   attributeOverrides   per-layer arrays of per-row overrides pinned on the
+ *                        first N rows. Recognised layer keys: `habitats`,
+ *                        `hedgerows`, `rivers`. Any field left unset on a row
+ *                        falls back to the random draw. Recognised fields:
+ *                          all layers  retention, baselineCondition,
+ *                                      proposedCondition,
+ *                                      baselineStrategicSignificance,
+ *                                      proposedStrategicSignificance,
+ *                                      advanceYears, delayYears, incomplete
+ *                          habitats    habitatFullName, proposedHabitatFullName,
+ *                                      parcelRef
+ *                          hedgerows   hedgeType, proposedHedgeType
+ *                          rivers      riverType, proposedRiverType,
+ *                                      baselineWaterEncroachment,
+ *                                      proposedWaterEncroachment,
+ *                                      baselineRiparianEncroachment,
+ *                                      proposedRiparianEncroachment
+ *                        `incomplete: true` blanks the row's proposed-side
+ *                        attribute cells to model unfinished post-intervention
+ *                        data.
+ *   seed                 optional 32-bit integer. When set, every random draw
+ *                        (geometry and attributes) is drawn from a deterministic
+ *                        sequence, so the same seed + plan yields a
+ *                        byte-identical file. Omit for non-reproducible output.
  */
 export function generateOne(outPath, centre, plan) {
   const {
@@ -694,7 +850,40 @@ export function generateOne(outPath, centre, plan) {
     numTrees,
     geometricFlawNames = [],
     emptyLayers = new Set(),
-    attributeOverrides = {}
+    attributeOverrides = {},
+    seed
+  } = plan
+
+  const seeded = Number.isInteger(seed)
+  if (seeded) {
+    // Pin both randomness and the metadata clock so the whole file — geometry,
+    // attributes and gpkg_contents/layer_styles timestamps — is reproducible.
+    setSeed(seed)
+    setFixedTimestamp(DETERMINISTIC_TIMESTAMP)
+  }
+  try {
+    generateOneInner(outPath, centre, {
+      numParcels,
+      numTrees,
+      geometricFlawNames,
+      emptyLayers,
+      attributeOverrides
+    })
+  } finally {
+    if (seeded) {
+      clearSeed()
+      clearFixedTimestamp()
+    }
+  }
+}
+
+function generateOneInner(outPath, centre, plan) {
+  const {
+    numParcels,
+    numTrees,
+    geometricFlawNames,
+    emptyLayers,
+    attributeOverrides
   } = plan
 
   if (geometricFlawNames.length > 0) {

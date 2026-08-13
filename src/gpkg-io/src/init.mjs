@@ -174,6 +174,12 @@ export function registerLayer(
  */
 export function openGeoPackage(filename, { srs = [] } = {}) {
   const db = new Database(filename)
+  // Handles from here build freshly generated artifacts, so crash durability
+  // buys nothing (a half-written file is discarded, not recovered) — trade it
+  // for write speed. Every autocommitted insert otherwise fsyncs twice and
+  // churns a journal sidecar, which costs seconds per file on slow disks.
+  db.pragma('journal_mode = MEMORY')
+  db.pragma('synchronous = OFF')
   initGeoPackage(db, srs)
   return db
 }

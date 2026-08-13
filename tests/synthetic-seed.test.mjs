@@ -14,10 +14,6 @@ describe('generateOne — seeded reproducibility', () => {
   beforeAll(() => {
     setMode('silent')
     outDir = mkdtempSync(path.join(tmpdir(), 'bng-seed-'))
-    // First generation cold-starts the better-sqlite3 native binding and the
-    // generation pipeline (several seconds on a cold CI runner). Pay that once
-    // here so each test measures only its own work, not one-time init.
-    generateOne(path.join(outDir, 'warmup.gpkg'), CENTRE, { numParcels: 1 })
   })
 
   afterAll(() => {

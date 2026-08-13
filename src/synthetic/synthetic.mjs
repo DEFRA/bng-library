@@ -105,6 +105,7 @@ const MAX_TREE_ADVANCE_YEARS = 3
 const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
+const RETENTION_RETAINED = 'Retained'
 // Fixed metadata timestamp used for seeded (reproducible) generation, so the
 // gpkg_contents / layer_styles times don't reintroduce per-run byte differences.
 const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
@@ -115,7 +116,7 @@ const SEEDED_RIVER_COUNT = 2
 // The next river (index 2, present once a fixture has three or more) is seeded
 // Created, so any fixture large enough to reach it exercises the created
 // watercourse branch without relying on the retention draw; see
-// `pickRiverRetention`.
+// `riverRetentionPool`.
 const CREATED_RIVER_INDEX = 2
 
 // ---------------------------------------------------------------------------
@@ -140,7 +141,7 @@ function syntheticRef(prefix, i) {
 }
 
 function pickProposedHabitat(baseline, retention) {
-  if (retention === 'Retained') {
+  if (retention === RETENTION_RETAINED) {
     return baseline
   }
   const proposedBroad =
@@ -192,7 +193,10 @@ function randomAdvanceDelay(maxAdvance, maxDelay) {
 // Every layer builder consults `perRowOverrides[i]` (see `generateOne`'s
 // `attributeOverrides` contract). A field left unset falls back to the random
 // draw, so a partial override pins only what it names and the rest of the row
-// stays coherent. Baseline-side values still pass through
+// stays coherent. Fields bound by a template invariant resolve as a unit —
+// the advance/delay pair, retention vs a differing proposed type, and the
+// culvert encroachment sentinel — so a partial override can never break an
+// invariant the random draw maintains. Baseline-side values still pass through
 // `baselineLinearType` / `baselineLinearAttribute`, so a `Created` linear row
 // keeps its "To be created" / "N/A" placeholders even when overridden.
 // ---------------------------------------------------------------------------
@@ -203,14 +207,19 @@ function overrideOr(override, key, fallback) {
   return override?.[key] ?? fallback
 }
 
-// A proposed-side cell. An `incomplete` row leaves it blank to model
-// post-intervention data a user has not finished entering; otherwise an
-// explicit override wins over the random `fallback`.
+// A proposed-side cell. An explicit override always wins — a scenario that
+// names a field owns its value, even on an `incomplete` row. Otherwise an
+// `incomplete` row leaves the cell blank to model post-intervention data a
+// user has not finished entering, and every other row takes the random
+// `fallback`.
 function resolveProposed(override, key, fallback) {
+  if (override?.[key] !== undefined) {
+    return override[key]
+  }
   if (override?.incomplete) {
     return null
   }
-  return override?.[key] ?? fallback
+  return fallback
 }
 
 // The advance/delay pair. The statutory metric allows at most one of the two
@@ -232,6 +241,21 @@ function resolveAdvanceDelay(override, retention, maxAdvance, maxDelay) {
     return randomAdvanceDelay(maxAdvance, maxDelay)
   }
   return [ZERO_YEARS, ZERO_YEARS]
+}
+
+// Retention couples to the proposed type: a Retained feature keeps its
+// baseline type, so an override pinning a proposed type that differs from the
+// baseline cannot share a row with a randomly drawn Retained. When a scenario
+// pins the proposed side without pinning retention, Retained drops out of the
+// draw; an explicit retention override always wins.
+function resolveRetention(override, pool, proposedTypeDiffers) {
+  if (override?.retention !== undefined) {
+    return override.retention
+  }
+  if (!proposedTypeDiffers) {
+    return pick(pool)
+  }
+  return pick(pool.filter((category) => category !== RETENTION_RETAINED))
 }
 
 /**
@@ -263,7 +287,14 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
     const baseline = override?.habitatFullName
       ? findHabitatByFullName(override.habitatFullName)
       : pick(IN_SCOPE_HABITATS)
-    const retention = override?.retention ?? pick(RETENTION_CATEGORIES)
+    const proposedDiffers =
+      override?.proposedHabitatFullName !== undefined &&
+      override.proposedHabitatFullName !== baseline.fullName
+    const retention = resolveRetention(
+      override,
+      RETENTION_CATEGORIES,
+      proposedDiffers
+    )
     const proposed = resolveProposedHabitat(override, baseline, retention)
     const [advanceYears, delayYears] = resolveAdvanceDelay(
       override,
@@ -368,7 +399,14 @@ const HEDGEROWS_SQL_SYNTH = `
 // created" / "N/A" placeholders.
 function buildHedgerowRow(coords, i, override) {
   const hedgeType = override?.hedgeType ?? pick(IN_SCOPE_HEDGE_TYPES)
-  const retention = override?.retention ?? pick(RETENTION_CATEGORIES)
+  const proposedDiffers =
+    override?.proposedHedgeType !== undefined &&
+    override.proposedHedgeType !== hedgeType
+  const retention = resolveRetention(
+    override,
+    RETENTION_CATEGORIES,
+    proposedDiffers
+  )
   const proposedHedgeType =
     override?.proposedHedgeType ??
     (retention === RETENTION_LOST ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType)
@@ -474,14 +512,68 @@ const RETENTION_WITH_BASELINE = RETENTION_CATEGORIES.filter(
   (retention) => retention !== RETENTION_CREATED
 )
 
-function pickRiverRetention(index) {
+function riverRetentionPool(index) {
   if (index < SEEDED_RIVER_COUNT) {
-    return pick(RETENTION_WITH_BASELINE)
+    return RETENTION_WITH_BASELINE
   }
   if (index === CREATED_RIVER_INDEX) {
-    return RETENTION_CREATED
+    return [RETENTION_CREATED]
   }
-  return pick(RETENTION_CATEGORIES)
+  return RETENTION_CATEGORIES
+}
+
+// The encroachment override fields, split by the side of the row they pin.
+// Encroachment couples to the river type: a culvert's two encroachment
+// columns are fixed to the "N/A - Culvert" sentinel.
+const BASELINE_ENCROACHMENT_OVERRIDE_KEYS = [
+  'baselineWaterEncroachment',
+  'baselineRiparianEncroachment'
+]
+const PROPOSED_ENCROACHMENT_OVERRIDE_KEYS = [
+  'proposedWaterEncroachment',
+  'proposedRiparianEncroachment'
+]
+
+function hasAnyOverride(override, keys) {
+  return keys.some((key) => override?.[key] !== undefined)
+}
+
+// The baseline river type. A pinned `riverType` wins. Otherwise a row whose
+// override pins an encroachment degree cannot take the seeded culvert — its
+// encroachment columns are fixed to the culvert sentinel — so the draw is
+// steered to the non-culvert types. The proposed side counts too when
+// `proposedRiverType` is not pinned, because it defaults to this type.
+function resolveRiverType(override, index) {
+  if (override?.riverType !== undefined) {
+    return override.riverType
+  }
+  const pinsEncroachment =
+    hasAnyOverride(override, BASELINE_ENCROACHMENT_OVERRIDE_KEYS) ||
+    (override?.proposedRiverType === undefined &&
+      hasAnyOverride(override, PROPOSED_ENCROACHMENT_OVERRIDE_KEYS))
+  if (pinsEncroachment) {
+    return pick(NON_CULVERT_IN_SCOPE_RIVER_TYPES)
+  }
+  return pickRiverType(index)
+}
+
+// A scenario that pins a culvert together with a non-sentinel encroachment
+// asks for a row the NE template cannot express — fail loudly rather than
+// emit it.
+function assertCulvertEncroachment(riverType, override, keys, rowIndex) {
+  if (riverType !== CULVERT_TYPE) {
+    return
+  }
+  for (const key of keys) {
+    const value = override?.[key]
+    if (value !== undefined && value !== CULVERT_ENCROACHMENT) {
+      throw new Error(
+        `rivers row ${rowIndex}: ${key} "${value}" conflicts with the pinned ` +
+          `"${CULVERT_TYPE}" type — a culvert's encroachment is fixed to ` +
+          `"${CULVERT_ENCROACHMENT}"`
+      )
+    }
+  }
 }
 
 // Encroachment does not apply to a culvert: both columns take the fixed
@@ -506,9 +598,28 @@ function riverEncroachment(riverType) {
 // / delay — the statutory metric (and the backend's ADVANCE_AND_DELAY_BOTH_SET
 // check) rejects a feature setting both.
 function buildRiverRow(coords, i, override) {
-  const riverType = override?.riverType ?? pickRiverType(i)
-  const retention = override?.retention ?? pickRiverRetention(i)
+  const riverType = resolveRiverType(override, i)
   const proposedRiverType = override?.proposedRiverType ?? riverType
+  assertCulvertEncroachment(
+    riverType,
+    override,
+    BASELINE_ENCROACHMENT_OVERRIDE_KEYS,
+    i
+  )
+  assertCulvertEncroachment(
+    proposedRiverType,
+    override,
+    PROPOSED_ENCROACHMENT_OVERRIDE_KEYS,
+    i
+  )
+  const proposedDiffers =
+    override?.proposedRiverType !== undefined &&
+    override.proposedRiverType !== riverType
+  const retention = resolveRetention(
+    override,
+    riverRetentionPool(i),
+    proposedDiffers
+  )
   const baselineEncroachment = riverEncroachment(riverType)
   const proposedEncroachment = riverEncroachment(proposedRiverType)
   const [advanceYears, delayYears] = resolveAdvanceDelay(
@@ -848,8 +959,17 @@ function runLayerGenerators(db, ring, ctx) {
  *                                      baselineRiparianEncroachment,
  *                                      proposedRiparianEncroachment
  *                        `incomplete: true` blanks the row's proposed-side
- *                        attribute cells to model unfinished post-intervention
- *                        data.
+ *                        condition, strategic-significance and encroachment
+ *                        cells to model unfinished post-intervention data;
+ *                        a field the row also overrides explicitly keeps its
+ *                        pinned value.
+ *                        Fields bound by a template invariant resolve as a
+ *                        unit: naming either of advanceYears / delayYears
+ *                        pins the pair; a proposed type differing from the
+ *                        baseline excludes Retained from the retention draw;
+ *                        an encroachment override steers the river-type draw
+ *                        away from Culvert (and an explicit Culvert pinned
+ *                        with a non-sentinel encroachment throws).
  *   seed                 optional 32-bit integer. When set, every random draw
  *                        (geometry and attributes) is drawn from a deterministic
  *                        sequence, so the same seed + plan yields a

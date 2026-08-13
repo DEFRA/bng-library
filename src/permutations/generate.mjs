@@ -77,14 +77,29 @@ function generateScenarioBuffers(scenario, dir, centre, seed) {
  * @param {number} [options.seed]   run seed → byte-reproducible output
  * @param {string} [options.only]   restrict to a single purpose
  * @param {[number, number]} [options.centre]  RLB centre (BNG easting,northing)
+ * @param {boolean} [options.manifestOnly]  enumerate the selected catalogue as
+ *   metadata only, skipping the (expensive) GeoPackage generation — for callers
+ *   that want to preview which scenarios a run would produce.
  * @returns {{ scenarios: object[], manifest: object }}  each scenario carries
- *   `baseline` / `postIntervention` `{ path, buffer }`; `manifest` is the same
- *   metadata without buffers, ready to serialise into the download.
+ *   `baseline` / `postIntervention` `{ path, buffer }` (metadata only when
+ *   `manifestOnly`); `manifest` is the same metadata without buffers, ready to
+ *   serialise into the download.
  */
-export function generatePermutations({ seed, only, centre } = {}) {
+export function generatePermutations({
+  seed,
+  only,
+  centre,
+  manifestOnly
+} = {}) {
   const selected = only
     ? SCENARIOS.filter((s) => s.purpose === only)
     : SCENARIOS
+  if (manifestOnly) {
+    const scenarios = selected.map((s) =>
+      manifestEntry(s, s.size ?? DEFAULT_SIZE)
+    )
+    return { scenarios, manifest: { scenarios } }
+  }
   const resolvedCentre = centre ?? DEFAULT_CENTRE
   const dir = mkdtempSync(path.join(tmpdir(), TMP_PREFIX))
   try {

@@ -24,7 +24,9 @@ describe('generatePermutations', () => {
   })
 
   it('covers the whole catalogue by default', () => {
-    const { scenarios, manifest } = generatePermutations()
+    // Selection coverage is independent of the (expensive) buffers, so enumerate
+    // the catalogue as metadata only — the buffer shape is asserted separately.
+    const { scenarios, manifest } = generatePermutations({ manifestOnly: true })
     expect(scenarios.length).toBe(PERMUTATION_SCENARIOS.length)
     expect(manifest.scenarios.length).toBe(PERMUTATION_SCENARIOS.length)
     // Manifest carries metadata, never the buffers.

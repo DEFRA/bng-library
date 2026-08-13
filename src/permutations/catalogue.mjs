@@ -29,10 +29,11 @@ import {
 
 // Habitats chosen for stable distinctiveness bands and a full 5-condition
 // range, so a scenario can pin any condition without hitting a "Not Possible"
-// (habitat, condition) pair.
+// (habitat, condition) pair. Both are Medium-or-lower distinctiveness: the
+// service rejects High/V.High habitats at upload (baseline and
+// post-intervention alike), so the catalogue must never pin one.
 const HABITAT_LOW = 'Grassland - Modified grassland'
 const HABITAT_MEDIUM = 'Grassland - Other neutral grassland'
-const HABITAT_HIGH = 'Grassland - Lowland calcareous grassland'
 
 // Strategic significance, worst → best multiplier. Index 2 is the "Low (1)"
 // value the habitat-details pages display.
@@ -279,7 +280,7 @@ const conditionScenarios = [
     purpose: 'conditions',
     title: 'Area habitats across every condition band',
     description:
-      'Six retained parcels, each pinned to a different condition (Good → Poor), same habitat.',
+      'Five retained parcels, each pinned to a different condition (Good → Poor), same habitat.',
     size: CONDITIONS.length,
     overrides: {
       habitats: CONDITIONS.map((condition) => ({
@@ -433,8 +434,8 @@ const advanceDelayScenarios = [
     overrides: {
       habitats: repeat(
         {
-          habitatFullName: HABITAT_HIGH,
-          proposedHabitatFullName: HABITAT_HIGH,
+          habitatFullName: HABITAT_MEDIUM,
+          proposedHabitatFullName: HABITAT_MEDIUM,
           retention: 'Created',
           proposedCondition: 'Good',
           baselineStrategicSignificance: SS_LOW,
@@ -460,8 +461,8 @@ const advanceDelayScenarios = [
     overrides: {
       habitats: repeat(
         {
-          habitatFullName: HABITAT_HIGH,
-          proposedHabitatFullName: HABITAT_HIGH,
+          habitatFullName: HABITAT_MEDIUM,
+          proposedHabitatFullName: HABITAT_MEDIUM,
           retention: 'Created',
           proposedCondition: 'Good',
           baselineStrategicSignificance: SS_LOW,

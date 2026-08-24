@@ -36,7 +36,7 @@
     "better-sqlite3": "^13.0.3",
     "husky": "9.1.7",
     "prettier": "3.9.6",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "xlsx": "^0.18.5"
   },
   "scripts": {

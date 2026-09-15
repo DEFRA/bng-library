@@ -28,13 +28,13 @@ moved with them.
 
 ## Layout
 
-| Path                 | What it holds                                                        |
-| -------------------- | -------------------------------------------------------------------- |
-| `index.mjs`          | The public surface. Nothing outside this directory imports any other file. |
-| `reference/`         | The statutory lookup tables as JSON — see `reference/README.md` for sourcing and provenance. |
-| `reference-constants.mjs` | The single inventory of reference data; every table is imported here. |
-| `scripts/`           | Small CLIs for calculating one feature by hand, useful when checking a figure against the published metric. |
-| `*.test.mjs`         | Tests, colocated with the module under test.                          |
+| Path                      | What it holds                                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `index.mjs`               | The public surface. Nothing outside this directory imports any other file.                                  |
+| `reference/`              | The statutory lookup tables as JSON — see `reference/README.md` for sourcing and provenance.                |
+| `reference-constants.mjs` | The single inventory of reference data; every table is imported here.                                       |
+| `scripts/`                | Small CLIs for calculating one feature by hand, useful when checking a figure against the published metric. |
+| `*.test.mjs`              | Tests, colocated with the module under test.                                                                |
 
 ## Conventions
 

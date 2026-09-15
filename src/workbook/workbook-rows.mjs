@@ -15,8 +15,10 @@
  * rows into the structure the writer modules consume.
  */
 
-import { conditionScores as metricConditionScores } from '../data/metric-values-habitat-condition.mjs'
-import { distinctivenessCategories as metricDistinctiveness } from '../data/metric-values-habitat-distinctiveness.mjs'
+import {
+  CONDITION_SCORES as metricConditionScores,
+  DISTINCTIVENESS_CATEGORIES as metricDistinctiveness
+} from '../metric/index.mjs'
 
 // ---------------------------------------------------------------------------
 // Ref formatting

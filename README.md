@@ -5,6 +5,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI.
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
+- **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 
 ## Install
 
@@ -50,6 +51,26 @@ const { baseline, postIntervention, messages } =
   await generateFromWorkbookBuffer({ workbookBuffer })
 ```
 
+### Statutory metric
+
+```js
+import {
+  calculateAreaHabitatBaseline,
+  DISTINCTIVENESS_CATEGORIES
+} from 'bng-library/metric'
+
+// Habitat types are keyed as they appear in the published metric tool.
+const { units } = calculateAreaHabitatBaseline(
+  1.5,
+  'Grassland - Modified grassland',
+  'Poor'
+)
+```
+
+The reference tables are the authority for habitat vocabulary — anything
+deriving a habitat's distinctiveness or its valid condition options should read
+them rather than keep its own list.
+
 ### Generic gpkg I/O
 
 ```js
@@ -64,8 +85,14 @@ const db = openGeoPackageReadonly('./some.gpkg')
 | --------------------- | --------------------------------------------------- |
 | `bng-library`         | Main API — synthesis, workbook reading, flaws, etc. |
 | `bng-library/gpkg-io` | Schema-agnostic GeoPackage read/write helpers.      |
+| `bng-library/metric`  | Statutory reference tables and unit calculations.   |
 
-See `index.mjs` for the full list of named exports.
+See `index.mjs` for the full list of named exports, and `src/metric/README.md`
+for the metric engine.
+
+`bng-library/metric` is pure calculation over bundled JSON tables — it needs
+neither of the peer dependencies below, so a consumer that only wants the maths
+can import it without installing `better-sqlite3` or `xlsx`.
 
 ## Development
 

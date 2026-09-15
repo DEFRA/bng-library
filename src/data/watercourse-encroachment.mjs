@@ -9,8 +9,26 @@
 // that literal and does NOT normalise "N/A Culvert" to it, so any other spelling
 // misses the lookup and silently falls back to the default (1.0) multiplier.
 //
-// TODO(engine-move): when bng-metric-engine moves into this library (see
-// docs/move-engine-into-bng-lib.md), assert these against the engine's
-// watercourse-encroachment-multiplier tables directly instead of duplicating.
+// The literal is kept spelled out rather than derived, because a generator that
+// silently followed a renamed engine key would keep producing files while
+// meaning something different. Instead it is asserted against both multiplier
+// tables at load, so a drift fails loudly and immediately.
+import {
+  WATERCOURSE_ENCROACHMENT_MULTIPLIER,
+  WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER
+} from '../metric/index.mjs'
+
 export const CULVERT_TYPE = 'Culvert'
 export const CULVERT_ENCROACHMENT = 'N/A - Culvert'
+
+for (const [label, table] of [
+  ['watercourse encroachment', WATERCOURSE_ENCROACHMENT_MULTIPLIER],
+  ['riparian encroachment', WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER]
+]) {
+  if (!(CULVERT_ENCROACHMENT in table)) {
+    throw new Error(
+      `bng-library: CULVERT_ENCROACHMENT "${CULVERT_ENCROACHMENT}" is not a key of the engine's ${label} multiplier table. ` +
+        'The generators would emit watercourse rows that silently miss the multiplier lookup.'
+    )
+  }
+}

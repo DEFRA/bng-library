@@ -12,10 +12,14 @@
  * "Intertidal hard structures" broad type.
  */
 
-import { conditionScores as metricConditionScores } from '../data/metric-values-habitat-condition.mjs'
-import { distinctivenessCategories as metricDistinctiveness } from '../data/metric-values-habitat-distinctiveness.mjs'
-import { hedgerowDistinctivenessCategories } from '../data/metric-values-hedgerow-distinctiveness.mjs'
-import { watercourseDistinctivenessCategories } from '../data/metric-values-watercourse-distinctiveness.mjs'
+// Habitat vocabulary comes straight from the statutory reference tables, so the
+// generator can only ever emit habitat types the engine recognises.
+import {
+  CONDITION_SCORES as metricConditionScores,
+  DISTINCTIVENESS_CATEGORIES as metricDistinctiveness,
+  HEDGEROW_DISTINCTIVENESS_CATEGORIES as hedgerowDistinctivenessCategories,
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES as watercourseDistinctivenessCategories
+} from '../metric/index.mjs'
 // Culvert encroachment values live in the shared data module (used by the
 // workbook generator too). Re-exported so synthetic callers keep one import
 // site. Non-culvert rows never use CULVERT_ENCROACHMENT.

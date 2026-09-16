@@ -4,8 +4,10 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
 import { generateOne } from '../index.mjs'
-import { hedgerowDistinctivenessCategories } from '../src/data/metric-values-hedgerow-distinctiveness.mjs'
-import { watercourseDistinctivenessCategories } from '../src/data/metric-values-watercourse-distinctiveness.mjs'
+import {
+  HEDGEROW_DISTINCTIVENESS_CATEGORIES as hedgerowDistinctivenessCategories,
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES as watercourseDistinctivenessCategories
+} from '../src/metric/index.mjs'
 import {
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE

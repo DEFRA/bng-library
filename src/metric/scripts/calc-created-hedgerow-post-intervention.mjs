@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateCreatedHedgerowPostIntervention } from '../src/hedgerow-post-intervention.mjs'
+import { calculateCreatedHedgerowPostIntervention } from '../hedgerow-post-intervention.mjs'
 import {
   exitWithUsage,
   parseCreationPositionalArgs,
@@ -10,8 +10,7 @@ import {
   runCli
 } from './post-intervention-cli-shared.mjs'
 
-const SCRIPT =
-  'bng-metric-engine/scripts/calc-created-hedgerow-post-intervention.js'
+const SCRIPT = 'src/metric/scripts/calc-created-hedgerow-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <lengthKm> <hedgeType> <condition> <advanceYears> <delayYears>`,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateCreatedWatercoursePostIntervention } from '../src/watercourse-post-intervention.mjs'
+import { calculateCreatedWatercoursePostIntervention } from '../watercourse-post-intervention.mjs'
 import {
   exitWithUsage,
   parseNonNegativeYears,
@@ -11,7 +11,7 @@ import {
 import { parseWatercourseCreatedPositionalArgs } from './post-intervention-watercourse-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-created-watercourse-post-intervention.js'
+  'src/metric/scripts/calc-created-watercourse-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <lengthKm> <watercourseType> <condition> <watercourseEncroachment> <riparianEncroachment> [advanceYears] [delayYears]`,

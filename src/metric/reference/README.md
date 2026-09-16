@@ -1,6 +1,6 @@
 # Statutory metric reference data
 
-Lookup tables used by `bng-metric-engine` for unit calculations and habitat/condition validation. Every file is imported statically in `src/reference-constants.js`, which is the single inventory of all reference data. The engine package holds the **full set** of tables needed for unit calculations.
+Lookup tables used by `bng-library/metric` for unit calculations and habitat/condition validation. Every file is imported statically in `../reference-constants.mjs`, which is the single inventory of all reference data. The metric entry point holds the **full set** of tables needed for unit calculations.
 
 ## Source
 
@@ -46,10 +46,10 @@ These tables mirror the reference data embedded in the published Statutory Metri
 
 1. Obtain the latest published Statutory Metric reference tables from Natural England.
 2. Update the relevant JSON file(s) in this directory (preserve key strings exactly — they are join keys for GeoPackage data).
-3. Add a static import and export in `src/reference-constants.js` if adding a new table, and add a row to the table above.
+3. Add a static import and export in `../reference-constants.mjs` if adding a new table, and add a row to the table above.
 4. Update the **Metric version** / **Extracted on** rows in this README.
-5. Run `npm test -- bng-metric-engine/` and any backend tests that depend on engine calculations.
+5. Run `npm test -- src/metric/` here, and any bng-metric-backend tests that depend on the calculations.
 
 ## Licence
 
-Same as the parent package — see `bng-metric-engine/package.json` (`OGL-UK-3.0`). Statutory Metric data is published by Natural England under Open Government Licence terms.
+Same as the parent package — see `package.json` at the bng-library root (`OGL-UK-3.0`). Statutory Metric data is published by Natural England under Open Government Licence terms.

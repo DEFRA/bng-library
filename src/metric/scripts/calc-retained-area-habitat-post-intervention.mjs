@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateRetainedAreaHabitatPostIntervention } from '../src/post-intervention.mjs'
+import { calculateRetainedAreaHabitatPostIntervention } from '../post-intervention.mjs'
 import {
   exitWithUsage,
   parsePositiveNumber,
@@ -10,7 +10,7 @@ import {
 } from './post-intervention-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-retained-area-habitat-post-intervention.js'
+  'src/metric/scripts/calc-retained-area-habitat-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <sizeHa> <habitat> <condition>`,

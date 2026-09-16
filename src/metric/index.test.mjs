@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import * as pkg from './index.mjs'
 
-describe('bng-metric-engine public exports', () => {
+describe('bng-library/metric public exports', () => {
   it('re-exports reference tables and baseline helpers', () => {
     expect(pkg.calculateAreaHabitatBaseline).toBeTypeOf('function')
     expect(pkg.getIndividualTreeAreaHectares).toBeTypeOf('function')

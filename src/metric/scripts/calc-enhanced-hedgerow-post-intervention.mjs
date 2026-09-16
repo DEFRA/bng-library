@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateEnhancedHedgerowPostIntervention } from '../src/hedgerow-post-intervention.mjs'
+import { calculateEnhancedHedgerowPostIntervention } from '../hedgerow-post-intervention.mjs'
 import {
   exitWithUsage,
   parseHedgerowEnhancementPositionalArgs,
@@ -10,8 +10,7 @@ import {
   runCli
 } from './post-intervention-cli-shared.mjs'
 
-const SCRIPT =
-  'bng-metric-engine/scripts/calc-enhanced-hedgerow-post-intervention.js'
+const SCRIPT = 'src/metric/scripts/calc-enhanced-hedgerow-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <baselineLengthKm> [postInterventionLengthKm] <baselineHedgeType> -- <postInterventionHedgeType> <baselineCondition> <postInterventionCondition> <advanceYears> <delayYears>`,

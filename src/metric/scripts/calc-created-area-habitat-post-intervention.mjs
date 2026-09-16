@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateCreatedAreaHabitatPostIntervention } from '../src/post-intervention.mjs'
+import { calculateCreatedAreaHabitatPostIntervention } from '../post-intervention.mjs'
 import {
   exitWithUsage,
   parseCreationPositionalArgs,
@@ -11,7 +11,7 @@ import {
 } from './post-intervention-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-created-area-habitat-post-intervention.js'
+  'src/metric/scripts/calc-created-area-habitat-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <sizeHa> <habitat> <condition> <advanceYears> <delayYears>`,

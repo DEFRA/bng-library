@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateEnhancedAreaHabitatPostIntervention } from '../src/post-intervention.mjs'
+import { calculateEnhancedAreaHabitatPostIntervention } from '../post-intervention.mjs'
 import {
   exitWithUsage,
   parseAreaHabitatEnhancementPositionalArgs,
@@ -11,7 +11,7 @@ import {
 } from './post-intervention-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-enhanced-area-habitat-post-intervention.js'
+  'src/metric/scripts/calc-enhanced-area-habitat-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <sizeHa> <baselineHabitat> -- <postInterventionHabitat> <baselineCondition> <postInterventionCondition> <advanceYears> <delayYears>`,

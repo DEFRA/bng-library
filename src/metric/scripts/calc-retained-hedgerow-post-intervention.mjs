@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateRetainedHedgerowPostIntervention } from '../src/hedgerow-post-intervention.mjs'
+import { calculateRetainedHedgerowPostIntervention } from '../hedgerow-post-intervention.mjs'
 import {
   exitWithUsage,
   parsePositiveNumber,
@@ -9,8 +9,7 @@ import {
   runCli
 } from './post-intervention-cli-shared.mjs'
 
-const SCRIPT =
-  'bng-metric-engine/scripts/calc-retained-hedgerow-post-intervention.js'
+const SCRIPT = 'src/metric/scripts/calc-retained-hedgerow-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <lengthKm> <hedgeType> <condition>`,

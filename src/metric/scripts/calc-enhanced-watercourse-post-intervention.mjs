@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateEnhancedWatercoursePostIntervention } from '../src/watercourse-post-intervention.mjs'
+import { calculateEnhancedWatercoursePostIntervention } from '../watercourse-post-intervention.mjs'
 import {
   exitWithUsage,
   parseNonNegativeYears,
@@ -11,7 +11,7 @@ import {
 import { parseWatercourseEnhancementPositionalArgs } from './post-intervention-watercourse-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-enhanced-watercourse-post-intervention.js'
+  'src/metric/scripts/calc-enhanced-watercourse-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <baselineLengthKm> [postInterventionLengthKm] <baselineWatercourseType> -- <postInterventionWatercourseType> <baselineCondition> <postInterventionCondition> [watercourseEncroachment] [riparianEncroachment] <advanceYears> <delayYears>`,

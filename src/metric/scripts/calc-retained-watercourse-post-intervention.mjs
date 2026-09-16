@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { calculateRetainedWatercoursePostIntervention } from '../src/watercourse-post-intervention.mjs'
+import { calculateRetainedWatercoursePostIntervention } from '../watercourse-post-intervention.mjs'
 import {
   exitWithUsage,
   parsePositiveNumber,
@@ -10,7 +10,7 @@ import {
 import { parseWatercourseRetainedPositionalArgs } from './post-intervention-watercourse-cli-shared.mjs'
 
 const SCRIPT =
-  'bng-metric-engine/scripts/calc-retained-watercourse-post-intervention.js'
+  'src/metric/scripts/calc-retained-watercourse-post-intervention.mjs'
 const USAGE = [
   'Usage:',
   `  node ${SCRIPT} <lengthKm> <watercourseType> <condition> [watercourseEncroachment] [riparianEncroachment]`,

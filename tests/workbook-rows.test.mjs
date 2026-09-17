@@ -394,6 +394,55 @@ describe('buildBaselineRows', () => {
   })
 })
 
+describe('created linear post-intervention years', () => {
+  it('carries C-2 advance and delay years onto proposed created watercourses', () => {
+    const created = {
+      ref: 1,
+      type: 'Ditches',
+      distinctiveness: 'Medium',
+      condition: 'Poor',
+      strategicSignificance: 'Low',
+      lengthM: 100,
+      advanceYears: 1,
+      delayYears: 2
+    }
+    const { rivers } = buildPostInterventionRows(
+      wb({ watercourses: { created: [created] } })
+    )
+    expect(rivers).toHaveLength(1)
+    expect(rivers[0]).toMatchObject({
+      retention: 'Created',
+      baselineRef: null
+    })
+    expect(rivers[0].proposed).toMatchObject({
+      type: 'Ditches',
+      advanceYears: 1,
+      delayYears: 2
+    })
+  })
+
+  it('carries B-2 advance and delay years onto proposed created hedgerows', () => {
+    const created = {
+      ref: 1,
+      type: 'Native hedgerow',
+      distinctiveness: 'Low',
+      condition: 'Poor',
+      strategicSignificance: 'Low',
+      lengthM: 50,
+      advanceYears: 4,
+      delayYears: 1
+    }
+    const { hedgerows } = buildPostInterventionRows(
+      wb({ hedgerows: { created: [created] } })
+    )
+    expect(hedgerows[0].proposed).toMatchObject({
+      type: 'Native hedgerow',
+      advanceYears: 4,
+      delayYears: 1
+    })
+  })
+})
+
 describe('watercourse encroachment read-through', () => {
   const culvert = hedgeBaseline({
     ref: 1,

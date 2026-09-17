@@ -7,6 +7,8 @@ describe('bng-library/metric public exports', () => {
     expect(pkg.calculateAreaHabitatBaseline).toBeTypeOf('function')
     expect(pkg.getIndividualTreeAreaHectares).toBeTypeOf('function')
     expect(pkg.calculatePostInterventionNetUnitChanges).toBeTypeOf('function')
+    expect(pkg.calculateWatercourseTradingRules).toBeTypeOf('function')
+    expect(pkg.calculateHabitatNetUnitChanges).toBeTypeOf('function')
     expect(pkg.INDIVIDUAL_TREE_AREA_HECTARES).toBeTypeOf('object')
     expect(pkg.calculateHedgerowBaseline).toBeTypeOf('function')
     expect(pkg.calculateWatercourseBaseline).toBeTypeOf('function')

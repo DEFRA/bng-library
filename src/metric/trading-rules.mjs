@@ -12,10 +12,19 @@
 // for deriving and combining statuses, so every band's status module reports
 // in the same terms.
 
+import {
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+  WATERCOURSE_DISTINCTIVENESS_SCORES
+} from './reference-constants.mjs'
+import { resolveLinearDistinctiveness } from './linear-resolvers.mjs'
 import { roundToSigFigs } from './utils.mjs'
 
 /** Net unit change threshold separating a surplus (> 0) from a deficit (< 0). */
 const SURPLUS_THRESHOLD = 0
+
+/** Watercourse distinctiveness bands that carry trading rules in the MVS. */
+const MEDIUM_BAND = 'Medium'
+const LOW_BAND = 'Low'
 
 /**
  * Coerce a value to a finite number, treating anything else as 0. Mirrors the
@@ -148,4 +157,78 @@ export function combineTradingRuleStatuses(statuses = []) {
   return tradingRuleStatus(
     !statuses.some((status) => status === TRADING_RULE_NOT_MET)
   )
+}
+
+/**
+ * Resolve a watercourse type's distinctiveness band and score from the engine's
+ * reference tables. Thin wrapper over {@link resolveLinearDistinctiveness} that
+ * pins the watercourse category/score maps.
+ *
+ * @param {string} watercourseType e.g. 'Ditches', 'Canals', 'Culvert'
+ * @returns {{ distinctiveness: string, distinctivenessScore: number }}
+ */
+export function resolveWatercourseDistinctiveness(watercourseType) {
+  return resolveLinearDistinctiveness(
+    watercourseType,
+    WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+    WATERCOURSE_DISTINCTIVENESS_SCORES,
+    'watercourse'
+  )
+}
+
+/**
+ * @param {Array<{ habitatType: string, distinctiveness: string, netUnitChange: number }>} habitats
+ * @param {string} band
+ * @returns {number[]} the net unit changes of the habitats in that band
+ */
+function netChangesForBand(habitats, band) {
+  return habitats
+    .filter((habitat) => habitat.distinctiveness === band)
+    .map((habitat) => habitat.netUnitChange)
+}
+
+/**
+ * AC1–AC5 — the full watercourse trading-rules unit figures.
+ *
+ * @param {Record<string, number>} baselineUnitsByType type -> summed baseline units
+ * @param {Record<string, number>} deliveredUnitsByType type -> summed retained+created+enhanced units
+ * @returns {{
+ *   habitats: Array<{ habitatType: string, distinctiveness: string, netUnitChange: number }>,
+ *   medium: { surplus: number, deficit: number },
+ *   low: { netChange: number, cumulativeAvailability: number }
+ * }}
+ */
+export function calculateWatercourseTradingRules(
+  baselineUnitsByType = {},
+  deliveredUnitsByType = {}
+) {
+  const habitats = calculateHabitatNetUnitChanges(
+    baselineUnitsByType,
+    deliveredUnitsByType
+  ).map((habitat) => ({
+    ...habitat,
+    distinctiveness: resolveWatercourseDistinctiveness(habitat.habitatType)
+      .distinctiveness
+  }))
+
+  const mediumChanges = netChangesForBand(habitats, MEDIUM_BAND)
+  const lowChanges = netChangesForBand(habitats, LOW_BAND)
+
+  const mediumSurplus = sumSurplus(mediumChanges)
+  const lowNetChange = sumNetChange(lowChanges)
+
+  return {
+    habitats,
+    medium: {
+      surplus: mediumSurplus,
+      deficit: sumDeficit(mediumChanges)
+    },
+    low: {
+      netChange: lowNetChange,
+      cumulativeAvailability: calculateCumulativeAvailability(
+        mediumSurplus,
+        lowNetChange
+      )
+    }
+  }
 }

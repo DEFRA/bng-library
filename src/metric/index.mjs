@@ -56,7 +56,9 @@ export {
   sumSurplus,
   TRADING_RULE_MET,
   TRADING_RULE_NOT_MET,
-  tradingRuleStatus
+  tradingRuleStatus,
+  resolveWatercourseDistinctiveness,
+  calculateWatercourseTradingRules
 } from './trading-rules.mjs'
 export {
   broadHabitatOf,

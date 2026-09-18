@@ -486,4 +486,64 @@ describe('watercourse encroachment read-through', () => {
       riparianEncroachment: 'Major/Major'
     })
   })
+
+  it('carries C-2 encroachment onto proposed created watercourses', () => {
+    const created = {
+      ref: 1,
+      type: 'Ditches',
+      distinctiveness: 'Medium',
+      condition: 'Poor',
+      strategicSignificance: 'Low',
+      lengthM: 100,
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Major/Moderate'
+    }
+    const { rivers } = buildPostInterventionRows(
+      wb({ watercourses: { created: [created] } })
+    )
+    expect(rivers[0]).toMatchObject({ retention: 'Created' })
+    expect(rivers[0].proposed).toMatchObject({
+      type: 'Ditches',
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Major/Moderate'
+    })
+  })
+
+  it('carries C-3 encroachment onto proposed enhanced watercourses', () => {
+    const baseline = hedgeBaseline({
+      ref: 9,
+      type: 'Canals',
+      distinctiveness: 'Medium',
+      condition: 'Poor',
+      lengthM: 3000,
+      lengthRetainedM: 0,
+      lengthEnhancedM: 500,
+      lengthLostM: 2500,
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Minor/ Minor'
+    })
+    const enhancement = {
+      baselineRef: 9,
+      proposedType: 'Canals',
+      proposedCondition: 'Fairly Poor',
+      proposedWaterEncroachment: 'Minor',
+      proposedRiparianEncroachment: 'Major/Major'
+    }
+    const { rivers } = buildPostInterventionRows(
+      wb({
+        watercourses: { baseline: [baseline], enhancements: [enhancement] }
+      })
+    )
+    const enhanced = rivers.find((r) => r.retention === 'Enhanced')
+    expect(enhanced.proposed).toMatchObject({
+      type: 'Canals',
+      condition: 'Fairly Poor',
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Major/Major'
+    })
+    expect(enhanced.baseline).toMatchObject({
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Minor/ Minor'
+    })
+  })
 })

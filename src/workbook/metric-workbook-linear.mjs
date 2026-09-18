@@ -1,7 +1,8 @@
 /**
  * Linear-feature sheet readers (Hedgerows + Watercourses): B-1 / C-1
- * baselines, B-2 / C-2 creation (same columns plus advance/delay years),
- * B-3 / C-3 enhancement mappings.
+ * baselines, B-2 / C-2 creation (advance/delay years plus, on C-2,
+ * proposed encroachment), B-3 / C-3 enhancement mappings (including
+ * C-3 proposed encroachment).
  */
 
 import { createRequire } from 'node:module'
@@ -249,6 +250,18 @@ function resolveLinearEnhancementCols(header) {
     cPropDist: findColAfter(header, [HDR_DISTINCTIVENESS], propAnchor),
     cPropCond: findColAfter(header, [HDR_CONDITION], propAnchor),
     cPropStrat: findColAfter(header, [HDR_STRATEGIC_SIGNIFICANCE], propAnchor),
+    // C-3 proposed encroachment sits to the right of the proposed-habitat
+    // group; B-3 has no such columns (findColAfter → -1 → null).
+    cPropWaterEncroach: findColAfter(
+      header,
+      [HDR_WATERCOURSE_ENCROACHMENT],
+      propAnchor
+    ),
+    cPropRiparianEncroach: findColAfter(
+      header,
+      [HDR_RIPARIAN_ENCROACHMENT],
+      propAnchor
+    ),
     cAdvance: col(
       idx,
       'Habitat enhanced in advance (years)',
@@ -288,6 +301,8 @@ function buildLinearEnhancementEntry(row, baselineRef, c) {
     proposedDistinctiveness: optString(row, c.cPropDist),
     proposedCondition: optString(row, c.cPropCond),
     proposedStrategicSignificance: optString(row, c.cPropStrat),
+    proposedWaterEncroachment: optString(row, c.cPropWaterEncroach),
+    proposedRiparianEncroachment: optString(row, c.cPropRiparianEncroach),
     advanceYears: optNumber(row, c.cAdvance),
     delayYears: optNumber(row, c.cDelay)
   }

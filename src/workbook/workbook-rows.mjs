@@ -134,7 +134,13 @@ function linearProposedFromEnh(b, enh) {
     condition: enh?.proposedCondition ?? b.condition,
     strategicSig: enh?.proposedStrategicSignificance ?? b.strategicSignificance,
     advanceYears: enh?.advanceYears ?? 0,
-    delayYears: enh?.delayYears ?? 0
+    delayYears: enh?.delayYears ?? 0,
+    // C-3 proposed encroachment when present; otherwise keep the baseline
+    // values (retained rows, or an enhancement that did not record a change).
+    waterEncroachment:
+      enh?.proposedWaterEncroachment ?? b.waterEncroachment ?? null,
+    riparianEncroachment:
+      enh?.proposedRiparianEncroachment ?? b.riparianEncroachment ?? null
   }
 }
 
@@ -145,7 +151,9 @@ function linearProposedFromCreated(c) {
     condition: c.condition,
     strategicSig: c.strategicSignificance,
     advanceYears: c.advanceYears ?? 0,
-    delayYears: c.delayYears ?? 0
+    delayYears: c.delayYears ?? 0,
+    waterEncroachment: c.waterEncroachment ?? null,
+    riparianEncroachment: c.riparianEncroachment ?? null
   }
 }
 

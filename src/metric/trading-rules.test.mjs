@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  calculateCumulativeSurplus,
+  calculateCumulativeAvailability,
   calculateHabitatNetUnitChanges,
   sumDeficit,
   sumNetChange,
@@ -92,12 +92,12 @@ describe('sumNetChange', () => {
   })
 })
 
-describe('calculateCumulativeSurplus', () => {
+describe('calculateCumulativeAvailability', () => {
   it('adds the lower band net change to the higher band surplus', () => {
-    expect(calculateCumulativeSurplus(8, -3)).toBe(5)
+    expect(calculateCumulativeAvailability(8, -3)).toBe(5)
   })
 
   it('can go negative when the lower band deficit exceeds the surplus', () => {
-    expect(calculateCumulativeSurplus(2, -6)).toBe(-4)
+    expect(calculateCumulativeAvailability(2, -6)).toBe(-4)
   })
 })

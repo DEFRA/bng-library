@@ -183,8 +183,8 @@ describe('calculateAreaHabitatTradingRules', () => {
     expect(result.low.netChange).toBe(-4)
   })
 
-  it('AC7 — cumulative surplus is the Medium surplus plus the Low net change', () => {
-    expect(result.cumulativeSurplus).toBe(3)
+  it('AC7 — cumulative availability is the Medium surplus plus the Low net change', () => {
+    expect(result.low.cumulativeAvailability).toBe(3)
   })
 })
 
@@ -245,8 +245,7 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
     expect(calculateAreaHabitatTradingRules()).toEqual({
       habitats: [],
       medium: { broadHabitats: [], surplus: 0, deficit: 0 },
-      low: { netChange: 0 },
-      cumulativeSurplus: 0
+      low: { netChange: 0, cumulativeAvailability: 0 }
     })
   })
 })

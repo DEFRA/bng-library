@@ -98,14 +98,18 @@ export function sumNetChange(netUnitChanges = []) {
 }
 
 /**
- * Cumulative surplus of units: the surplus carried down from a higher band plus
- * the lower band's own net change.
+ * Cumulative availability of units for a lower band: the surplus carried down
+ * from a higher band plus that band's own net change.
+ *
+ * Deliberately *not* named for the Statutory Metric's "Cumulative surplus of
+ * units", which is computed differently — see the note on the area-habitat
+ * calculator's `low.cumulativeAvailability`.
  *
  * @param {number} higherBandSurplus zero or positive, from {@link sumSurplus}
  * @param {number} lowerBandNetChange from {@link sumNetChange}
  * @returns {number}
  */
-export function calculateCumulativeSurplus(
+export function calculateCumulativeAvailability(
   higherBandSurplus,
   lowerBandNetChange
 ) {

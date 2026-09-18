@@ -169,7 +169,7 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
   })
 
   it('AC7 adds the Low net change to the Medium surplus', () => {
-    expect(result.cumulativeSurplus).toBeCloseTo(
+    expect(result.low.cumulativeAvailability).toBeCloseTo(
       32.52223606429601,
       DECIMAL_PLACES
     )
@@ -181,9 +181,10 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
     // off the Medium surplus before offsetting the Low band. AC7 carries the
     // surplus down undiminished, because the deficit still has to be offset by
     // trading up — it is not available to absorb a Low deficit as well. The two
-    // therefore differ by exactly the AC5 Medium deficit.
+    // therefore differ by exactly the AC5 Medium deficit, which is why this
+    // figure is named for availability rather than for the workbook's cell.
     const metricFigure = 23.101216358632172
-    expect(result.cumulativeSurplus - metricFigure).toBeCloseTo(
+    expect(result.low.cumulativeAvailability - metricFigure).toBeCloseTo(
       Math.abs(result.medium.deficit),
       10
     )

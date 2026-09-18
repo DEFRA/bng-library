@@ -48,7 +48,7 @@ const PUBLIC_EXPORTS = [
   'calculateCreatedAreaHabitatPostIntervention',
   'calculateCreatedHedgerowPostIntervention',
   'calculateCreatedWatercoursePostIntervention',
-  'calculateCumulativeSurplus',
+  'calculateCumulativeAvailability',
   'calculateEnhancedAreaHabitatPostIntervention',
   'calculateEnhancedHedgerowPostIntervention',
   'calculateEnhancedWatercoursePostIntervention',

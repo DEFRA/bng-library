@@ -11,15 +11,15 @@
 // "Individual trees - Urban tree" / "- Rural tree", so they fall out of the
 // same aggregation as habitat parcels with no special handling.
 //
-// `cumulativeSurplus` deliberately does not reconcile to the published metric —
-// see the note on it below before using it as though it did.
+// `low.cumulativeAvailability` deliberately does not reconcile to the published
+// metric — see the note on it below before using it as though it did.
 //
 // Nothing here derives Met / Not-met statuses — that is a front-end concern.
 
 import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
 import {
   calculateHabitatNetUnitChanges,
-  calculateCumulativeSurplus,
+  calculateCumulativeAvailability,
   sumDeficit,
   sumNetChange,
   sumSurplus
@@ -165,16 +165,16 @@ function lowBandNetChanges(habitats) {
  * @returns {{
  *   habitats: Array<{ habitatType: string, broadHabitat: string, distinctiveness: string, netUnitChange: number }>,
  *   medium: { broadHabitats: Array<{ broadHabitat: string, netUnitChange: number }>, surplus: number, deficit: number },
- *   low: { netChange: number },
- *   cumulativeSurplus: number
+ *   low: { netChange: number, cumulativeAvailability: number }
  * }}
  *
- * `cumulativeSurplus` is the Medium surplus plus the Low net change (AC7). It is
- * **not** the Statutory Metric's "Cumulative surplus of units", and must not be
- * presented as though it were: the metric nets the Medium deficit off the Medium
- * surplus before offsetting the Low band, so its figure is always lower than
- * this one by exactly `Math.abs(medium.deficit)`. On the published worked example
- * the metric reports 23.1012 where this reports 32.5222.
+ * `low.cumulativeAvailability` is the Medium surplus plus the Low net change
+ * (AC7): the units available to the Low band once the Medium surplus is carried
+ * down. It is **not** the Statutory Metric's "Cumulative surplus of units", and
+ * is deliberately not named for it: the metric nets the Medium deficit off the
+ * Medium surplus before offsetting the Low band, so its figure is always lower
+ * than this one by exactly `Math.abs(medium.deficit)`. On the published worked
+ * example the metric reports 23.1012 where this reports 32.5222.
  *
  * The divergence is intentional — the deficit still has to be offset by trading
  * up, so it is not also available to absorb a Low deficit — but it means a site
@@ -204,8 +204,11 @@ export function calculateAreaHabitatTradingRules(
       deficit: sumDeficit(broadHabitatChanges)
     },
     low: {
-      netChange: lowNetChange
-    },
-    cumulativeSurplus: calculateCumulativeSurplus(mediumSurplus, lowNetChange)
+      netChange: lowNetChange,
+      cumulativeAvailability: calculateCumulativeAvailability(
+        mediumSurplus,
+        lowNetChange
+      )
+    }
   }
 }

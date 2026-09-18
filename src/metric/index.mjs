@@ -49,7 +49,7 @@ export {
 export { resolveDistinctiveness } from './multipliers.mjs'
 export {
   calculateHabitatNetUnitChanges,
-  calculateCumulativeSurplus,
+  calculateCumulativeAvailability,
   sumDeficit,
   sumNetChange,
   sumSurplus

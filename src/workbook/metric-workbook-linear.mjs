@@ -1,7 +1,7 @@
 /**
  * Linear-feature sheet readers (Hedgerows + Watercourses): B-1 / C-1
- * baselines, B-3 / C-3 enhancement mappings. (B-2 / C-2 creation reuses the
- * baseline reader without the per-fate columns.)
+ * baselines, B-2 / C-2 creation (same columns plus advance/delay years),
+ * B-3 / C-3 enhancement mappings.
  */
 
 import { createRequire } from 'node:module'
@@ -11,7 +11,11 @@ const XLSX = require('xlsx')
 import {
   HDR_BASELINE_REF,
   HDR_CONDITION,
+  HDR_DELAY_HABITAT_CREATION,
+  HDR_DELAY_HABITAT_CREATION_SHORT,
   HDR_DISTINCTIVENESS,
+  HDR_HABITAT_CREATED_IN_ADVANCE,
+  HDR_HABITAT_CREATED_IN_ADVANCE_SHORT,
   HDR_LENGTH_KM,
   HDR_PROPOSED_BROAD_HABITAT,
   HDR_PROPOSED_HABITAT,
@@ -52,7 +56,18 @@ function resolveLinearCols(header, typeHeader, withFate) {
       cStrat: findStrategicSignificanceCol(header),
       // Watercourse-only; -1 (→ null) on hedge sheets.
       cWaterEncroach: col(idx, HDR_WATERCOURSE_ENCROACHMENT),
-      cRiparianEncroach: col(idx, HDR_RIPARIAN_ENCROACHMENT)
+      cRiparianEncroach: col(idx, HDR_RIPARIAN_ENCROACHMENT),
+      // Present on B-2 / C-2; absent on B-1 / C-1 (col() → -1 → years 0).
+      cAdvance: col(
+        idx,
+        HDR_HABITAT_CREATED_IN_ADVANCE,
+        HDR_HABITAT_CREATED_IN_ADVANCE_SHORT
+      ),
+      cDelay: col(
+        idx,
+        HDR_DELAY_HABITAT_CREATION,
+        HDR_DELAY_HABITAT_CREATION_SHORT
+      )
     },
     // B-1 / C-1 carry the same per-row fate split as A-1, in length units (km).
     // C-1 uses "Length Lost" (title-case) while B-1 uses "Length lost" — col()
@@ -110,8 +125,16 @@ function buildLinearEntry(
   fateCols,
   withFate
 ) {
-  const { cRef, cDist, cCond, cStrat, cWaterEncroach, cRiparianEncroach } =
-    baseCols
+  const {
+    cRef,
+    cDist,
+    cCond,
+    cStrat,
+    cWaterEncroach,
+    cRiparianEncroach,
+    cAdvance,
+    cDelay
+  } = baseCols
   const ref = readString(row[cRef])
   const entry = {
     ref: ref ?? String(outIndex + 1),
@@ -125,7 +148,9 @@ function buildLinearEntry(
     // through so the generated GeoPackage reflects the real values rather than
     // a hardcoded default.
     waterEncroachment: optString(row, cWaterEncroach),
-    riparianEncroachment: optString(row, cRiparianEncroach)
+    riparianEncroachment: optString(row, cRiparianEncroach),
+    advanceYears: optNumber(row, cAdvance),
+    delayYears: optNumber(row, cDelay)
   }
   if (withFate) {
     const { cLenRetained, cLenEnhanced, cLenLost } = fateCols

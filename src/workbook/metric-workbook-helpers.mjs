@@ -47,6 +47,15 @@ export const HDR_BROAD_HABITAT = 'Broad Habitat'
 export const HDR_WATERCOURSE_ENCROACHMENT = 'Extent of encroachment'
 export const HDR_RIPARIAN_ENCROACHMENT = 'Extent of encroachment for both banks'
 
+// A-2 / B-2 / C-2 creation sheets. Shorter aliases cover older template wording.
+export const HDR_HABITAT_CREATED_IN_ADVANCE =
+  'Habitat created in advance (years)'
+export const HDR_HABITAT_CREATED_IN_ADVANCE_SHORT = 'Habitat created in advance'
+export const HDR_DELAY_HABITAT_CREATION =
+  'Delay in starting habitat creation (years)'
+export const HDR_DELAY_HABITAT_CREATION_SHORT =
+  'Delay in starting habitat creation'
+
 const MAX_HEADER_SCAN_ROWS = 30
 
 // ---------------------------------------------------------------------------

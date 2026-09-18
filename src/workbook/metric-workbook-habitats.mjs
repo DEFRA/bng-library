@@ -13,6 +13,10 @@ import {
   HDR_BROAD_HABITAT,
   HDR_CONDITION,
   HDR_DISTINCTIVENESS,
+  HDR_HABITAT_CREATED_IN_ADVANCE,
+  HDR_HABITAT_CREATED_IN_ADVANCE_SHORT,
+  HDR_DELAY_HABITAT_CREATION,
+  HDR_DELAY_HABITAT_CREATION_SHORT,
   HDR_PROPOSED_BROAD_HABITAT,
   HDR_PROPOSED_HABITAT,
   HDR_REF,
@@ -261,13 +265,13 @@ function resolveCreatedHabitatCols(header) {
     cStrat: findStrategicSignificanceCol(header),
     cAdvance: col(
       idx,
-      'Habitat created in advance (years)',
-      'Habitat created in advance'
+      HDR_HABITAT_CREATED_IN_ADVANCE,
+      HDR_HABITAT_CREATED_IN_ADVANCE_SHORT
     ),
     cDelay: col(
       idx,
-      'Delay in starting habitat creation (years)',
-      'Delay in starting habitat creation'
+      HDR_DELAY_HABITAT_CREATION,
+      HDR_DELAY_HABITAT_CREATION_SHORT
     ),
     cFull: labelCols[labelCols.length - A2_LABEL_FULL_OFFSET] ?? -1,
     cType: labelCols[labelCols.length - A2_LABEL_TYPE_OFFSET] ?? -1,

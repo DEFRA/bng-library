@@ -546,4 +546,83 @@ describe('watercourse encroachment read-through', () => {
       riparianEncroachment: 'Minor/ Minor'
     })
   })
+
+  it('warns when a proposed encroachment value is unrecognised by the engine', () => {
+    const created = {
+      ref: 1,
+      type: 'Ditches',
+      distinctiveness: 'Medium',
+      condition: 'Poor',
+      strategicSignificance: 'Low',
+      lengthM: 100,
+      // A spreadsheet typo the engine's exact-key tables can't match.
+      waterEncroachment: 'Minr',
+      riparianEncroachment: 'Major/Moderate'
+    }
+    const { rivers, warnings } = buildPostInterventionRows(
+      wb({ watercourses: { created: [created] } })
+    )
+    // The value is still carried through — the warning is advisory, not a drop.
+    expect(rivers[0].proposed.waterEncroachment).toBe('Minr')
+    expect(warnings).toContainEqual(
+      expect.stringContaining(
+        'unrecognised proposed watercourse encroachment "Minr"'
+      )
+    )
+    // The recognised riparian value must not warn.
+    expect(warnings.some((w) => w.includes('riparian encroachment'))).toBe(
+      false
+    )
+  })
+
+  it('accepts encroachment values that only match after normalisation', () => {
+    const created = {
+      ref: 1,
+      type: 'Ditches',
+      distinctiveness: 'Medium',
+      condition: 'Poor',
+      strategicSignificance: 'Low',
+      lengthM: 100,
+      // Leading numeric prefix + slash spacing, as seen in GeoPackage exports.
+      waterEncroachment: '2. Minor',
+      riparianEncroachment: 'Minor/ Minor'
+    }
+    const { warnings } = buildPostInterventionRows(
+      wb({ watercourses: { created: [created] } })
+    )
+    expect(warnings).toHaveLength(0)
+  })
+
+  it('never warns for hedgerows, whose encroachment is always null', () => {
+    const { warnings } = buildPostInterventionRows(
+      wb({
+        hedgerows: {
+          baseline: [hedgeBaseline({ ref: 1, type: 'Native hedgerow' })]
+        }
+      })
+    )
+    expect(warnings.some((w) => w.includes('encroachment'))).toBe(false)
+  })
+
+  it('warns on a C-1 typo for a fully-lost parcel that emits no post-intervention row', () => {
+    const lost = hedgeBaseline({
+      ref: 4,
+      type: 'Ditches',
+      lengthM: 100,
+      lengthRetainedM: 0,
+      lengthEnhancedM: 0,
+      lengthLostM: 100,
+      waterEncroachment: 'Minr',
+      riparianEncroachment: 'Minor/ Minor'
+    })
+    const { rivers, warnings } = buildPostInterventionRows(
+      wb({ watercourses: { baseline: [lost] } })
+    )
+    expect(rivers).toHaveLength(0)
+    expect(warnings).toContainEqual(
+      expect.stringContaining(
+        'unrecognised baseline watercourse encroachment "Minr"'
+      )
+    )
+  })
 })

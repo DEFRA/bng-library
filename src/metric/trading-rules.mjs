@@ -1,4 +1,4 @@
-// Trading-rules unit calculations — band-agnostic primitives (BMD-993).
+// Trading-rules unit calculations — band-agnostic primitives.
 //
 // These functions are deliberately pure and module-agnostic so the same
 // primitives back the area-habitat rules today and the hedgerow / watercourse
@@ -7,8 +7,8 @@
 // calculators, and trading rules only aggregate them by habitat type and
 // distinctiveness band.
 //
-// Nothing here derives Met / Not-met statuses — that is a separate concern
-// (BMD-1008, front end). This module produces the unit figures only.
+// Nothing here derives Met / Not-met statuses — that is a separate front-end
+// concern. This module produces the unit figures only.
 
 import { roundToSigFigs } from './utils.mjs'
 

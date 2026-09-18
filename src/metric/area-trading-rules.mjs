@@ -1,4 +1,4 @@
-// Area-habitat trading-rules unit calculations (BMD-993, MVS).
+// Area-habitat trading-rules unit calculations (MVS).
 //
 // Area habitats differ from the linear modules in one substantive way: Medium
 // distinctiveness trades at *broad habitat* level ("same broad habitat or a
@@ -11,7 +11,7 @@
 // "Individual trees - Urban tree" / "- Rural tree", so they fall out of the
 // same aggregation as habitat parcels with no special handling.
 //
-// Nothing here derives Met / Not-met statuses — that is BMD-1008 (front end).
+// Nothing here derives Met / Not-met statuses — that is a front-end concern.
 
 import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
 import {

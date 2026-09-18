@@ -54,7 +54,7 @@ These tables mirror the reference data embedded in the published Statutory Metri
 
 Transcription errors found after extraction, and the evidence for each.
 
-### 2026-09-18 — two Intertidal hard structures distinctiveness bands (BMD-993)
+### 2026-09-18 — two Intertidal hard structures distinctiveness bands
 
 `habitat-area-distinctiveness-categories.json`:
 
@@ -63,7 +63,8 @@ Transcription errors found after extraction, and the evidence for each.
 | `Intertidal hard structures - Artificial hard structures with integrated greening of grey infrastructure (IGGI)` | V.Low  | Medium |
 | `Intertidal hard structures - Artificial features of hard structures`                                            | Medium | Low    |
 
-Raised by the BMD-993 trading-rules band table, which disagreed with these two rows.
+Raised by the area-habitat trading-rules band table, which disagreed with these two
+rows.
 Corroborated by `habitat-area-condition-scores.json`: every other V.Low habitat scores
 only `N/A - Other`, because a V.Low habitat cannot be condition-assessed. IGGI was the
 sole V.Low row carrying a full Good → Poor condition ladder, which is only meaningful for

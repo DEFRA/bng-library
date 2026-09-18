@@ -17,7 +17,10 @@
 
 import {
   CONDITION_SCORES as metricConditionScores,
-  DISTINCTIVENESS_CATEGORIES as metricDistinctiveness
+  DISTINCTIVENESS_CATEGORIES as metricDistinctiveness,
+  WATERCOURSE_ENCROACHMENT_MULTIPLIER,
+  WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER,
+  isRecognisedEncroachmentValue
 } from '../metric/index.mjs'
 
 // ---------------------------------------------------------------------------
@@ -134,7 +137,13 @@ function linearProposedFromEnh(b, enh) {
     condition: enh?.proposedCondition ?? b.condition,
     strategicSig: enh?.proposedStrategicSignificance ?? b.strategicSignificance,
     advanceYears: enh?.advanceYears ?? 0,
-    delayYears: enh?.delayYears ?? 0
+    delayYears: enh?.delayYears ?? 0,
+    // C-3 proposed encroachment when present; otherwise keep the baseline
+    // values (retained rows, or an enhancement that did not record a change).
+    waterEncroachment:
+      enh?.proposedWaterEncroachment ?? b.waterEncroachment ?? null,
+    riparianEncroachment:
+      enh?.proposedRiparianEncroachment ?? b.riparianEncroachment ?? null
   }
 }
 
@@ -145,7 +154,9 @@ function linearProposedFromCreated(c) {
     condition: c.condition,
     strategicSig: c.strategicSignificance,
     advanceYears: c.advanceYears ?? 0,
-    delayYears: c.delayYears ?? 0
+    delayYears: c.delayYears ?? 0,
+    waterEncroachment: c.waterEncroachment ?? null,
+    riparianEncroachment: c.riparianEncroachment ?? null
   }
 }
 
@@ -637,6 +648,57 @@ function expandBaselineLinearRow(b, enhMap, refPrefix, warnings) {
   return rows
 }
 
+/**
+ * Warn when an encroachment value won't match the engine's exact-key
+ * multiplier tables. The backend defaults an unrecognised value to multiplier
+ * 1 (fully unencroached) and only logs it far downstream, so surface it here
+ * at generation time instead. Null / empty values are treated as recognised
+ * (hedgerow rows always carry null, so they never warn).
+ *
+ * @param {{ waterEncroachment?: unknown, riparianEncroachment?: unknown } | null | undefined} attrs
+ * @param {string} refPrefix
+ * @param {string} ref
+ * @param {'baseline' | 'proposed'} side
+ * @param {string[]} warnings
+ * @param {{ waterEncroachment?: unknown, riparianEncroachment?: unknown } | null} [skipIfSameAs]
+ */
+function warnIfEncroachmentUnrecognised(
+  attrs,
+  refPrefix,
+  ref,
+  side,
+  warnings,
+  skipIfSameAs = null
+) {
+  if (!attrs) {
+    return
+  }
+  const checks = [
+    [
+      'watercourse',
+      attrs.waterEncroachment,
+      WATERCOURSE_ENCROACHMENT_MULTIPLIER,
+      skipIfSameAs?.waterEncroachment
+    ],
+    [
+      'riparian',
+      attrs.riparianEncroachment,
+      WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER,
+      skipIfSameAs?.riparianEncroachment
+    ]
+  ]
+  for (const [label, value, table, alreadyWarned] of checks) {
+    if (alreadyWarned !== undefined && value === alreadyWarned) {
+      continue
+    }
+    if (!isRecognisedEncroachmentValue(value, table)) {
+      warnings.push(
+        `${refPrefix} ref ${ref}: unrecognised ${side} ${label} encroachment "${value}" — the backend will fall back to multiplier 1`
+      )
+    }
+  }
+}
+
 function buildLinearPostIntervention({
   baseline,
   created,
@@ -646,12 +708,32 @@ function buildLinearPostIntervention({
 }) {
   const rows = []
   for (const b of baseline) {
+    // C-1 values, including fully-lost parcels that emit no post-intervention row.
+    warnIfEncroachmentUnrecognised(
+      b,
+      refPrefix,
+      String(b.ref),
+      'baseline',
+      warnings
+    )
     rows.push(...expandBaselineLinearRow(b, enhMap, refPrefix, warnings))
   }
   let seq = baseline.length + 1
   for (const c of created) {
     rows.push(makeCreatedLinearRow(c, refPrefix, seq))
     seq += 1
+  }
+  for (const row of rows) {
+    // Created rows have no C-1 ancestor; skip-if-same would hide the C-2 typo.
+    const alreadyWarned = row.retention === 'Created' ? null : row.baseline
+    warnIfEncroachmentUnrecognised(
+      row.proposed,
+      refPrefix,
+      row.baselineRef ?? row.ref,
+      'proposed',
+      warnings,
+      alreadyWarned
+    )
   }
   return rows
 }

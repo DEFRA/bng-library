@@ -1,15 +1,22 @@
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 import {
+  HDR_BASELINE_REF,
   HDR_CONDITION,
   HDR_DELAY_HABITAT_CREATION,
   HDR_DISTINCTIVENESS,
   HDR_HABITAT_CREATED_IN_ADVANCE,
   HDR_LENGTH_KM,
+  HDR_PROPOSED_HABITAT,
   HDR_REF,
+  HDR_RIPARIAN_ENCROACHMENT,
+  HDR_WATERCOURSE_ENCROACHMENT,
   SHEETS
 } from '../src/workbook/metric-workbook-helpers.mjs'
-import { readLinearFeatures } from '../src/workbook/metric-workbook-linear.mjs'
+import {
+  readLinearEnhancements,
+  readLinearFeatures
+} from '../src/workbook/metric-workbook-linear.mjs'
 
 const require = createRequire(import.meta.url)
 const XLSX = require('xlsx')
@@ -103,6 +110,60 @@ describe('readLinearFeatures — C-2 / B-2 advance and delay years', () => {
       type: 'Ditches',
       advanceYears: 0,
       delayYears: 0
+    })
+  })
+})
+
+describe('readLinearFeatures — C-2 proposed encroachment', () => {
+  it('reads watercourse and riparian encroachment from C-2', () => {
+    const sheet = SHEETS.watercoursesCreation
+    const headers = [
+      HDR_REF,
+      'Watercourse type',
+      HDR_LENGTH_KM,
+      HDR_DISTINCTIVENESS,
+      HDR_CONDITION,
+      HDR_WATERCOURSE_ENCROACHMENT,
+      HDR_RIPARIAN_ENCROACHMENT
+    ]
+    const wb = workbookFromAoa(sheet, [
+      ['C-2 On-Site Watercourse Creation'],
+      headers,
+      [1, 'Ditches', 0.01, 'Medium', 'Poor', 'Minor', 'Major/Moderate']
+    ])
+    const created = readLinearFeatures(wb, sheet, 'river', { skipped: [] })
+    expect(created[0]).toMatchObject({
+      type: 'Ditches',
+      waterEncroachment: 'Minor',
+      riparianEncroachment: 'Major/Moderate'
+    })
+  })
+})
+
+describe('readLinearEnhancements — C-3 proposed encroachment', () => {
+  it('reads proposed watercourse and riparian encroachment from C-3', () => {
+    const sheet = SHEETS.watercoursesEnhancement
+    const headers = [
+      HDR_BASELINE_REF,
+      HDR_LENGTH_KM,
+      HDR_PROPOSED_HABITAT,
+      HDR_DISTINCTIVENESS,
+      HDR_CONDITION,
+      HDR_WATERCOURSE_ENCROACHMENT,
+      HDR_RIPARIAN_ENCROACHMENT
+    ]
+    const wb = workbookFromAoa(sheet, [
+      ["C-3 On-Site WaterC' Enhancement"],
+      headers,
+      [9, 0.5, 'Canals', 'Medium', 'Fairly Poor', 'Minor', 'Major/Major']
+    ])
+    const enhancements = readLinearEnhancements(wb, sheet, { skipped: [] })
+    expect(enhancements).toHaveLength(1)
+    expect(enhancements[0]).toMatchObject({
+      baselineRef: '9',
+      proposedType: 'Canals',
+      proposedWaterEncroachment: 'Minor',
+      proposedRiparianEncroachment: 'Major/Major'
     })
   })
 })

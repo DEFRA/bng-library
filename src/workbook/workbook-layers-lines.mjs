@@ -593,9 +593,9 @@ function riverPostBindings(r, coords) {
   // workbook row, then culvert-by-type, then the "No Encroachment" default. A
   // created watercourse has no baseline at all, so both baseline encroachment
   // columns end up "N/A" whatever is resolved here.
-  // Proposed side: the workbook does not carry a proposed encroachment, so keep
-  // the culvert-by-type override over the "No Encroachment" default. Baseline
-  // and proposed are resolved from their own type, since retention may change it.
+  // Proposed side: C-2 / C-3 carry the post-intervention encroachment; fall
+  // back to culvert-by-type, then "No Encroachment". Baseline and proposed
+  // are resolved from their own type, since retention may change it.
   const baselineIsCulvert = r.baseline?.type === CULVERT_TYPE
   const proposedIsCulvert = r.proposed.type === CULVERT_TYPE
   const baselineWaterEncroachment =
@@ -608,10 +608,10 @@ function riverPostBindings(r, coords) {
       : RIVER_ENCROACHMENT_RIPARIAN_NONE)
   const proposedWaterEncroachment = proposedIsCulvert
     ? CULVERT_ENCROACHMENT
-    : RIVER_ENCROACHMENT_NONE
+    : (r.proposed.waterEncroachment ?? RIVER_ENCROACHMENT_NONE)
   const proposedRiparianEncroachment = proposedIsCulvert
     ? CULVERT_ENCROACHMENT
-    : RIVER_ENCROACHMENT_RIPARIAN_NONE
+    : (r.proposed.riparianEncroachment ?? RIVER_ENCROACHMENT_RIPARIAN_NONE)
   return [
     gpkgLineString(SRS_ID, coords),
     r.ref,

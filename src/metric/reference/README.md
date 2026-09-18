@@ -50,6 +50,28 @@ These tables mirror the reference data embedded in the published Statutory Metri
 4. Update the **Metric version** / **Extracted on** rows in this README.
 5. Run `npm test -- src/metric/` here, and any bng-metric-backend tests that depend on the calculations.
 
+## Corrections
+
+Transcription errors found after extraction, and the evidence for each.
+
+### 2026-09-18 — two Intertidal hard structures distinctiveness bands (BMD-993)
+
+`habitat-area-distinctiveness-categories.json`:
+
+| Habitat type                                                                                                     | Was    | Now    |
+| ---------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| `Intertidal hard structures - Artificial hard structures with integrated greening of grey infrastructure (IGGI)` | V.Low  | Medium |
+| `Intertidal hard structures - Artificial features of hard structures`                                            | Medium | Low    |
+
+Raised by the BMD-993 trading-rules band table, which disagreed with these two rows.
+Corroborated by `habitat-area-condition-scores.json`: every other V.Low habitat scores
+only `N/A - Other`, because a V.Low habitat cannot be condition-assessed. IGGI was the
+sole V.Low row carrying a full Good → Poor condition ladder, which is only meaningful for
+a habitat that can be assessed — so the V.Low band, not the condition row, was the error.
+
+Distinctiveness bands feed the distinctiveness **score** (Medium 4, Low 2, V.Low 0), so
+this changes unit values for these two habitat types wherever they appear.
+
 ## Licence
 
 Same as the parent package — see `package.json` at the bng-library root (`OGL-UK-3.0`). Statutory Metric data is published by Natural England under Open Government Licence terms.

@@ -11,6 +11,9 @@
 // "Individual trees - Urban tree" / "- Rural tree", so they fall out of the
 // same aggregation as habitat parcels with no special handling.
 //
+// `cumulativeSurplus` deliberately does not reconcile to the published metric —
+// see the note on it below before using it as though it did.
+//
 // Nothing here derives Met / Not-met statuses — that is a front-end concern.
 
 import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
@@ -65,7 +68,9 @@ export function broadHabitatOf(habitatType) {
 
 /**
  * The broad habitat a Medium habitat cumulates under, folding the two
- * intertidal broad habitats into one (AC3).
+ * intertidal broad habitats into one (AC3). Every habitat entry carries this as
+ * `tradingBroadHabitat`, so a caller can group the habitats by it and match
+ * `medium.broadHabitats` exactly, rather than re-implementing the merge.
  *
  * @param {string} broadHabitat
  * @returns {string}
@@ -87,11 +92,13 @@ function tradingBroadHabitatOf(broadHabitat) {
  * Very Low habitats are excluded because they hold zero units and trading does
  * not apply to them; High and Very High are excluded because the MVS defines no
  * traded figure for them (they require the same habitat, not a band trade).
- * Habitat types absent from the reference data are skipped — the caller resolves
- * and reports unrecognised types, which it can do with a logger.
+ * Habitat types absent from the reference data are skipped silently — this
+ * function has no logger. The backend caller resolves every habitat type against
+ * the reference data before calling and warns on any it cannot place, so an
+ * unrecognised type is reported there rather than here.
  *
  * @param {Array<{ habitatType: string, netUnitChange: number }>} netUnitChanges
- * @returns {Array<{ habitatType: string, broadHabitat: string, distinctiveness: string, netUnitChange: number }>}
+ * @returns {Array<{ habitatType: string, broadHabitat: string, tradingBroadHabitat: string, distinctiveness: string, netUnitChange: number }>}
  */
 function tradeableHabitats(netUnitChanges) {
   const habitats = []
@@ -100,9 +107,11 @@ function tradeableHabitats(netUnitChanges) {
     if (distinctiveness !== MEDIUM_BAND && distinctiveness !== LOW_BAND) {
       continue
     }
+    const broadHabitat = broadHabitatOf(habitat.habitatType)
     habitats.push({
       habitatType: habitat.habitatType,
-      broadHabitat: broadHabitatOf(habitat.habitatType),
+      broadHabitat,
+      tradingBroadHabitat: tradingBroadHabitatOf(broadHabitat),
       distinctiveness,
       netUnitChange: habitat.netUnitChange
     })
@@ -123,9 +132,8 @@ function cumulativeBroadHabitatChanges(habitats) {
     if (habitat.distinctiveness !== MEDIUM_BAND) {
       continue
     }
-    const broadHabitat = tradingBroadHabitatOf(habitat.broadHabitat)
-    const running = totals.get(broadHabitat) ?? 0
-    totals.set(broadHabitat, running + habitat.netUnitChange)
+    const running = totals.get(habitat.tradingBroadHabitat) ?? 0
+    totals.set(habitat.tradingBroadHabitat, running + habitat.netUnitChange)
   }
   return [...totals.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
@@ -160,6 +168,19 @@ function lowBandNetChanges(habitats) {
  *   low: { netChange: number },
  *   cumulativeSurplus: number
  * }}
+ *
+ * `cumulativeSurplus` is the Medium surplus plus the Low net change (AC7). It is
+ * **not** the Statutory Metric's "Cumulative surplus of units", and must not be
+ * presented as though it were: the metric nets the Medium deficit off the Medium
+ * surplus before offsetting the Low band, so its figure is always lower than
+ * this one by exactly `Math.abs(medium.deficit)`. On the published worked example
+ * the metric reports 23.1012 where this reports 32.5222.
+ *
+ * The divergence is intentional — the deficit still has to be offset by trading
+ * up, so it is not also available to absorb a Low deficit — but it means a site
+ * can look compliant on this figure while the metric reports it short. Anything
+ * deriving a Met / Not-met status has to account for `medium.deficit` in its own
+ * right rather than assuming this number already has.
  */
 export function calculateAreaHabitatTradingRules(
   baselineUnitsByType = {},

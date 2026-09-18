@@ -80,42 +80,49 @@ describe('calculateAreaHabitatTradingRules', () => {
       {
         habitatType: ARABLE_MARGINS,
         broadHabitat: 'Cropland',
+        tradingBroadHabitat: 'Cropland',
         distinctiveness: 'Medium',
         netUnitChange: 4
       },
       {
         habitatType: MODIFIED_GRASSLAND,
         broadHabitat: 'Grassland',
+        tradingBroadHabitat: 'Grassland',
         distinctiveness: 'Low',
         netUnitChange: -6
       },
       {
         habitatType: NEUTRAL_GRASSLAND,
         broadHabitat: 'Grassland',
+        tradingBroadHabitat: 'Grassland',
         distinctiveness: 'Medium',
         netUnitChange: -6
       },
       {
         habitatType: UPLAND_ACID_GRASSLAND,
         broadHabitat: 'Grassland',
+        tradingBroadHabitat: 'Grassland',
         distinctiveness: 'Medium',
         netUnitChange: 6
       },
       {
         habitatType: URBAN_TREE,
         broadHabitat: 'Individual trees',
+        tradingBroadHabitat: 'Individual trees',
         distinctiveness: 'Medium',
         netUnitChange: 3
       },
       {
         habitatType: RESERVOIRS,
         broadHabitat: 'Lakes',
+        tradingBroadHabitat: 'Lakes',
         distinctiveness: 'Medium',
         netUnitChange: -3
       },
       {
         habitatType: ALLOTMENTS,
         broadHabitat: 'Urban',
+        tradingBroadHabitat: 'Urban',
         distinctiveness: 'Low',
         netUnitChange: 2
       }
@@ -135,6 +142,31 @@ describe('calculateAreaHabitatTradingRules', () => {
       { broadHabitat: 'Individual trees', netUnitChange: 3 },
       { broadHabitat: 'Lakes', netUnitChange: -3 }
     ])
+  })
+
+  it('AC2 — habitats can be grouped by tradingBroadHabitat to match the broad habitat rows', () => {
+    // A consumer rendering habitats under their broad-habitat row must not have
+    // to re-implement the intertidal merge to do it.
+    const grouped = new Map()
+    for (const habitat of result.habitats) {
+      if (habitat.distinctiveness !== 'Medium') {
+        continue
+      }
+      grouped.set(
+        habitat.tradingBroadHabitat,
+        (grouped.get(habitat.tradingBroadHabitat) ?? 0) + habitat.netUnitChange
+      )
+    }
+
+    expect([...grouped.keys()].sort()).toEqual(
+      result.medium.broadHabitats.map((entry) => entry.broadHabitat)
+    )
+    for (const entry of result.medium.broadHabitats) {
+      expect(grouped.get(entry.broadHabitat)).toBeCloseTo(
+        entry.netUnitChange,
+        10
+      )
+    }
   })
 
   it('AC4 — totals only the broad habitats in surplus', () => {

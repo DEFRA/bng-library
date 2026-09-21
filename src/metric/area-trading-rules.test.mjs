@@ -295,3 +295,144 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
     })
   })
 })
+
+describe('calculateAreaHabitatTradingRules — AC7 against the metric', () => {
+  // The Statutory Metric publishes its own "Cumulative surplus of units"
+  // (Trading Summary Area Habitats, K125). It nets the Medium deficit off the
+  // Medium surplus before offsetting the Low band; AC7 carries the surplus down
+  // undiminished, because the deficit still has to be offset by trading up and
+  // so is not also available to absorb a Low deficit. The two therefore differ
+  // by exactly the AC5 Medium deficit.
+  //
+  // The worked-example test pins that relationship for one workbook, with the
+  // figures written out. This pins it as a property of the calculator: across
+  // every combination below the gap is the Medium deficit and nothing else, so
+  // a change to any of AC4, AC5, AC6 or AC7 that breaks the relationship fails
+  // here rather than only on the one fixture that happens to exercise it.
+  const metricCumulativeSurplus = (result) =>
+    result.medium.surplus + result.medium.deficit + result.low.netChange
+
+  // (baseline, delivered) pairs giving net unit changes of -8, -3, 0, +5, +11.
+  const UNIT_PAIRS = [
+    [8, 0],
+    [5, 2],
+    [4, 4],
+    [1, 6],
+    [0, 11]
+  ]
+
+  // Two un-merged Medium broad habitats, one Medium intertidal (so the AC3
+  // merge is live in every case) and one Low habitat, each swept across the
+  // five net changes above — 625 combinations of surplus, deficit and zero.
+  const SWEPT_HABITATS = [
+    ARABLE_MARGINS,
+    RESERVOIRS,
+    LITTORAL_SAND,
+    MODIFIED_GRASSLAND
+  ]
+
+  const combinations = () => {
+    let rows = [[]]
+    for (let i = 0; i < SWEPT_HABITATS.length; i++) {
+      rows = rows.flatMap((row) => UNIT_PAIRS.map((pair) => [...row, pair]))
+    }
+    return rows
+  }
+
+  const resultFor = (pairs) => {
+    const baselineUnitsByType = {}
+    const deliveredUnitsByType = {}
+    pairs.forEach(([baseline, delivered], index) => {
+      baselineUnitsByType[SWEPT_HABITATS[index]] = baseline
+      deliveredUnitsByType[SWEPT_HABITATS[index]] = delivered
+    })
+    // A Low intertidal habitat in every case: it must count toward the Low net
+    // change without ever reaching the merged Medium group.
+    deliveredUnitsByType[ARTIFICIAL_FEATURES] = 3
+    return calculateAreaHabitatTradingRules(
+      baselineUnitsByType,
+      deliveredUnitsByType
+    )
+  }
+
+  const netChangesOf = (pairs) =>
+    pairs.map(([baseline, delivered]) => delivered - baseline).join(', ')
+
+  it('differs from the metric by exactly the Medium deficit, in every case', () => {
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      const gap =
+        result.low.cumulativeAvailability - metricCumulativeSurplus(result)
+      if (Math.abs(gap - Math.abs(result.medium.deficit)) > 1e-10) {
+        failures.push(
+          `net changes [${netChangesOf(pairs)}]: gap ${gap}, Medium deficit ${result.medium.deficit}`
+        )
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('is the Medium surplus plus the Low net change, in every case', () => {
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      const expected = result.medium.surplus + result.low.netChange
+      if (Math.abs(result.low.cumulativeAvailability - expected) > 1e-10) {
+        failures.push(
+          `net changes [${netChangesOf(pairs)}]: ${result.low.cumulativeAvailability} !== ${expected}`
+        )
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('is never below the metric figure', () => {
+    // The gap is the Medium deficit, which is zero or negative by definition,
+    // so AC7 can equal the metric but never fall short of it. A site that looks
+    // short on AC7 is short on the metric too — the risk runs the other way,
+    // and that is the direction a Met / Not-met status has to guard.
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      if (
+        result.low.cumulativeAvailability <
+        metricCumulativeSurplus(result) - 1e-10
+      ) {
+        failures.push(`net changes [${netChangesOf(pairs)}]`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('reproduces the worked example, with no deficit and with one', () => {
+    // Two named cases so the sweep above is anchored to readable arithmetic.
+    const noDeficit = resultFor([
+      [0, 11],
+      [0, 11],
+      [0, 11],
+      [0, 11]
+    ])
+    expect(noDeficit.medium.deficit).toBe(0)
+    expect(noDeficit.low.cumulativeAvailability).toBe(
+      metricCumulativeSurplus(noDeficit)
+    )
+
+    const withDeficit = resultFor([
+      [0, 11],
+      [8, 0],
+      [4, 4],
+      [0, 11]
+    ])
+    expect(withDeficit.medium.deficit).toBe(-8)
+    expect(withDeficit.low.cumulativeAvailability).toBe(
+      metricCumulativeSurplus(withDeficit) + 8
+    )
+  })
+})

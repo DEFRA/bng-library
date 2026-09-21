@@ -167,7 +167,10 @@ function lowBandNetChanges(habitats) {
  * type}"), covering habitat parcels and individual trees alike. Units for both
  * sides are pre-summed by the caller.
  *
- * Each habitat entry carries `tradingBroadHabitat`, the key to group it under.
+ * `habitatTypes` holds one entry per unique habitat type, not per feature — the
+ * caller has already summed each type's units across its parcels and trees.
+ *
+ * Each entry carries `tradingBroadHabitat`, the key to group it under.
  * It differs from `broadHabitat` only for Medium intertidal habitats, where the
  * AC3 merge applies; every Low habitat keeps its ordinary broad habitat, because
  * the Low band does not trade per broad habitat and AC3 never merges it.
@@ -175,9 +178,9 @@ function lowBandNetChanges(habitats) {
  * @param {Record<string, number>} baselineUnitsByType type -> summed baseline units
  * @param {Record<string, number>} deliveredUnitsByType type -> summed retained+created+enhanced units
  * @returns {{
- *   habitats: Array<{ habitatType: string, broadHabitat: string, tradingBroadHabitat: string, distinctiveness: string, netUnitChange: number }>,
+ *   habitatTypes: Array<{ habitatType: string, broadHabitat: string, tradingBroadHabitat: string, distinctiveness: string, netUnitChange: number }>,
  *   medium: { broadHabitats: Array<{ broadHabitat: string, netUnitChange: number }>, surplus: number, deficit: number },
- *   low: { netChange: number, cumulativeAvailability: number }
+ *   low: { netUnitChange: number, cumulativeAvailability: number }
  * }}
  *
  * `low.cumulativeAvailability` is the Medium surplus plus the Low net change
@@ -198,25 +201,25 @@ export function calculateAreaHabitatTradingRules(
   baselineUnitsByType = {},
   deliveredUnitsByType = {}
 ) {
-  const habitats = tradeableHabitats(
+  const habitatTypes = tradeableHabitats(
     calculateHabitatNetUnitChanges(baselineUnitsByType, deliveredUnitsByType)
   )
 
-  const broadHabitats = cumulativeBroadHabitatChanges(habitats)
+  const broadHabitats = cumulativeBroadHabitatChanges(habitatTypes)
   const broadHabitatChanges = broadHabitats.map((entry) => entry.netUnitChange)
 
   const mediumSurplus = sumSurplus(broadHabitatChanges)
-  const lowNetChange = sumNetChange(lowBandNetChanges(habitats))
+  const lowNetChange = sumNetChange(lowBandNetChanges(habitatTypes))
 
   return {
-    habitats,
+    habitatTypes,
     medium: {
       broadHabitats,
       surplus: mediumSurplus,
       deficit: sumDeficit(broadHabitatChanges)
     },
     low: {
-      netChange: lowNetChange,
+      netUnitChange: lowNetChange,
       cumulativeAvailability: calculateCumulativeAvailability(
         mediumSurplus,
         lowNetChange

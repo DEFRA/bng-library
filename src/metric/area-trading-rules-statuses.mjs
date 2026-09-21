@@ -36,12 +36,12 @@ const DEFICIT_THRESHOLD = 0
  * treat that reduction as a bug in the spreadsheet and carry the surplus down
  * whole.
  *
- * Area habitats: Not met when either band is. This is what makes the Low band
- * rule safe — the deficit the Low band was allowed to ignore still fails the
- * site through the Medium band.
+ * Overall: Not met when either band is. This is the field to read, and what
+ * makes the Low band rule safe — the deficit the Low band was allowed to ignore
+ * still fails the site through the Medium band.
  *
  * With no post-intervention upload there is nothing to trade against, so the
- * area-habitat status is Not met and both band statuses are `null`: each band
+ * overall status is Not met and both band statuses are `null`: each band
  * rule requires both files to have been uploaded, so neither was derived.
  *
  * @param {ReturnType<import('./area-trading-rules.mjs').calculateAreaHabitatTradingRules>} tradingRules
@@ -49,14 +49,14 @@ const DEFICIT_THRESHOLD = 0
  *   post-intervention file has been uploaded. Explicit because it cannot be
  *   inferred from the figures: a project with no post-intervention upload and
  *   one whose post-intervention delivers zero units produce the same totals.
- * @returns {{ medium: string|null, low: string|null, areaHabitats: string }}
+ * @returns {{ medium: string|null, low: string|null, overall: string }}
  */
 export function deriveAreaHabitatTradingRuleStatuses(
   tradingRules,
   { postInterventionUploaded = true } = {}
 ) {
   if (!postInterventionUploaded) {
-    return { medium: null, low: null, areaHabitats: TRADING_RULE_NOT_MET }
+    return { medium: null, low: null, overall: TRADING_RULE_NOT_MET }
   }
 
   const broadHabitats = tradingRules?.medium?.broadHabitats ?? []
@@ -72,6 +72,6 @@ export function deriveAreaHabitatTradingRuleStatuses(
   return {
     medium,
     low,
-    areaHabitats: combineTradingRuleStatuses([medium, low])
+    overall: combineTradingRuleStatuses([medium, low])
   }
 }

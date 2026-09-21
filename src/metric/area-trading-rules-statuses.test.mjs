@@ -66,7 +66,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — the Medium band', () => {
       low: { cumulativeAvailability: -0 }
     })
 
-    expect(statuses).toEqual({ medium: MET, low: MET, areaHabitats: MET })
+    expect(statuses).toEqual({ medium: MET, low: MET, overall: MET })
   })
 
   it('is Met when there are no Medium habitats at all', () => {
@@ -128,14 +128,14 @@ describe('deriveAreaHabitatTradingRuleStatuses — the Low band', () => {
     ])
     expect(tradingRules.medium.surplus).toBe(10)
     expect(tradingRules.medium.deficit).toBe(-8)
-    expect(tradingRules.low.netChange).toBe(-5)
+    expect(tradingRules.low.netUnitChange).toBe(-5)
     expect(tradingRules.low.cumulativeAvailability).toBe(5)
 
     // What the spreadsheet would report for the same site.
     expect(
       tradingRules.medium.surplus +
         tradingRules.medium.deficit +
-        tradingRules.low.netChange
+        tradingRules.low.netUnitChange
     ).toBe(-3)
 
     const statuses = deriveAreaHabitatTradingRuleStatuses(tradingRules)
@@ -145,7 +145,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — the Low band', () => {
     // still makes the Medium band Not met, and with it the site as a whole.
     // That pairing is what makes it safe to carry the surplus down whole.
     expect(statuses.medium).toBe(NOT_MET)
-    expect(statuses.areaHabitats).toBe(NOT_MET)
+    expect(statuses.overall).toBe(NOT_MET)
   })
 })
 
@@ -153,7 +153,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — the area-habitat status', () 
   it('is Met only when both bands are Met', () => {
     const statuses = statusesFor({}, { [ARABLE_MARGINS]: 6, [ALLOTMENTS]: 3 })
 
-    expect(statuses).toEqual({ medium: MET, low: MET, areaHabitats: MET })
+    expect(statuses).toEqual({ medium: MET, low: MET, overall: MET })
   })
 
   it('is Not met when only the Medium band is Not met', () => {
@@ -164,7 +164,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — the area-habitat status', () 
 
     expect(statuses.medium).toBe(NOT_MET)
     expect(statuses.low).toBe(MET)
-    expect(statuses.areaHabitats).toBe(NOT_MET)
+    expect(statuses.overall).toBe(NOT_MET)
   })
 
   it('is Not met when only the Low band is Not met', () => {
@@ -175,7 +175,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — the area-habitat status', () 
 
     expect(statuses.medium).toBe(MET)
     expect(statuses.low).toBe(NOT_MET)
-    expect(statuses.areaHabitats).toBe(NOT_MET)
+    expect(statuses.overall).toBe(NOT_MET)
   })
 })
 
@@ -190,7 +190,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — no post-intervention upload',
     expect(statuses).toEqual({
       medium: null,
       low: null,
-      areaHabitats: NOT_MET
+      overall: NOT_MET
     })
   })
 
@@ -200,7 +200,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — no post-intervention upload',
     // delivered there is nothing to trade against.
     const statuses = statusesFor({}, {}, { postInterventionUploaded: false })
 
-    expect(statuses.areaHabitats).toBe(NOT_MET)
+    expect(statuses.overall).toBe(NOT_MET)
   })
 
   it('derives both bands when a post-intervention file is uploaded', () => {
@@ -210,7 +210,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — no post-intervention upload',
       { postInterventionUploaded: true }
     )
 
-    expect(statuses).toEqual({ medium: MET, low: MET, areaHabitats: MET })
+    expect(statuses).toEqual({ medium: MET, low: MET, overall: MET })
   })
 })
 
@@ -218,19 +218,19 @@ describe('deriveAreaHabitatTradingRuleStatuses — edge inputs', () => {
   it('treats a project with no area habitats as Met', () => {
     expect(
       deriveAreaHabitatTradingRuleStatuses(calculateAreaHabitatTradingRules())
-    ).toEqual({ medium: MET, low: MET, areaHabitats: MET })
+    ).toEqual({ medium: MET, low: MET, overall: MET })
   })
 
   it('does not throw on a missing or partial figures object', () => {
     expect(deriveAreaHabitatTradingRuleStatuses(undefined)).toEqual({
       medium: MET,
       low: MET,
-      areaHabitats: MET
+      overall: MET
     })
     expect(deriveAreaHabitatTradingRuleStatuses({ medium: {} })).toEqual({
       medium: MET,
       low: MET,
-      areaHabitats: MET
+      overall: MET
     })
   })
 })

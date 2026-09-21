@@ -299,3 +299,183 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
     })
   })
 })
+
+describe('calculateAreaHabitatTradingRules — cumulative availability against the metric spreadsheet', () => {
+  // WHAT THIS IS ABOUT
+  //
+  // Cumulative availability is how many units are left for the Low band once
+  // the Medium surplus has been carried down to it. The metric spreadsheet
+  // works out the same thing, but first cancels the Medium deficit against the
+  // Medium surplus.
+  //
+  // The trading rules do not allow that cancellation. A surplus in one broad
+  // habitat cannot make good a deficit in another, so the deficit has to be
+  // settled some other way and the surplus units were never spoken for. They
+  // really are available to the Low band. We treat the spreadsheet's step as a
+  // bug and do not copy it.
+  //
+  // Our figure is therefore always higher than the spreadsheet's, by exactly
+  // the Medium deficit.
+  //
+  // WHY WE TEST IT
+  //
+  // A 9.42-unit difference from the published metric looks like a defect to
+  // anyone checking our output against a workbook. The obvious "fix" is to make
+  // the numbers match — which would import the bug. These tests make that fix
+  // fail the build.
+  //
+  // The worked-example test already proves the relationship, but only for one
+  // workbook with its figures written out by hand. These prove it holds for the
+  // calculator generally: 625 combinations of surplus, deficit and zero, with
+  // the same relationship checked in every one.
+
+  /** What the spreadsheet would report for the same project. */
+  const metricCumulativeSurplus = (result) =>
+    result.medium.surplus + result.medium.deficit + result.low.netChange
+
+  // (baseline, delivered) pairs giving net unit changes of -8, -3, 0, +5, +11.
+  const UNIT_PAIRS = [
+    [8, 0],
+    [5, 2],
+    [4, 4],
+    [1, 6],
+    [0, 11]
+  ]
+
+  // Four habitats, each swept across those five net changes: two ordinary
+  // Medium broad habitats, one Medium intertidal (so the intertidal merge is
+  // active throughout) and one Low. 5^4 = 625 projects.
+  const SWEPT_HABITATS = [
+    ARABLE_MARGINS,
+    RESERVOIRS,
+    LITTORAL_SAND,
+    MODIFIED_GRASSLAND
+  ]
+
+  const combinations = () => {
+    let rows = [[]]
+    for (let i = 0; i < SWEPT_HABITATS.length; i++) {
+      rows = rows.flatMap((row) => UNIT_PAIRS.map((pair) => [...row, pair]))
+    }
+    return rows
+  }
+
+  const resultFor = (pairs) => {
+    const baselineUnitsByType = {}
+    const deliveredUnitsByType = {}
+    pairs.forEach(([baseline, delivered], index) => {
+      baselineUnitsByType[SWEPT_HABITATS[index]] = baseline
+      deliveredUnitsByType[SWEPT_HABITATS[index]] = delivered
+    })
+    // Present in every project: a Low habitat that sits in an intertidal broad
+    // habitat, which must count toward the Low band and never be swept into the
+    // merged Medium group.
+    deliveredUnitsByType[ARTIFICIAL_FEATURES] = 3
+    return calculateAreaHabitatTradingRules(
+      baselineUnitsByType,
+      deliveredUnitsByType
+    )
+  }
+
+  const netChangesOf = (pairs) =>
+    pairs.map(([baseline, delivered]) => delivered - baseline).join(', ')
+
+  it('differs from the metric by exactly the Medium deficit, in every case', () => {
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      const gap =
+        result.low.cumulativeAvailability - metricCumulativeSurplus(result)
+      if (Math.abs(gap - Math.abs(result.medium.deficit)) > 1e-10) {
+        failures.push(
+          `net changes [${netChangesOf(pairs)}]: gap ${gap}, Medium deficit ${result.medium.deficit}`
+        )
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('is the Medium surplus plus the Low net change, in every case', () => {
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      const expected = result.medium.surplus + result.low.netChange
+      if (Math.abs(result.low.cumulativeAvailability - expected) > 1e-10) {
+        failures.push(
+          `net changes [${netChangesOf(pairs)}]: ${result.low.cumulativeAvailability} !== ${expected}`
+        )
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('is never below the metric figure', () => {
+    // The gap is the Medium deficit, which is never positive, so our figure can
+    // equal the spreadsheet's but never come out lower. That matters for the
+    // Met / Not-met status: a site that looks short on our figure is short on
+    // the spreadsheet's too, so we can never fail a site the metric would pass.
+    const failures = []
+
+    for (const pairs of combinations()) {
+      const result = resultFor(pairs)
+      if (
+        result.low.cumulativeAvailability <
+        metricCumulativeSurplus(result) - 1e-10
+      ) {
+        failures.push(`net changes [${netChangesOf(pairs)}]`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  it('holds for a site you can check by hand', () => {
+    // The sweep above is generated, so this anchors it to a site a reader can
+    // follow:
+    //
+    //   Cropland    4 units of Medium habitat, fully enhanced into Grassland
+    //   Grassland   10 units delivered by that enhancement
+    //   Lakes       4 units of Medium habitat, lost
+    //   Low band    5 units lost
+    //
+    // Surplus 10, deficit -8, Low band -5. We carry the surplus down whole and
+    // leave 5 units available; the spreadsheet cancels the deficit first and
+    // reaches -3. The two answers straddle zero, so this is also the case where
+    // the difference changes what a site is told, not just a figure.
+    const result = calculateAreaHabitatTradingRules(
+      {
+        [ARABLE_MARGINS]: 4,
+        [RESERVOIRS]: 4,
+        [MODIFIED_GRASSLAND]: 5
+      },
+      { [NEUTRAL_GRASSLAND]: 10 }
+    )
+
+    expect(result.medium.surplus).toBe(10)
+    expect(result.medium.deficit).toBe(-8)
+    expect(result.low.netChange).toBe(-5)
+
+    expect(result.low.cumulativeAvailability).toBe(5)
+    expect(metricCumulativeSurplus(result)).toBe(-3)
+  })
+
+  it('agrees with the spreadsheet when no broad habitat is in deficit', () => {
+    // The two only differ by the Medium deficit, so with none they match. Worth
+    // pinning: it is the case where a reconciliation against a workbook finds
+    // nothing wrong, which is why the discrepancy looks like a defect when it
+    // does appear.
+    const result = calculateAreaHabitatTradingRules(
+      { [MODIFIED_GRASSLAND]: 5 },
+      { [ARABLE_MARGINS]: 11, [NEUTRAL_GRASSLAND]: 6 }
+    )
+
+    expect(result.medium.deficit).toBe(0)
+    expect(result.low.cumulativeAvailability).toBe(
+      metricCumulativeSurplus(result)
+    )
+  })
+})

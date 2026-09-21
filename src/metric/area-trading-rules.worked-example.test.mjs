@@ -24,6 +24,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { calculateAreaHabitatTradingRules } from './area-trading-rules.mjs'
+import { deriveAreaHabitatTradingRuleStatuses } from './area-trading-rules-statuses.mjs'
 
 // The figures below are the workbook's raw stored values, which carry IEEE-754
 // noise in their last digit or two (108.28816610400001 for a number the metric
@@ -85,8 +86,9 @@ const result = calculateAreaHabitatTradingRules(
 
 /** @param {string} habitatType */
 function netChangeFor(habitatType) {
-  return result.habitats.find((habitat) => habitat.habitatType === habitatType)
-    ?.netUnitChange
+  return result.habitatTypes.find(
+    (habitat) => habitat.habitatType === habitatType
+  )?.netUnitChange
 }
 
 /** @param {string} broadHabitat */
@@ -99,7 +101,7 @@ function broadChangeFor(broadHabitat) {
 describe('worked example — AC1 net unit change per habitat', () => {
   it('covers the 14 Medium and Low habitats across baseline and post-intervention', () => {
     // 15 unique habitats in the example, less the Very Low one.
-    expect(result.habitats).toHaveLength(14)
+    expect(result.habitatTypes).toHaveLength(14)
   })
 
   it.each([
@@ -165,7 +167,7 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
   })
 
   it('AC6 nets the Low band', () => {
-    expect(result.low.netChange).toBeCloseTo(-90, DECIMAL_PLACES)
+    expect(result.low.netUnitChange).toBeCloseTo(-90, DECIMAL_PLACES)
   })
 
   it('AC7 adds the Low net change to the Medium surplus', () => {
@@ -188,5 +190,38 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
       Math.abs(result.medium.deficit),
       10
     )
+  })
+})
+
+// The statuses the same example produces, kept alongside the figures because
+// they are derived from them and share the oracle.
+describe('worked example — trading-rules statuses', () => {
+  const statuses = deriveAreaHabitatTradingRuleStatuses(result, {
+    postInterventionUploaded: true
+  })
+
+  it('reports the Medium band Not met', () => {
+    // Heathland and shrub (-1.4210) and the merged intertidal group (-8.0000)
+    // are both in deficit, and either one alone is enough to fail the band.
+    expect(statuses.medium).toBe('Not met')
+  })
+
+  it('reports the Low band Met', () => {
+    // Availability is +32.5222, so the band passes. It would pass on the
+    // spreadsheet's own lower figure of 23.1012 too, so the difference between
+    // the two does not decide this example either way.
+    expect(statuses.low).toBe('Met')
+  })
+
+  it('reports the area habitats Not met, on the Medium band alone', () => {
+    expect(statuses.overall).toBe('Not met')
+  })
+
+  it('reports Not met before a post-intervention file is uploaded', () => {
+    expect(
+      deriveAreaHabitatTradingRuleStatuses(result, {
+        postInterventionUploaded: false
+      })
+    ).toEqual({ medium: null, low: null, overall: 'Not met' })
   })
 })

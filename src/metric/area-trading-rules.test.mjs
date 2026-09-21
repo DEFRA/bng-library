@@ -77,7 +77,7 @@ describe('calculateAreaHabitatTradingRules', () => {
   )
 
   it('AC1 — nets each unique habitat, keeping Medium and Low only', () => {
-    expect(result.habitats).toEqual([
+    expect(result.habitatTypes).toEqual([
       {
         habitatType: ARABLE_MARGINS,
         broadHabitat: 'Cropland',
@@ -132,7 +132,9 @@ describe('calculateAreaHabitatTradingRules', () => {
 
   it('AC1 — excludes Very Low habitats, which hold no units to trade', () => {
     expect(
-      result.habitats.some((habitat) => habitat.habitatType === SEALED_SURFACE)
+      result.habitatTypes.some(
+        (habitat) => habitat.habitatType === SEALED_SURFACE
+      )
     ).toBe(false)
   })
 
@@ -149,7 +151,7 @@ describe('calculateAreaHabitatTradingRules', () => {
     // A consumer rendering habitats under their broad-habitat row must not have
     // to re-implement the intertidal merge to do it.
     const grouped = new Map()
-    for (const habitat of result.habitats) {
+    for (const habitat of result.habitatTypes) {
       if (habitat.distinctiveness !== 'Medium') {
         continue
       }
@@ -181,7 +183,7 @@ describe('calculateAreaHabitatTradingRules', () => {
   })
 
   it('AC6 — nets the Low band across the band, not per broad habitat', () => {
-    expect(result.low.netChange).toBe(-4)
+    expect(result.low.netUnitChange).toBe(-4)
   })
 
   it('AC7 — cumulative availability is the Medium surplus plus the Low net change', () => {
@@ -206,7 +208,9 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
   it('keeps the un-merged broad habitat on each habitat entry', () => {
     const result = calculateAreaHabitatTradingRules({}, { [IGGI]: 1 })
 
-    expect(result.habitats[0].broadHabitat).toBe('Intertidal hard structures')
+    expect(result.habitatTypes[0].broadHabitat).toBe(
+      'Intertidal hard structures'
+    )
   })
 
   it('does not merge a Low intertidal habitat into the Medium group', () => {
@@ -216,7 +220,7 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
     )
 
     expect(result.medium.broadHabitats).toEqual([])
-    expect(result.low.netChange).toBe(4)
+    expect(result.low.netUnitChange).toBe(4)
   })
 
   it('leaves a Low intertidal habitat its ordinary trading broad habitat', () => {
@@ -229,7 +233,7 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
     )
 
     expect(
-      result.habitats.map((habitat) => [
+      result.habitatTypes.map((habitat) => [
         habitat.habitatType,
         habitat.tradingBroadHabitat
       ])
@@ -238,7 +242,7 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
       [ARTIFICIAL_LITTORAL_MUD, 'Intertidal sediment']
     ])
     expect(
-      result.habitats.some(
+      result.habitatTypes.some(
         (habitat) =>
           habitat.tradingBroadHabitat === MERGED_INTERTIDAL_BROAD_HABITAT
       )
@@ -254,7 +258,7 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
     )
 
     const tradingKeyFor = (habitatType) =>
-      result.habitats.find((habitat) => habitat.habitatType === habitatType)
+      result.habitatTypes.find((habitat) => habitat.habitatType === habitatType)
         .tradingBroadHabitat
 
     expect(tradingKeyFor(LITTORAL_SAND)).toBe(MERGED_INTERTIDAL_BROAD_HABITAT)
@@ -272,7 +276,7 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
       {}
     )
 
-    expect(result.habitats).toEqual([])
+    expect(result.habitatTypes).toEqual([])
     expect(result.medium.surplus).toBe(0)
   })
 
@@ -282,16 +286,16 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
       { 'Not a - real habitat': 5, [ALLOTMENTS]: 2 }
     )
 
-    expect(result.habitats.map((habitat) => habitat.habitatType)).toEqual([
+    expect(result.habitatTypes.map((habitat) => habitat.habitatType)).toEqual([
       ALLOTMENTS
     ])
   })
 
   it('returns zeroed figures for a project with no area habitats', () => {
     expect(calculateAreaHabitatTradingRules()).toEqual({
-      habitats: [],
+      habitatTypes: [],
       medium: { broadHabitats: [], surplus: 0, deficit: 0 },
-      low: { netChange: 0, cumulativeAvailability: 0 }
+      low: { netUnitChange: 0, cumulativeAvailability: 0 }
     })
   })
 })
@@ -327,7 +331,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
   /** What the spreadsheet would report for the same project. */
   const metricCumulativeSurplus = (result) =>
-    result.medium.surplus + result.medium.deficit + result.low.netChange
+    result.medium.surplus + result.medium.deficit + result.low.netUnitChange
 
   // (baseline, delivered) pairs giving net unit changes of -8, -3, 0, +5, +11.
   const UNIT_PAIRS = [
@@ -398,7 +402,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
     for (const pairs of combinations()) {
       const result = resultFor(pairs)
-      const expected = result.medium.surplus + result.low.netChange
+      const expected = result.medium.surplus + result.low.netUnitChange
       if (Math.abs(result.low.cumulativeAvailability - expected) > 1e-10) {
         failures.push(
           `net changes [${netChangesOf(pairs)}]: ${result.low.cumulativeAvailability} !== ${expected}`
@@ -453,7 +457,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
     expect(result.medium.surplus).toBe(10)
     expect(result.medium.deficit).toBe(-8)
-    expect(result.low.netChange).toBe(-5)
+    expect(result.low.netUnitChange).toBe(-5)
 
     expect(result.low.cumulativeAvailability).toBe(5)
     expect(metricCumulativeSurplus(result)).toBe(-3)

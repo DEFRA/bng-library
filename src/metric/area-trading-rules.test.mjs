@@ -331,7 +331,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
   /** What the spreadsheet would report for the same project. */
   const metricCumulativeSurplus = (result) =>
-    result.medium.surplus + result.medium.deficit + result.low.netChange
+    result.medium.surplus + result.medium.deficit + result.low.netUnitChange
 
   // (baseline, delivered) pairs giving net unit changes of -8, -3, 0, +5, +11.
   const UNIT_PAIRS = [
@@ -402,7 +402,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
     for (const pairs of combinations()) {
       const result = resultFor(pairs)
-      const expected = result.medium.surplus + result.low.netChange
+      const expected = result.medium.surplus + result.low.netUnitChange
       if (Math.abs(result.low.cumulativeAvailability - expected) > 1e-10) {
         failures.push(
           `net changes [${netChangesOf(pairs)}]: ${result.low.cumulativeAvailability} !== ${expected}`
@@ -457,7 +457,7 @@ describe('calculateAreaHabitatTradingRules — cumulative availability against t
 
     expect(result.medium.surplus).toBe(10)
     expect(result.medium.deficit).toBe(-8)
-    expect(result.low.netChange).toBe(-5)
+    expect(result.low.netUnitChange).toBe(-5)
 
     expect(result.low.cumulativeAvailability).toBe(5)
     expect(metricCumulativeSurplus(result)).toBe(-3)

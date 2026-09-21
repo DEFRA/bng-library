@@ -37,6 +37,8 @@ const PUBLIC_EXPORTS = [
   'TIME_TO_TARGET_CREATION',
   'TIME_TO_TARGET_ENHANCEMENT',
   'TIME_TO_TARGET_MULTIPLIER',
+  'TRADING_RULE_MET',
+  'TRADING_RULE_NOT_MET',
   'WATERCOURSE_CONDITION_SCORES',
   'WATERCOURSE_DISTINCTIVENESS_CATEGORIES',
   'WATERCOURSE_DISTINCTIVENESS_SCORES',
@@ -59,6 +61,8 @@ const PUBLIC_EXPORTS = [
   'calculateRetainedHedgerowPostIntervention',
   'calculateRetainedWatercoursePostIntervention',
   'calculateWatercourseBaseline',
+  'combineTradingRuleStatuses',
+  'deriveAreaHabitatTradingRuleStatuses',
   'getIndividualTreeAreaHectares',
   'isRecognisedEncroachmentValue',
   'normaliseEncroachmentLabel',
@@ -66,7 +70,8 @@ const PUBLIC_EXPORTS = [
   'roundToSigFigs',
   'sumDeficit',
   'sumNetChange',
-  'sumSurplus'
+  'sumSurplus',
+  'tradingRuleStatus'
 ]
 
 describe("the 'bng-library/metric' subpath export", () => {

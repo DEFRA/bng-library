@@ -3,9 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   calculateCumulativeAvailability,
   calculateHabitatNetUnitChanges,
+  combineTradingRuleStatuses,
   sumDeficit,
   sumNetChange,
-  sumSurplus
+  sumSurplus,
+  TRADING_RULE_MET,
+  TRADING_RULE_NOT_MET,
+  tradingRuleStatus
 } from './trading-rules.mjs'
 
 describe('calculateHabitatNetUnitChanges', () => {
@@ -99,5 +103,45 @@ describe('calculateCumulativeAvailability', () => {
 
   it('can go negative when the lower band deficit exceeds the surplus', () => {
     expect(calculateCumulativeAvailability(2, -6)).toBe(-4)
+  })
+})
+
+describe('tradingRuleStatus', () => {
+  it('names the two statuses', () => {
+    expect(TRADING_RULE_MET).toBe('Met')
+    expect(TRADING_RULE_NOT_MET).toBe('Not met')
+  })
+
+  it('maps a boolean to a status', () => {
+    expect(tradingRuleStatus(true)).toBe(TRADING_RULE_MET)
+    expect(tradingRuleStatus(false)).toBe(TRADING_RULE_NOT_MET)
+  })
+})
+
+describe('combineTradingRuleStatuses', () => {
+  it('is Not met when any status is Not met', () => {
+    expect(
+      combineTradingRuleStatuses([TRADING_RULE_MET, TRADING_RULE_NOT_MET])
+    ).toBe(TRADING_RULE_NOT_MET)
+  })
+
+  it('is Met when every status is Met', () => {
+    expect(
+      combineTradingRuleStatuses([TRADING_RULE_MET, TRADING_RULE_MET])
+    ).toBe(TRADING_RULE_MET)
+  })
+
+  it('is Met for no statuses at all', () => {
+    expect(combineTradingRuleStatuses()).toBe(TRADING_RULE_MET)
+    expect(combineTradingRuleStatuses([])).toBe(TRADING_RULE_MET)
+  })
+
+  it('does not let an underived band decide the aggregate', () => {
+    // A null band is one whose preconditions were not met, not one that failed.
+    // The caller decides what that means — see AC4, where the area-habitat
+    // status is Not met for a reason of its own, not because a band is null.
+    expect(combineTradingRuleStatuses([null, TRADING_RULE_MET])).toBe(
+      TRADING_RULE_MET
+    )
   })
 })

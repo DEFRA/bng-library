@@ -24,6 +24,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { calculateAreaHabitatTradingRules } from './area-trading-rules.mjs'
+import { deriveAreaHabitatTradingRuleStatuses } from './area-trading-rules-statuses.mjs'
 
 // The figures below are the workbook's raw stored values, which carry IEEE-754
 // noise in their last digit or two (108.28816610400001 for a number the metric
@@ -188,5 +189,36 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
       Math.abs(result.medium.deficit),
       10
     )
+  })
+})
+
+// BMD-1008 AC6 — the statuses the same example produces. Kept alongside the
+// figures because the statuses are derived from them and share the oracle.
+describe('worked example — BMD-1008 statuses', () => {
+  const statuses = deriveAreaHabitatTradingRuleStatuses(result)
+
+  it('reports the Medium band Not met', () => {
+    // Heathland and shrub (-1.4210) and the merged intertidal group (-8.0000)
+    // are both in deficit, so AC1 fails on either one alone.
+    expect(statuses.medium).toBe('Not met')
+  })
+
+  it('reports the Low band Met', () => {
+    // AC7 availability is +32.5222 — positive, so AC2 passes. It passes on the
+    // metric's own lower figure of 23.1012 too, so the divergence does not
+    // decide this example either way.
+    expect(statuses.low).toBe('Met')
+  })
+
+  it('reports the area habitats Not met, on the Medium band alone', () => {
+    expect(statuses.areaHabitats).toBe('Not met')
+  })
+
+  it('reports Not met before a post-intervention file is uploaded', () => {
+    expect(
+      deriveAreaHabitatTradingRuleStatuses(result, {
+        postInterventionUploaded: false
+      })
+    ).toEqual({ medium: null, low: null, areaHabitats: 'Not met' })
   })
 })

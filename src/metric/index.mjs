@@ -50,13 +50,18 @@ export { resolveDistinctiveness } from './multipliers.mjs'
 export {
   calculateHabitatNetUnitChanges,
   calculateCumulativeAvailability,
+  combineTradingRuleStatuses,
   sumDeficit,
   sumNetChange,
-  sumSurplus
+  sumSurplus,
+  TRADING_RULE_MET,
+  TRADING_RULE_NOT_MET,
+  tradingRuleStatus
 } from './trading-rules.mjs'
 export {
   broadHabitatOf,
   calculateAreaHabitatTradingRules,
   MERGED_INTERTIDAL_BROAD_HABITAT
 } from './area-trading-rules.mjs'
+export { deriveAreaHabitatTradingRuleStatuses } from './area-trading-rules-statuses.mjs'
 export { MAX_YEARS, MAX_YEARS_PLUS, MIN_YEARS } from './validate.mjs'

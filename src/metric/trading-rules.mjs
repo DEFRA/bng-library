@@ -115,3 +115,35 @@ export function calculateCumulativeAvailability(
 ) {
   return roundToSigFigs(higherBandSurplus + lowerBandNetChange)
 }
+
+/** A trading rule that is satisfied. */
+export const TRADING_RULE_MET = 'Met'
+
+/** A trading rule that is not satisfied. */
+export const TRADING_RULE_NOT_MET = 'Not met'
+
+/**
+ * The status a single trading rule resolves to.
+ *
+ * @param {boolean} isMet
+ * @returns {string} {@link TRADING_RULE_MET} or {@link TRADING_RULE_NOT_MET}
+ */
+export function tradingRuleStatus(isMet) {
+  return isMet ? TRADING_RULE_MET : TRADING_RULE_NOT_MET
+}
+
+/**
+ * The aggregate of several band statuses: Not met if any one of them is.
+ *
+ * A band whose status was not derived (null — the band's preconditions were not
+ * satisfied) does not make the aggregate Not met on its own; the caller decides
+ * what an underived band means, because the reason differs per module.
+ *
+ * @param {Array<string|null>} statuses
+ * @returns {string} {@link TRADING_RULE_MET} or {@link TRADING_RULE_NOT_MET}
+ */
+export function combineTradingRuleStatuses(statuses = []) {
+  return tradingRuleStatus(
+    !statuses.some((status) => status === TRADING_RULE_NOT_MET)
+  )
+}

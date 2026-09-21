@@ -7,8 +7,10 @@
 // calculators, and trading rules only aggregate them by habitat type and
 // distinctiveness band.
 //
-// Nothing here derives Met / Not-met statuses — that is a separate front-end
-// concern. This module produces the unit figures only.
+// Alongside the unit figures, this module owns the Met / Not-met status
+// vocabulary (`TRADING_RULE_MET` / `TRADING_RULE_NOT_MET`) and the primitives
+// for deriving and combining statuses, so every band's status module reports
+// in the same terms.
 
 import { roundToSigFigs } from './utils.mjs'
 

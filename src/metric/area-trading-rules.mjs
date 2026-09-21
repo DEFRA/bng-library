@@ -14,7 +14,8 @@
 // `low.cumulativeAvailability` deliberately does not reconcile to the published
 // metric — see the note on it below before using it as though it did.
 //
-// Nothing here derives Met / Not-met statuses — that is a front-end concern.
+// This module produces the unit figures only; the Met / Not-met statuses are
+// derived from them in area-trading-rules-statuses.mjs.
 
 import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
 import {

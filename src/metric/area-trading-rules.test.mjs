@@ -296,16 +296,19 @@ describe('calculateAreaHabitatTradingRules — habitats outside the MVS bands', 
   })
 })
 
-describe('calculateAreaHabitatTradingRules — AC7 against the metric', () => {
+describe('calculateAreaHabitatTradingRules — cumulative availability against the metric spreadsheet', () => {
   // WHAT THIS IS ABOUT
   //
-  // AC7 works out how many units are available to the Low band. The metric
-  // spreadsheet answers the same question, but first cancels the Medium
-  // deficit against the Medium surplus. The trading rules do not allow that
-  // cancellation: a surplus in one broad habitat cannot make good a deficit in
-  // another, so those surplus units were never spoken for and really are
-  // available. BMD-993 AC7 calls the spreadsheet's step a bug and does not
-  // copy it.
+  // Cumulative availability is how many units are left for the Low band once
+  // the Medium surplus has been carried down to it. The metric spreadsheet
+  // works out the same thing, but first cancels the Medium deficit against the
+  // Medium surplus.
+  //
+  // The trading rules do not allow that cancellation. A surplus in one broad
+  // habitat cannot make good a deficit in another, so the deficit has to be
+  // settled some other way and the surplus units were never spoken for. They
+  // really are available to the Low band. We treat the spreadsheet's step as a
+  // bug and do not copy it.
   //
   // Our figure is therefore always higher than the spreadsheet's, by exactly
   // the Medium deficit.
@@ -314,8 +317,8 @@ describe('calculateAreaHabitatTradingRules — AC7 against the metric', () => {
   //
   // A 9.42-unit difference from the published metric looks like a defect to
   // anyone checking our output against a workbook. The obvious "fix" is to make
-  // it match — which would import the bug. These tests make that fix fail the
-  // build.
+  // the numbers match — which would import the bug. These tests make that fix
+  // fail the build.
   //
   // The worked-example test already proves the relationship, but only for one
   // workbook with its figures written out by hand. These prove it holds for the
@@ -336,8 +339,8 @@ describe('calculateAreaHabitatTradingRules — AC7 against the metric', () => {
   ]
 
   // Four habitats, each swept across those five net changes: two ordinary
-  // Medium broad habitats, one Medium intertidal (so the AC3 merge is active
-  // throughout) and one Low. 5^4 = 625 projects.
+  // Medium broad habitats, one Medium intertidal (so the intertidal merge is
+  // active throughout) and one Low. 5^4 = 625 projects.
   const SWEPT_HABITATS = [
     ARABLE_MARGINS,
     RESERVOIRS,

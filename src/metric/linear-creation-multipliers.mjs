@@ -1,8 +1,7 @@
 import { BaselineLookupError } from './errors.mjs'
-import { CREATION, ENHANCEMENT } from './multipliers.mjs'
+import { CREATION } from './multipliers.mjs'
 import { TIME_TO_TARGET_MULTIPLIER } from './reference-constants.mjs'
 import {
-  advanceMeetsTimeToTarget,
   applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
   toTimeToTargetBucketKey
@@ -12,6 +11,7 @@ import {
   validateHabitatChange
 } from './validate.mjs'
 import {
+  LOW_DIFFICULTY,
   lookupLinearDifficultyLabel,
   multiplierForDifficultyLabel,
   NOT_POSSIBLE,
@@ -114,44 +114,36 @@ export function getLinearCreationTimeMultiplier(
 }
 
 /**
- * Resolve the difficulty change type for a creation project, accounting for
- * the statutory rule that advance time meeting the "Poor" time-to-target
- * earns Enhancement difficulty bands.
+ * Standard (unadjusted) statutory time-to-target years for a created linear
+ * feature reaching `condition` — i.e. the value before any advance/delay is
+ * applied. This is the `L` column in the statutory workbook's creation tabs.
  *
  * @param {object} cfg
  * @param {string} linearType
- * @param {number} validatedAdvanceYears
- * @param {number} validatedDelayYears
- * @param {string} timeToTargetKey
- * @returns {string} CREATION or ENHANCEMENT
+ * @param {string} condition
+ * @returns {number}
  */
-function resolveCreationDifficultyChangeType(
-  cfg,
-  linearType,
-  validatedAdvanceYears,
-  validatedDelayYears,
-  timeToTargetKey
-) {
-  if (advanceMeetsTimeToTarget(validatedAdvanceYears, timeToTargetKey)) {
-    return ENHANCEMENT
-  }
-  const poorTargetKey = getLinearCreationTimeToTargetValue(
-    cfg,
-    linearType,
-    'Poor',
-    validatedAdvanceYears,
-    validatedDelayYears
+function standardCreationTimeToTargetYears(cfg, linearType, condition) {
+  return normaliseReferenceYears(
+    lookupLinearCreationTimeToTarget(cfg, linearType, condition)
   )
-  return advanceMeetsTimeToTarget(validatedAdvanceYears, poorTargetKey)
-    ? ENHANCEMENT
-    : CREATION
 }
 
 /**
- * Resolve the difficulty band label used for a Creation-path linear feature
- * (including the advance-meets-Poor-target reclassification to Enhancement
- * bands). Shared by the label and multiplier accessors so display and unit
- * calculation can never disagree.
+ * Resolve the difficulty band label used for a Creation-path linear feature.
+ * Shared by the label and multiplier accessors so display and unit calculation
+ * can never disagree.
+ *
+ * Statutory linear rule (workbook tabs C-2 watercourse and B-2 hedgerow):
+ * created difficulty drops to the fixed "Low" band only when the habitat is
+ * created far enough in advance to reach its target condition before the loss
+ * occurs — i.e. when advance covers the full standard time to target
+ * (`advance >= L`, "only applicable if all habitat created before losses").
+ * Otherwise the habitat's Creation band applies. Unlike area habitats (tab
+ * A-2), linear features have NO Creation->Enhancement reclassification for
+ * advance that merely reaches Poor condition; the "time to reach poor" figure
+ * is only an upper bound on the advance a user may enter, not a difficulty
+ * trigger.
  *
  * @param {object} cfg
  * @param {string} linearType
@@ -170,24 +162,18 @@ export function getLinearCreationDifficultyLabel(
   validateLinearType(linearType, cfg.distinctivenessCategories, cfg.label)
   validateHabitatChange(CREATION)
   validateLinearCondition(linearType, condition, cfg.conditionScores, cfg.label)
-  const { validatedAdvanceYears, validatedDelayYears } =
-    validateAdvanceAndDelayYears(advanceYears, delayYears)
+  const { validatedAdvanceYears } = validateAdvanceAndDelayYears(
+    advanceYears,
+    delayYears
+  )
 
-  const timeToTargetKey = getLinearCreationTimeToTargetValue(
-    cfg,
-    linearType,
-    condition,
-    validatedAdvanceYears,
-    validatedDelayYears
-  )
-  const difficultyChangeType = resolveCreationDifficultyChangeType(
-    cfg,
-    linearType,
-    validatedAdvanceYears,
-    validatedDelayYears,
-    timeToTargetKey
-  )
-  return lookupLinearDifficultyLabel(cfg, linearType, difficultyChangeType)
+  if (
+    validatedAdvanceYears >=
+    standardCreationTimeToTargetYears(cfg, linearType, condition)
+  ) {
+    return LOW_DIFFICULTY
+  }
+  return lookupLinearDifficultyLabel(cfg, linearType, CREATION)
 }
 
 /**

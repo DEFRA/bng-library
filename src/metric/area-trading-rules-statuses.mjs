@@ -49,11 +49,14 @@ const DEFICIT_THRESHOLD = 0
  *   post-intervention file has been uploaded. Explicit because it cannot be
  *   inferred from the figures: a project with no post-intervention upload and
  *   one whose post-intervention delivers zero units produce the same totals.
+ *   Defaults to false so a caller that omits it fails safe — the dangerous
+ *   mistake is reporting Met for a site with nothing to trade against, so
+ *   Met is only ever reachable by saying the upload happened.
  * @returns {{ medium: string|null, low: string|null, overall: string }}
  */
 export function deriveAreaHabitatTradingRuleStatuses(
   tradingRules,
-  { postInterventionUploaded = true } = {}
+  { postInterventionUploaded = false } = {}
 ) {
   if (!postInterventionUploaded) {
     return { medium: null, low: null, overall: TRADING_RULE_NOT_MET }

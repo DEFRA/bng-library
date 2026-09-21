@@ -196,7 +196,9 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
 // The statuses the same example produces, kept alongside the figures because
 // they are derived from them and share the oracle.
 describe('worked example — trading-rules statuses', () => {
-  const statuses = deriveAreaHabitatTradingRuleStatuses(result)
+  const statuses = deriveAreaHabitatTradingRuleStatuses(result, {
+    postInterventionUploaded: true
+  })
 
   it('reports the Medium band Not met', () => {
     // Heathland and shrub (-1.4210) and the merged intertidal group (-8.0000)

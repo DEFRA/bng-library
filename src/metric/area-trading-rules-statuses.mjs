@@ -1,13 +1,15 @@
-// Area-habitat trading-rules Met / Not-met statuses (BMD-1008).
+// Area-habitat trading-rules Met / Not-met statuses.
 //
-// The unit figures these read come from `calculateAreaHabitatTradingRules`
-// (BMD-993). The statuses live here, next to those figures and to the worked
-// example that pins them, rather than in the consumer that displays them:
-// deciding whether a site meets the trading rules is a calculation, and the
-// combination it requires is easy to get wrong in a way that fails towards
-// "Met". AC2 in particular reads a figure that deliberately does not reconcile
-// to the Statutory Metric, and is only safe because AC3 pairs it with AC1 — a
-// consumer implementing AC2 alone would report a site compliant that the metric
+// The unit figures these read come from `calculateAreaHabitatTradingRules`.
+// The statuses live here, next to those figures and the worked example that
+// pins them, rather than in the consumer that displays them: deciding whether
+// a site meets the trading rules is a calculation, and the combination it
+// needs is easy to get wrong in a way that wrongly reports "Met".
+//
+// The Low band rule is the one to watch. It reads a figure that deliberately
+// does not reconcile to the metric spreadsheet, and is only safe because the
+// site-wide status takes the Medium band into account as well. Anyone applying
+// the Low rule on its own would report a site compliant that the spreadsheet
 // reports short. Deriving here means no consumer performs that combination.
 //
 // Display is a separate concern: this module produces statuses, not markup.
@@ -18,29 +20,29 @@ import {
   TRADING_RULE_NOT_MET
 } from './trading-rules.mjs'
 
-/** A broad habitat or band figure below this is in deficit (AC1, AC2). */
+/** A broad habitat or band figure below this is in deficit. */
 const DEFICIT_THRESHOLD = 0
 
 /**
- * AC1–AC4 — the area-habitat trading-rules statuses.
+ * The area-habitat trading-rules statuses.
  *
- * AC1: the Medium band is Not met when *any* Medium broad habitat is in
- * deficit, which is the per-broad-habitat cumulative change from BMD-993 AC2
- * and AC3. A broad habitat that nets to exactly zero is not in deficit, so it
- * does not make the band Not met.
+ * Medium band: Not met when *any* Medium broad habitat is in deficit — when its
+ * cumulative net unit change is below zero. A broad habitat that nets to
+ * exactly zero is not in deficit, so it does not make the band Not met.
  *
- * AC2: the Low band is Not met when the cumulative availability from BMD-993
- * AC7 is below zero. That figure deliberately departs from the metric
- * spreadsheet, which reduces the Medium surplus by the Medium deficit before
- * offering it to the Low band — BMD-1008 records that as a bug in the
- * spreadsheet and takes the undiminished figure on purpose.
+ * Low band: Not met when the cumulative availability figure is below zero. That
+ * figure deliberately departs from the metric spreadsheet, which reduces the
+ * Medium surplus by the Medium deficit before offering it to the Low band. We
+ * treat that reduction as a bug in the spreadsheet and carry the surplus down
+ * whole.
  *
- * AC3: the area-habitat status is Not met when either band is.
+ * Area habitats: Not met when either band is. This is what makes the Low band
+ * rule safe — the deficit the Low band was allowed to ignore still fails the
+ * site through the Medium band.
  *
- * AC4: with no post-intervention upload there is nothing to trade against, so
- * the area-habitat status is Not met. The band statuses are `null` rather than
- * Not met: AC1 and AC2 are both conditioned on *both* files having been
- * uploaded, so neither has been derived.
+ * With no post-intervention upload there is nothing to trade against, so the
+ * area-habitat status is Not met and both band statuses are `null`: each band
+ * rule requires both files to have been uploaded, so neither was derived.
  *
  * @param {ReturnType<import('./area-trading-rules.mjs').calculateAreaHabitatTradingRules>} tradingRules
  * @param {{ postInterventionUploaded?: boolean }} [options] whether a

@@ -192,21 +192,21 @@ describe('worked example — AC4 to AC7 band aggregates', () => {
   })
 })
 
-// BMD-1008 AC6 — the statuses the same example produces. Kept alongside the
-// figures because the statuses are derived from them and share the oracle.
-describe('worked example — BMD-1008 statuses', () => {
+// The statuses the same example produces, kept alongside the figures because
+// they are derived from them and share the oracle.
+describe('worked example — trading-rules statuses', () => {
   const statuses = deriveAreaHabitatTradingRuleStatuses(result)
 
   it('reports the Medium band Not met', () => {
     // Heathland and shrub (-1.4210) and the merged intertidal group (-8.0000)
-    // are both in deficit, so AC1 fails on either one alone.
+    // are both in deficit, and either one alone is enough to fail the band.
     expect(statuses.medium).toBe('Not met')
   })
 
   it('reports the Low band Met', () => {
-    // AC7 availability is +32.5222 — positive, so AC2 passes. It passes on the
-    // metric's own lower figure of 23.1012 too, so the divergence does not
-    // decide this example either way.
+    // Availability is +32.5222, so the band passes. It would pass on the
+    // spreadsheet's own lower figure of 23.1012 too, so the difference between
+    // the two does not decide this example either way.
     expect(statuses.low).toBe('Met')
   })
 

@@ -20,7 +20,7 @@ const statusesFor = (baselineUnitsByType, deliveredUnitsByType, options) =>
     options
   )
 
-describe('deriveAreaHabitatTradingRuleStatuses — AC1, the Medium band', () => {
+describe('deriveAreaHabitatTradingRuleStatuses — the Medium band', () => {
   it('is Met when every Medium broad habitat is in surplus', () => {
     const statuses = statusesFor(
       { [ARABLE_MARGINS]: 2, [RESERVOIRS]: 2 },
@@ -76,7 +76,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — AC1, the Medium band', () => 
   })
 })
 
-describe('deriveAreaHabitatTradingRuleStatuses — AC2, the Low band', () => {
+describe('deriveAreaHabitatTradingRuleStatuses — the Low band', () => {
   it('is Met when cumulative availability is positive', () => {
     const statuses = statusesFor({}, { [ALLOTMENTS]: 3 })
 
@@ -149,7 +149,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — AC2, the Low band', () => {
   })
 })
 
-describe('deriveAreaHabitatTradingRuleStatuses — AC3, the area-habitat status', () => {
+describe('deriveAreaHabitatTradingRuleStatuses — the area-habitat status', () => {
   it('is Met only when both bands are Met', () => {
     const statuses = statusesFor({}, { [ARABLE_MARGINS]: 6, [ALLOTMENTS]: 3 })
 
@@ -179,7 +179,7 @@ describe('deriveAreaHabitatTradingRuleStatuses — AC3, the area-habitat status'
   })
 })
 
-describe('deriveAreaHabitatTradingRuleStatuses — AC4, no post-intervention upload', () => {
+describe('deriveAreaHabitatTradingRuleStatuses — no post-intervention upload', () => {
   it('is Not met, with neither band derived', () => {
     const statuses = statusesFor(
       { [ARABLE_MARGINS]: 5 },
@@ -196,8 +196,8 @@ describe('deriveAreaHabitatTradingRuleStatuses — AC4, no post-intervention upl
 
   it('stays Not met even where the figures alone would read Met', () => {
     // Nothing lost anywhere, so every band figure is zero and both bands would
-    // otherwise be Met. AC4 overrides that: with nothing delivered there is
-    // nothing to trade against.
+    // otherwise be Met. The upload rule overrides that: with nothing
+    // delivered there is nothing to trade against.
     const statuses = statusesFor({}, {}, { postInterventionUploaded: false })
 
     expect(statuses.areaHabitats).toBe(NOT_MET)

@@ -95,26 +95,55 @@ describe('deriveAreaHabitatTradingRuleStatuses — AC2, the Low band', () => {
     expect(statuses.low).toBe(NOT_MET)
   })
 
-  it('takes the Medium surplus undiminished by the Medium deficit', () => {
-    // The point BMD-1008 calls out as a deliberate departure from the metric
-    // spreadsheet. Cropland +6 and Lakes -4 give a Medium surplus of 6 and a
-    // deficit of -4; the Low band is -5. AC7 carries the surplus down whole,
-    // so availability is +1 and the Low band is Met. The spreadsheet would net
-    // the deficit off first, reach -3, and report the Low band short.
+  it('carries the Medium surplus down whole, where the spreadsheet does not', () => {
+    // A site that enhances one Medium parcel and loses two others:
+    //
+    //   Cropland    4 units of Medium habitat, fully enhanced into Grassland
+    //   Grassland   10 units delivered by that enhancement
+    //   Lakes       4 units of Medium habitat, lost
+    //   Low band    5 units lost
+    //
+    // Cropland therefore ends at -4, Grassland at +10 and Lakes at -4: a Medium
+    // surplus of 10 and a deficit of -8, sitting in different broad habitats.
+    // The surplus cannot be used to make that deficit good, so it is still
+    // available to the Low band. Carried down whole against the Low band's -5,
+    // it leaves 5 units available and the Low band Met.
+    //
+    // The metric spreadsheet cancels the deficit against the surplus first,
+    // reaches -3, and reports the Low band short. This test fails if we ever
+    // adopt that: both the figure and the status change.
     const tradingRules = calculateAreaHabitatTradingRules(
-      { [RESERVOIRS]: 4, [MODIFIED_GRASSLAND]: 5 },
-      { [ARABLE_MARGINS]: 6 }
+      {
+        [ARABLE_MARGINS]: 4,
+        [RESERVOIRS]: 4,
+        [MODIFIED_GRASSLAND]: 5
+      },
+      { [NEUTRAL_GRASSLAND]: 10 }
     )
-    expect(tradingRules.medium.surplus).toBe(6)
-    expect(tradingRules.medium.deficit).toBe(-4)
+
+    expect(tradingRules.medium.broadHabitats).toEqual([
+      { broadHabitat: 'Cropland', netUnitChange: -4 },
+      { broadHabitat: 'Grassland', netUnitChange: 10 },
+      { broadHabitat: 'Lakes', netUnitChange: -4 }
+    ])
+    expect(tradingRules.medium.surplus).toBe(10)
+    expect(tradingRules.medium.deficit).toBe(-8)
     expect(tradingRules.low.netChange).toBe(-5)
-    expect(tradingRules.low.cumulativeAvailability).toBe(1)
+    expect(tradingRules.low.cumulativeAvailability).toBe(5)
+
+    // What the spreadsheet would report for the same site.
+    expect(
+      tradingRules.medium.surplus +
+        tradingRules.medium.deficit +
+        tradingRules.low.netChange
+    ).toBe(-3)
 
     const statuses = deriveAreaHabitatTradingRuleStatuses(tradingRules)
 
     expect(statuses.low).toBe(MET)
-    // AC3 is what keeps this safe: the Medium deficit that the Low band was
-    // allowed to ignore still makes the area-habitat status Not met.
+    // The deficit the Low band was allowed to ignore is not overlooked: it
+    // still makes the Medium band Not met, and with it the site as a whole.
+    // That pairing is what makes it safe to carry the surplus down whole.
     expect(statuses.medium).toBe(NOT_MET)
     expect(statuses.areaHabitats).toBe(NOT_MET)
   })

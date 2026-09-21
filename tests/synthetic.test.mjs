@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
 import { generateOne } from '../index.mjs'
 import {
+  DISTINCTIVENESS_CATEGORIES as areaDistinctivenessCategories,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES as hedgerowDistinctivenessCategories,
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES as watercourseDistinctivenessCategories
 } from '../src/metric/index.mjs'
@@ -299,6 +300,13 @@ describe('synthetic generateOne — non-inland habitat override', () => {
   const IGGI_TYPE =
     'Artificial hard structures with integrated greening of grey infrastructure (IGGI)'
   const IGGI_BROAD = 'Intertidal hard structures'
+  // Read the band from the reference tables rather than pinning a literal: a
+  // correction to the statutory data should not fail this test, which is about
+  // pinning a non-inland habitat, not about which band that habitat sits in.
+  const IGGI_BAND = areaDistinctivenessCategories[IGGI_FULL_NAME]
+  // The service excludes High and V.High, so a fixture habitat has to be one
+  // of these three for the rest of the pipeline to accept it.
+  const IN_SCOPE_BANDS = ['Medium', 'Low', 'V.Low']
 
   let outDir
   let outPath
@@ -318,7 +326,7 @@ describe('synthetic generateOne — non-inland habitat override', () => {
     rmSync(outDir, { recursive: true, force: true })
   })
 
-  it('writes the pinned habitat with its own broad type and V.Low band', () => {
+  it('writes the pinned habitat with its own broad type and band', () => {
     const db = openGeoPackageReadonly(outPath)
     try {
       const row = db
@@ -332,8 +340,9 @@ describe('synthetic generateOne — non-inland habitat override', () => {
         .get()
       expect(row.broad).toBe(IGGI_BROAD)
       expect(row.type).toBe(IGGI_TYPE)
-      // V.Low keeps the fixture inside the service's distinctiveness scope.
-      expect(row.band).toBe('V.Low')
+      expect(row.band).toBe(IGGI_BAND)
+      // The fixture is only useful if it stays inside the service's scope.
+      expect(IN_SCOPE_BANDS).toContain(row.band)
       // Must be a condition the metric actually scores, not "Not Possible".
       expect(row.condition).toBeTruthy()
     } finally {
@@ -354,7 +363,7 @@ describe('synthetic generateOne — non-inland habitat override', () => {
         .get()
       expect(row.broad).toBe(IGGI_BROAD)
       expect(row.type).toBe(IGGI_TYPE)
-      expect(row.band).toBe('V.Low')
+      expect(row.band).toBe(IGGI_BAND)
     } finally {
       db.close()
     }

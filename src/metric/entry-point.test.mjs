@@ -32,6 +32,7 @@ const PUBLIC_EXPORTS = [
   'MAX_SIG_FIGS',
   'MAX_YEARS',
   'MAX_YEARS_PLUS',
+  'MERGED_INTERTIDAL_BROAD_HABITAT',
   'MIN_YEARS',
   'TIME_TO_TARGET_CREATION',
   'TIME_TO_TARGET_ENHANCEMENT',
@@ -41,13 +42,17 @@ const PUBLIC_EXPORTS = [
   'WATERCOURSE_DISTINCTIVENESS_SCORES',
   'WATERCOURSE_ENCROACHMENT_MULTIPLIER',
   'WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER',
+  'broadHabitatOf',
   'calculateAreaHabitatBaseline',
+  'calculateAreaHabitatTradingRules',
   'calculateCreatedAreaHabitatPostIntervention',
   'calculateCreatedHedgerowPostIntervention',
   'calculateCreatedWatercoursePostIntervention',
+  'calculateCumulativeAvailability',
   'calculateEnhancedAreaHabitatPostIntervention',
   'calculateEnhancedHedgerowPostIntervention',
   'calculateEnhancedWatercoursePostIntervention',
+  'calculateHabitatNetUnitChanges',
   'calculateHedgerowBaseline',
   'calculatePostInterventionNetUnitChanges',
   'calculateRetainedAreaHabitatPostIntervention',
@@ -58,7 +63,10 @@ const PUBLIC_EXPORTS = [
   'isRecognisedEncroachmentValue',
   'normaliseEncroachmentLabel',
   'resolveDistinctiveness',
-  'roundToSigFigs'
+  'roundToSigFigs',
+  'sumDeficit',
+  'sumNetChange',
+  'sumSurplus'
 ]
 
 describe("the 'bng-library/metric' subpath export", () => {

@@ -21,6 +21,7 @@ const MODIFIED_GRASSLAND = 'Grassland - Modified grassland' // Low
 const ALLOTMENTS = 'Urban - Allotments' // Low
 const ARTIFICIAL_FEATURES =
   'Intertidal hard structures - Artificial features of hard structures' // Low
+const ARTIFICIAL_LITTORAL_MUD = 'Intertidal sediment - Artificial littoral mud' // Low
 
 const SEALED_SURFACE = 'Urban - Developed land; sealed surface' // V.Low
 const CALCAREOUS_GRASSLAND = 'Grassland - Lowland calcareous grassland' // High
@@ -216,6 +217,51 @@ describe('calculateAreaHabitatTradingRules — intertidal merge (AC3)', () => {
 
     expect(result.medium.broadHabitats).toEqual([])
     expect(result.low.netChange).toBe(4)
+  })
+
+  it('leaves a Low intertidal habitat its ordinary trading broad habitat', () => {
+    // The merge is Medium-only, so a consumer grouping every returned habitat
+    // by tradingBroadHabitat must not find a Low habitat under the merged
+    // Medium label. Both intertidal broad habitats carry Low types.
+    const result = calculateAreaHabitatTradingRules(
+      {},
+      { [ARTIFICIAL_FEATURES]: 4, [ARTIFICIAL_LITTORAL_MUD]: 2 }
+    )
+
+    expect(
+      result.habitats.map((habitat) => [
+        habitat.habitatType,
+        habitat.tradingBroadHabitat
+      ])
+    ).toEqual([
+      [ARTIFICIAL_FEATURES, 'Intertidal hard structures'],
+      [ARTIFICIAL_LITTORAL_MUD, 'Intertidal sediment']
+    ])
+    expect(
+      result.habitats.some(
+        (habitat) =>
+          habitat.tradingBroadHabitat === MERGED_INTERTIDAL_BROAD_HABITAT
+      )
+    ).toBe(false)
+  })
+
+  it('merges a Medium intertidal habitat sharing a broad habitat with a Low one', () => {
+    // Both bands present in Intertidal sediment: only the Medium entry moves to
+    // the merged key, pinning the boundary from both sides in one data set.
+    const result = calculateAreaHabitatTradingRules(
+      {},
+      { [LITTORAL_SAND]: 5, [ARTIFICIAL_LITTORAL_MUD]: 2 }
+    )
+
+    const tradingKeyFor = (habitatType) =>
+      result.habitats.find((habitat) => habitat.habitatType === habitatType)
+        .tradingBroadHabitat
+
+    expect(tradingKeyFor(LITTORAL_SAND)).toBe(MERGED_INTERTIDAL_BROAD_HABITAT)
+    expect(tradingKeyFor(ARTIFICIAL_LITTORAL_MUD)).toBe('Intertidal sediment')
+    expect(result.medium.broadHabitats).toEqual([
+      { broadHabitat: MERGED_INTERTIDAL_BROAD_HABITAT, netUnitChange: 5 }
+    ])
   })
 })
 

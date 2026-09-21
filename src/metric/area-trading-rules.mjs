@@ -67,19 +67,26 @@ export function broadHabitatOf(habitatType) {
 }
 
 /**
- * The broad habitat a Medium habitat cumulates under, folding the two
- * intertidal broad habitats into one (AC3). Every habitat entry carries this as
- * `tradingBroadHabitat`, so a caller can group the habitats by it and match
- * `medium.broadHabitats` exactly, rather than re-implementing the merge.
+ * The broad habitat a habitat cumulates under for trading purposes.
+ *
+ * For a Medium habitat that is the AC3 merge: the two intertidal broad habitats
+ * fold into one, so a caller can group the Medium habitats by this and match
+ * `medium.broadHabitats` exactly rather than re-implementing the merge.
+ *
+ * The merge is Medium-only. Low distinctiveness trades on distinctiveness alone,
+ * with no broad-habitat constraint, so a Low intertidal habitat has no merged
+ * group to belong to and keeps its ordinary broad habitat — reporting one under
+ * the merged Medium label would place it in a group AC3 never put it in.
  *
  * @param {string} broadHabitat
+ * @param {string} distinctiveness
  * @returns {string}
  */
-function tradingBroadHabitatOf(broadHabitat) {
-  if (
+function tradingBroadHabitatOf(broadHabitat, distinctiveness) {
+  const isIntertidal =
     broadHabitat === INTERTIDAL_SEDIMENT ||
     broadHabitat === INTERTIDAL_HARD_STRUCTURES
-  ) {
+  if (distinctiveness === MEDIUM_BAND && isIntertidal) {
     return MERGED_INTERTIDAL_BROAD_HABITAT
   }
   return broadHabitat
@@ -111,7 +118,7 @@ function tradeableHabitats(netUnitChanges) {
     habitats.push({
       habitatType: habitat.habitatType,
       broadHabitat,
-      tradingBroadHabitat: tradingBroadHabitatOf(broadHabitat),
+      tradingBroadHabitat: tradingBroadHabitatOf(broadHabitat, distinctiveness),
       distinctiveness,
       netUnitChange: habitat.netUnitChange
     })
@@ -160,10 +167,15 @@ function lowBandNetChanges(habitats) {
  * type}"), covering habitat parcels and individual trees alike. Units for both
  * sides are pre-summed by the caller.
  *
+ * Each habitat entry carries `tradingBroadHabitat`, the key to group it under.
+ * It differs from `broadHabitat` only for Medium intertidal habitats, where the
+ * AC3 merge applies; every Low habitat keeps its ordinary broad habitat, because
+ * the Low band does not trade per broad habitat and AC3 never merges it.
+ *
  * @param {Record<string, number>} baselineUnitsByType type -> summed baseline units
  * @param {Record<string, number>} deliveredUnitsByType type -> summed retained+created+enhanced units
  * @returns {{
- *   habitats: Array<{ habitatType: string, broadHabitat: string, distinctiveness: string, netUnitChange: number }>,
+ *   habitats: Array<{ habitatType: string, broadHabitat: string, tradingBroadHabitat: string, distinctiveness: string, netUnitChange: number }>,
  *   medium: { broadHabitats: Array<{ broadHabitat: string, netUnitChange: number }>, surplus: number, deficit: number },
  *   low: { netChange: number, cumulativeAvailability: number }
  * }}

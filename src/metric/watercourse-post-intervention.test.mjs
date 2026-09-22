@@ -238,6 +238,31 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
     expect(result.units).toBeCloseTo(2.08384)
   })
 
+  it('matches C-3 Culvert→Canals when the proposed condition is Poor', () => {
+    // Example Watercourse MVS C-3 row 17: Culvert Poor → Canals Poor, 0.25 km,
+    // delay 1. Proposed condition is Poor, whose creation time-to-target is 1
+    // year; the uplift still uses the flat 10-year distinctiveness value.
+    const result = calculateEnhancedWatercoursePostIntervention(
+      15,
+      0.25,
+      'Culvert',
+      'Canals',
+      'Poor',
+      'Poor',
+      {
+        watercourseEncroachment: 'Minor',
+        riparianEncroachment: 'Major/Minor',
+        advanceYears: 0,
+        delayYears: 1
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.6757723946)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
+    expect(result.units).toBeCloseTo(0.5630595245856)
+  })
+
   it('drops distinctiveness-uplift difficulty to Low once advance covers the 10-year target', () => {
     const result = calculateEnhancedWatercoursePostIntervention(
       1,

@@ -285,7 +285,7 @@ describe('getWatercourseCreationTimeToTargetValue', () => {
 })
 
 describe('getWatercourseCreationDifficultyLabel', () => {
-  it('returns the Creation band label when advance does not clear the Poor target', () => {
+  it('returns the Creation band label when advance is below the standard time to target', () => {
     expect(
       getWatercourseCreationDifficultyLabel(PRIORITY_HABITAT, MODERATE, 0, 0)
     ).toBe('High')
@@ -309,17 +309,19 @@ describe('getWatercourseCreationDifficultyLabel', () => {
     ).toBe(DIFFICULTY_CREATION)
   })
 
-  it('reclassifies to the Enhancement band once advance clears the Poor target', () => {
-    // Priority habitat Poor time-to-target is 1 year, so advanceYears: 1
-    // reclassifies Creation difficulty to the Enhancement band (Medium),
-    // not directly to Low as area habitats do.
+  it('keeps the Creation band when advance only clears the Poor target, not the full target', () => {
+    // Priority habitat Moderate creation time-to-target is 5 years and Poor is
+    // 1 year. An advance of 1 clears Poor but not the full target, so the
+    // statutory linear tabs (C-2) keep the Creation band (High) — there is no
+    // Poor->Enhancement reclassification for linear features, unlike area
+    // habitats.
     const label = getWatercourseCreationDifficultyLabel(
       PRIORITY_HABITAT,
       MODERATE,
       1,
       0
     )
-    expect(label).toBe('Medium')
+    expect(label).toBe('High')
     expect(
       getWatercourseCreationDifficultyMultiplier(
         PRIORITY_HABITAT,
@@ -327,20 +329,62 @@ describe('getWatercourseCreationDifficultyLabel', () => {
         1,
         0
       )
-    ).toBe(DIFFICULTY_MEDIUM)
+    ).toBe(DIFFICULTY_CREATION)
   })
 
-  it('stays on the Enhancement band even when advance fully meets the target', () => {
-    // Meeting the full Moderate target (5 years) still only reclassifies to
-    // Enhancement (Medium) for watercourse creation — unlike area habitats,
-    // which force Low once advance meets the full target.
+  it('drops to the fixed Low band once advance meets the full standard time to target', () => {
+    // Meeting the full Moderate target (5 years) means the habitat reaches
+    // target condition before the loss, so the statutory tabs assign the fixed
+    // "Low" band (multiplier 1) directly — not the habitat's Enhancement band.
     const label = getWatercourseCreationDifficultyLabel(
       PRIORITY_HABITAT,
       MODERATE,
       5,
       0
     )
-    expect(label).toBe('Medium')
+    expect(label).toBe('Low')
+    expect(
+      getWatercourseCreationDifficultyMultiplier(
+        PRIORITY_HABITAT,
+        MODERATE,
+        5,
+        0
+      )
+    ).toBe(DIFFICULTY_LOW)
+  })
+
+  it('keeps a created ditch on Medium below the target and drops to Low at/above it', () => {
+    // Reproduces the BMD-1018 regression: ditch Moderate creation time-to-target
+    // is 5 years, difficulty Creation = Medium (0.67). Advance below 5 must stay
+    // Medium; advance >= 5 drops to the fixed Low band.
+    expect(
+      getWatercourseCreationDifficultyMultiplier(
+        WATERCOURSE_DITCHES,
+        MODERATE,
+        2,
+        0
+      )
+    ).toBe(DIFFICULTY_MEDIUM)
+    expect(
+      getWatercourseCreationDifficultyMultiplier(
+        WATERCOURSE_DITCHES,
+        MODERATE,
+        5,
+        0
+      )
+    ).toBe(DIFFICULTY_LOW)
+  })
+
+  it('returns the fixed Low band for a created culvert in advance (no N/A lookup)', () => {
+    // Culvert's only creatable condition is Poor (L = 1) and its Enhancement
+    // band is 'N/A'. The old Poor->Enhancement reclassification resolved that
+    // band and threw on the multiplier lookup.
+    expect(getWatercourseCreationDifficultyLabel('Culvert', POOR, 1, 0)).toBe(
+      'Low'
+    )
+    expect(
+      getWatercourseCreationDifficultyMultiplier('Culvert', POOR, 1, 0)
+    ).toBe(DIFFICULTY_LOW)
   })
 
   it('throws BaselineLookupError for an unrecognised watercourse type', () => {
@@ -520,20 +564,20 @@ describe('shared linear type/condition validation', () => {
     }
   })
 
-  it('throws when the difficulty band is missing for the resolved change type', () => {
+  it('throws when the Creation difficulty band is missing for the type', () => {
     const original =
       referenceConstants.WATERCOURSE_DIFFICULTY[WATERCOURSE_DITCHES]
     referenceConstants.WATERCOURSE_DIFFICULTY[WATERCOURSE_DITCHES] = {
-      Creation: 'Low'
+      Enhancement: 'Low'
     }
     try {
-      // Ditches Poor time-to-target is 1 year, so advanceYears: 1
-      // reclassifies to the (now-missing) Enhancement band.
+      // Advance below the full target keeps the Creation band, which is now
+      // missing, so the lookup throws.
       expect(() =>
         getWatercourseCreationDifficultyLabel(
           WATERCOURSE_DITCHES,
           MODERATE,
-          1,
+          0,
           0
         )
       ).toThrow('Difficulty not found')

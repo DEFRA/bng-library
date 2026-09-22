@@ -8,7 +8,7 @@ import {
 } from './watercourse-post-intervention.mjs'
 
 const DIFFICULTY_CREATION = 0.33
-const DIFFICULTY_MEDIUM = 0.67
+const DIFFICULTY_LOW = 1
 
 describe('calculateRetainedWatercoursePostIntervention', () => {
   it('returns correct units with no encroachment (defaults to 1)', () => {
@@ -79,10 +79,11 @@ describe('calculateCreatedWatercoursePostIntervention', () => {
     expect(result.difficulty).toBe('High')
   })
 
-  it('reclassifies difficulty to the Enhancement band once advance clears the Poor target', () => {
-    // Priority habitat Poor time-to-target is 1 year, so advanceYears: 1
-    // reclassifies Creation difficulty (High) to the Enhancement band
-    // (Medium) — difficulty and difficultyMultiplier must stay consistent.
+  it('keeps the Creation band when advance clears only the Poor target', () => {
+    // Priority habitat Moderate creation time-to-target is 5 years; Poor is 1.
+    // An advance of 1 clears Poor but not the full target, so the difficulty
+    // stays on the Creation band (High). Linear features have no
+    // Poor->Enhancement reclassification (BMD-1018).
     const result = calculateCreatedWatercoursePostIntervention(
       1,
       'Priority habitat',
@@ -93,8 +94,25 @@ describe('calculateCreatedWatercoursePostIntervention', () => {
       0
     )
     expect(result.standardTimeToTargetCondition).toBe('5')
-    expect(result.difficulty).toBe('Medium')
-    expect(result.difficultyMultiplier).toBe(DIFFICULTY_MEDIUM)
+    expect(result.difficulty).toBe('High')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_CREATION)
+  })
+
+  it('drops to the fixed Low band once advance meets the full standard time to target', () => {
+    // Advance of 5 meets the full Moderate target, so the habitat reaches
+    // target condition before the loss and the statutory tabs assign the fixed
+    // "Low" band (multiplier 1) directly, not the Enhancement band.
+    const result = calculateCreatedWatercoursePostIntervention(
+      1,
+      'Priority habitat',
+      'Moderate',
+      'Minor',
+      'Minor/No Encroachment',
+      5,
+      0
+    )
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
   })
 
   it('defaults advanceYears and delayYears to 0 when omitted', () => {

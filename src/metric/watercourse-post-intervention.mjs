@@ -14,15 +14,10 @@ import {
   resolveRequiredEncroachmentMultiplier
 } from './linear-resolvers.mjs'
 import {
-  lookupLinearDifficultyLabel,
-  LOW_DIFFICULTY,
-  multiplierForDifficultyLabel,
-  NOT_POSSIBLE,
+  resolveLinearDistinctivenessEnhancementMetrics,
   WATERCOURSE_CONFIG
 } from './linear-multiplier-shared.mjs'
-import { ENHANCEMENT } from './multipliers.mjs'
 import {
-  TIME_TO_TARGET_MULTIPLIER,
   WATERCOURSE_CONDITION_SCORES,
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
   WATERCOURSE_DISTINCTIVENESS_SCORES,
@@ -30,11 +25,6 @@ import {
   WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER,
   WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT
 } from './reference-constants.mjs'
-import {
-  applyDelayAdvanceAndClamp,
-  toTimeToTargetBucketKey
-} from './linear-time-target-utils.mjs'
-import { validateAdvanceAndDelayYears } from './validate.mjs'
 import {
   calculateCreatedLinearPostIntervention,
   calculateEnhancedLinearPostIntervention,
@@ -51,7 +41,9 @@ const STATUTORY_TIME_TO_TARGET_DELAY_YEARS = 0
  * Time and difficulty for a C-3 distinctiveness uplift (proposed
  * distinctiveness score > baseline). Statutory tab C-3 uses G-7 cell R3
  * ("Enhancement through Distinctiveness") as a fixed standard time-to-target,
- * then applies advance/delay. Difficulty is the proposed type's Enhancement
+ * then applies advance/delay. That flat 10-year cell is watercourses only.
+ * Hedgerow distinctiveness uplifts use the G-6 baseline-type by proposed-type
+ * matrix, not this cell. Difficulty is the proposed type's Enhancement
  * band, dropping to Low only when advance covers that same 10-year figure.
  *
  * @param {{ postType: string, advanceYears: number, delayYears: number }} ctx
@@ -62,41 +54,13 @@ function resolveWatercourseDistinctivenessEnhancementMetrics({
   advanceYears,
   delayYears
 }) {
-  const { validatedAdvanceYears, validatedDelayYears } =
-    validateAdvanceAndDelayYears(advanceYears, delayYears)
-  const referenceYears = WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT
-  const computedYears = applyDelayAdvanceAndClamp(
-    referenceYears,
-    validatedAdvanceYears,
-    validatedDelayYears
+  return resolveLinearDistinctivenessEnhancementMetrics(
+    WATERCOURSE_CONFIG,
+    postType,
+    WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
+    advanceYears,
+    delayYears
   )
-  const timeToTargetKey = toTimeToTargetBucketKey(computedYears)
-  const timeMultiplier = TIME_TO_TARGET_MULTIPLIER[timeToTargetKey]
-  if (timeMultiplier === undefined || timeMultiplier === null) {
-    throw new Error(
-      `Time multiplier not found for watercourse distinctiveness enhancement (${timeToTargetKey} years)`
-    )
-  }
-  if (timeMultiplier === NOT_POSSIBLE) {
-    throw new Error(
-      'Time multiplier for watercourse distinctiveness enhancement is not possible'
-    )
-  }
-
-  const difficulty =
-    validatedAdvanceYears >= referenceYears
-      ? LOW_DIFFICULTY
-      : lookupLinearDifficultyLabel(WATERCOURSE_CONFIG, postType, ENHANCEMENT)
-  return {
-    timeMultiplier,
-    difficultyMultiplier: multiplierForDifficultyLabel(
-      WATERCOURSE_CONFIG,
-      postType,
-      difficulty
-    ),
-    standardTimeToTargetCondition: toTimeToTargetBucketKey(referenceYears),
-    difficulty
-  }
 }
 
 /**

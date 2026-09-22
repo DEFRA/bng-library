@@ -375,6 +375,18 @@ describe('getWatercourseCreationDifficultyLabel', () => {
     ).toBe(DIFFICULTY_LOW)
   })
 
+  it('returns the fixed Low band for a created culvert in advance (no N/A lookup)', () => {
+    // Culvert's only creatable condition is Poor (L = 1) and its Enhancement
+    // band is 'N/A'. The old Poor->Enhancement reclassification resolved that
+    // band and threw on the multiplier lookup.
+    expect(getWatercourseCreationDifficultyLabel('Culvert', POOR, 1, 0)).toBe(
+      'Low'
+    )
+    expect(
+      getWatercourseCreationDifficultyMultiplier('Culvert', POOR, 1, 0)
+    ).toBe(DIFFICULTY_LOW)
+  })
+
   it('throws BaselineLookupError for an unrecognised watercourse type', () => {
     expect(() =>
       getWatercourseCreationDifficultyLabel('Not a watercourse', MODERATE, 0, 0)

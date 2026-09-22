@@ -281,6 +281,31 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
     expect(result.difficulty).toBe('Medium')
   })
 
+  it('keeps the condition matrix when the type changes but distinctiveness does not', () => {
+    // Ditches and Canals are both Medium, so C-3 does not use the 10-year
+    // "Enhancement through Distinctiveness" value. Fairly Good → Good is 2
+    // years on the enhancement matrix.
+    const result = calculateEnhancedWatercoursePostIntervention(
+      1,
+      1,
+      'Ditches',
+      'Canals',
+      'Fairly Good',
+      'Good',
+      {
+        watercourseEncroachment: 'No Encroachment',
+        riparianEncroachment: 'No Encroachment/No Encroachment',
+        advanceYears: 0,
+        delayYears: 0
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('2')
+    expect(result.timeMultiplier).toBe(0.931225)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
+    expect(result.units).toBeCloseTo(11.86245)
+  })
+
   it('matches spreadsheet units for Moderate to Good with advance years', () => {
     const result = calculateEnhancedWatercoursePostIntervention(
       1,

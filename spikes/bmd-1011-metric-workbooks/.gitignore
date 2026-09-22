@@ -1,0 +1,5 @@
+# Generated workbooks (~3.2MB each) and the LibreOffice profile. The inputs are
+# reproducible from the scripts; the outputs are not worth versioning.
+out/
+.lo-profile/
+__pycache__/

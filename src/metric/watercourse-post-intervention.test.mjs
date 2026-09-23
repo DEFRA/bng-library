@@ -189,7 +189,10 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
     expect(result.difficulty).toBe('Medium')
   })
 
-  it('matches spreadsheet units for cross-type distinctiveness enhancement from Poor baseline', () => {
+  it('uses the fixed 10-year distinctiveness-uplift time-to-target from a Poor baseline', () => {
+    // C-3: when distinctiveness increases, standard TTT is G-7 "Enhancement
+    // through Distinctiveness" (10 years), not the creation table. Difficulty
+    // is the proposed type's Enhancement band (Priority habitat = Medium).
     const result = calculateEnhancedWatercoursePostIntervention(
       1,
       1,
@@ -204,11 +207,81 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
         delayYears: 0
       }
     )
-    expect(result.timeMultiplier).toBe(0.8368287006)
-    expect(result.difficultyMultiplier).toBe(0.33)
-    expect(result.units).toBeCloseTo(7.31384)
-    expect(result.standardTimeToTargetCondition).toBe('5')
-    expect(result.difficulty).toBe('High')
+    expect(result.timeMultiplier).toBe(0.7002822742)
+    expect(result.difficultyMultiplier).toBe(0.67)
+    expect(result.units).toBeCloseTo(9.63027)
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.difficulty).toBe('Medium')
+  })
+
+  it('matches C-3 Culvert→Ditches Poor distinctiveness uplift with advance years', () => {
+    // Example Watercourse MVS C-3 row 13: Culvert Poor → Ditches Moderate,
+    // 0.5 km, advance 2. Standard TTT 10, remaining 8, Enhancement Low.
+    const result = calculateEnhancedWatercoursePostIntervention(
+      1,
+      0.5,
+      'Culvert',
+      'Ditches',
+      'Poor',
+      'Moderate',
+      {
+        watercourseEncroachment: 'Minor',
+        riparianEncroachment: 'Major/Moderate',
+        advanceYears: 2,
+        delayYears: 0
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.7520011535)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
+    expect(result.units).toBeCloseTo(2.08384)
+  })
+
+  it('matches C-3 Culvert→Canals when the proposed condition is Poor', () => {
+    // Example Watercourse MVS C-3 row 17: Culvert Poor → Canals Poor, 0.25 km,
+    // delay 1. Proposed condition is Poor, whose creation time-to-target is 1
+    // year; the uplift still uses the flat 10-year distinctiveness value.
+    const result = calculateEnhancedWatercoursePostIntervention(
+      15,
+      0.25,
+      'Culvert',
+      'Canals',
+      'Poor',
+      'Poor',
+      {
+        watercourseEncroachment: 'Minor',
+        riparianEncroachment: 'Major/Minor',
+        advanceYears: 0,
+        delayYears: 1
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.6757723946)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
+    expect(result.units).toBeCloseTo(0.5630595245856)
+  })
+
+  it('drops distinctiveness-uplift difficulty to Low once advance covers the 10-year target', () => {
+    const result = calculateEnhancedWatercoursePostIntervention(
+      1,
+      1,
+      'Ditches',
+      'Priority habitat',
+      'Poor',
+      'Moderate',
+      {
+        watercourseEncroachment: 'No Encroachment',
+        riparianEncroachment: 'No Encroachment/No Encroachment',
+        advanceYears: 10,
+        delayYears: 0
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(1)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
   })
 
   it('matches spreadsheet units for cross-type distinctiveness enhancement', () => {
@@ -231,6 +304,31 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
     expect(result.difficultyMultiplier).toBe(0.67)
     expect(result.standardTimeToTargetCondition).toBe('10')
     expect(result.difficulty).toBe('Medium')
+  })
+
+  it('keeps the condition matrix when the type changes but distinctiveness does not', () => {
+    // Ditches and Canals are both Medium, so C-3 does not use the 10-year
+    // "Enhancement through Distinctiveness" value. Fairly Good → Good is 2
+    // years on the enhancement matrix.
+    const result = calculateEnhancedWatercoursePostIntervention(
+      1,
+      1,
+      'Ditches',
+      'Canals',
+      'Fairly Good',
+      'Good',
+      {
+        watercourseEncroachment: 'No Encroachment',
+        riparianEncroachment: 'No Encroachment/No Encroachment',
+        advanceYears: 0,
+        delayYears: 0
+      }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('2')
+    expect(result.timeMultiplier).toBe(0.931225)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(1)
+    expect(result.units).toBeCloseTo(11.86245)
   })
 
   it('matches spreadsheet units for Moderate to Good with advance years', () => {

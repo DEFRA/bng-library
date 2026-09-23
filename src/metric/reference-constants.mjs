@@ -16,6 +16,7 @@ import TIME_TO_TARGET_MULTIPLIER from './reference/time-to-target-multiplier.jso
 import WATERCOURSE_CONDITION_SCORES from './reference/watercourse-condition-scores.json' with { type: 'json' }
 import WATERCOURSE_DIFFICULTY from './reference/watercourse-difficulty.json' with { type: 'json' }
 import WATERCOURSE_TIME_TO_TARGET_CREATION from './reference/watercourse-time-to-target-creation.json' with { type: 'json' }
+import WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT from './reference/watercourse-time-to-target-distinctiveness-enhancement.json' with { type: 'json' }
 import WATERCOURSE_TIME_TO_TARGET_ENHANCEMENT from './reference/watercourse-time-to-target-enhancement.json' with { type: 'json' }
 import WATERCOURSE_DISTINCTIVENESS_CATEGORIES from './reference/watercourse-distinctiveness-categories.json' with { type: 'json' }
 import WATERCOURSE_DISTINCTIVENESS_SCORES from './reference/watercourse-distinctiveness-scores.json' with { type: 'json' }
@@ -42,6 +43,7 @@ export {
   WATERCOURSE_DIFFICULTY,
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
   WATERCOURSE_TIME_TO_TARGET_CREATION,
+  WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   WATERCOURSE_TIME_TO_TARGET_ENHANCEMENT,
   WATERCOURSE_DISTINCTIVENESS_SCORES,
   WATERCOURSE_ENCROACHMENT_MULTIPLIER,

@@ -105,7 +105,7 @@ const [results] = await recalculateWorkbooks(['./out/site.xlsx'], {
 ```
 
 Only input cells are written. The formulas are left as Defra wrote them,
-including the known cumulative-surplus error (BMD-993), so the results are the
+including the known cumulative-surplus error, so the results are the
 metric's, not ours. The workbook is edited in place inside its zip, which keeps
 it at the template's ~3.2MB. Re-saving through a spreadsheet library would
 take it to ~82MB. Every cached value is stripped, so a workbook that has not
@@ -135,7 +135,7 @@ metric v4 workbook, which is not committed here; otherwise they are skipped.
 | `bng-library`                 | Main API — synthesis, workbook reading, flaws, etc. |
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
-| `bng-library/workbook-writer` | Synthetic metric workbooks for QA (BMD-1011).       |
+| `bng-library/workbook-writer` | Synthetic metric workbooks for QA.                  |
 
 See `index.mjs` for the full list of named exports, and `src/metric/README.md`
 for the metric engine.

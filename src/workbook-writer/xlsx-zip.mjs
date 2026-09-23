@@ -3,7 +3,7 @@
  *
  * An .xlsx is a zip of XML parts. Loading one with a spreadsheet library and
  * saving it again keeps the formulas but re-serialises the styles, taking the
- * Defra metric template from 3.6MB to 82MB (BMD-1011). Editing only the parts
+ * Defra metric template from 3.6MB to 82MB. Editing only the parts
  * that change, and copying every other entry's compressed bytes through
  * untouched, keeps the file the size it was and leaves styles, validation,
  * charts and the other forty-odd sheets exactly as Defra shipped them.

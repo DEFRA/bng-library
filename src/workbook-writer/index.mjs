@@ -1,6 +1,6 @@
 /**
  * bng-library/workbook-writer — synthetic Statutory Biodiversity Metric
- * workbooks for QA (BMD-1011).
+ * workbooks for QA.
  *
  * One scenario, both artefacts: the GeoPackage pair is generated as before,
  * and the matching workbook is derived from its post-intervention half by

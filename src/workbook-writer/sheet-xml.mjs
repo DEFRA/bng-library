@@ -330,7 +330,7 @@ export class SheetXml {
   /**
    * Remove every formula's cached result. A workbook that has not been
    * recalculated then reads as empty rather than as the template's old
-   * answers — the stale-value failure BMD-1011 warned about becomes loud.
+   * answers — a stale-value failure becomes loud.
    */
   stripCachedValues() {
     for (const row of this.rows) {

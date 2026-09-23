@@ -1,5 +1,5 @@
 /**
- * The trading-rule matrix (BMD-1011): scenarios that exercise every trading
+ * The trading-rule matrix: scenarios that exercise every trading
  * rule the service can meet, each both satisfied and breached, and the ways
  * surpluses and deficits in different distinctiveness bands interact.
  *
@@ -471,7 +471,7 @@ export const TRADING_MATRIX = [
     id: 'higher-deficit-not-covered-from-below',
     title: 'a Medium deficit beside a Low surplus',
     description:
-      'Area: a Medium grassland is replaced by a Low one, while two Low grasslands are improved from Poor to Good. Hedgerows: a Medium hedgerow is lost while two Low hedgerows are improved. A surplus cannot be carried up, so the Medium rules are breached and the Low ones met. This is also the case the published metric totals wrongly (BMD-993): its cumulative surplus is reported uncorrected.',
+      'Area: a Medium grassland is replaced by a Low one, while two Low grasslands are improved from Poor to Good. Hedgerows: a Medium hedgerow is lost while two Low hedgerows are improved. A surplus cannot be carried up, so the Medium rules are breached and the Low ones met. This is also the case the published metric totals wrongly: its cumulative surplus is reported uncorrected.',
     habitats: [
       replaced(MEDIUM_GRASSLAND, LOW_GRASSLAND),
       improved(LOW_GRASSLAND),

@@ -53,7 +53,7 @@ export const RESULT_SHEETS = [
 
 /**
  * The area habitat cumulative surplus. The published metric computes it with
- * a known error (BMD-993: K90 folds the Medium deficit into the running
+ * a known error (K90 folds the Medium deficit into the running
  * total); it is reported as the workbook gives it, uncorrected, and named so
  * that nobody mistakes it for the corrected figure.
  */

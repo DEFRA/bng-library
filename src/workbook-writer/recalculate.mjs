@@ -3,7 +3,7 @@
  *
  * LibreOffice will not recalculate an .xlsx on load unless told to: its
  * OOXMLRecalcMode defaults to "never", so a plain --convert-to hands back the
- * values the file was saved with and looks exactly like success (BMD-1011).
+ * values the file was saved with and looks exactly like success.
  * The setting is seeded into a private user profile before the first launch.
  * The writer also strips every cached value, so a recalculation that did not
  * happen shows up as empty answers rather than stale ones.

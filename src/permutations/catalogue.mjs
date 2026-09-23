@@ -17,7 +17,7 @@
  *                 'trees') generated empty, so the random filler features
  *                 cannot add warnings or trading breaches of their own
  *
- * What the metric workbook should make of a scenario (BMD-1011) — checked
+ * What the metric workbook should make of a scenario — checked
  * against the recalculated workbook by `checkScenarioExpectations`:
  *   expectMetricWarnings  text of warnings the metric raises on the subject
  *   expectTrading         { area | hedgerow | watercourse: { band: 'met' |
@@ -301,7 +301,7 @@ const interventionScenarios = [
 
 // ---------------------------------------------------------------------------
 // Invalid interventions — each one a rule the metric enforces, so the
-// workbook raises its own warning on the subject (BMD-1011)
+// workbook raises its own warning on the subject
 // ---------------------------------------------------------------------------
 
 // A second, retained parcel keeps the baseline non-zero whatever happens to

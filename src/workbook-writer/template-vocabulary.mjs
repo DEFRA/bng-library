@@ -6,7 +6,7 @@
  * anything: the lookups that use it are wrapped in IFERROR, so the row
  * reports "Check Data" and generates no units. A corpus built from such rows
  * computes nothing, and a comparison against it passes because both sides are
- * empty (BMD-1011). So the lists are taken from the template — never from
+ * empty. So the lists are taken from the template — never from
  * the library's own reference data — and every row is checked against them.
  */
 

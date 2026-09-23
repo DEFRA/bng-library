@@ -19,11 +19,9 @@
 
 import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
 import {
+  calculateBandTradingFigures,
   calculateHabitatNetUnitChanges,
-  calculateCumulativeAvailability,
-  sumDeficit,
-  sumNetChange,
-  sumSurplus
+  sumNetChange
 } from './trading-rules.mjs'
 
 /** Distinctiveness bands that carry area-habitat trading rules in the MVS. */
@@ -152,16 +150,6 @@ function cumulativeBroadHabitatChanges(habitats) {
 }
 
 /**
- * @param {Array<{ distinctiveness: string, netUnitChange: number }>} habitats
- * @returns {number[]} the net unit changes of the Low-distinctiveness habitats
- */
-function lowBandNetChanges(habitats) {
-  return habitats
-    .filter((habitat) => habitat.distinctiveness === LOW_BAND)
-    .map((habitat) => habitat.netUnitChange)
-}
-
-/**
  * AC1–AC7 — the full area-habitat trading-rules unit figures.
  *
  * Habitat types are the engine reference keys ("{Broad habitat} - {Habitat
@@ -207,24 +195,16 @@ export function calculateAreaHabitatTradingRules(
   )
 
   const broadHabitats = cumulativeBroadHabitatChanges(habitatTypes)
-  const broadHabitatChanges = broadHabitats.map((entry) => entry.netUnitChange)
-
-  const mediumSurplus = sumSurplus(broadHabitatChanges)
-  const lowNetChange = sumNetChange(lowBandNetChanges(habitatTypes))
+  const { medium, low } = calculateBandTradingFigures(
+    broadHabitats.map((entry) => entry.netUnitChange),
+    habitatTypes
+      .filter((habitat) => habitat.distinctiveness === LOW_BAND)
+      .map((habitat) => habitat.netUnitChange)
+  )
 
   return {
     habitatTypes,
-    medium: {
-      broadHabitats,
-      surplus: mediumSurplus,
-      deficit: sumDeficit(broadHabitatChanges)
-    },
-    low: {
-      netUnitChange: lowNetChange,
-      cumulativeAvailability: calculateCumulativeAvailability(
-        mediumSurplus,
-        lowNetChange
-      )
-    }
+    medium: { broadHabitats, ...medium },
+    low
   }
 }

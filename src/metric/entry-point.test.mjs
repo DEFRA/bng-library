@@ -47,6 +47,7 @@ const PUBLIC_EXPORTS = [
   'broadHabitatOf',
   'calculateAreaHabitatBaseline',
   'calculateAreaHabitatTradingRules',
+  'calculateBandTradingFigures',
   'calculateCreatedAreaHabitatPostIntervention',
   'calculateCreatedHedgerowPostIntervention',
   'calculateCreatedWatercoursePostIntervention',

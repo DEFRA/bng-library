@@ -127,6 +127,43 @@ export function calculateCumulativeAvailability(
   return roundToSigFigs(higherBandSurplus + lowerBandNetChange)
 }
 
+/**
+ * Surplus, deficit and cumulative availability for a module's Medium and Low
+ * bands, once that module has decided which net unit changes belong in each.
+ *
+ * Area habitats pass one net per broad habitat. Watercourses pass one net per
+ * habitat type. The arithmetic is the same either way: surplus and deficit are
+ * taken from the Medium list, and cumulative availability is the Medium surplus
+ * plus the Low net unit change. The Medium deficit is not subtracted.
+ *
+ * @param {number[]} mediumNetUnitChanges
+ * @param {number[]} lowNetUnitChanges
+ * @returns {{
+ *   medium: { surplus: number, deficit: number },
+ *   low: { netUnitChange: number, cumulativeAvailability: number }
+ * }}
+ */
+export function calculateBandTradingFigures(
+  mediumNetUnitChanges = [],
+  lowNetUnitChanges = []
+) {
+  const surplus = sumSurplus(mediumNetUnitChanges)
+  const netUnitChange = sumNetChange(lowNetUnitChanges)
+  return {
+    medium: {
+      surplus,
+      deficit: sumDeficit(mediumNetUnitChanges)
+    },
+    low: {
+      netUnitChange,
+      cumulativeAvailability: calculateCumulativeAvailability(
+        surplus,
+        netUnitChange
+      )
+    }
+  }
+}
+
 /** A trading rule that is satisfied. */
 export const TRADING_RULE_MET = 'Met'
 
@@ -195,7 +232,7 @@ function netChangesForBand(habitats, band) {
  * @returns {{
  *   habitats: Array<{ habitatType: string, distinctiveness: string, netUnitChange: number }>,
  *   medium: { surplus: number, deficit: number },
- *   low: { netChange: number, cumulativeAvailability: number }
+ *   low: { netUnitChange: number, cumulativeAvailability: number }
  * }}
  */
 export function calculateWatercourseTradingRules(
@@ -211,24 +248,10 @@ export function calculateWatercourseTradingRules(
       .distinctiveness
   }))
 
-  const mediumChanges = netChangesForBand(habitats, MEDIUM_BAND)
-  const lowChanges = netChangesForBand(habitats, LOW_BAND)
+  const { medium, low } = calculateBandTradingFigures(
+    netChangesForBand(habitats, MEDIUM_BAND),
+    netChangesForBand(habitats, LOW_BAND)
+  )
 
-  const mediumSurplus = sumSurplus(mediumChanges)
-  const lowNetChange = sumNetChange(lowChanges)
-
-  return {
-    habitats,
-    medium: {
-      surplus: mediumSurplus,
-      deficit: sumDeficit(mediumChanges)
-    },
-    low: {
-      netChange: lowNetChange,
-      cumulativeAvailability: calculateCumulativeAvailability(
-        mediumSurplus,
-        lowNetChange
-      )
-    }
-  }
+  return { habitats, medium, low }
 }

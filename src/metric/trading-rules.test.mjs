@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { BaselineLookupError } from './errors.mjs'
 import {
+  calculateBandTradingFigures,
   calculateCumulativeAvailability,
   calculateHabitatNetUnitChanges,
   calculateWatercourseTradingRules,
@@ -139,6 +140,15 @@ describe('calculateCumulativeAvailability', () => {
   })
 })
 
+describe('calculateBandTradingFigures', () => {
+  it('derives both bands from the two lists and leaves the deficit out of the low figure', () => {
+    expect(calculateBandTradingFigures([12.92, -6.18], [-21.49])).toEqual({
+      medium: { surplus: 12.92, deficit: -6.18 },
+      low: { netUnitChange: -21.49, cumulativeAvailability: -8.57 }
+    })
+  })
+})
+
 describe('resolveWatercourseDistinctiveness', () => {
   it('maps watercourse types to their statutory band', () => {
     expect(resolveWatercourseDistinctiveness('Ditches').distinctiveness).toBe(
@@ -187,9 +197,61 @@ describe('calculateWatercourseTradingRules', () => {
     expect(result.medium).toEqual({ surplus: 12.92, deficit: -6.18 })
 
     expect(result.low).toEqual({
-      netChange: -21.49,
+      netUnitChange: -21.49,
       cumulativeAvailability: -8.57
     })
+  })
+
+  it('reconciles to the spreadsheet at full precision', () => {
+    // Per-type baseline units (C-1 col R) and delivered units (C-1 col W
+    // retained + C-2 col Z created + C-3 col AM enhanced, attributed to the
+    // proposed type), summed at full precision from the worked-example
+    // workbook. The ticket requires calculating at full precision and rounding
+    // only for display, so these assert the un-rounded figures rather than the
+    // 2 dp reading above.
+    const baselineByType = {
+      Ditches: 28.130000000000003,
+      Canals: 24.864000000000004,
+      Culvert: 22.44
+    }
+    const deliveredByType = {
+      Ditches: 41.0534128582792,
+      Canals: 18.6830595245856,
+      Culvert: 0.9520000000000001
+    }
+
+    const result = calculateWatercourseTradingRules(
+      baselineByType,
+      deliveredByType
+    )
+
+    // AC1 net unit change per type — reconciles to G-2 Habitat groups AF174-176.
+    expect(result.habitats).toEqual([
+      {
+        habitatType: 'Canals',
+        distinctiveness: 'Medium',
+        netUnitChange: -6.1809404754144
+      },
+      {
+        habitatType: 'Culvert',
+        distinctiveness: 'Low',
+        netUnitChange: -21.488
+      },
+      {
+        habitatType: 'Ditches',
+        distinctiveness: 'Medium',
+        netUnitChange: 12.9234128582792
+      }
+    ])
+
+    // AC2 surplus -> Trading Summary WaterC's I29.
+    expect(result.medium.surplus).toBe(12.9234128582792)
+    // AC3 deficit -> I30.
+    expect(result.medium.deficit).toBe(-6.1809404754144)
+    // AC4 low net change -> I41.
+    expect(result.low.netUnitChange).toBe(-21.488)
+    // AC5 cumulative availability -> I42.
+    expect(result.low.cumulativeAvailability).toBe(-8.5645871417208)
   })
 
   it('produces zeroed aggregates when there are no watercourses', () => {
@@ -198,7 +260,7 @@ describe('calculateWatercourseTradingRules', () => {
     expect(result).toEqual({
       habitats: [],
       medium: { surplus: 0, deficit: 0 },
-      low: { netChange: 0, cumulativeAvailability: 0 }
+      low: { netUnitChange: 0, cumulativeAvailability: 0 }
     })
   })
 })

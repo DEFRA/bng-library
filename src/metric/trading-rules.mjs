@@ -22,9 +22,9 @@ import { roundToSigFigs } from './utils.mjs'
 /** Net unit change threshold separating a surplus (> 0) from a deficit (< 0). */
 const SURPLUS_THRESHOLD = 0
 
-/** Watercourse distinctiveness bands that carry trading rules in the MVS. */
-const MEDIUM_BAND = 'Medium'
-const LOW_BAND = 'Low'
+/** Distinctiveness bands that carry trading rules in the MVS. */
+export const MEDIUM_BAND = 'Medium'
+export const LOW_BAND = 'Low'
 
 /**
  * Coerce a value to a finite number, treating anything else as 0. Mirrors the

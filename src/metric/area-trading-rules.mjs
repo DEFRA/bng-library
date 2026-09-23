@@ -21,12 +21,10 @@ import { DISTINCTIVENESS_CATEGORIES } from './reference-constants.mjs'
 import {
   calculateBandTradingFigures,
   calculateHabitatNetUnitChanges,
+  LOW_BAND,
+  MEDIUM_BAND,
   sumNetChange
 } from './trading-rules.mjs'
-
-/** Distinctiveness bands that carry area-habitat trading rules in the MVS. */
-const MEDIUM_BAND = 'Medium'
-const LOW_BAND = 'Low'
 
 /**
  * Separator between the broad habitat and the habitat type in a reference key,

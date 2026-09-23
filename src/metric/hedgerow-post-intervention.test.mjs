@@ -178,6 +178,53 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     expect(poor.units).toBeCloseTo(4.8011290968)
   })
 
+  it('reads the 12-year distinctiveness-uplift cell', () => {
+    // Ecologically valuable line of trees → Species-rich native hedgerow with
+    // trees is 12, the largest and most common value in the uplift table.
+    // Guards against a shifted row or swapped column in the reference data.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Ecologically valuable line of trees',
+      'Species-rich native hedgerow with trees',
+      'Moderate',
+      'Moderate',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_HIGH)
+    expect(result.postInterventionDistinctivenessScore).toBe(
+      DISTINCTIVENESS_SCORE_HIGH
+    )
+    expect(result.standardTimeToTargetCondition).toBe('12')
+    expect(result.timeMultiplier).toBe(0.6521203607)
+    expect(result.difficulty).toBe('Low')
+    // ((1*6*2 - 1*4*2) * 0.6521203607 + 1*4*2) * 1
+    expect(result.units).toBeCloseTo(10.6084814428)
+  })
+
+  it('reads the 6-year distinctiveness-uplift cell', () => {
+    // Native hedgerow → Native hedgerow - associated with bank or ditch is the
+    // only 6 in the uplift table.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Native hedgerow - associated with bank or ditch',
+      'Moderate',
+      'Moderate',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_MEDIUM)
+    expect(result.postInterventionDistinctivenessScore).toBe(
+      DISTINCTIVENESS_SCORE_MEDIUM
+    )
+    expect(result.standardTimeToTargetCondition).toBe('6')
+    expect(result.timeMultiplier).toBe(0.8075396961)
+    expect(result.difficulty).toBe('Low')
+    // ((1*4*2 - 1*2*2) * 0.8075396961 + 1*2*2) * 1
+    expect(result.units).toBeCloseTo(7.2301587844)
+  })
+
   it('fails a G-6 Error distinctiveness pair instead of using creation time-to-target', () => {
     // Line of trees → Species-rich native hedgerow is Error on G-6.
     // Creation time-to-target for that proposed type in Moderate is 5.
@@ -239,6 +286,49 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
     expect(result.standardTimeToTargetCondition).toBe('2')
     expect(result.difficulty).toBe('Low')
+  })
+
+  it('applies advance years on the distinctiveness-uplift path', () => {
+    // Native hedgerow → Species-rich native hedgerow with trees is 10 on the
+    // uplift table. Advancing 15 years meets the target, so the multiplier is
+    // 1, but standardTimeToTargetCondition stays on the unadjusted 10.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
+      'Good',
+      { advanceYears: 15, delayYears: 0 }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(1)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    // ((1*6*3 - 1*2*1) * 1 + 1*2*1) * 1
+    expect(result.units).toBe(18)
+  })
+
+  it('applies delay years on the distinctiveness-uplift path', () => {
+    // Same uplift pair (10 years). A 5-year delay lengthens the effective time
+    // to 15, moving the multiplier, while standardTimeToTargetCondition stays
+    // on the unadjusted 10. Advance and delay are tested separately because
+    // validate.mjs rejects both on the same feature.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
+      'Good',
+      { advanceYears: 0, delayYears: 5 }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.5860163055)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    // ((1*6*3 - 1*2*1) * 0.5860163055 + 1*2*1) * 1
+    expect(result.units).toBeCloseTo(11.376260888)
   })
 
   it('uses baseline length for baseline value when post-intervention length is greater', () => {

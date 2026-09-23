@@ -8,6 +8,7 @@ import HEDGEROW_DISTINCTIVENESS_CATEGORIES from './reference/hedgerow-distinctiv
 import HEDGEROW_DIFFICULTY from './reference/hedgerow-difficulty.json' with { type: 'json' }
 import HEDGEROW_DISTINCTIVENESS_SCORES from './reference/hedgerow-distinctiveness-scores.json' with { type: 'json' }
 import HEDGEROW_TIME_TO_TARGET_CREATION from './reference/hedgerow-time-to-target-creation.json' with { type: 'json' }
+import HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT from './reference/hedgerow-time-to-target-distinctiveness-enhancement.json' with { type: 'json' }
 import HEDGEROW_TIME_TO_TARGET_ENHANCEMENT from './reference/hedgerow-time-to-target-enhancement.json' with { type: 'json' }
 import INDIVIDUAL_TREE_AREA_HECTARES from './reference/individual-tree-area.json' with { type: 'json' }
 import TIME_TO_TARGET_CREATION from './reference/habitat-area-time-to-target-creation.json' with { type: 'json' }
@@ -34,6 +35,7 @@ export {
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_SCORES,
   HEDGEROW_TIME_TO_TARGET_CREATION,
+  HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   HEDGEROW_TIME_TO_TARGET_ENHANCEMENT,
   INDIVIDUAL_TREE_AREA_HECTARES,
   TIME_TO_TARGET_CREATION,

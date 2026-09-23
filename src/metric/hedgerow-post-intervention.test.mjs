@@ -14,8 +14,10 @@ const MULTIPLIER_2_YRS = 0.931225
 const DIFFICULTY_LOW = 1
 const DISTINCTIVENESS_LOW = 'Low'
 const DISTINCTIVENESS_MEDIUM = 'Medium'
+const DISTINCTIVENESS_HIGH = 'High'
 const DISTINCTIVENESS_SCORE_LOW = 2
 const DISTINCTIVENESS_SCORE_MEDIUM = 4
+const DISTINCTIVENESS_SCORE_HIGH = 6
 const CONDITION_SCORE_MODERATE = 2
 const CONDITION_SCORE_GOOD = 3
 const STRATEGIC_SIGNIFICANCE = 1
@@ -90,9 +92,12 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     expect(result.postInterventionConditionScore).toBe(CONDITION_SCORE_MODERATE)
     expect(result.timeMultiplier).toBe(MULTIPLIER_10_YRS)
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    expect(result.standardTimeToTargetCondition).toBe('3')
   })
 
-  it('uses creation time-to-target when enhancing to higher distinctiveness from Poor', () => {
+  it('uses the G-6 matrix when enhancing to higher distinctiveness from Poor', () => {
+    // Native hedgerow → Species-rich native hedgerow is 5 on G-6.
+    // The creation table for that proposed type in Moderate is also 5.
     const result = calculateEnhancedHedgerowPostIntervention(
       1,
       1,
@@ -114,24 +119,153 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     expect(result.difficulty).toBe('Low')
   })
 
-  it('uses Poor enhancement time-to-target start for higher distinctiveness above Poor', () => {
+  it('uses the G-6 matrix for a distinctiveness uplift above Poor', () => {
+    // Native hedgerow Moderate → Species-rich native hedgerow with trees
+    // Moderate. G-6 is 10 for this pair. The old rule, the enhancement table
+    // for the proposed type starting at Poor, is 6 for Moderate. Creation
+    // time-to-target for this proposed type in Moderate is also 10, so this
+    // case separates the above-Poor path from that enhancement table.
     const result = calculateEnhancedHedgerowPostIntervention(
       1,
       1,
       'Native hedgerow',
-      'Species-rich native hedgerow',
+      'Species-rich native hedgerow with trees',
       'Moderate',
+      'Moderate',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_HIGH)
+    expect(result.postInterventionDistinctivenessScore).toBe(
+      DISTINCTIVENESS_SCORE_HIGH
+    )
+    expect(result.postInterventionConditionScore).toBe(CONDITION_SCORE_MODERATE)
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.7002822742)
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    expect(result.difficulty).toBe('Low')
+    // ((1*6*2 - 1*2*2) * 0.7002822742 + 1*2*2) * 1
+    expect(result.units).toBeCloseTo(9.6022581936)
+  })
+
+  it('uses 10 years for Native hedgerow to Species-rich native hedgerow with trees', () => {
+    // G-6 is 10 for this pair. Creation time-to-target for the proposed
+    // type is 20 in Good and 1 in Poor.
+    const good = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
       'Good',
       { advanceYears: 0, delayYears: 0 }
     )
-    expect(result.units).toBeCloseTo(10.696)
+    expect(good.standardTimeToTargetCondition).toBe('10')
+    expect(good.timeMultiplier).toBe(0.7002822742)
+    expect(good.difficulty).toBe('Low')
+    expect(good.units).toBeCloseTo(13.2045163872)
+
+    const poor = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
+      'Poor',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(poor.standardTimeToTargetCondition).toBe('10')
+    expect(poor.timeMultiplier).toBe(0.7002822742)
+    expect(poor.units).toBeCloseTo(4.8011290968)
+  })
+
+  it('reads the 12-year distinctiveness-uplift cell', () => {
+    // Ecologically valuable line of trees → Species-rich native hedgerow with
+    // trees is 12, the largest and most common value in the uplift table.
+    // Guards against a shifted row or swapped column in the reference data.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Ecologically valuable line of trees',
+      'Species-rich native hedgerow with trees',
+      'Moderate',
+      'Moderate',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_HIGH)
+    expect(result.postInterventionDistinctivenessScore).toBe(
+      DISTINCTIVENESS_SCORE_HIGH
+    )
+    expect(result.standardTimeToTargetCondition).toBe('12')
+    expect(result.timeMultiplier).toBe(0.6521203607)
+    expect(result.difficulty).toBe('Low')
+    // ((1*6*2 - 1*4*2) * 0.6521203607 + 1*4*2) * 1
+    expect(result.units).toBeCloseTo(10.6084814428)
+  })
+
+  it('reads the 6-year distinctiveness-uplift cell', () => {
+    // Native hedgerow → Native hedgerow - associated with bank or ditch is the
+    // only 6 in the uplift table.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Native hedgerow - associated with bank or ditch',
+      'Moderate',
+      'Moderate',
+      { advanceYears: 0, delayYears: 0 }
+    )
     expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_MEDIUM)
     expect(result.postInterventionDistinctivenessScore).toBe(
       DISTINCTIVENESS_SCORE_MEDIUM
     )
-    expect(result.postInterventionConditionScore).toBe(CONDITION_SCORE_GOOD)
-    expect(result.timeMultiplier).toBe(MULTIPLIER_30_YRS)
+    expect(result.standardTimeToTargetCondition).toBe('6')
+    expect(result.timeMultiplier).toBe(0.8075396961)
+    expect(result.difficulty).toBe('Low')
+    // ((1*4*2 - 1*2*2) * 0.8075396961 + 1*2*2) * 1
+    expect(result.units).toBeCloseTo(7.2301587844)
+  })
+
+  it('fails a G-6 Error distinctiveness pair instead of using creation time-to-target', () => {
+    // Line of trees → Species-rich native hedgerow is Error on G-6.
+    // Creation time-to-target for that proposed type in Moderate is 5.
+    expect(() =>
+      calculateEnhancedHedgerowPostIntervention(
+        1,
+        1,
+        'Line of trees',
+        'Species-rich native hedgerow',
+        'Poor',
+        'Moderate',
+        { advanceYears: 0, delayYears: 0 }
+      )
+    ).toThrow(BaselineLookupError)
+  })
+
+  it('keeps the condition table when the type changes but distinctiveness does not', () => {
+    // Native hedgerow → Line of trees are both Low distinctiveness, so this is
+    // a type change without a distinctiveness uplift. It must stay on the
+    // enhancement-through-condition table (Line of trees Moderate→Good = 10),
+    // not the flat/G-6 uplift path. The proposed condition still drives the
+    // year, unlike a distinctiveness uplift.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Line of trees',
+      'Moderate',
+      'Good',
+      { advanceYears: 0, delayYears: 0 }
+    )
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_LOW)
+    expect(result.postInterventionDistinctivenessScore).toBe(
+      DISTINCTIVENESS_SCORE_LOW
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.7002822742)
+    expect(result.difficulty).toBe('Low')
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    // ((1*2*3 - 1*2*2) * 0.7002822742 + 1*2*2) * 1
+    expect(result.units).toBeCloseTo(5.4005645484)
   })
 
   it('applies advance years to reduce time-to-target', () => {
@@ -152,6 +286,49 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
     expect(result.standardTimeToTargetCondition).toBe('2')
     expect(result.difficulty).toBe('Low')
+  })
+
+  it('applies advance years on the distinctiveness-uplift path', () => {
+    // Native hedgerow → Species-rich native hedgerow with trees is 10 on the
+    // uplift table. Advancing 15 years meets the target, so the multiplier is
+    // 1, but standardTimeToTargetCondition stays on the unadjusted 10.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
+      'Good',
+      { advanceYears: 15, delayYears: 0 }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(1)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    // ((1*6*3 - 1*2*1) * 1 + 1*2*1) * 1
+    expect(result.units).toBe(18)
+  })
+
+  it('applies delay years on the distinctiveness-uplift path', () => {
+    // Same uplift pair (10 years). A 5-year delay lengthens the effective time
+    // to 15, moving the multiplier, while standardTimeToTargetCondition stays
+    // on the unadjusted 10. Advance and delay are tested separately because
+    // validate.mjs rejects both on the same feature.
+    const result = calculateEnhancedHedgerowPostIntervention(
+      1,
+      1,
+      'Native hedgerow',
+      'Species-rich native hedgerow with trees',
+      'Poor',
+      'Good',
+      { advanceYears: 0, delayYears: 5 }
+    )
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.5860163055)
+    expect(result.difficulty).toBe('Low')
+    expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
+    // ((1*6*3 - 1*2*1) * 0.5860163055 + 1*2*1) * 1
+    expect(result.units).toBeCloseTo(11.376260888)
   })
 
   it('uses baseline length for baseline value when post-intervention length is greater', () => {

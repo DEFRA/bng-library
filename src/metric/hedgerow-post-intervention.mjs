@@ -1,3 +1,4 @@
+import { BaselineLookupError } from './errors.mjs'
 import {
   getHedgerowCreationDifficultyLabel,
   getHedgerowCreationDifficultyMultiplier,
@@ -8,11 +9,17 @@ import {
   getHedgerowEnhancementTimeMultiplier,
   getHedgerowEnhancementTimeToTargetValue
 } from './linear-hedgerow-multipliers.mjs'
+import {
+  HEDGEROW_CONFIG,
+  NOT_POSSIBLE,
+  resolveLinearDistinctivenessEnhancementMetrics
+} from './linear-multiplier-shared.mjs'
 import { isDistinctivenessEnhancement } from './linear-resolvers.mjs'
 import {
   HEDGEROW_CONDITION_SCORES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
-  HEDGEROW_DISTINCTIVENESS_SCORES
+  HEDGEROW_DISTINCTIVENESS_SCORES,
+  HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT
 } from './reference-constants.mjs'
 import {
   calculateCreatedLinearPostIntervention,
@@ -21,33 +28,60 @@ import {
 } from './linear-post-intervention.mjs'
 
 const HEDGEROW_RESOLVER_LABEL = 'hedgerow'
-const POOR_CONDITION = 'Poor'
 const STATUTORY_ADVANCE_YEARS = 0
 const STATUTORY_DELAY_YEARS = 0
 
 /**
- * Enhancement-through-distinctiveness from a Poor baseline uses creation
- * time-to-target on the post-intervention hedge. Otherwise the enhancement
- * table uses the "Poor" start band on the post-intervention hedge type.
- * @param {number} baselineDistinctivenessScore
- * @param {number} postInterventionDistinctivenessScore
- * @param {string} baselineCondition
- * @returns {string}
+ * G-6 "Enhancement Through Distinctiveness" is a baseline-type by proposed-type
+ * matrix. The proposed condition is not part of the lookup. Cells marked
+ * Error in the workbook are stored as Not Possible and fail the lookup.
+ * @param {string} baselineType
+ * @param {string} postType
+ * @returns {number}
  */
-function resolveHedgerowEnhancementTimeStartCondition(
-  baselineDistinctivenessScore,
-  postInterventionDistinctivenessScore,
-  baselineCondition
-) {
-  if (
-    isDistinctivenessEnhancement(
-      baselineDistinctivenessScore,
-      postInterventionDistinctivenessScore
+function lookupHedgerowDistinctivenessEnhancementYears(baselineType, postType) {
+  const value =
+    HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT[baselineType]?.[
+      postType
+    ]
+  if (value === undefined || value === null) {
+    throw new BaselineLookupError(
+      `Time to target not found for hedgerow distinctiveness enhancement: ${baselineType} -> ${postType}`
     )
-  ) {
-    return POOR_CONDITION
   }
-  return baselineCondition
+  if (value === NOT_POSSIBLE) {
+    throw new BaselineLookupError(
+      `Time to target '${NOT_POSSIBLE}' for hedgerow distinctiveness enhancement: ${baselineType} -> ${postType}`
+    )
+  }
+  return value
+}
+
+/**
+ * Time and difficulty when the proposed distinctiveness score is higher than
+ * the baseline. B-3 supplies the G-6 type-by-type cell as the standard
+ * time-to-target. Advance, delay, and difficulty are applied by the shared
+ * linear helper.
+ * @param {{ baselineType: string, postType: string, advanceYears: number, delayYears: number }} ctx
+ * @returns {{ timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
+ */
+function resolveHedgerowDistinctivenessEnhancementMetrics({
+  baselineType,
+  postType,
+  advanceYears,
+  delayYears
+}) {
+  const referenceYears = lookupHedgerowDistinctivenessEnhancementYears(
+    baselineType,
+    postType
+  )
+  return resolveLinearDistinctivenessEnhancementMetrics(
+    HEDGEROW_CONFIG,
+    postType,
+    referenceYears,
+    advanceYears,
+    delayYears
+  )
 }
 
 function resolveCreationMetrics({
@@ -125,12 +159,13 @@ function resolveEnhancementMetrics({
 
 /**
  * Resolve time and difficulty multipliers for an enhanced hedgerow.
- * @param {{ baselineDistinctivenessScore: number, postInterventionDistinctivenessScore: number, postType: string, baselineCondition: string, postCondition: string, advanceYears: number, delayYears: number }} enhancementContext
+ * @param {{ baselineDistinctivenessScore: number, postInterventionDistinctivenessScore: number, baselineType: string, postType: string, baselineCondition: string, postCondition: string, advanceYears: number, delayYears: number }} enhancementContext
  * @returns {{ timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
  */
 function resolveHedgerowEnhancementMultipliers({
   baselineDistinctivenessScore,
   postInterventionDistinctivenessScore,
+  baselineType,
   postType,
   baselineCondition,
   postCondition,
@@ -141,25 +176,19 @@ function resolveHedgerowEnhancementMultipliers({
     isDistinctivenessEnhancement(
       baselineDistinctivenessScore,
       postInterventionDistinctivenessScore
-    ) &&
-    baselineCondition === POOR_CONDITION
+    )
   ) {
-    return resolveCreationMetrics({
+    return resolveHedgerowDistinctivenessEnhancementMetrics({
+      baselineType,
       postType,
-      postCondition,
       advanceYears,
       delayYears
     })
   }
 
-  const timeStartCondition = resolveHedgerowEnhancementTimeStartCondition(
-    baselineDistinctivenessScore,
-    postInterventionDistinctivenessScore,
-    baselineCondition
-  )
   return resolveEnhancementMetrics({
     postType,
-    timeStartCondition,
+    timeStartCondition: baselineCondition,
     postCondition,
     advanceYears,
     delayYears

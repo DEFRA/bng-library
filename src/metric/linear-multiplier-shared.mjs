@@ -1,5 +1,10 @@
 import { BaselineLookupError } from './errors.mjs'
 import {
+  applyDelayAdvanceAndClamp,
+  toTimeToTargetBucketKey
+} from './linear-time-target-utils.mjs'
+import { ENHANCEMENT } from './multipliers.mjs'
+import {
   HEDGEROW_CONDITION_SCORES,
   HEDGEROW_DIFFICULTY,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
@@ -10,8 +15,10 @@ import {
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
   WATERCOURSE_TIME_TO_TARGET_CREATION,
   WATERCOURSE_TIME_TO_TARGET_ENHANCEMENT,
-  DIFFICULTY_MULTIPLIER
+  DIFFICULTY_MULTIPLIER,
+  TIME_TO_TARGET_MULTIPLIER
 } from './reference-constants.mjs'
+import { validateAdvanceAndDelayYears } from './validate.mjs'
 
 export const NOT_POSSIBLE = 'Not Possible'
 export const LOW_DIFFICULTY = 'Low'
@@ -152,4 +159,61 @@ export function multiplierForDifficultyLabel(cfg, linearType, difficultyLabel) {
     )
   }
   return multiplier
+}
+
+/**
+ * Time and difficulty once a distinctiveness-uplift standard year figure is
+ * already known. The caller supplies that figure: a fixed cell for
+ * watercourses, a type-by-type matrix cell for hedgerows. Advance and delay
+ * adjust the time multiplier only. Difficulty is the proposed type's
+ * Enhancement band, dropping to Low when advance covers the standard years.
+ *
+ * @param {object} cfg
+ * @param {string} postType
+ * @param {number} referenceYears
+ * @param {number} advanceYears
+ * @param {number} delayYears
+ * @returns {{ timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
+ */
+export function resolveLinearDistinctivenessEnhancementMetrics(
+  cfg,
+  postType,
+  referenceYears,
+  advanceYears,
+  delayYears
+) {
+  const { validatedAdvanceYears, validatedDelayYears } =
+    validateAdvanceAndDelayYears(advanceYears, delayYears)
+  const computedYears = applyDelayAdvanceAndClamp(
+    referenceYears,
+    validatedAdvanceYears,
+    validatedDelayYears
+  )
+  const timeToTargetKey = toTimeToTargetBucketKey(computedYears)
+  const timeMultiplier = TIME_TO_TARGET_MULTIPLIER[timeToTargetKey]
+  if (timeMultiplier === undefined || timeMultiplier === null) {
+    throw new BaselineLookupError(
+      `Time multiplier not found for ${cfg.label} distinctiveness enhancement (${timeToTargetKey} years)`
+    )
+  }
+  if (timeMultiplier === NOT_POSSIBLE) {
+    throw new BaselineLookupError(
+      `Time multiplier for ${cfg.label} distinctiveness enhancement is not possible`
+    )
+  }
+
+  const difficulty =
+    validatedAdvanceYears >= referenceYears
+      ? LOW_DIFFICULTY
+      : lookupLinearDifficultyLabel(cfg, postType, ENHANCEMENT)
+  return {
+    timeMultiplier,
+    difficultyMultiplier: multiplierForDifficultyLabel(
+      cfg,
+      postType,
+      difficulty
+    ),
+    standardTimeToTargetCondition: toTimeToTargetBucketKey(referenceYears),
+    difficulty
+  }
 }

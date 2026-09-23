@@ -8,9 +8,6 @@
  * gives results identical to the filled-in example workbook the work began
  * with. A newer release gets a new entry here once it has been checked the
  * same way.
- *
- * Downloaded, never committed: whether the tool may be redistributed is not
- * yet confirmed.
  */
 
 import { createHash } from 'node:crypto'

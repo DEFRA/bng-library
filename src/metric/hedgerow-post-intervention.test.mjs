@@ -14,8 +14,10 @@ const MULTIPLIER_2_YRS = 0.931225
 const DIFFICULTY_LOW = 1
 const DISTINCTIVENESS_LOW = 'Low'
 const DISTINCTIVENESS_MEDIUM = 'Medium'
+const DISTINCTIVENESS_HIGH = 'High'
 const DISTINCTIVENESS_SCORE_LOW = 2
 const DISTINCTIVENESS_SCORE_MEDIUM = 4
+const DISTINCTIVENESS_SCORE_HIGH = 6
 const CONDITION_SCORE_MODERATE = 2
 const CONDITION_SCORE_GOOD = 3
 const STRATEGIC_SIGNIFICANCE = 1
@@ -118,26 +120,31 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
   })
 
   it('uses the G-6 matrix for a distinctiveness uplift above Poor', () => {
-    // Native hedgerow → Species-rich native hedgerow is 5 on G-6,
-    // independent of the Moderate baseline and Good proposed condition.
+    // Native hedgerow Moderate → Species-rich native hedgerow with trees
+    // Moderate. G-6 is 10 for this pair. The old rule, the enhancement table
+    // for the proposed type starting at Poor, is 6 for Moderate. Creation
+    // time-to-target for this proposed type in Moderate is also 10, so this
+    // case separates the above-Poor path from that enhancement table.
     const result = calculateEnhancedHedgerowPostIntervention(
       1,
       1,
       'Native hedgerow',
-      'Species-rich native hedgerow',
+      'Species-rich native hedgerow with trees',
       'Moderate',
-      'Good',
+      'Moderate',
       { advanceYears: 0, delayYears: 0 }
     )
-    expect(result.units).toBeCloseTo(10.696)
-    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_MEDIUM)
+    expect(result.postInterventionDistinctiveness).toBe(DISTINCTIVENESS_HIGH)
     expect(result.postInterventionDistinctivenessScore).toBe(
-      DISTINCTIVENESS_SCORE_MEDIUM
+      DISTINCTIVENESS_SCORE_HIGH
     )
-    expect(result.postInterventionConditionScore).toBe(CONDITION_SCORE_GOOD)
-    expect(result.timeMultiplier).toBe(MULTIPLIER_30_YRS)
+    expect(result.postInterventionConditionScore).toBe(CONDITION_SCORE_MODERATE)
+    expect(result.standardTimeToTargetCondition).toBe('10')
+    expect(result.timeMultiplier).toBe(0.7002822742)
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
-    expect(result.standardTimeToTargetCondition).toBe('5')
+    expect(result.difficulty).toBe('Low')
+    // ((1*6*2 - 1*2*2) * 0.7002822742 + 1*2*2) * 1
+    expect(result.units).toBeCloseTo(9.6022581936)
   })
 
   it('uses 10 years for Native hedgerow to Species-rich native hedgerow with trees', () => {

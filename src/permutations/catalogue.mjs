@@ -20,8 +20,8 @@
  * What the metric workbook should make of a scenario (BMD-1011) — checked
  * against the recalculated workbook by `checkScenarioExpectations`:
  *   expectMetricWarnings  text of warnings the metric raises on the subject
- *   expectTradingBreaches { area | hedgerow | watercourse: [band, …] } —
- *                         distinctiveness bands whose trading rule fails
+ *   expectTrading         { area | hedgerow | watercourse: { band: 'met' |
+ *                         'breached' } } — each band's trading-rule verdict
  *   expectRejectedInputs  ['sheetKey.field', …] — subject inputs the
  *                         workbook's own drop-down lists do not offer
  *
@@ -39,6 +39,7 @@ import {
   MIN_RIVER_COUNT,
   STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
+import { TRADING_MATRIX } from './trading-matrix.mjs'
 
 // Habitats chosen for stable distinctiveness bands and a full 5-condition
 // range, so a scenario can pin any condition without hitting a "Not Possible"
@@ -72,7 +73,6 @@ const AREAS_AND_RIVERS = ['hedgerows', 'trees']
 const RIVER_DITCH = 'Ditches'
 const RIVER_CULVERT = 'Culvert'
 const HEDGE_NATIVE = 'Native hedgerow'
-const HEDGE_SPECIES_RICH = 'Species-rich native hedgerow'
 const HEDGE_POOR = HEDGE_CONDITIONS[2]
 
 // A small fixture still draws this many linear features, so pinning them all
@@ -647,57 +647,6 @@ const tradingScenarios = [
       ref: 'H001',
       note: 'Low (baseline) → Medium (proposed) distinctiveness'
     }
-  },
-  {
-    id: 'trading-area-medium-breach',
-    purpose: 'trading-rules',
-    title: 'Trading rules breached — Medium habitat replaced by Low',
-    description:
-      'H001, a Medium-distinctiveness habitat, is lost and a Low-distinctiveness one created in its place. A Medium loss must be replaced by the same broad habitat or a higher distinctiveness, so the Medium trading rule fails.',
-    size: 2,
-    emptyLayers: ONLY_AREAS,
-    overrides: {
-      habitats: areaSubject({
-        retention: 'Created',
-        proposedHabitatFullName: HABITAT_LOW,
-        proposedCondition: 'Good',
-        advanceYears: '0',
-        delayYears: '0'
-      })
-    },
-    expectTradingBreaches: { area: ['Medium'] },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'Medium parcel lost, Low habitat created'
-    }
-  },
-  {
-    id: 'trading-hedgerow-medium-breach',
-    purpose: 'trading-rules',
-    title: 'Trading rules breached — Medium hedgerows lost',
-    description:
-      'Every hedgerow is a species-rich native hedgerow (Medium distinctiveness) and every one is lost, with nothing created to replace it.',
-    size: 1,
-    emptyLayers: AREAS_AND_HEDGEROWS,
-    overrides: {
-      habitats: [retainedControl],
-      hedgerows: repeat(
-        {
-          hedgeType: HEDGE_SPECIES_RICH,
-          retention: 'Lost',
-          baselineCondition: HEDGE_GOOD,
-          baselineStrategicSignificance: SS_LOW
-        },
-        MIN_HEDGEROWS
-      )
-    },
-    expectTradingBreaches: { hedgerow: ['Medium'] },
-    subject: {
-      layer: 'Hedgerows',
-      ref: 'HG001',
-      note: 'lost Medium-distinctiveness hedgerow'
-    }
   }
 ]
 
@@ -840,6 +789,7 @@ export const SCENARIOS = [
   ...strategicSignificanceScenarios,
   ...netGainScenarios,
   ...tradingScenarios,
+  ...TRADING_MATRIX,
   ...advanceDelayScenarios,
   ...completenessScenarios
 ]

@@ -87,7 +87,6 @@ recalculate it headlessly, and read back the metric's own answers:
 
 ```js
 import {
-  readMetricResults,
   recalculateWorkbooks,
   workbookFromGeoPackage
 } from 'bng-library/workbook-writer'
@@ -99,10 +98,9 @@ const { buffer, issues } = workbookFromGeoPackage({
 })
 writeFileSync('./out/site.xlsx', buffer)
 
-const [recalculated] = recalculateWorkbooks(['./out/site.xlsx'], {
-  outDir: './out/recalculated'
+const [results] = await recalculateWorkbooks(['./out/site.xlsx'], {
+  workDir: './out/.recalc'
 })
-const results = readMetricResults(readFileSync(recalculated))
 // results.headline.netUnitChange.area, results.trading, results.rowWarnings …
 ```
 

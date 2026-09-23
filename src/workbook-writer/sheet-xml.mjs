@@ -64,7 +64,8 @@ function hasFormula(cellXml) {
   return /<f[\s>/]/.test(cellXml)
 }
 
-function columnLetters(index) {
+/** 1 → "A", 27 → "AA". */
+export function columnLetters(index) {
   let letters = ''
   let n = index
   while (n > 0) {

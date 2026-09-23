@@ -27,7 +27,6 @@ import {
 import {
   METRIC_SHEETS,
   checkScenarioExpectations,
-  createRecalcProfile,
   isLibreOfficeAvailable,
   readMetricResults,
   readTemplateVocabulary,
@@ -45,8 +44,10 @@ const SEED = 11
 // The template is ~3.6MB; re-serialising it with a spreadsheet library takes
 // it to ~82MB. Editing in place must keep it near its original size.
 const MAX_WORKBOOK_BYTES = 4_000_000
-// LibreOffice takes ~10s a workbook.
+// LibreOffice takes a few seconds a workbook.
 const RECALC_TIMEOUT_MS = 180_000
+// Writing a purpose's worth of GeoPackages and workbooks.
+const GENERATE_TIMEOUT_MS = 60_000
 
 function scenario(id) {
   return SCENARIOS.find((s) => s.id === id)
@@ -79,7 +80,7 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     template = readFileSync(TEMPLATE)
     vocabulary = readTemplateVocabulary(template)
     write('invalid-area-condition-reduced')
-    write('trading-hedgerow-medium-breach')
+    write('trading-higher-deficit-not-covered-from-below')
   })
 
   afterAll(() => {
@@ -120,22 +121,21 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
 
   it('writes a workbook every input of which the template accepts', () => {
     expect(written['invalid-area-condition-reduced'].issues).toEqual([])
-    expect(written['trading-hedgerow-medium-breach'].issues).toEqual([])
+    expect(
+      written['trading-higher-deficit-not-covered-from-below'].issues
+    ).toEqual([])
   })
 
   it.skipIf(!isLibreOfficeAvailable())(
     'recalculates to the metric’s own verdict',
-    () => {
+    async () => {
       const ids = Object.keys(written)
-      const outputs = recalculateWorkbooks(
+      const recalculated = await recalculateWorkbooks(
         ids.map((id) => written[id].file),
-        {
-          outDir: path.join(dir, 'recalculated'),
-          profile: createRecalcProfile(path.join(dir, 'profile'))
-        }
+        { workDir: path.join(dir, 'recalc') }
       )
       ids.forEach((id, i) => {
-        const results = readMetricResults(readFileSync(outputs[i]))
+        const results = recalculated[i]
         expect(typeof results.headline.baselineUnits.area).toBe('number')
         const checks = checkScenarioExpectations(written[id].scenario, results)
         expect(checks.length).toBeGreaterThan(0)
@@ -150,17 +150,21 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     expect(() => readMetricResults(buffer)).toThrow(/not been recalculated/)
   })
 
-  it('adds each scenario’s workbook to the permutations output', () => {
-    const { scenarios, manifest } = generatePermutations({
-      only: 'trading-rules',
-      seed: SEED,
-      workbookTemplate: template
-    })
-    for (const s of scenarios) {
-      expect(s.workbook.path).toBe(`trading-rules/${s.id}.xlsx`)
-      expect(s.workbook.buffer.length).toBeLessThan(MAX_WORKBOOK_BYTES)
-      expect(Array.isArray(s.workbook.issues)).toBe(true)
-    }
-    expect(manifest.scenarios[0].files.workbook).toMatch(/\.xlsx$/)
-  })
+  it(
+    'adds each scenario’s workbook to the permutations output',
+    () => {
+      const { scenarios, manifest } = generatePermutations({
+        only: 'trading-rules',
+        seed: SEED,
+        workbookTemplate: template
+      })
+      for (const s of scenarios) {
+        expect(s.workbook.path).toBe(`trading-rules/${s.id}.xlsx`)
+        expect(s.workbook.buffer.length).toBeLessThan(MAX_WORKBOOK_BYTES)
+        expect(Array.isArray(s.workbook.issues)).toBe(true)
+      }
+      expect(manifest.scenarios[0].files.workbook).toMatch(/\.xlsx$/)
+    },
+    GENERATE_TIMEOUT_MS
+  )
 })

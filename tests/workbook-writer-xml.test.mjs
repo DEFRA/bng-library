@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 import { readZip, writeZip } from '../src/workbook-writer/xlsx-zip.mjs'
+import { csvToSheet } from '../src/workbook-writer/csv-sheets.mjs'
 import {
   SheetXml,
   columnIndex,
@@ -142,5 +143,26 @@ describe('shiftFormula', () => {
   it('carries column letters over Z', () => {
     expect(shiftFormula('Z1', 0, 1)).toBe('AA1')
     expect(columnIndex('AA')).toBe(27)
+  })
+})
+
+describe('csvToSheet', () => {
+  it('reads LibreOffice’s unformatted export back into typed cells', () => {
+    const sheet = csvToSheet(
+      [
+        ',Area habitat units,23.1012163586322,14.8084720247642%',
+        '"On-site\npost-intervention","say ""hi""",#REF!,Check Data ⚠',
+        ''
+      ].join('\n')
+    )
+    expect(sheet.B1).toEqual({ t: 's', v: 'Area habitat units' })
+    expect(sheet.C1).toEqual({ t: 'n', v: 23.1012163586322 })
+    expect(sheet.D1.t).toBe('n')
+    expect(sheet.D1.v).toBeCloseTo(0.148084720247642, 15)
+    expect(sheet.A2.v).toBe('On-site\npost-intervention')
+    expect(sheet.B2.v).toBe('say "hi"')
+    expect(sheet.C2).toEqual({ t: 'e', v: '#REF!', w: '#REF!' })
+    expect(sheet.A1).toBeUndefined()
+    expect(sheet['!ref']).toBe('A1:D2')
   })
 })

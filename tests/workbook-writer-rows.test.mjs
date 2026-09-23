@@ -299,7 +299,7 @@ describe('checkScenarioExpectations', () => {
         subject,
         expectGain: 'met',
         expectMetricWarnings: ['Can not reduce condition', 'No enhancement'],
-        expectTradingBreaches: { area: ['Medium', 'Low'] },
+        expectTrading: { area: { Medium: 'breached', Low: 'breached' } },
         expectRejectedInputs: ['habitatBaseline.condition']
       },
       results,

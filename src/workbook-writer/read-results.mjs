@@ -7,6 +7,7 @@
  */
 
 import { createRequire } from 'node:module'
+import { columnIndex, columnLetters } from './sheet-xml.mjs'
 import { METRIC_SHEETS } from './template-layout.mjs'
 
 const require = createRequire(import.meta.url)
@@ -40,6 +41,15 @@ const TRADING_SUMMARIES = {
   hedgerow: { sheet: TRADING_HEDGEROW, verdict: 'F', rows: [5, 6, 7, 8, 9] },
   watercourse: { sheet: TRADING_WATERCOURSE, verdict: 'G', rows: [5, 6, 7, 8] }
 }
+
+/** Every sheet the results are read from. */
+export const RESULT_SHEETS = [
+  HEADLINE,
+  TRADING_AREA,
+  TRADING_HEDGEROW,
+  TRADING_WATERCOURSE,
+  ...Object.values(METRIC_SHEETS).map((layout) => layout.sheet)
+]
 
 /**
  * The area habitat cumulative surplus. The published metric computes it with
@@ -116,7 +126,7 @@ function readHeadline(sheet) {
   return headline
 }
 
-function readTrading(XLSX, workbook) {
+function readTrading(workbook) {
   const trading = {}
   for (const [kind, summary] of Object.entries(TRADING_SUMMARIES)) {
     const sheet = workbook.Sheets[summary.sheet]
@@ -128,11 +138,22 @@ function readTrading(XLSX, workbook) {
   return trading
 }
 
-function scanRows(XLSX, sheet, from, to, visit) {
-  const range = XLSX.utils.decode_range(sheet['!ref'])
-  for (let row = from; row <= Math.min(to, range.e.r + 1); row += 1) {
-    for (let c = range.s.c; c <= range.e.c; c += 1) {
-      const ref = XLSX.utils.encode_cell({ r: row - 1, c })
+const LAST_CELL = /:([A-Z]+)(\d+)$/
+
+/** The last column (as an index) and row of a sheet's used range. */
+function extent(sheet) {
+  const [, letters, row] = LAST_CELL.exec(sheet?.['!ref'] ?? '') ?? []
+  if (!letters) {
+    return { lastColumn: -1, lastRow: 0 }
+  }
+  return { lastColumn: columnIndex(letters) - 1, lastRow: Number(row) }
+}
+
+function scanRows(sheet, from, to, visit) {
+  const { lastColumn, lastRow } = extent(sheet)
+  for (let row = from; row <= Math.min(to, lastRow); row += 1) {
+    for (let c = 0; c <= lastColumn; c += 1) {
+      const ref = `${columnLetters(c + 1)}${row}`
       const message = warningAt(sheet, ref)
       if (message) {
         visit(row, ref, message)
@@ -146,49 +167,51 @@ function scanRows(XLSX, sheet, from, to, visit) {
  * is keyed to the feature reference the writer put on that row; one in the
  * summary block above the rows applies to the sheet as a whole.
  */
-function readWarnings(XLSX, workbook) {
+function readWarnings(workbook) {
   const rowWarnings = []
   const sheetWarnings = []
   for (const [key, layout] of Object.entries(METRIC_SHEETS)) {
     const sheet = workbook.Sheets[layout.sheet]
-    scanRows(XLSX, sheet, 1, layout.firstRow - 1, (row, cell, message) => {
+    scanRows(sheet, 1, layout.firstRow - 1, (row, cell, message) => {
       sheetWarnings.push({ sheet: key, cell, message })
     })
     const defects = TEMPLATE_DEFECT_COLUMNS[key] ?? new Set()
-    scanRows(
-      XLSX,
-      sheet,
-      layout.firstRow,
-      layout.lastRow,
-      (row, cell, message) => {
-        if (defects.has(cell.replace(/\d+$/, ''))) {
-          return
-        }
-        const reference = value(sheet, `${layout.columns.reference}${row}`)
-        rowWarnings.push({ sheet: key, row, cell, reference, message })
+    scanRows(sheet, layout.firstRow, layout.lastRow, (row, cell, message) => {
+      if (defects.has(cell.replace(/\d+$/, ''))) {
+        return
       }
-    )
+      const reference = value(sheet, `${layout.columns.reference}${row}`)
+      rowWarnings.push({ sheet: key, row, cell, reference, message })
+    })
   }
   return { rowWarnings, sheetWarnings }
 }
 
+function loadWorkbook(source) {
+  if (!Buffer.isBuffer(source)) {
+    return source
+  }
+  return loadXlsx().read(source, { type: 'buffer' })
+}
+
 /**
- * @param {Buffer} buffer a workbook recalculated by recalculateWorkbooks
+ * @param {Buffer | { Sheets: object }} source a recalculated workbook: one of
+ *   recalculateWorkbooks' results, or the bytes of an .xlsx saved by Excel
+ *   or LibreOffice with its values in place
  */
-export function readMetricResults(buffer) {
-  const XLSX = loadXlsx()
-  const workbook = XLSX.read(buffer, { type: 'buffer' })
+export function readMetricResults(source) {
+  const workbook = loadWorkbook(source)
   const headlineSheet = workbook.Sheets[HEADLINE]
   const results = {
     headline: readHeadline(headlineSheet),
-    trading: readTrading(XLSX, workbook),
+    trading: readTrading(workbook),
     uncorrected: {
       areaCumulativeSurplus: value(
         workbook.Sheets[TRADING_AREA],
         CUMULATIVE_SURPLUS_CELL
       )
     },
-    ...readWarnings(XLSX, workbook)
+    ...readWarnings(workbook)
   }
   // The writer strips every cached value. A baseline figure of nothing at
   // all means the workbook was never recalculated.

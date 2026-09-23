@@ -8,6 +8,7 @@
  * here, before anyone compares a service run against it.
  */
 
+// A trading summary's verdict reads "Yes ✓" or "No ▲".
 const NOT_SATISFIED = /^no\b/i
 
 function gainVerdict(percent, target) {
@@ -48,13 +49,21 @@ function warningCheck(text, scenario, results) {
   }
 }
 
-function tradingCheck(kind, band, results) {
+const MET = 'met'
+const BREACHED = 'breached'
+
+function tradingCheck(kind, band, expected, results) {
   const verdict = results.trading[kind]?.find((t) => t.distinctiveness === band)
+  const satisfied = verdict?.satisfied ?? null
+  let actual = 'missing'
+  if (satisfied !== null) {
+    actual = NOT_SATISFIED.test(satisfied) ? BREACHED : MET
+  }
   return {
     check: `${kind} trading rule, ${band}`,
-    expected: 'not satisfied',
-    actual: verdict?.satisfied ?? 'missing',
-    passed: NOT_SATISFIED.test(verdict?.satisfied ?? '')
+    expected,
+    actual,
+    passed: actual === expected
   }
 }
 
@@ -88,11 +97,9 @@ export function checkScenarioExpectations(scenario, results, issues = []) {
   for (const text of scenario.expectMetricWarnings ?? []) {
     checks.push(warningCheck(text, scenario, results))
   }
-  for (const [kind, bands] of Object.entries(
-    scenario.expectTradingBreaches ?? {}
-  )) {
-    for (const band of bands) {
-      checks.push(tradingCheck(kind, band, results))
+  for (const [kind, bands] of Object.entries(scenario.expectTrading ?? {})) {
+    for (const [band, expected] of Object.entries(bands)) {
+      checks.push(tradingCheck(kind, band, expected, results))
     }
   }
   for (const target of scenario.expectRejectedInputs ?? []) {

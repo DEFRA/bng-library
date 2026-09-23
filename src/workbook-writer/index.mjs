@@ -12,8 +12,8 @@
  *     postInterventionPath, templateBuffer, vocabulary
  *   })
  *   // write buffer to disk, then:
- *   const [recalculated] = recalculateWorkbooks([file], { outDir })
- *   const results = readMetricResults(readFileSync(recalculated))
+ *   const [results] = await recalculateWorkbooks([file], { workDir })
+ *   // results.headline, results.trading, results.rowWarnings …
  */
 
 import { workbookRowsFromGeoPackage } from './gpkg-rows.mjs'
@@ -37,6 +37,7 @@ export {
   recalculateWorkbooks
 } from './recalculate.mjs'
 export { readMetricResults } from './read-results.mjs'
+export { parseCsv, readCsvWorkbook } from './csv-sheets.mjs'
 export { checkScenarioExpectations } from './expectations.mjs'
 
 /**

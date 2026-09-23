@@ -350,26 +350,61 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
   )
 }
 
+// A row pinned to a length range accepts only a fraction of the lines drawn,
+// so a layer with one gets a larger rejection budget.
+const LENGTH_RANGE_BUDGET_MULTIPLIER = 10
+
+/**
+ * Whether a drawn line suits the row it would become: any line does, unless
+ * the row's override pins a `lengthRange` of [min, max] metres. Unrounded, so
+ * the check sees the length the backend measures.
+ */
+function suitsRow(coords, override) {
+  const range = override?.lengthRange
+  if (!range) {
+    return true
+  }
+  let length = 0
+  for (let i = 1; i < coords.length; i += 1) {
+    length += Math.hypot(
+      coords[i][0] - coords[i - 1][0],
+      coords[i][1] - coords[i - 1][1]
+    )
+  }
+  return length >= range[0] && length <= range[1]
+}
+
 /**
  * Shared rejection-sampling driver for the synthetic line-feature layers.
  * Picks linestrings via `generateLinestring`, rejects any whose vertices
- * fall outside the boundary, and inserts up to `count` accepted features.
+ * fall outside the boundary — or whose length falls outside the row's pinned
+ * `lengthRange` — and inserts up to `count` accepted features. Without a
+ * `lengthRange` the draw sequence is exactly as before, so seeded fixtures
+ * are unchanged.
  */
 function generateLineFeatures(
   db,
   boundaryRing,
   count,
-  { tableName, sql, buildRow }
+  { tableName, sql, buildRow, perRowOverrides }
 ) {
   const stmt = db.prepare(sql)
   const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
   let produced = 0
   let attempts = 0
-  const maxAttempts = count * LINE_FEATURE_REJECTION_BUDGET_FACTOR
+  const pinsLength = perRowOverrides?.some((o) => o?.lengthRange) ?? false
+  const maxAttempts =
+    count *
+    LINE_FEATURE_REJECTION_BUDGET_FACTOR *
+    (pinsLength ? LENGTH_RANGE_BUDGET_MULTIPLIER : 1)
   while (produced < count && attempts < maxAttempts) {
     attempts += 1
     const coords = generateLinestring(boundaryRing)
-    if (coords && lineInsideRing(coords, boundaryRing)) {
+    if (
+      coords &&
+      lineInsideRing(coords, boundaryRing) &&
+      suitsRow(coords, perRowOverrides?.[produced])
+    ) {
       expandEnvelope(allEnvelope, envelopeFromCoords(coords))
       stmt.run(...buildRow(coords, produced))
       produced += 1
@@ -461,6 +496,7 @@ function generateHedgerows(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Hedgerows',
     sql: HEDGEROWS_SQL_SYNTH,
+    perRowOverrides,
     buildRow: (coords, i) => buildHedgerowRow(coords, i, perRowOverrides?.[i])
   })
 }
@@ -700,6 +736,7 @@ function generateRivers(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Rivers',
     sql: RIVERS_SQL_SYNTH,
+    perRowOverrides,
     buildRow: (coords, i) => buildRiverRow(coords, i, perRowOverrides?.[i])
   })
 }
@@ -953,6 +990,11 @@ function runLayerGenerators(db, ring, ctx) {
  *                          habitats    habitatFullName, proposedHabitatFullName,
  *                                      parcelRef
  *                          hedgerows   hedgeType, proposedHedgeType
+ *                          hedgerows,  lengthRange — [min, max] metres; the
+ *                          rivers      line is redrawn until it fits, so a
+ *                                      scenario comparing units between
+ *                                      lines is not at the mercy of lengths
+ *                                      that otherwise vary ~40-fold
  *                          rivers      riverType, proposedRiverType,
  *                                      baselineWaterEncroachment,
  *                                      proposedWaterEncroachment,

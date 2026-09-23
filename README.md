@@ -123,7 +123,7 @@ checksum-pinned), the release the scenarios were validated against.
 Recalculation needs LibreOffice (`soffice`, or `SOFFICE_PATH`). Excel
 recalculates a generated workbook on open. `generatePermutations({
 workbookTemplate })` adds each scenario's workbook to the permutations
-output. The harness's `npm run generate:workbooks` builds the whole corpus.
+output. The harness's `npm run generate:scenarios` builds the whole corpus.
 
 The tests against the real template run when `METRIC_TEMPLATE` points at a
 metric v4 workbook, which is not committed here; otherwise they are skipped.

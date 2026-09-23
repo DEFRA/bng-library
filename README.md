@@ -116,6 +116,10 @@ offer. The metric's lookups are wrapped in `IFERROR`, so such a row raises
 nothing and generates no units. The lists are read from the template, never
 from this library's reference data.
 
+No template to hand? `downloadPublishedTemplate()` fetches the calculation
+tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.0.4,
+checksum-pinned), the release the scenarios were validated against.
+
 Recalculation needs LibreOffice (`soffice`, or `SOFFICE_PATH`). Excel
 recalculates a generated workbook on open. `generatePermutations({
 workbookTemplate })` adds each scenario's workbook to the permutations

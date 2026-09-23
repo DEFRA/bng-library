@@ -11,6 +11,9 @@
  * anything is written, so a template whose columns have moved fails loudly
  * instead of taking inputs in the wrong cells.
  *
+ * `titleCell` is the sheet's own name, worked out with CELL("filename"),
+ * which LibreOffice cannot always evaluate: it is not a metric output.
+ *
  * A column listed in a sheet's `overridesFormula` holds a default formula
  * the user is meant to replace; it is overwritten there, and only there.
  *
@@ -22,6 +25,7 @@
 export const METRIC_SHEETS = {
   habitatBaseline: {
     sheet: 'A-1 On-Site Habitat Baseline',
+    titleCell: 'D3',
     firstRow: 11,
     lastRow: 258,
     fingerprint: {
@@ -48,6 +52,7 @@ export const METRIC_SHEETS = {
   },
   habitatCreation: {
     sheet: 'A-2 On-Site Habitat Creation',
+    titleCell: 'D3',
     firstRow: 11,
     lastRow: 256,
     fingerprint: {
@@ -71,6 +76,7 @@ export const METRIC_SHEETS = {
   },
   habitatEnhancement: {
     sheet: 'A-3 On-Site Habitat Enhancement',
+    titleCell: 'E3',
     firstRow: 12,
     lastRow: 257,
     fingerprint: {
@@ -95,6 +101,7 @@ export const METRIC_SHEETS = {
   },
   hedgerowBaseline: {
     sheet: 'B-1 On-Site Hedge Baseline',
+    titleCell: 'B3',
     firstRow: 10,
     lastRow: 257,
     fingerprint: {
@@ -118,6 +125,7 @@ export const METRIC_SHEETS = {
   },
   hedgerowCreation: {
     sheet: 'B-2 On-Site Hedge Creation',
+    titleCell: 'B3',
     firstRow: 12,
     lastRow: 259,
     fingerprint: {
@@ -140,6 +148,7 @@ export const METRIC_SHEETS = {
   },
   hedgerowEnhancement: {
     sheet: 'B-3 On-Site Hedge Enhancement',
+    titleCell: 'B3',
     firstRow: 12,
     lastRow: 257,
     fingerprint: {
@@ -159,6 +168,7 @@ export const METRIC_SHEETS = {
   },
   watercourseBaseline: {
     sheet: "C-1 On-Site WaterC' Baseline",
+    titleCell: 'B3',
     firstRow: 10,
     lastRow: 257,
     fingerprint: {
@@ -186,6 +196,7 @@ export const METRIC_SHEETS = {
   },
   watercourseCreation: {
     sheet: "C-2 On-Site WaterC' Creation",
+    titleCell: 'B3',
     firstRow: 12,
     lastRow: 259,
     fingerprint: {
@@ -210,6 +221,7 @@ export const METRIC_SHEETS = {
   },
   watercourseEnhancement: {
     sheet: "C-3 On-Site WaterC' Enhancement",
+    titleCell: 'B3',
     firstRow: 12,
     lastRow: 257,
     fingerprint: {

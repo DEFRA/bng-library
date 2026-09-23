@@ -39,6 +39,11 @@ export {
 export { readMetricResults } from './read-results.mjs'
 export { parseCsv, readCsvWorkbook } from './csv-sheets.mjs'
 export { checkScenarioExpectations } from './expectations.mjs'
+export {
+  PUBLISHED_METRIC_TEMPLATE,
+  downloadPublishedTemplate,
+  isPublishedTemplate
+} from './published-template.mjs'
 
 /**
  * Derive a metric workbook from a post-intervention GeoPackage.

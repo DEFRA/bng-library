@@ -173,7 +173,9 @@ function readWarnings(workbook) {
   for (const [key, layout] of Object.entries(METRIC_SHEETS)) {
     const sheet = workbook.Sheets[layout.sheet]
     scanRows(sheet, 1, layout.firstRow - 1, (row, cell, message) => {
-      sheetWarnings.push({ sheet: key, cell, message })
+      if (cell !== layout.titleCell) {
+        sheetWarnings.push({ sheet: key, cell, message })
+      }
     })
     const defects = TEMPLATE_DEFECT_COLUMNS[key] ?? new Set()
     scanRows(sheet, layout.firstRow, layout.lastRow, (row, cell, message) => {

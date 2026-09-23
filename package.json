@@ -1,13 +1,14 @@
 {
   "name": "bng-library",
   "version": "0.1.0",
-  "description": "Shared BNG library: statutory metric calculations and reference data, synthetic + workbook-driven GeoPackage generation, plus generic gpkg I/O helpers.",
+  "description": "Shared BNG library: statutory metric calculations and reference data, synthetic + workbook-driven GeoPackage generation, generic gpkg I/O helpers, and synthetic metric workbooks for QA.",
   "type": "module",
   "main": "./index.mjs",
   "exports": {
     ".": "./index.mjs",
     "./gpkg-io": "./src/gpkg-io/index.mjs",
-    "./metric": "./src/metric/index.mjs"
+    "./metric": "./src/metric/index.mjs",
+    "./workbook-writer": "./src/workbook-writer/index.mjs"
   },
   "files": [
     "index.mjs",

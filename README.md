@@ -6,6 +6,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
+- **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
 
 ## Install
 
@@ -79,13 +80,60 @@ import { openGeoPackageReadonly } from 'bng-library/gpkg-io'
 const db = openGeoPackageReadonly('./some.gpkg')
 ```
 
+### Synthetic metric workbooks
+
+Derive the Defra metric workbook that describes a post-intervention GeoPackage,
+recalculate it headlessly, and read back the metric's own answers:
+
+```js
+import {
+  readMetricResults,
+  recalculateWorkbooks,
+  workbookFromGeoPackage
+} from 'bng-library/workbook-writer'
+
+const templateBuffer = readFileSync('./metric-v4.xlsx')
+const { buffer, issues } = workbookFromGeoPackage({
+  postInterventionPath: './site-post-intervention.gpkg',
+  templateBuffer
+})
+writeFileSync('./out/site.xlsx', buffer)
+
+const [recalculated] = recalculateWorkbooks(['./out/site.xlsx'], {
+  outDir: './out/recalculated'
+})
+const results = readMetricResults(readFileSync(recalculated))
+// results.headline.netUnitChange.area, results.trading, results.rowWarnings …
+```
+
+Only input cells are written. The formulas are left as Defra wrote them,
+including the known cumulative-surplus error (BMD-993), so the results are the
+metric's, not ours. The workbook is edited in place inside its zip, which keeps
+it at the template's ~3.2MB. Re-saving through a spreadsheet library would
+take it to ~82MB. Every cached value is stripped, so a workbook that has not
+been recalculated reads as empty, never as stale.
+
+`issues` lists every input that the template's own drop-down lists do not
+offer. The metric's lookups are wrapped in `IFERROR`, so such a row raises
+nothing and generates no units. The lists are read from the template, never
+from this library's reference data.
+
+Recalculation needs LibreOffice (`soffice`, or `SOFFICE_PATH`). Excel
+recalculates a generated workbook on open. `generatePermutations({
+workbookTemplate })` adds each scenario's workbook to the permutations
+output. The harness's `npm run generate:workbooks` builds the whole corpus.
+
+The tests against the real template run when `METRIC_TEMPLATE` points at a
+metric v4 workbook, which is not committed here; otherwise they are skipped.
+
 ## Entry points
 
-| Specifier             | Purpose                                             |
-| --------------------- | --------------------------------------------------- |
-| `bng-library`         | Main API — synthesis, workbook reading, flaws, etc. |
-| `bng-library/gpkg-io` | Schema-agnostic GeoPackage read/write helpers.      |
-| `bng-library/metric`  | Statutory reference tables and unit calculations.   |
+| Specifier                     | Purpose                                             |
+| ----------------------------- | --------------------------------------------------- |
+| `bng-library`                 | Main API — synthesis, workbook reading, flaws, etc. |
+| `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
+| `bng-library/metric`          | Statutory reference tables and unit calculations.   |
+| `bng-library/workbook-writer` | Synthetic metric workbooks for QA (BMD-1011).       |
 
 See `index.mjs` for the full list of named exports, and `src/metric/README.md`
 for the metric engine.

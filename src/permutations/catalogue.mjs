@@ -13,6 +13,17 @@
  *   subject       { layer, ref, note } — the feature a tester should open
  *   expectGain    'met' | 'unmet' — when set, the runner prices the habitats
  *                 through the engine and asserts the +10% threshold
+ *   emptyLayers   optional layer keys ('habitats', 'hedgerows', 'rivers',
+ *                 'trees') generated empty, so the random filler features
+ *                 cannot add warnings or trading breaches of their own
+ *
+ * What the metric workbook should make of a scenario (BMD-1011) — checked
+ * against the recalculated workbook by `checkScenarioExpectations`:
+ *   expectMetricWarnings  text of warnings the metric raises on the subject
+ *   expectTradingBreaches { area | hedgerow | watercourse: [band, …] } —
+ *                         distinctiveness bands whose trading rule fails
+ *   expectRejectedInputs  ['sheetKey.field', …] — subject inputs the
+ *                         workbook's own drop-down lists do not offer
  *
  * The axes from BMD-934 map onto the purposes below: intervention categories
  * across the three habitat types, conditions, strategic significance, met/unmet
@@ -24,6 +35,8 @@ import {
   CONDITIONS,
   HEDGE_CONDITIONS,
   IN_SCOPE_HEDGE_TYPES,
+  MIN_HEDGEROW_COUNT,
+  MIN_RIVER_COUNT,
   STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 
@@ -50,6 +63,22 @@ const NO_WATER_ENCROACHMENT = 'No Encroachment'
 const NO_RIPARIAN_ENCROACHMENT = 'No Encroachment/No Encroachment'
 
 const DEFAULT_SIZE = 6
+
+// Isolate one layer: the others are generated empty.
+const ONLY_AREAS = ['hedgerows', 'rivers', 'trees']
+const AREAS_AND_HEDGEROWS = ['rivers', 'trees']
+const AREAS_AND_RIVERS = ['hedgerows', 'trees']
+
+const RIVER_DITCH = 'Ditches'
+const RIVER_CULVERT = 'Culvert'
+const HEDGE_NATIVE = 'Native hedgerow'
+const HEDGE_SPECIES_RICH = 'Species-rich native hedgerow'
+const HEDGE_POOR = HEDGE_CONDITIONS[2]
+
+// A small fixture still draws this many linear features, so pinning them all
+// leaves no random ones behind.
+const MIN_HEDGEROWS = MIN_HEDGEROW_COUNT
+const MIN_RIVERS = MIN_RIVER_COUNT
 
 /** Repeat a per-row recipe `n` times to pin every row of a layer. */
 function repeat(recipe, n) {
@@ -271,6 +300,207 @@ const interventionScenarios = [
 ]
 
 // ---------------------------------------------------------------------------
+// Invalid interventions — each one a rule the metric enforces, so the
+// workbook raises its own warning on the subject (BMD-1011)
+// ---------------------------------------------------------------------------
+
+// A second, retained parcel keeps the baseline non-zero whatever happens to
+// the subject.
+const retainedControl = { ...areaBase, retention: 'Retained' }
+
+function areaSubject(subject) {
+  return [{ ...areaBase, ...subject }, retainedControl]
+}
+
+const enhancedDitch = {
+  riverType: RIVER_DITCH,
+  retention: 'Enhanced',
+  baselineCondition: 'Moderate',
+  proposedCondition: 'Good',
+  baselineStrategicSignificance: SS_LOW,
+  proposedStrategicSignificance: SS_LOW,
+  baselineWaterEncroachment: NO_WATER_ENCROACHMENT,
+  baselineRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT
+}
+
+const invalidInterventionScenarios = [
+  {
+    id: 'invalid-area-condition-reduced',
+    purpose: 'invalid-interventions',
+    title: 'Area habitat — enhancement that lowers condition',
+    description:
+      'H001 is "enhanced" from Moderate to Poor condition, same habitat. The metric does not allow an enhancement to reduce condition.',
+    size: 2,
+    emptyLayers: ONLY_AREAS,
+    overrides: {
+      habitats: areaSubject({
+        retention: 'Enhanced',
+        proposedHabitatFullName: HABITAT_MEDIUM,
+        proposedCondition: 'Poor'
+      })
+    },
+    expectMetricWarnings: ['Can not reduce condition'],
+    subject: {
+      layer: 'Habitats',
+      ref: 'H001',
+      note: 'enhanced parcel whose condition drops'
+    }
+  },
+  {
+    id: 'invalid-area-no-enhancement',
+    purpose: 'invalid-interventions',
+    title: 'Area habitat — enhancement that changes nothing',
+    description:
+      'H001 is "enhanced" with the same habitat and the same Moderate condition — an enhancement that enhances nothing.',
+    size: 2,
+    emptyLayers: ONLY_AREAS,
+    overrides: {
+      habitats: areaSubject({
+        retention: 'Enhanced',
+        proposedHabitatFullName: HABITAT_MEDIUM,
+        proposedCondition: 'Moderate'
+      })
+    },
+    expectMetricWarnings: ['No enhancement'],
+    subject: {
+      layer: 'Habitats',
+      ref: 'H001',
+      note: 'enhanced parcel with no change'
+    }
+  },
+  {
+    id: 'invalid-area-trading-down',
+    purpose: 'invalid-interventions',
+    title: 'Area habitat — enhancement to a lower distinctiveness',
+    description:
+      'H001 is "enhanced" from a Medium-distinctiveness habitat to a Low one. An enhancement may not trade down.',
+    size: 2,
+    emptyLayers: ONLY_AREAS,
+    overrides: {
+      habitats: areaSubject({
+        retention: 'Enhanced',
+        proposedHabitatFullName: HABITAT_LOW,
+        proposedCondition: 'Good'
+      })
+    },
+    expectMetricWarnings: ['Trading Down'],
+    subject: {
+      layer: 'Habitats',
+      ref: 'H001',
+      note: 'Medium → Low distinctiveness enhancement'
+    }
+  },
+  {
+    id: 'invalid-area-advance-and-delay',
+    purpose: 'invalid-interventions',
+    title: 'Created habitat — both advance and delay years',
+    description:
+      'H001 is created 2 years in advance and also delayed by 3 years. The metric allows one or the other, never both.',
+    size: 2,
+    emptyLayers: ONLY_AREAS,
+    overrides: {
+      habitats: areaSubject({
+        retention: 'Created',
+        proposedHabitatFullName: HABITAT_MEDIUM,
+        proposedCondition: 'Good',
+        advanceYears: '2',
+        delayYears: '3'
+      })
+    },
+    expectMetricWarnings: ['both advance and delayed'],
+    subject: {
+      layer: 'Habitats',
+      ref: 'H001',
+      note: 'created parcel with advance and delay both set'
+    }
+  },
+  {
+    id: 'invalid-hedgerow-condition-reduced',
+    purpose: 'invalid-interventions',
+    title: 'Hedgerow — enhancement that lowers condition',
+    description:
+      'Every hedgerow is "enhanced" from Good to Poor condition. The metric does not allow an enhancement to reduce condition.',
+    size: 1,
+    emptyLayers: AREAS_AND_HEDGEROWS,
+    overrides: {
+      habitats: [retainedControl],
+      hedgerows: repeat(
+        {
+          hedgeType: HEDGE_NATIVE,
+          retention: 'Enhanced',
+          baselineCondition: HEDGE_GOOD,
+          proposedCondition: HEDGE_POOR,
+          baselineStrategicSignificance: SS_LOW,
+          proposedStrategicSignificance: SS_LOW
+        },
+        MIN_HEDGEROWS
+      )
+    },
+    expectMetricWarnings: ['Can not reduce condition'],
+    subject: {
+      layer: 'Hedgerows',
+      ref: 'HG001',
+      note: 'enhanced hedgerow whose condition drops'
+    }
+  },
+  {
+    id: 'invalid-watercourse-culvert-enhanced',
+    purpose: 'invalid-interventions',
+    title: 'Watercourse — an enhanced culvert',
+    description:
+      'R001 is a culvert, "enhanced" in place. The metric has no enhancement for a culvert: its enhancement sheet does not offer the type at all.',
+    size: 1,
+    emptyLayers: AREAS_AND_RIVERS,
+    overrides: {
+      habitats: [retainedControl],
+      rivers: [
+        {
+          riverType: RIVER_CULVERT,
+          retention: 'Enhanced',
+          baselineCondition: 'Poor',
+          proposedCondition: 'Poor',
+          baselineStrategicSignificance: SS_LOW,
+          proposedStrategicSignificance: SS_LOW
+        },
+        {
+          ...enhancedDitch,
+          retention: 'Retained',
+          proposedCondition: 'Moderate'
+        }
+      ]
+    },
+    expectRejectedInputs: ['watercourseEnhancement.habitatType'],
+    subject: { layer: 'Rivers', ref: 'R001', note: 'an enhanced culvert' }
+  },
+  {
+    id: 'invalid-watercourse-encroachment-worsened',
+    purpose: 'invalid-interventions',
+    title: 'Watercourse — enhancement that worsens encroachment',
+    description:
+      'Both ditches are "enhanced" to Good condition while their encroachment goes from none to Major on the channel and both banks, so the enhancement delivers fewer units than the baseline.',
+    size: 1,
+    emptyLayers: AREAS_AND_RIVERS,
+    overrides: {
+      habitats: [retainedControl],
+      rivers: repeat(
+        {
+          ...enhancedDitch,
+          proposedWaterEncroachment: 'Major',
+          proposedRiparianEncroachment: 'Major/Major'
+        },
+        MIN_RIVERS
+      )
+    },
+    expectMetricWarnings: ['units less than baseline'],
+    subject: {
+      layer: 'Rivers',
+      ref: 'R001',
+      note: 'enhanced ditch with worsened encroachment'
+    }
+  }
+]
+
+// ---------------------------------------------------------------------------
 // Conditions — one parcel per condition band
 // ---------------------------------------------------------------------------
 
@@ -417,6 +647,57 @@ const tradingScenarios = [
       ref: 'H001',
       note: 'Low (baseline) → Medium (proposed) distinctiveness'
     }
+  },
+  {
+    id: 'trading-area-medium-breach',
+    purpose: 'trading-rules',
+    title: 'Trading rules breached — Medium habitat replaced by Low',
+    description:
+      'H001, a Medium-distinctiveness habitat, is lost and a Low-distinctiveness one created in its place. A Medium loss must be replaced by the same broad habitat or a higher distinctiveness, so the Medium trading rule fails.',
+    size: 2,
+    emptyLayers: ONLY_AREAS,
+    overrides: {
+      habitats: areaSubject({
+        retention: 'Created',
+        proposedHabitatFullName: HABITAT_LOW,
+        proposedCondition: 'Good',
+        advanceYears: '0',
+        delayYears: '0'
+      })
+    },
+    expectTradingBreaches: { area: ['Medium'] },
+    subject: {
+      layer: 'Habitats',
+      ref: 'H001',
+      note: 'Medium parcel lost, Low habitat created'
+    }
+  },
+  {
+    id: 'trading-hedgerow-medium-breach',
+    purpose: 'trading-rules',
+    title: 'Trading rules breached — Medium hedgerows lost',
+    description:
+      'Every hedgerow is a species-rich native hedgerow (Medium distinctiveness) and every one is lost, with nothing created to replace it.',
+    size: 1,
+    emptyLayers: AREAS_AND_HEDGEROWS,
+    overrides: {
+      habitats: [retainedControl],
+      hedgerows: repeat(
+        {
+          hedgeType: HEDGE_SPECIES_RICH,
+          retention: 'Lost',
+          baselineCondition: HEDGE_GOOD,
+          baselineStrategicSignificance: SS_LOW
+        },
+        MIN_HEDGEROWS
+      )
+    },
+    expectTradingBreaches: { hedgerow: ['Medium'] },
+    subject: {
+      layer: 'Hedgerows',
+      ref: 'HG001',
+      note: 'lost Medium-distinctiveness hedgerow'
+    }
   }
 ]
 
@@ -554,6 +835,7 @@ const completenessScenarios = [
 
 export const SCENARIOS = [
   ...interventionScenarios,
+  ...invalidInterventionScenarios,
   ...conditionScenarios,
   ...strategicSignificanceScenarios,
   ...netGainScenarios,

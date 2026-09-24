@@ -33,6 +33,7 @@ import {
   recalculateWorkbooks,
   workbookFromGeoPackage
 } from '../src/workbook-writer/index.mjs'
+import { readZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const require = createRequire(import.meta.url)
 const XLSX = require('xlsx')
@@ -117,6 +118,36 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     const a3 = workbook.Sheets[METRIC_SHEETS.habitatEnhancement.sheet]
     expect(a3.Q12.v).toBe('Grassland')
     expect(a3.Y12.v).toBe('Poor')
+  })
+
+  it('writes a workbook Excel opens without repairing', () => {
+    const zip = readZip(written['invalid-area-condition-reduced'].buffer)
+    // A formula list that names overridden cells is removed by Excel's repair.
+    expect(zip.has('xl/calcChain.xml')).toBe(false)
+    expect(zip.read('xl/_rels/workbook.xml.rels').toString()).not.toContain(
+      'calcChain'
+    )
+    expect(zip.read('[Content_Types].xml').toString()).not.toContain(
+      'calcChain'
+    )
+    // A formula cell that lost its type but kept its result reads as a
+    // malformed number, and Excel repairs the cell.
+    const untypedResults = zip.names
+      .filter((name) => name.startsWith('xl/worksheets/'))
+      .flatMap(
+        (name) =>
+          zip
+            .read(name)
+            .toString()
+            .match(/<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g) ?? []
+      )
+      .filter(
+        (cell) =>
+          cell.includes('<f') &&
+          /<v[\s>/]/.test(cell) &&
+          !/^<c\b[^>]*\st="/.test(cell)
+      )
+    expect(untypedResults).toEqual([])
   })
 
   it('writes a workbook every input of which the template accepts', () => {

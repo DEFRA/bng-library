@@ -61,6 +61,27 @@ describe('xlsx-zip', () => {
     expect(workbook.Sheets.One.B2.v).toBe(2)
   })
 
+  it('leaves out the entries named for removal', () => {
+    const original = readZip(smallWorkbook())
+    const target = original.names.find((n) => n.endsWith('theme1.xml'))
+    const copy = readZip(writeZip(original, new Map(), new Set([target])))
+    expect(copy.names).toEqual(original.names.filter((n) => n !== target))
+    const workbook = XLSX.read(
+      writeZip(original, new Map(), new Set([target])),
+      {
+        type: 'buffer'
+      }
+    )
+    expect(workbook.Sheets.One.B2.v).toBe(2)
+  })
+
+  it('refuses to remove an entry that is not there', () => {
+    const original = readZip(smallWorkbook())
+    expect(() => writeZip(original, new Map(), new Set(['nope.xml']))).toThrow(
+      /not in the zip/
+    )
+  })
+
   it('refuses to replace an entry that is not there', () => {
     const original = readZip(smallWorkbook())
     expect(() => writeZip(original, new Map([['nope.xml', 'x']]))).toThrow(
@@ -107,6 +128,25 @@ describe('SheetXml', () => {
     s.stripCachedValues()
     expect(s.toString()).toContain('<c r="A1"><f>B1</f></c>')
     expect(s.toString()).toContain('<c r="B1" t="s"><v>0</v></c>')
+  })
+
+  it('strips a cached result written with xml:space, leaving no untyped text', () => {
+    const s = sheet(
+      '<row r="16"><c r="K16" s="637" t="str"><f>IF(J16&gt;0," ","Short")</f><v xml:space="preserve"> </v></c><c r="L16" t="str"><f>K16</f><v xml:space="preserve"/></c></row>'
+    )
+    s.stripCachedValues()
+    expect(s.toString()).toContain(
+      '<c r="K16" s="637"><f>IF(J16&gt;0," ","Short")</f></c>'
+    )
+    expect(s.toString()).toContain('<c r="L16"><f>K16</f></c>')
+    expect(s.toString()).not.toContain('<v')
+  })
+
+  it('reads a cached value written with xml:space', () => {
+    const s = sheet(
+      '<row r="1"><c r="A1" t="str"><f>B1</f><v xml:space="preserve"> padded </v></c></row>'
+    )
+    expect(s.cell('A1').value).toBe(' padded ')
   })
 
   it('overrides a shared formula without orphaning the rest of its group', () => {

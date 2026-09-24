@@ -13,6 +13,8 @@ import { readZip, writeZip } from './xlsx-zip.mjs'
 const WORKBOOK_PART = 'xl/workbook.xml'
 const WORKBOOK_RELS_PART = 'xl/_rels/workbook.xml.rels'
 const SHARED_STRINGS_PART = 'xl/sharedStrings.xml'
+const CALC_CHAIN_PART = 'xl/calcChain.xml'
+const CONTENT_TYPES_PART = '[Content_Types].xml'
 
 function decodeEntities(text) {
   return text
@@ -148,6 +150,39 @@ export class MetricTemplate {
     if (this.workbookChanged) {
       replacements.set(WORKBOOK_PART, this.workbookXml)
     }
-    return writeZip(this.zip, replacements)
+    return writeZip(this.zip, replacements, this.withoutCalcChain(replacements))
+  }
+
+  /**
+   * Leave out the calculation chain, Excel's list of every formula cell.
+   * Overriding a default formula leaves it naming cells that no longer hold
+   * one, and Excel then "repairs" the workbook on opening. Without the part
+   * Excel rebuilds the chain silently. Its relationship and content type go
+   * with it, so nothing refers to a missing part.
+   *
+   * @param {Map<string, string>} replacements added to in place
+   * @returns {Set<string>} the parts to remove
+   */
+  withoutCalcChain(replacements) {
+    if (!this.zip.has(CALC_CHAIN_PART)) {
+      return new Set()
+    }
+    const rels = this.zip.read(WORKBOOK_RELS_PART).toString('utf8')
+    replacements.set(
+      WORKBOOK_RELS_PART,
+      rels.replace(
+        /<Relationship\b[^>]*Target="[^"]*calcChain\.xml"[^>]*\/>/,
+        ''
+      )
+    )
+    const types = this.zip.read(CONTENT_TYPES_PART).toString('utf8')
+    replacements.set(
+      CONTENT_TYPES_PART,
+      types.replace(
+        /<Override\b[^>]*PartName="\/xl\/calcChain\.xml"[^>]*\/>/,
+        ''
+      )
+    )
+    return new Set([CALC_CHAIN_PART])
   }
 }

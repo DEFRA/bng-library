@@ -9,6 +9,11 @@
 
 const ROW_PATTERN = /<row\b[^>]*?(?:\/>|>[\s\S]*?<\/row>)/g
 const CELL_PATTERN = /<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g
+// A cell's cached value, with or without attributes: the template writes one
+// with leading or trailing spaces as <v xml:space="preserve"> </v>.
+const CACHED_VALUE_PATTERN =
+  /<v(?:\s[^>]*)?\/>|<v(?:\s[^>]*[^/])?>[\s\S]*?<\/v>/
+const CACHED_TEXT_PATTERN = /<v(?:\s[^>]*[^/])?>([\s\S]*?)<\/v>/
 const ALPHABET_SIZE = 26
 const CHAR_CODE_A = 65
 
@@ -141,7 +146,7 @@ function withoutCachedValue(cellXml) {
   }
   const tag = openingTag(cellXml)
   const bareTag = tag.replace(/\st="[^"]*"/, '')
-  const body = cellXml.slice(tag.length).replace(/<v\/>|<v>[\s\S]*?<\/v>/, '')
+  const body = cellXml.slice(tag.length).replace(CACHED_VALUE_PATTERN, '')
   return bareTag + body
 }
 
@@ -232,7 +237,7 @@ export class SheetXml {
       return null
     }
     const inline = /<t[^>]*>([\s\S]*?)<\/t>/.exec(found.xml)
-    const cached = /<v>([\s\S]*?)<\/v>/.exec(found.xml)
+    const cached = CACHED_TEXT_PATTERN.exec(found.xml)
     const raw = inline?.[1] ?? cached?.[1] ?? null
     return {
       formula: hasFormula(found.xml),

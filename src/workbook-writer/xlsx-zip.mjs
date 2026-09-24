@@ -190,23 +190,26 @@ function centralHeader(entry, nameBytes, localOffset) {
 
 /**
  * Write a new zip: every entry of `zip` in its original order, with the
- * entries named in `replacements` swapped for new content. Everything else is
- * copied as the compressed bytes it already was.
+ * entries named in `replacements` swapped for new content and those named in
+ * `removals` left out. Everything else is copied as the compressed bytes it
+ * already was.
  *
  * @param {ReturnType<typeof readZip>} zip
  * @param {Map<string, Buffer|string>} replacements
+ * @param {Set<string>} [removals]
  * @returns {Buffer}
  */
-export function writeZip(zip, replacements) {
-  for (const name of replacements.keys()) {
+export function writeZip(zip, replacements, removals = new Set()) {
+  for (const name of [...replacements.keys(), ...removals]) {
     if (!zip.has(name)) {
-      throw new Error(`Cannot replace ${name}: it is not in the zip`)
+      throw new Error(`Cannot replace or remove ${name}: it is not in the zip`)
     }
   }
+  const kept = zip.entries.filter((entry) => !removals.has(entry.name))
   const chunks = []
   const central = []
   let offset = 0
-  for (const original of zip.entries) {
+  for (const original of kept) {
     const content = replacements.get(original.name)
     const entry =
       content === undefined
@@ -221,8 +224,8 @@ export function writeZip(zip, replacements) {
   const centralDirectory = Buffer.concat(central)
   const end = Buffer.alloc(END_RECORD_SIZE)
   end.writeUInt32LE(SIG_END, 0)
-  end.writeUInt16LE(zip.entries.length, 8)
-  end.writeUInt16LE(zip.entries.length, 10)
+  end.writeUInt16LE(kept.length, 8)
+  end.writeUInt16LE(kept.length, 10)
   end.writeUInt32LE(centralDirectory.length, 12)
   end.writeUInt32LE(offset, 16)
   return Buffer.concat([...chunks, centralDirectory, end])

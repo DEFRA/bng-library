@@ -58,7 +58,6 @@ import {
 import {
   ALL_HABITATS,
   BASE_MAP,
-  CONDITIONS,
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE,
   ENCROACHMENT_RIPARIAN,
@@ -69,7 +68,6 @@ import {
   IN_SCOPE_HABITATS_BY_BROAD,
   IN_SCOPE_HEDGE_TYPES,
   IN_SCOPE_RIVER_TYPES,
-  HEDGE_CONDITIONS,
   HEDGEROW_PER_PARCEL_RATIO,
   LINE_FEATURE_REJECTION_BUDGET_FACTOR,
   LOCATIONS,
@@ -90,6 +88,17 @@ import {
   TREE_TYPE_STREET,
   WATERCOURSE_DISTINCTIVENESS
 } from './synthetic-constants.mjs'
+import {
+  AREA,
+  HEDGEROW,
+  WATERCOURSE,
+  baselineConditions,
+  canCreate,
+  canEnhance,
+  creationConditions,
+  encroachmentNoWorseThan,
+  enhancementPairs
+} from './valid-draws.mjs'
 
 // ---------------------------------------------------------------------------
 // Tunables specific to synthetic-mode emission.
@@ -106,6 +115,7 @@ const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 const ZERO_YEARS = '0'
 const RETENTION_RETAINED = 'Retained'
+const RETENTION_ENHANCED = 'Enhanced'
 // Fixed metadata timestamp used for seeded (reproducible) generation, so the
 // gpkg_contents / layer_styles times don't reintroduce per-run byte differences.
 const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
@@ -140,13 +150,26 @@ function syntheticRef(prefix, i) {
   return `${prefix}${String(i + 1).padStart(FEATURE_REF_PAD, FEATURE_REF_PAD_CHAR)}`
 }
 
+// The habitats a random creation can pick: those the metric can create in at
+// least one condition, by broad type.
+const CREATABLE_HABITATS_BY_BROAD = Object.fromEntries(
+  IN_SCOPE_BROAD_HABITAT_TYPES.map((broad) => [
+    broad,
+    IN_SCOPE_HABITATS_BY_BROAD[broad].filter((h) => canCreate(AREA, h.fullName))
+  ]).filter(([, pool]) => pool.length > 0)
+)
+const CREATABLE_BROAD_TYPES = Object.keys(CREATABLE_HABITATS_BY_BROAD)
+
+// A retained or enhanced parcel keeps its habitat: an enhancement that
+// changes habitat is a distinctiveness uplift, which a scenario pins. A
+// created parcel (persisted as Lost) takes a habitat the metric can create.
 function pickProposedHabitat(baseline, retention) {
-  if (retention === RETENTION_RETAINED) {
+  if (retention === RETENTION_RETAINED || retention === RETENTION_ENHANCED) {
     return baseline
   }
   const proposedBroad =
-    retention === 'Lost' ? pick(IN_SCOPE_BROAD_HABITAT_TYPES) : baseline.broad
-  const pool = IN_SCOPE_HABITATS_BY_BROAD[proposedBroad]
+    retention === 'Lost' ? pick(CREATABLE_BROAD_TYPES) : baseline.broad
+  const pool = CREATABLE_HABITATS_BY_BROAD[proposedBroad]
   // A pinned habitat can sit in a broad type the random pools exclude (e.g.
   // "Intertidal hard structures"). Enhancing or creating within that broad
   // type has nothing to draw from, so the baseline habitat carries through —
@@ -243,6 +266,63 @@ function resolveAdvanceDelay(override, retention, maxAdvance, maxDelay) {
   return [ZERO_YEARS, ZERO_YEARS]
 }
 
+function pickOr(options, fallback) {
+  return options.length > 0 ? pick(options) : fallback
+}
+
+// The proposed condition when an enhancement pair does not apply: a retained
+// feature keeps its condition, an enhancement that changes type (a pinned
+// uplift) takes any condition the new type can have, and a created one a
+// condition the metric can create it in.
+function proposedConditionFallback(kind, proposedType, retention, baseline) {
+  if (retention === RETENTION_RETAINED) {
+    return baseline
+  }
+  if (retention === RETENTION_ENHANCED) {
+    return pickOr(baselineConditions(kind, proposedType), baseline)
+  }
+  return pickOr(creationConditions(kind, proposedType), baseline)
+}
+
+/**
+ * The baseline and proposed conditions a row falls back to where a scenario
+ * does not pin them, drawn so the metric accepts them: a condition the type
+ * can have, an enhancement that improves on the baseline, a creation in a
+ * condition the type can be created in. Pinned values still win at the call
+ * site; this only makes the unpinned side agree with them where it can.
+ */
+function drawConditions(kind, baselineType, proposedType, retention, override) {
+  const pinnedFrom = override?.baselineCondition
+  const pinnedTo = override?.proposedCondition
+  if (retention === RETENTION_ENHANCED && proposedType === baselineType) {
+    const pairs = enhancementPairs(kind, baselineType).filter(
+      ([from, to]) =>
+        (pinnedFrom === undefined || from === pinnedFrom) &&
+        (pinnedTo === undefined || to === pinnedTo)
+    )
+    if (pairs.length > 0) {
+      const [from, to] = pick(pairs)
+      return { baseline: from, proposed: to }
+    }
+  }
+  const baseline =
+    pinnedFrom ?? pickOr(baselineConditions(kind, baselineType), null)
+  return {
+    baseline,
+    proposed: proposedConditionFallback(kind, proposedType, retention, baseline)
+  }
+}
+
+// The retention categories a feature can validly take at random: no
+// enhancement the metric cannot make, no creation it cannot create.
+function validRetentionPool(pool, { enhance, create }) {
+  return pool.filter(
+    (retention) =>
+      (retention !== RETENTION_ENHANCED || enhance) &&
+      (retention !== RETENTION_CREATED || create)
+  )
+}
+
 // Retention couples to the proposed type: a Retained feature keeps its
 // baseline type, so an override pinning a proposed type that differs from the
 // baseline cannot share a row with a randomly drawn Retained. When a scenario
@@ -292,10 +372,20 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       override.proposedHabitatFullName !== baseline.fullName
     const retention = resolveRetention(
       override,
-      RETENTION_CATEGORIES,
+      validRetentionPool(RETENTION_CATEGORIES, {
+        enhance: canEnhance(AREA, baseline.fullName),
+        create: Boolean(CREATABLE_HABITATS_BY_BROAD[baseline.broad])
+      }),
       proposedDiffers
     )
     const proposed = resolveProposedHabitat(override, baseline, retention)
+    const conditions = drawConditions(
+      AREA,
+      baseline.fullName,
+      proposed.fullName,
+      retention,
+      override
+    )
     const [advanceYears, delayYears] = resolveAdvanceDelay(
       override,
       retention,
@@ -308,7 +398,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       baseline.broad,
       baseline.type,
       Math.round(polygonArea(ring)),
-      overrideOr(override, 'baselineCondition', pick(baseline.validConditions)),
+      overrideOr(override, 'baselineCondition', conditions.baseline),
       overrideOr(
         override,
         'baselineStrategicSignificance',
@@ -317,11 +407,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       gpkgAreaRetention(retention),
       proposed.broad,
       proposed.type,
-      resolveProposed(
-        override,
-        'proposedCondition',
-        pick(proposed.validConditions)
-      ),
+      resolveProposed(override, 'proposedCondition', conditions.proposed),
       resolveProposed(
         override,
         'proposedStrategicSignificance',
@@ -350,26 +436,61 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
   )
 }
 
+// A row pinned to a length range accepts only a fraction of the lines drawn,
+// so a layer with one gets a larger rejection budget.
+const LENGTH_RANGE_BUDGET_MULTIPLIER = 10
+
+/**
+ * Whether a drawn line suits the row it would become: any line does, unless
+ * the row's override pins a `lengthRange` of [min, max] metres. Unrounded, so
+ * the check sees the length the backend measures.
+ */
+function suitsRow(coords, override) {
+  const range = override?.lengthRange
+  if (!range) {
+    return true
+  }
+  let length = 0
+  for (let i = 1; i < coords.length; i += 1) {
+    length += Math.hypot(
+      coords[i][0] - coords[i - 1][0],
+      coords[i][1] - coords[i - 1][1]
+    )
+  }
+  return length >= range[0] && length <= range[1]
+}
+
 /**
  * Shared rejection-sampling driver for the synthetic line-feature layers.
  * Picks linestrings via `generateLinestring`, rejects any whose vertices
- * fall outside the boundary, and inserts up to `count` accepted features.
+ * fall outside the boundary — or whose length falls outside the row's pinned
+ * `lengthRange` — and inserts up to `count` accepted features. Without a
+ * `lengthRange` the draw sequence is exactly as before, so seeded fixtures
+ * are unchanged.
  */
 function generateLineFeatures(
   db,
   boundaryRing,
   count,
-  { tableName, sql, buildRow }
+  { tableName, sql, buildRow, perRowOverrides }
 ) {
   const stmt = db.prepare(sql)
   const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
   let produced = 0
   let attempts = 0
-  const maxAttempts = count * LINE_FEATURE_REJECTION_BUDGET_FACTOR
+  const pinsLength = perRowOverrides?.some((o) => o?.lengthRange) ?? false
+  const maxAttempts =
+    count *
+    LINE_FEATURE_REJECTION_BUDGET_FACTOR *
+    (pinsLength ? LENGTH_RANGE_BUDGET_MULTIPLIER : 1)
   while (produced < count && attempts < maxAttempts) {
     attempts += 1
     const coords = generateLinestring(boundaryRing)
-    if (coords && lineInsideRing(coords, boundaryRing)) {
+    if (
+      coords &&
+      lineInsideRing(coords, boundaryRing) &&
+      suitsRow(coords, perRowOverrides?.[produced])
+    ) {
       expandEnvelope(allEnvelope, envelopeFromCoords(coords))
       stmt.run(...buildRow(coords, produced))
       produced += 1
@@ -404,12 +525,22 @@ function buildHedgerowRow(coords, i, override) {
     override.proposedHedgeType !== hedgeType
   const retention = resolveRetention(
     override,
-    RETENTION_CATEGORIES,
+    validRetentionPool(RETENTION_CATEGORIES, {
+      enhance: canEnhance(HEDGEROW, hedgeType),
+      create: canCreate(HEDGEROW, hedgeType)
+    }),
     proposedDiffers
   )
   const proposedHedgeType =
     override?.proposedHedgeType ??
     (retention === RETENTION_LOST ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType)
+  const conditions = drawConditions(
+    HEDGEROW,
+    hedgeType,
+    proposedHedgeType,
+    retention,
+    override
+  )
   const [advanceYears, delayYears] = resolveAdvanceDelay(
     override,
     retention,
@@ -422,7 +553,7 @@ function buildHedgerowRow(coords, i, override) {
     baselineLinearType(retention, hedgeType),
     baselineLinearAttribute(
       retention,
-      overrideOr(override, 'baselineCondition', pick(HEDGE_CONDITIONS))
+      overrideOr(override, 'baselineCondition', conditions.baseline)
     ),
     baselineLinearAttribute(
       retention,
@@ -434,7 +565,7 @@ function buildHedgerowRow(coords, i, override) {
     ),
     retention,
     proposedHedgeType,
-    resolveProposed(override, 'proposedCondition', pick(HEDGE_CONDITIONS)),
+    resolveProposed(override, 'proposedCondition', conditions.proposed),
     resolveProposed(
       override,
       'proposedStrategicSignificance',
@@ -461,6 +592,7 @@ function generateHedgerows(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Hedgerows',
     sql: HEDGEROWS_SQL_SYNTH,
+    perRowOverrides,
     buildRow: (coords, i) => buildHedgerowRow(coords, i, perRowOverrides?.[i])
   })
 }
@@ -589,6 +721,44 @@ function riverEncroachment(riverType) {
   }
 }
 
+// The proposed encroachment. A retained watercourse keeps its baseline
+// encroachment, and an enhanced one never worsens it (the metric flags an
+// enhancement that does); a created one, a lost one, a type change or a
+// culvert draws afresh.
+function proposedRiverEncroachment(
+  retention,
+  riverType,
+  proposedRiverType,
+  baseline
+) {
+  const keepsType =
+    proposedRiverType === riverType && riverType !== CULVERT_TYPE
+  if (keepsType && retention === RETENTION_RETAINED) {
+    return baseline
+  }
+  if (keepsType && retention === RETENTION_ENHANCED) {
+    return {
+      water: pickOr(
+        encroachmentNoWorseThan(
+          'water',
+          ENCROACHMENT_WATERCOURSE,
+          baseline.water
+        ),
+        baseline.water
+      ),
+      riparian: pickOr(
+        encroachmentNoWorseThan(
+          'riparian',
+          ENCROACHMENT_RIPARIAN,
+          baseline.riparian
+        ),
+        baseline.riparian
+      )
+    }
+  }
+  return riverEncroachment(proposedRiverType)
+}
+
 // Unlike a hedgerow, a watercourse keeps its baseline type through the
 // intervention by default, so `proposedRiverType` defaults to the baseline
 // type; a scenario can still pin a different proposed type. Both encroachment
@@ -617,11 +787,38 @@ function buildRiverRow(coords, i, override) {
     override.proposedRiverType !== riverType
   const retention = resolveRetention(
     override,
-    riverRetentionPool(i),
+    validRetentionPool(riverRetentionPool(i), {
+      enhance: canEnhance(WATERCOURSE, riverType),
+      create: true
+    }),
     proposedDiffers
   )
-  const baselineEncroachment = riverEncroachment(riverType)
-  const proposedEncroachment = riverEncroachment(proposedRiverType)
+  const conditions = drawConditions(
+    WATERCOURSE,
+    riverType,
+    proposedRiverType,
+    retention,
+    override
+  )
+  const drawnEncroachment = riverEncroachment(riverType)
+  const baselineEncroachment = {
+    water: overrideOr(
+      override,
+      'baselineWaterEncroachment',
+      drawnEncroachment.water
+    ),
+    riparian: overrideOr(
+      override,
+      'baselineRiparianEncroachment',
+      drawnEncroachment.riparian
+    )
+  }
+  const proposedEncroachment = proposedRiverEncroachment(
+    retention,
+    riverType,
+    proposedRiverType,
+    baselineEncroachment
+  )
   const [advanceYears, delayYears] = resolveAdvanceDelay(
     override,
     retention,
@@ -634,7 +831,7 @@ function buildRiverRow(coords, i, override) {
     baselineLinearType(retention, riverType),
     baselineLinearAttribute(
       retention,
-      overrideOr(override, 'baselineCondition', pick(CONDITIONS))
+      overrideOr(override, 'baselineCondition', conditions.baseline)
     ),
     baselineLinearAttribute(
       retention,
@@ -644,25 +841,11 @@ function buildRiverRow(coords, i, override) {
         pick(STRATEGIC_SIGNIFICANCE)
       )
     ),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(
-        override,
-        'baselineWaterEncroachment',
-        baselineEncroachment.water
-      )
-    ),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(
-        override,
-        'baselineRiparianEncroachment',
-        baselineEncroachment.riparian
-      )
-    ),
+    baselineLinearAttribute(retention, baselineEncroachment.water),
+    baselineLinearAttribute(retention, baselineEncroachment.riparian),
     retention,
     proposedRiverType,
-    resolveProposed(override, 'proposedCondition', pick(CONDITIONS)),
+    resolveProposed(override, 'proposedCondition', conditions.proposed),
     resolveProposed(
       override,
       'proposedStrategicSignificance',
@@ -700,6 +883,7 @@ function generateRivers(db, boundaryRing, count, perRowOverrides) {
   generateLineFeatures(db, boundaryRing, count, {
     tableName: 'Rivers',
     sql: RIVERS_SQL_SYNTH,
+    perRowOverrides,
     buildRow: (coords, i) => buildRiverRow(coords, i, perRowOverrides?.[i])
   })
 }
@@ -776,6 +960,14 @@ function generateUrbanTrees(db, boundaryRing, count) {
     const ruralOrUrban = TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
     const type = pick(TREE_TYPES)
     const retention = pickTreeRetention(produced)
+    const treeHabitat = `Individual trees - ${ruralOrUrban} tree`
+    const conditions = drawConditions(
+      AREA,
+      treeHabitat,
+      treeHabitat,
+      retention,
+      undefined
+    )
     // Only a newly planted (Created) tree carries creation-in-advance / delay
     // years, and at most one of the pair — as with hedgerows and habitats.
     const [treeAdvanceYears, treeDelayYears] =
@@ -786,13 +978,13 @@ function generateUrbanTrees(db, boundaryRing, count) {
       gpkgPoint(SRS_ID, x, y),
       syntheticRef('T', produced),
       baselineLinearAttribute(retention, size),
-      baselineLinearAttribute(retention, pick(CONDITIONS)),
+      baselineLinearAttribute(retention, conditions.baseline),
       baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
       baselineLinearAttribute(retention, type),
       retention,
       treeCategory(retention),
       retention === 'Lost' ? pick(TREE_SIZES) : size,
-      pick(CONDITIONS),
+      conditions.proposed,
       pick(STRATEGIC_SIGNIFICANCE),
       retention === 'Lost' ? pick(TREE_TYPES) : type,
       pick(LOCATIONS),
@@ -953,6 +1145,11 @@ function runLayerGenerators(db, ring, ctx) {
  *                          habitats    habitatFullName, proposedHabitatFullName,
  *                                      parcelRef
  *                          hedgerows   hedgeType, proposedHedgeType
+ *                          hedgerows,  lengthRange — [min, max] metres; the
+ *                          rivers      line is redrawn until it fits, so a
+ *                                      scenario comparing units between
+ *                                      lines is not at the mercy of lengths
+ *                                      that otherwise vary ~40-fold
  *                          rivers      riverType, proposedRiverType,
  *                                      baselineWaterEncroachment,
  *                                      proposedWaterEncroachment,

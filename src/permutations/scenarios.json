@@ -1,0 +1,2279 @@
+{
+  "$comment": "The BNG test-scenario catalogue. Each scenario becomes a baseline / post-intervention GeoPackage pair (and, in the harness, a metric workbook). Fields are documented in the README under \"Scenario catalogue\"; the file is checked when it is loaded (src/permutations/catalogue.mjs), and an id starting \"invalid-\" marks a scenario that deliberately holds invalid data (every other scenario must be valid), and a \"$comment\" is allowed on any scenario or override row.",
+  "defaultSize": 6,
+  "scenarios": [
+    {
+      "id": "intervention-area-retained",
+      "purpose": "intervention",
+      "title": "Area habitat — Retained",
+      "description": "Every area parcel is retained: proposed state mirrors the baseline.",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "a retained area habitat"
+      }
+    },
+    {
+      "id": "intervention-area-enhanced",
+      "purpose": "intervention",
+      "title": "Area habitat — Enhanced",
+      "description": "Area parcels are enhanced from Moderate to Good condition (same habitat).",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "an enhanced area habitat"
+      }
+    },
+    {
+      "id": "intervention-area-created",
+      "purpose": "intervention",
+      "title": "Area habitat — Created",
+      "description": "Area parcels are created (written to the gpkg as the statutory 'Lost' retention).",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "a created area habitat"
+      }
+    },
+    {
+      "id": "intervention-hedgerow-retained",
+      "purpose": "intervention",
+      "title": "Hedgerow — Retained",
+      "description": "The first hedgerow is retained; area parcels tile the redline.",
+      "overrides": {
+        "hedgerows": [
+          {
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "a retained hedgerow"
+      }
+    },
+    {
+      "id": "intervention-hedgerow-enhanced",
+      "purpose": "intervention",
+      "title": "Hedgerow — Enhanced",
+      "description": "The first hedgerow is enhanced from Moderate to Good condition.",
+      "overrides": {
+        "hedgerows": [
+          {
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "an enhanced hedgerow"
+      }
+    },
+    {
+      "id": "intervention-hedgerow-created",
+      "purpose": "intervention",
+      "title": "Hedgerow — Created",
+      "description": "The first hedgerow is created; its baseline columns take the template placeholders.",
+      "overrides": {
+        "hedgerows": [
+          {
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "a created hedgerow"
+      }
+    },
+    {
+      "id": "intervention-watercourse-retained",
+      "purpose": "intervention",
+      "title": "Watercourse — Retained",
+      "description": "The first watercourse is retained, with no encroachment.",
+      "overrides": {
+        "rivers": [
+          {
+            "riverType": "Canals",
+            "retention": "Retained",
+            "baselineCondition": "Fairly Good",
+            "proposedCondition": "Fairly Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "a retained watercourse"
+      }
+    },
+    {
+      "id": "intervention-watercourse-enhanced",
+      "purpose": "intervention",
+      "title": "Watercourse — Enhanced",
+      "description": "The first watercourse is enhanced from Moderate to Good condition.",
+      "overrides": {
+        "rivers": [
+          {
+            "riverType": "Canals",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "an enhanced watercourse"
+      }
+    },
+    {
+      "id": "intervention-watercourse-created",
+      "purpose": "intervention",
+      "title": "Watercourse — Created",
+      "description": "The first watercourse is created; its baseline columns take the template placeholders.",
+      "overrides": {
+        "rivers": [
+          {
+            "riverType": "Canals",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "delayYears": "2"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "a created watercourse"
+      }
+    },
+    {
+      "id": "invalid-area-condition-reduced",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement that lowers condition",
+      "description": "H001 is \"enhanced\" from Moderate to Poor condition, same habitat. The metric does not allow an enhancement to reduce condition.",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Poor"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Can not reduce condition"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel whose condition drops"
+      }
+    },
+    {
+      "id": "invalid-area-no-enhancement",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement that changes nothing",
+      "description": "H001 is \"enhanced\" with the same habitat and the same Moderate condition — an enhancement that enhances nothing.",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["No enhancement"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel with no change"
+      }
+    },
+    {
+      "id": "invalid-area-trading-down",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement to a lower distinctiveness",
+      "description": "H001 is \"enhanced\" from a Medium-distinctiveness habitat to a Low one. An enhancement may not trade down.",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Trading Down"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "Medium → Low distinctiveness enhancement"
+      }
+    },
+    {
+      "id": "invalid-area-advance-and-delay",
+      "purpose": "invalid-interventions",
+      "title": "Created habitat — both advance and delay years",
+      "description": "H001 is created 2 years in advance and also delayed by 3 years. The metric allows one or the other, never both.",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "2",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["both advance and delayed"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "created parcel with advance and delay both set"
+      }
+    },
+    {
+      "id": "invalid-hedgerow-condition-reduced",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — enhancement that lowers condition",
+      "description": "Every hedgerow is \"enhanced\" from Good to Poor condition. The metric does not allow an enhancement to reduce condition.",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Can not reduce condition"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "enhanced hedgerow whose condition drops"
+      }
+    },
+    {
+      "id": "invalid-watercourse-culvert-enhanced",
+      "purpose": "invalid-interventions",
+      "title": "Watercourse — an enhanced culvert",
+      "description": "R001 is a culvert, \"enhanced\" in place. The metric has no enhancement for a culvert: its enhancement sheet does not offer the type at all.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Culvert",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectRejectedInputs": ["watercourseEnhancement.habitatType"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "an enhanced culvert"
+      }
+    },
+    {
+      "id": "invalid-watercourse-encroachment-worsened",
+      "purpose": "invalid-interventions",
+      "title": "Watercourse — enhancement that worsens encroachment",
+      "description": "Both ditches are \"enhanced\" to Good condition while their encroachment goes from none to Major on the channel and both banks, so the enhancement delivers fewer units than the baseline.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "Major",
+            "proposedRiparianEncroachment": "Major/Major"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "Major",
+            "proposedRiparianEncroachment": "Major/Major"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["units less than baseline"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "enhanced ditch with worsened encroachment"
+      }
+    },
+    {
+      "id": "conditions-area-spread",
+      "purpose": "conditions",
+      "title": "Area habitats across every condition band",
+      "description": "Five retained parcels, each pinned to a different condition (Good → Poor), same habitat.",
+      "size": 5,
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Fairly Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Fairly Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "Good condition (H001) through Poor (H005)"
+      }
+    },
+    {
+      "id": "strategic-significance-spread",
+      "purpose": "strategic-significance",
+      "title": "Area habitats across every strategic-significance band",
+      "description": "Three retained parcels pinned to Low (1), Medium and High strategic significance.",
+      "size": 3,
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Location ecologically desirable but not in local strategy",
+            "proposedStrategicSignificance": "Location ecologically desirable but not in local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Formally identified in local strategy",
+            "proposedStrategicSignificance": "Formally identified in local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "H001 Low (1), H002 Medium, H003 High strategic significance"
+      }
+    },
+    {
+      "id": "net-gain-met",
+      "purpose": "net-gain",
+      "title": "Net gain met (≥ 10%)",
+      "description": "Every parcel enhanced from Low-distinctiveness/Poor to Medium-distinctiveness/Good — a large, unambiguous gain.",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectGain": "met",
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcels driving a net gain over 10%"
+      }
+    },
+    {
+      "id": "net-gain-unmet",
+      "purpose": "net-gain",
+      "title": "Net gain unmet (< 10%)",
+      "description": "Every parcel retained unchanged — zero net change, so the 10% gain is not met.",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectGain": "unmet",
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "retained parcels with no net gain"
+      }
+    },
+    {
+      "id": "trading-low-to-medium",
+      "purpose": "trading-rules",
+      "title": "Trading rules — Low → Medium distinctiveness",
+      "description": "Parcels enhanced from a Low-distinctiveness habitat to a Medium-distinctiveness one, exercising the low→medium trading rule.",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "Low (baseline) → Medium (proposed) distinctiveness"
+      }
+    },
+    {
+      "id": "trading-all-met",
+      "purpose": "trading-rules",
+      "title": "Trading rules — nothing lost, every rule met",
+      "description": "Control. Area: parcels retained and one enhanced. Hedgerows: retained and one enhanced. Watercourses: a canal retained, a ditch enhanced. Every trading rule is met.",
+      "size": 3,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Non-native and ornamental hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Poor"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Canals",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "met",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-like-for-like",
+      "purpose": "trading-rules",
+      "title": "Trading rules — like-for-like replacement, enough units",
+      "description": "Area: a Medium grassland is lost and two Medium grasslands created (same broad habitat). Hedgerows: a Medium hedgerow in Poor condition is lost and two Medium hedgerows created. Watercourses: a poor, encroached ditch is lost and a ditch in Good condition created. Every rule is met.",
+      "size": 3,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other lowland acid grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other lowland acid grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow with trees",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow with trees",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "Major",
+            "baselineRiparianEncroachment": "Major/Major",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "met",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-too-few-units",
+      "purpose": "trading-rules",
+      "title": "Trading rules — right habitat, too few units",
+      "description": "Area: a Medium grassland is replaced one-for-one by another Medium grassland, which, discounted for the years it takes to reach condition, delivers fewer units than were lost. Hedgerows: a Medium hedgerow in Good condition is replaced by another planted ten years late and left in Poor condition. Watercourses: a ditch is replaced by one dug ten years late and left in Poor condition. Each replacement is the right habitat but too small a one, so each Medium rule is breached.",
+      "size": 2,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other lowland acid grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow with trees",
+            "retention": "Created",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "10"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "retention": "Created",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "10",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "breached",
+          "Low": "met",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-wrong-habitat",
+      "purpose": "trading-rules",
+      "title": "Trading rules — enough units, wrong habitat",
+      "description": "Area: a Medium grassland is lost and two Medium heathlands created — more units than were lost, but a different broad habitat. Hedgerows: a Medium hedgerow is lost and two Low hedgerows created. Watercourses: a poor, encroached ditch is lost and a canal created. Each Medium rule is breached however many units the replacement brings.",
+      "size": 3,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Heathland and shrub - Mixed scrub",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Heathland and shrub - Mixed scrub",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "Major",
+            "baselineRiparianEncroachment": "Major/Major",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Canals",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "breached",
+          "Low": "met",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-trade-down",
+      "purpose": "trading-rules",
+      "title": "Trading rules — replaced by a lower distinctiveness",
+      "description": "Area: a Medium grassland is replaced by a Low one. Hedgerows: a Low hedgerow is replaced by two non-native (Very Low) hedgerows. Watercourses: a ditch (Medium) is replaced by a culvert (Low). The rule for the band that was lost is breached — a surplus lower down never makes good a loss higher up.",
+      "size": 2,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Non-native and ornamental hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Non-native and ornamental hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Culvert",
+            "retention": "Created",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "breached",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-trade-up",
+      "purpose": "trading-rules",
+      "title": "Trading rules — replaced by a higher distinctiveness",
+      "description": "Area: a Low grassland is replaced by a Medium one. Hedgerows: a Low hedgerow is replaced by two Medium hedgerows. Watercourses: a culvert (Low) is replaced by a ditch (Medium). Trading up is always allowed, so every rule is met.",
+      "size": 2,
+      "emptyLayers": ["trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ],
+        "rivers": [
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Culvert",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "riverType": "Ditches",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
+        },
+        "watercourse": {
+          "Medium": "met",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-low-for-low",
+      "purpose": "trading-rules",
+      "title": "Trading rules — Low replaced by Low in another habitat",
+      "description": "Area: a Low grassland is replaced by Low urban allotments — a different broad habitat, which the Low rule allows. Hedgerows: a non-native (Very Low) hedgerow is replaced by a native one (Low). Both rules are met.",
+      "size": 2,
+      "emptyLayers": ["trees", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Urban - Allotments",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Non-native and ornamental hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-lost-to-development",
+      "purpose": "trading-rules",
+      "title": "Trading rules — lost to development, nothing in its place",
+      "description": "Area: a Low grassland is built over (Very Low sealed surface, which the metric gives no units). Hedgerows: a non-native (Very Low) hedgerow is removed. Nothing replaces either, so the Low area rule and the Very Low hedgerow rule are breached.",
+      "size": 2,
+      "emptyLayers": ["trees", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Urban - Developed land; sealed surface",
+            "proposedCondition": "N/A - Other",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Non-native and ornamental hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "breached"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "breached"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-lower-deficit-covered-from-above",
+      "purpose": "trading-rules",
+      "title": "Trading rules — a Low deficit made good by a Medium surplus",
+      "description": "Area: a Low grassland is built over, while two Medium grasslands are improved from Poor to Good. Hedgerows: a Low hedgerow is lost while two Medium hedgerows are improved. A surplus may be carried down to a lower band, so every rule is met.",
+      "size": 3,
+      "emptyLayers": ["trees", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Urban - Developed land; sealed surface",
+            "proposedCondition": "N/A - Other",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-higher-deficit-not-covered-from-below",
+      "purpose": "trading-rules",
+      "title": "Trading rules — a Medium deficit beside a Low surplus",
+      "description": "Area: a Medium grassland is replaced by a Low one, while two Low grasslands are improved from Poor to Good. Hedgerows: a Medium hedgerow is lost while two Low hedgerows are improved. A surplus cannot be carried up, so the Medium rules are breached and the Low ones met.",
+      "size": 3,
+      "emptyLayers": ["trees", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "breached",
+          "Low": "met",
+          "Very Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-surplus-in-another-broad-habitat",
+      "purpose": "trading-rules",
+      "title": "Trading rules — a Medium surplus in one broad habitat, a deficit in another",
+      "description": "Area: three Medium grasslands are improved from Poor to Good, a large Medium surplus, while a Medium heathland is replaced by a Low grassland. The Medium rule is met habitat by habitat, so the grassland surplus cannot make good the heathland loss and the rule is breached despite the net gain.",
+      "size": 4,
+      "emptyLayers": ["trees", "hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Heathland and shrub - Mixed scrub",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Modified grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-low-deficit-covered-beside-medium-deficit",
+      "purpose": "trading-rules",
+      "title": "Trading rules — a Low deficit made good by a Medium surplus, beside a Medium deficit",
+      "description": "Area: a Low grassland is enhanced into a Medium one, so the Low band loses units and the Medium grassland gains more, while two Medium heathlands are built over. The heathland deficit breaches the Medium rule, as no other Medium broad habitat may make it good, but the grassland surplus still covers the Low loss, so the Low rule is met. This is the case the published metric gets wrong: it nets the heathland deficit off the grassland surplus before offering it to the Low band, and so reports the Low rule breached. The workbooks correct that bug (METRIC_CORRECTIONS in the workbook writer).",
+      "size": 3,
+      "emptyLayers": ["trees", "hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Heathland and shrub - Mixed scrub",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Urban - Developed land; sealed surface",
+            "proposedCondition": "N/A - Other",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Heathland and shrub - Mixed scrub",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Urban - Developed land; sealed surface",
+            "proposedCondition": "N/A - Other",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the Low grassland enhanced into a Medium one; see the description"
+      }
+    },
+    {
+      "id": "advance-delay-created-advance",
+      "purpose": "advance-delay",
+      "title": "Created habitat — advance years",
+      "description": "Created parcels with habitat creation started 5 years in advance (delay 0).",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "created parcel with 5 advance years"
+      }
+    },
+    {
+      "id": "advance-delay-created-delay",
+      "purpose": "advance-delay",
+      "title": "Created habitat — delay years",
+      "description": "Created parcels with habitat creation delayed by 3 years (advance 0).",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "3"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "created parcel with 3 delay years"
+      }
+    },
+    {
+      "id": "data-complete",
+      "purpose": "data-completeness",
+      "title": "Complete post-intervention data",
+      "description": "Every enhanced parcel has all proposed attributes populated — a clean, complete file.",
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "a complete enhanced parcel"
+      }
+    },
+    {
+      "id": "invalid-data-incomplete",
+      "purpose": "data-completeness",
+      "title": "Invalid: mixed complete and incomplete data",
+      "description": "Deliberately invalid. The first three parcels are complete; the last three are enhancements with a blank proposed condition and strategic significance, which the metric does not accept, so those rows generate no units.",
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H004",
+        "note": "H004–H006 have blank proposed data"
+      },
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "incomplete": true
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "incomplete": true
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "incomplete": true
+          }
+        ]
+      },
+      "expectRejectedInputs": [
+        "habitatEnhancement.condition",
+        "habitatEnhancement.strategicSignificance"
+      ]
+    }
+  ]
+}

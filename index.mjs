@@ -88,6 +88,7 @@ export {
   DEFAULT_SIZE as PERMUTATION_DEFAULT_SIZE,
   PURPOSES as PERMUTATION_PURPOSES,
   SCENARIOS as PERMUTATION_SCENARIOS,
-  generatePermutations
+  generatePermutations,
+  scenarioPlan as permutationScenarioPlan
 } from './src/permutations/generate.mjs'
 export { derivePermutationSeed } from './src/permutations/seed.mjs'

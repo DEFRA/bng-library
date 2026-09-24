@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { openGeoPackageReadonly } from '../src/gpkg-io/index.mjs'
+import { openGeoPackageReadonly, wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
 import {
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE
@@ -329,5 +329,78 @@ describe('attributeOverrides — coupled-field resolution', () => {
     } finally {
       db.close()
     }
+  })
+})
+
+describe('attributeOverrides — lengthRange', () => {
+  let outDir
+
+  beforeAll(() => {
+    setMode('silent')
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-length-range-'))
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  function lengths(gpkgPath, table) {
+    const db = openGeoPackageReadonly(gpkgPath)
+    try {
+      return db
+        .prepare(`SELECT geom FROM "${table}" ORDER BY rowid`)
+        .all()
+        .map((r) => {
+          const coords = wkbToGeoJSON(r.geom).coordinates
+          let length = 0
+          for (let i = 1; i < coords.length; i += 1) {
+            length += Math.hypot(
+              coords[i][0] - coords[i - 1][0],
+              coords[i][1] - coords[i - 1][1]
+            )
+          }
+          return length
+        })
+    } finally {
+      db.close()
+    }
+  }
+
+  it('draws each pinned hedgerow and river within its length range', () => {
+    const gpkgPath = path.join(outDir, 'lengths.gpkg')
+    const range = { lengthRange: [300, 400] }
+    generateOne(gpkgPath, CENTRE, {
+      numParcels: 2,
+      seed: 5,
+      attributeOverrides: {
+        hedgerows: [range, range, range],
+        rivers: [
+          { ...range, riverType: 'Ditches' },
+          { ...range, riverType: 'Canals' }
+        ]
+      }
+    })
+    for (const length of [
+      ...lengths(gpkgPath, 'Hedgerows'),
+      ...lengths(gpkgPath, 'Rivers')
+    ]) {
+      expect(length).toBeGreaterThanOrEqual(300)
+      expect(length).toBeLessThanOrEqual(400)
+    }
+  })
+
+  it('leaves an unpinned row to the ordinary draw', () => {
+    const plain = path.join(outDir, 'plain.gpkg')
+    const pinnedSecond = path.join(outDir, 'pinned-second.gpkg')
+    generateOne(plain, CENTRE, { numParcels: 2, seed: 9 })
+    generateOne(pinnedSecond, CENTRE, {
+      numParcels: 2,
+      seed: 9,
+      attributeOverrides: { hedgerows: [{}, { lengthRange: [300, 400] }] }
+    })
+    // Rows before the first pinned one are drawn exactly as without it.
+    expect(lengths(pinnedSecond, 'Hedgerows')[0]).toBe(
+      lengths(plain, 'Hedgerows')[0]
+    )
   })
 })

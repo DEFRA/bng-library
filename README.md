@@ -41,6 +41,12 @@ const { buffer, messages, flawReport } = await generateSyntheticGpkg({
 })
 ```
 
+Every random attribute is one the statutory metric accepts, read from its own
+reference tables: conditions each habitat can have, creation only in
+conditions it can be created in, enhancements that improve on the baseline,
+and encroachment that never worsens. Invalid data comes only from the flaw
+fixtures or from values a caller pins.
+
 ### Workbook-driven (buffer-in/out)
 
 ```js
@@ -149,7 +155,15 @@ file; no code changes are needed. `generatePermutations` and the harness's
 The file is checked when it is loaded, and every problem is reported at once.
 A misspelt field, an override the generator does not recognise, or an
 expectation it cannot check stops the load rather than being silently
-ignored. A `$comment` is allowed on any scenario or override row, for notes
+ignored.
+
+**Only a scenario whose id starts `invalid-` holds invalid data**, and its
+files are named for it. It must declare the errors it expects
+(`expectMetricWarnings` or `expectRejectedInputs`); no other scenario may.
+Everything a scenario does not pin is drawn at random from what the metric
+accepts (see `src/synthetic/valid-draws.mjs`), so every other scenario is
+valid throughout. `checkScenarioExpectations` adds a _valid data_ check to
+each of them: no metric error on any row, and no rejected input. A `$comment` is allowed on any scenario or override row, for notes
 the file would otherwise lose.
 
 The file holds `defaultSize`, the habitat parcel count for a scenario with no
@@ -166,8 +180,8 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `emptyLayers`          |          | Layers generated empty (`habitats`, `hedgerows`, `rivers`, `trees`), so random features cannot add warnings or trading breaches of their own                                                         |
 | `expectGain`           |          | `met` or `unmet`: the area net gain against 10%, checked through the engine and, with workbooks, the metric                                                                                          |
 | `expectTrading`        |          | `{ area \| hedgerow \| watercourse: { band: "met" \| "breached" } }`, checked against the metric's trading summaries                                                                                 |
-| `expectMetricWarnings` |          | Text of warnings the metric must raise on the subject                                                                                                                                                |
-| `expectRejectedInputs` |          | `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                                |
+| `expectMetricWarnings` |          | `invalid-` only. Text of warnings the metric must raise on the subject                                                                                                                               |
+| `expectRejectedInputs` |          | `invalid-` only. `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                               |
 
 Override rows take the fields of `generateOne`'s `attributeOverrides`:
 

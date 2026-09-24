@@ -1,5 +1,5 @@
 {
-  "$comment": "The BNG test-scenario catalogue. Each scenario becomes a baseline / post-intervention GeoPackage pair (and, in the harness, a metric workbook). Fields are documented in the README under \"Scenario catalogue\"; the file is checked when it is loaded (src/permutations/catalogue.mjs), and a \"$comment\" is allowed on any scenario or override row.",
+  "$comment": "The BNG test-scenario catalogue. Each scenario becomes a baseline / post-intervention GeoPackage pair (and, in the harness, a metric workbook). Fields are documented in the README under \"Scenario catalogue\"; the file is checked when it is loaded (src/permutations/catalogue.mjs), and an id starting \"invalid-\" marks a scenario that deliberately holds invalid data (every other scenario must be valid), and a \"$comment\" is allowed on any scenario or override row.",
   "defaultSize": 6,
   "scenarios": [
     {
@@ -2155,10 +2155,15 @@
       }
     },
     {
-      "id": "data-incomplete-mix",
+      "id": "invalid-data-incomplete",
       "purpose": "data-completeness",
-      "title": "Mixed complete and incomplete data",
-      "description": "The first three parcels are complete; the last three are incomplete (blank proposed condition and strategic significance).",
+      "title": "Invalid: mixed complete and incomplete data",
+      "description": "Deliberately invalid. The first three parcels are complete; the last three are enhancements with a blank proposed condition and strategic significance, which the metric does not accept, so those rows generate no units.",
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H004",
+        "note": "H004–H006 have blank proposed data"
+      },
       "overrides": {
         "habitats": [
           {
@@ -2211,11 +2216,10 @@
           }
         ]
       },
-      "subject": {
-        "layer": "Habitats",
-        "ref": "H004",
-        "note": "H004–H006 have blank proposed data"
-      }
+      "expectRejectedInputs": [
+        "habitatEnhancement.condition",
+        "habitatEnhancement.strategicSignificance"
+      ]
     }
   ]
 }

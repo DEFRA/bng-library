@@ -8,6 +8,7 @@ import { generateOne, setMode } from '../index.mjs'
 import { workbookRowsFromGeoPackage } from '../src/workbook-writer/gpkg-rows.mjs'
 import { checkVocabulary } from '../src/workbook-writer/template-vocabulary.mjs'
 import { checkScenarioExpectations } from '../src/workbook-writer/expectations.mjs'
+import { isDataError } from '../src/permutations/invalid-data.mjs'
 
 const CENTRE = [530000, 180000]
 const SS = 'Area/compensation not in local strategy/ no local strategy'
@@ -296,6 +297,7 @@ describe('checkScenarioExpectations', () => {
   it('passes what the metric shows and fails what it does not', () => {
     const checks = checkScenarioExpectations(
       {
+        id: 'invalid-area-condition-reduced',
         subject,
         expectGain: 'met',
         expectMetricWarnings: ['Can not reduce condition', 'No enhancement'],
@@ -324,7 +326,76 @@ describe('checkScenarioExpectations', () => {
     ])
   })
 
-  it('declares nothing for a scenario with no expectations', () => {
-    expect(checkScenarioExpectations({ subject }, results)).toEqual([])
+  it('declares nothing for an invalid- scenario with no expectations', () => {
+    expect(
+      checkScenarioExpectations({ id: 'invalid-x', subject }, results)
+    ).toEqual([])
+  })
+
+  it('fails a scenario not named invalid- that has metric errors or rejected inputs', () => {
+    const issues = [
+      {
+        sheet: 'watercourseBaseline',
+        field: 'condition',
+        reference: 'R001',
+        value: 'Fairly Poor',
+        problem: 'not-in-list'
+      }
+    ]
+    const [check] = checkScenarioExpectations(
+      { id: 'intervention-area-enhanced', subject },
+      results,
+      issues
+    )
+    expect(check).toEqual({
+      check: 'valid data (no metric errors or rejected inputs)',
+      expected: 'none',
+      actual:
+        'H001: Error - Can not reduce condition ▲; H002: Error - No enhancement ▲; R001: watercourseBaseline.condition "Fairly Poor"',
+      passed: false
+    })
+  })
+
+  it('passes valid data, counting advice as valid', () => {
+    const advisory = {
+      ...results,
+      rowWarnings: [
+        {
+          sheet: 'habitatCreation',
+          cell: 'R11',
+          reference: 'H003',
+          message:
+            'Check details - Is there evidence habitat creation in place? ⚠'
+        }
+      ]
+    }
+    expect(
+      checkScenarioExpectations({ id: 'net-gain-met', subject }, advisory)
+    ).toEqual([
+      {
+        check: 'valid data (no metric errors or rejected inputs)',
+        expected: 'none',
+        actual: 'none',
+        passed: true
+      }
+    ])
+  })
+})
+
+describe('isDataError', () => {
+  it.each([
+    ['Error - Can not reduce condition ▲', true],
+    ['Not Possible ▲', true],
+    ['Check Data ⚠', true],
+    ['Check data ⚠', true],
+    ['#N/A', true],
+    ['#VALUE!', true],
+    ['Check details - Is there evidence habitat creation in place? ⚠', false],
+    [
+      'Low Difficulty - only applicable if all habitat created before losses ⚠',
+      false
+    ]
+  ])('%s → %s', (message, expected) => {
+    expect(isDataError(message)).toBe(expected)
   })
 })

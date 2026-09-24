@@ -9,6 +9,7 @@
  */
 
 import { readFileSync } from 'node:fs'
+import { INVALID_PREFIX } from './invalid-data.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -217,6 +218,30 @@ const SCENARIO_FIELDS = [
   ...Object.keys(OPTIONAL_FIELDS)
 ]
 
+const ERROR_EXPECTATIONS = ['expectMetricWarnings', 'expectRejectedInputs']
+
+/**
+ * The naming rule: a scenario holding invalid data starts `invalid-` and
+ * says which errors it expects; every other scenario expects none.
+ */
+function checkInvalidNaming(scenario, where) {
+  if (!isText(scenario.id)) {
+    return []
+  }
+  const declared = ERROR_EXPECTATIONS.filter((field) => field in scenario)
+  if (scenario.id.startsWith(INVALID_PREFIX)) {
+    return declared.length > 0
+      ? []
+      : [
+          `${where}: an "${INVALID_PREFIX}" scenario must declare the errors it expects, in ${ERROR_EXPECTATIONS.join(' or ')}`
+        ]
+  }
+  return declared.map(
+    (field) =>
+      `${where}.${field}: only a scenario whose id starts "${INVALID_PREFIX}" may expect errors`
+  )
+}
+
 function checkScenario(scenario, where) {
   if (!isObject(scenario)) {
     return [`${where}: must be an object`]
@@ -234,6 +259,7 @@ function checkScenario(scenario, where) {
         (field) => `${where}.${field}: must be kebab-case, like "net-gain-met"`
       ),
     ...checkSubject(scenario.subject, `${where}.subject`),
+    ...checkInvalidNaming(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)
       .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))

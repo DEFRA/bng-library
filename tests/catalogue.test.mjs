@@ -131,6 +131,7 @@ describe('parseScenarioCatalogue', () => {
   it('checks the other expectations and settings', () => {
     const doc = catalogue(
       scenario({
+        id: 'invalid-area-enhanced',
         size: 0,
         emptyLayers: ['trees', 'ponds', 'trees'],
         expectGain: 'yes',
@@ -163,6 +164,25 @@ describe('parseScenarioCatalogue', () => {
       expect.stringMatching(/\.id: must be kebab-case/),
       expect.stringMatching(/\.subject\.ref: is required text/),
       expect.stringMatching(/\.subject\.note: is required text/)
+    ])
+  })
+
+  it('requires an invalid- scenario to declare its errors, and no other to', () => {
+    const doc = catalogue(
+      scenario({ id: 'invalid-quiet' }),
+      scenario({ id: 'noisy', expectMetricWarnings: ['No enhancement'] }),
+      scenario({
+        id: 'invalid-declared',
+        expectRejectedInputs: ['habitatEnhancement.condition']
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /^scenarios\[0\] \(invalid-quiet\): an "invalid-" scenario must declare the errors it expects/
+      ),
+      expect.stringMatching(
+        /^scenarios\[1\] \(noisy\)\.expectMetricWarnings: only a scenario whose id starts "invalid-" may expect errors/
+      )
     ])
   })
 

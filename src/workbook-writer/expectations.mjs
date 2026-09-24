@@ -8,6 +8,14 @@
  * here, before anyone compares a service run against it.
  */
 
+import {
+  isDataError,
+  isInvalidScenario
+} from '../permutations/invalid-data.mjs'
+
+// Data errors quoted in a failed valid-data check.
+const ERRORS_QUOTED = 3
+
 // A trading summary's verdict reads "Yes ✓" or "No ▲".
 const NOT_SATISFIED = /^no\b/i
 
@@ -82,12 +90,37 @@ function rejectedInputCheck(target, scenario, issues) {
 }
 
 /**
+ * A scenario not named `invalid-` must be valid throughout: no metric error
+ * on any row and no input the workbook rejects, filler features included.
+ */
+function validDataCheck(results, issues) {
+  const errors = [
+    ...results.rowWarnings
+      .filter((w) => isDataError(w.message))
+      .map((w) => `${w.reference}: ${w.message}`),
+    ...issues.map((i) => `${i.reference}: ${i.sheet}.${i.field} "${i.value}"`)
+  ]
+  const more =
+    errors.length > ERRORS_QUOTED
+      ? `, and ${errors.length - ERRORS_QUOTED} more`
+      : ''
+  return {
+    check: 'valid data (no metric errors or rejected inputs)',
+    expected: 'none',
+    actual: errors.length
+      ? `${errors.slice(0, ERRORS_QUOTED).join('; ')}${more}`
+      : 'none',
+    passed: errors.length === 0
+  }
+}
+
+/**
  * @param {object} scenario a catalogue entry
  * @param {object} results from readMetricResults
  * @param {object[]} [issues] from checkVocabulary
  * @returns {{ check: string, expected: string, actual: string,
- *   passed: boolean }[]} one per declared expectation; empty when the
- *   scenario declares none
+ *   passed: boolean }[]} one per declared expectation, and for a scenario
+ *   not named `invalid-` a check that its data is valid throughout
  */
 export function checkScenarioExpectations(scenario, results, issues = []) {
   const checks = []
@@ -104,6 +137,9 @@ export function checkScenarioExpectations(scenario, results, issues = []) {
   }
   for (const target of scenario.expectRejectedInputs ?? []) {
     checks.push(rejectedInputCheck(target, scenario, issues))
+  }
+  if (!isInvalidScenario(scenario)) {
+    checks.push(validDataCheck(results, issues))
   }
   return checks
 }

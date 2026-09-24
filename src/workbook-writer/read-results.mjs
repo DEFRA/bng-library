@@ -60,13 +60,21 @@ export const RESULT_SHEETS = [
 const CUMULATIVE_SURPLUS_CELL = 'K125'
 
 /**
- * Columns whose formula is broken in the published template itself, so they
- * show an error on every filled row whatever the input. A-1's hidden
- * "Succession" check reads IF(#REF!>0, …): the range it once referred to was
- * deleted. Reporting it would bury the warnings that mean something.
+ * Hidden columns whose "errors" are not about the input, so reporting them
+ * would bury the warnings that mean something:
+ *
+ * - A-1 AH, the "Succession" check, is broken in the published template: it
+ *   reads IF(#REF!>0, …), the range it once referred to having been deleted,
+ *   so it errors on every filled row.
+ * - A-2 AE, "Time to Poor condition", looks up how long the habitat takes to
+ *   reach Poor whatever was entered, so any habitat that has no Poor
+ *   condition (a sealed surface, say) shows "Not Possible" on a valid row.
+ *
+ * Both are hidden, so nobody opening the workbook sees them.
  */
 const TEMPLATE_DEFECT_COLUMNS = {
-  habitatBaseline: new Set(['AH'])
+  habitatBaseline: new Set(['AH']),
+  habitatCreation: new Set(['AE'])
 }
 
 // A metric warning carries one of these markers.

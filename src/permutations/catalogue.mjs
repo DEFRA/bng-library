@@ -1,799 +1,310 @@
 /**
- * The permutations catalogue: a declarative set of scenarios the runner turns
- * into paired baseline / post-intervention GeoPackages, organised by purpose.
+ * The permutations catalogue, loaded from `scenarios.json` beside this file.
  *
- * Each scenario is a plain recipe over the bng-library `attributeOverrides`
- * surface (see `generateOne`). A scenario names:
- *   id            kebab-case, unique; drives the output filenames
- *   purpose       the sub-folder it lands in (a testing theme)
- *   title         one-line human label
- *   description   what the fixture demonstrates
- *   size          habitat parcel count (also scales hedgerow/river/tree counts)
- *   overrides     bng-library attributeOverrides ({ habitats, hedgerows, rivers })
- *   subject       { layer, ref, note } — the feature a tester should open
- *   expectGain    'met' | 'unmet' — when set, the runner prices the habitats
- *                 through the engine and asserts the +10% threshold
- *   emptyLayers   optional layer keys ('habitats', 'hedgerows', 'rivers',
- *                 'trees') generated empty, so the random filler features
- *                 cannot add warnings or trading breaches of their own
- *
- * What the metric workbook should make of a scenario — checked
- * against the recalculated workbook by `checkScenarioExpectations`:
- *   expectMetricWarnings  text of warnings the metric raises on the subject
- *   expectTrading         { area | hedgerow | watercourse: { band: 'met' |
- *                         'breached' } } — each band's trading-rule verdict
- *   expectRejectedInputs  ['sheetKey.field', …] — subject inputs the
- *                         workbook's own drop-down lists do not offer
- *
- * The axes from BMD-934 map onto the purposes below: intervention categories
- * across the three habitat types, conditions, strategic significance, met/unmet
- * 10% net gain, low→medium distinctiveness trading, enhancement/creation
- * advance & delay years, and complete vs incomplete data.
+ * The scenarios are configuration, not code: each is a plain recipe the
+ * runner turns into paired baseline / post-intervention GeoPackages. The
+ * fields are documented in the README ("Scenario catalogue"). The file is
+ * checked as it is loaded, and every problem is reported at once, so a typo
+ * in a field name fails loudly instead of being ignored by the generator.
  */
 
-import {
-  CONDITIONS,
-  HEDGE_CONDITIONS,
-  IN_SCOPE_HEDGE_TYPES,
-  MIN_HEDGEROW_COUNT,
-  MIN_RIVER_COUNT,
-  STRATEGIC_SIGNIFICANCE
-} from '../synthetic/synthetic-constants.mjs'
-import { TRADING_MATRIX } from './trading-matrix.mjs'
+import { readFileSync } from 'node:fs'
 
-// Habitats chosen for stable distinctiveness bands and a full 5-condition
-// range, so a scenario can pin any condition without hitting a "Not Possible"
-// (habitat, condition) pair. Both are Medium-or-lower distinctiveness: the
-// service rejects High/V.High habitats at upload (baseline and
-// post-intervention alike), so the catalogue must never pin one.
-const HABITAT_LOW = 'Grassland - Modified grassland'
-const HABITAT_MEDIUM = 'Grassland - Other neutral grassland'
+const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
-// Strategic significance, worst → best multiplier. Index 2 is the "Low (1)"
-// value the habitat-details pages display.
-const SS_LOW = STRATEGIC_SIGNIFICANCE[2]
-const SS_MEDIUM = STRATEGIC_SIGNIFICANCE[1]
-const SS_HIGH = STRATEGIC_SIGNIFICANCE[0]
+const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const WORKBOOK_FIELD = /^[a-zA-Z]+\.[a-zA-Z]+$/
+const COMMENT = '$comment'
 
-const RIVER_TYPE = 'Canals'
-const HEDGE_TYPE = IN_SCOPE_HEDGE_TYPES[0]
-const HEDGE_GOOD = HEDGE_CONDITIONS[0]
-const HEDGE_MODERATE = HEDGE_CONDITIONS[1]
-
-const NO_WATER_ENCROACHMENT = 'No Encroachment'
-const NO_RIPARIAN_ENCROACHMENT = 'No Encroachment/No Encroachment'
-
-const DEFAULT_SIZE = 6
-
-// Isolate one layer: the others are generated empty.
-const ONLY_AREAS = ['hedgerows', 'rivers', 'trees']
-const AREAS_AND_HEDGEROWS = ['rivers', 'trees']
-const AREAS_AND_RIVERS = ['hedgerows', 'trees']
-
-const RIVER_DITCH = 'Ditches'
-const RIVER_CULVERT = 'Culvert'
-const HEDGE_NATIVE = 'Native hedgerow'
-const HEDGE_POOR = HEDGE_CONDITIONS[2]
-
-// A small fixture still draws this many linear features, so pinning them all
-// leaves no random ones behind.
-const MIN_HEDGEROWS = MIN_HEDGEROW_COUNT
-const MIN_RIVERS = MIN_RIVER_COUNT
-
-/** Repeat a per-row recipe `n` times to pin every row of a layer. */
-function repeat(recipe, n) {
-  return Array.from({ length: n }, () => ({ ...recipe }))
+const LAYERS = ['habitats', 'hedgerows', 'rivers', 'trees']
+const GAIN_VERDICTS = ['met', 'unmet']
+const TRADING_VERDICTS = ['met', 'breached']
+const TRADING_BANDS = {
+  area: ['Very High', 'High', 'Medium', 'Low'],
+  hedgerow: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
+  watercourse: ['Very High', 'High', 'Medium', 'Low']
 }
 
-// ---------------------------------------------------------------------------
-// Intervention categories across the three habitat types
-// ---------------------------------------------------------------------------
-
-const areaBase = {
-  habitatFullName: HABITAT_MEDIUM,
-  baselineCondition: 'Moderate',
-  baselineStrategicSignificance: SS_LOW,
-  proposedStrategicSignificance: SS_LOW
+// The generator's `attributeOverrides` contract (see `generateOne`).
+const COMMON_OVERRIDE_FIELDS = [
+  'retention',
+  'baselineCondition',
+  'proposedCondition',
+  'baselineStrategicSignificance',
+  'proposedStrategicSignificance',
+  'advanceYears',
+  'delayYears',
+  'incomplete'
+]
+const OVERRIDE_FIELDS = {
+  habitats: ['habitatFullName', 'proposedHabitatFullName', 'parcelRef'],
+  hedgerows: ['hedgeType', 'proposedHedgeType', 'lengthRange'],
+  rivers: [
+    'riverType',
+    'proposedRiverType',
+    'baselineWaterEncroachment',
+    'proposedWaterEncroachment',
+    'baselineRiparianEncroachment',
+    'proposedRiparianEncroachment',
+    'lengthRange'
+  ]
 }
 
-const interventionScenarios = [
-  {
-    id: 'intervention-area-retained',
-    purpose: 'intervention',
-    title: 'Area habitat — Retained',
-    description:
-      'Every area parcel is retained: proposed state mirrors the baseline.',
-    overrides: {
-      habitats: repeat({ ...areaBase, retention: 'Retained' }, DEFAULT_SIZE)
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'a retained area habitat'
-    }
-  },
-  {
-    id: 'intervention-area-enhanced',
-    purpose: 'intervention',
-    title: 'Area habitat — Enhanced',
-    description:
-      'Area parcels are enhanced from Moderate to Good condition (same habitat).',
-    overrides: {
-      habitats: repeat(
-        {
-          ...areaBase,
-          retention: 'Enhanced',
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          proposedCondition: 'Good'
-        },
-        DEFAULT_SIZE
-      )
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'an enhanced area habitat'
-    }
-  },
-  {
-    id: 'intervention-area-created',
-    purpose: 'intervention',
-    title: 'Area habitat — Created',
-    description:
-      "Area parcels are created (written to the gpkg as the statutory 'Lost' retention).",
-    overrides: {
-      habitats: repeat(
-        {
-          ...areaBase,
-          retention: 'Created',
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          proposedCondition: 'Good'
-        },
-        DEFAULT_SIZE
-      )
-    },
-    subject: { layer: 'Habitats', ref: 'H001', note: 'a created area habitat' }
-  },
-  {
-    id: 'intervention-hedgerow-retained',
-    purpose: 'intervention',
-    title: 'Hedgerow — Retained',
-    description:
-      'The first hedgerow is retained; area parcels tile the redline.',
-    overrides: {
-      hedgerows: [
-        {
-          hedgeType: HEDGE_TYPE,
-          retention: 'Retained',
-          baselineCondition: HEDGE_GOOD,
-          proposedCondition: HEDGE_GOOD,
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        }
-      ]
-    },
-    subject: {
-      layer: 'Hedgerows',
-      ref: 'HG001',
-      note: 'a retained hedgerow'
-    }
-  },
-  {
-    id: 'intervention-hedgerow-enhanced',
-    purpose: 'intervention',
-    title: 'Hedgerow — Enhanced',
-    description:
-      'The first hedgerow is enhanced from Moderate to Good condition.',
-    overrides: {
-      hedgerows: [
-        {
-          hedgeType: HEDGE_TYPE,
-          retention: 'Enhanced',
-          baselineCondition: HEDGE_MODERATE,
-          proposedCondition: HEDGE_GOOD,
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        }
-      ]
-    },
-    subject: {
-      layer: 'Hedgerows',
-      ref: 'HG001',
-      note: 'an enhanced hedgerow'
-    }
-  },
-  {
-    id: 'intervention-hedgerow-created',
-    purpose: 'intervention',
-    title: 'Hedgerow — Created',
-    description:
-      'The first hedgerow is created; its baseline columns take the template placeholders.',
-    overrides: {
-      hedgerows: [
-        {
-          hedgeType: HEDGE_TYPE,
-          retention: 'Created',
-          proposedCondition: HEDGE_GOOD,
-          proposedStrategicSignificance: SS_LOW,
-          advanceYears: '2'
-        }
-      ]
-    },
-    subject: { layer: 'Hedgerows', ref: 'HG001', note: 'a created hedgerow' }
-  },
-  {
-    id: 'intervention-watercourse-retained',
-    purpose: 'intervention',
-    title: 'Watercourse — Retained',
-    description: 'The first watercourse is retained, with no encroachment.',
-    overrides: {
-      rivers: [
-        {
-          riverType: RIVER_TYPE,
-          retention: 'Retained',
-          baselineCondition: 'Fairly Good',
-          proposedCondition: 'Fairly Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW,
-          baselineWaterEncroachment: NO_WATER_ENCROACHMENT,
-          proposedWaterEncroachment: NO_WATER_ENCROACHMENT,
-          baselineRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT,
-          proposedRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT
-        }
-      ]
-    },
-    subject: {
-      layer: 'Rivers',
-      ref: 'R001',
-      note: 'a retained watercourse'
-    }
-  },
-  {
-    id: 'intervention-watercourse-enhanced',
-    purpose: 'intervention',
-    title: 'Watercourse — Enhanced',
-    description:
-      'The first watercourse is enhanced from Moderate to Good condition.',
-    overrides: {
-      rivers: [
-        {
-          riverType: RIVER_TYPE,
-          retention: 'Enhanced',
-          baselineCondition: 'Moderate',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW,
-          baselineWaterEncroachment: NO_WATER_ENCROACHMENT,
-          proposedWaterEncroachment: NO_WATER_ENCROACHMENT,
-          baselineRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT,
-          proposedRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT
-        }
-      ]
-    },
-    subject: {
-      layer: 'Rivers',
-      ref: 'R001',
-      note: 'an enhanced watercourse'
-    }
-  },
-  {
-    id: 'intervention-watercourse-created',
-    purpose: 'intervention',
-    title: 'Watercourse — Created',
-    description:
-      'The first watercourse is created; its baseline columns take the template placeholders.',
-    overrides: {
-      rivers: [
-        {
-          riverType: RIVER_TYPE,
-          retention: 'Created',
-          proposedCondition: 'Good',
-          proposedStrategicSignificance: SS_LOW,
-          proposedWaterEncroachment: NO_WATER_ENCROACHMENT,
-          proposedRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT,
-          delayYears: '2'
-        }
-      ]
-    },
-    subject: { layer: 'Rivers', ref: 'R001', note: 'a created watercourse' }
-  }
-]
-
-// ---------------------------------------------------------------------------
-// Invalid interventions — each one a rule the metric enforces, so the
-// workbook raises its own warning on the subject
-// ---------------------------------------------------------------------------
-
-// A second, retained parcel keeps the baseline non-zero whatever happens to
-// the subject.
-const retainedControl = { ...areaBase, retention: 'Retained' }
-
-function areaSubject(subject) {
-  return [{ ...areaBase, ...subject }, retainedControl]
+/** A catalogue that cannot be read or does not check out; a CLI can report it plainly. */
+export class ScenarioCatalogueError extends Error {
+  name = 'ScenarioCatalogueError'
 }
 
-const enhancedDitch = {
-  riverType: RIVER_DITCH,
-  retention: 'Enhanced',
-  baselineCondition: 'Moderate',
-  proposedCondition: 'Good',
-  baselineStrategicSignificance: SS_LOW,
-  proposedStrategicSignificance: SS_LOW,
-  baselineWaterEncroachment: NO_WATER_ENCROACHMENT,
-  baselineRiparianEncroachment: NO_RIPARIAN_ENCROACHMENT
+const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+const isText = (v) => typeof v === 'string' && v.trim() !== ''
+const isPositiveInteger = (v) => Number.isInteger(v) && v > 0
+const list = (values) => values.map((v) => JSON.stringify(v)).join(', ')
+
+function unknownKeys(value, allowed, where) {
+  return Object.keys(value)
+    .filter((key) => !allowed.includes(key))
+    .map(
+      (key) =>
+        `${where}: unknown field "${key}"; expected one of ${list(allowed)}`
+    )
 }
 
-const invalidInterventionScenarios = [
-  {
-    id: 'invalid-area-condition-reduced',
-    purpose: 'invalid-interventions',
-    title: 'Area habitat — enhancement that lowers condition',
-    description:
-      'H001 is "enhanced" from Moderate to Poor condition, same habitat. The metric does not allow an enhancement to reduce condition.',
-    size: 2,
-    emptyLayers: ONLY_AREAS,
-    overrides: {
-      habitats: areaSubject({
-        retention: 'Enhanced',
-        proposedHabitatFullName: HABITAT_MEDIUM,
-        proposedCondition: 'Poor'
-      })
-    },
-    expectMetricWarnings: ['Can not reduce condition'],
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'enhanced parcel whose condition drops'
-    }
-  },
-  {
-    id: 'invalid-area-no-enhancement',
-    purpose: 'invalid-interventions',
-    title: 'Area habitat — enhancement that changes nothing',
-    description:
-      'H001 is "enhanced" with the same habitat and the same Moderate condition — an enhancement that enhances nothing.',
-    size: 2,
-    emptyLayers: ONLY_AREAS,
-    overrides: {
-      habitats: areaSubject({
-        retention: 'Enhanced',
-        proposedHabitatFullName: HABITAT_MEDIUM,
-        proposedCondition: 'Moderate'
-      })
-    },
-    expectMetricWarnings: ['No enhancement'],
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'enhanced parcel with no change'
-    }
-  },
-  {
-    id: 'invalid-area-trading-down',
-    purpose: 'invalid-interventions',
-    title: 'Area habitat — enhancement to a lower distinctiveness',
-    description:
-      'H001 is "enhanced" from a Medium-distinctiveness habitat to a Low one. An enhancement may not trade down.',
-    size: 2,
-    emptyLayers: ONLY_AREAS,
-    overrides: {
-      habitats: areaSubject({
-        retention: 'Enhanced',
-        proposedHabitatFullName: HABITAT_LOW,
-        proposedCondition: 'Good'
-      })
-    },
-    expectMetricWarnings: ['Trading Down'],
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'Medium → Low distinctiveness enhancement'
-    }
-  },
-  {
-    id: 'invalid-area-advance-and-delay',
-    purpose: 'invalid-interventions',
-    title: 'Created habitat — both advance and delay years',
-    description:
-      'H001 is created 2 years in advance and also delayed by 3 years. The metric allows one or the other, never both.',
-    size: 2,
-    emptyLayers: ONLY_AREAS,
-    overrides: {
-      habitats: areaSubject({
-        retention: 'Created',
-        proposedHabitatFullName: HABITAT_MEDIUM,
-        proposedCondition: 'Good',
-        advanceYears: '2',
-        delayYears: '3'
-      })
-    },
-    expectMetricWarnings: ['both advance and delayed'],
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'created parcel with advance and delay both set'
-    }
-  },
-  {
-    id: 'invalid-hedgerow-condition-reduced',
-    purpose: 'invalid-interventions',
-    title: 'Hedgerow — enhancement that lowers condition',
-    description:
-      'Every hedgerow is "enhanced" from Good to Poor condition. The metric does not allow an enhancement to reduce condition.',
-    size: 1,
-    emptyLayers: AREAS_AND_HEDGEROWS,
-    overrides: {
-      habitats: [retainedControl],
-      hedgerows: repeat(
-        {
-          hedgeType: HEDGE_NATIVE,
-          retention: 'Enhanced',
-          baselineCondition: HEDGE_GOOD,
-          proposedCondition: HEDGE_POOR,
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        MIN_HEDGEROWS
-      )
-    },
-    expectMetricWarnings: ['Can not reduce condition'],
-    subject: {
-      layer: 'Hedgerows',
-      ref: 'HG001',
-      note: 'enhanced hedgerow whose condition drops'
-    }
-  },
-  {
-    id: 'invalid-watercourse-culvert-enhanced',
-    purpose: 'invalid-interventions',
-    title: 'Watercourse — an enhanced culvert',
-    description:
-      'R001 is a culvert, "enhanced" in place. The metric has no enhancement for a culvert: its enhancement sheet does not offer the type at all.',
-    size: 1,
-    emptyLayers: AREAS_AND_RIVERS,
-    overrides: {
-      habitats: [retainedControl],
-      rivers: [
-        {
-          riverType: RIVER_CULVERT,
-          retention: 'Enhanced',
-          baselineCondition: 'Poor',
-          proposedCondition: 'Poor',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        {
-          ...enhancedDitch,
-          retention: 'Retained',
-          proposedCondition: 'Moderate'
-        }
-      ]
-    },
-    expectRejectedInputs: ['watercourseEnhancement.habitatType'],
-    subject: { layer: 'Rivers', ref: 'R001', note: 'an enhanced culvert' }
-  },
-  {
-    id: 'invalid-watercourse-encroachment-worsened',
-    purpose: 'invalid-interventions',
-    title: 'Watercourse — enhancement that worsens encroachment',
-    description:
-      'Both ditches are "enhanced" to Good condition while their encroachment goes from none to Major on the channel and both banks, so the enhancement delivers fewer units than the baseline.',
-    size: 1,
-    emptyLayers: AREAS_AND_RIVERS,
-    overrides: {
-      habitats: [retainedControl],
-      rivers: repeat(
-        {
-          ...enhancedDitch,
-          proposedWaterEncroachment: 'Major',
-          proposedRiparianEncroachment: 'Major/Major'
-        },
-        MIN_RIVERS
-      )
-    },
-    expectMetricWarnings: ['units less than baseline'],
-    subject: {
-      layer: 'Rivers',
-      ref: 'R001',
-      note: 'enhanced ditch with worsened encroachment'
-    }
+function checkOneOf(value, allowed, where) {
+  return allowed.includes(value)
+    ? []
+    : [`${where}: ${JSON.stringify(value)} is not one of ${list(allowed)}`]
+}
+
+function checkTextList(value, where, pattern) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [`${where}: must be a non-empty list of text`]
   }
-]
+  return value
+    .map((item, i) => ({ item, i }))
+    .filter(({ item }) => !isText(item) || (pattern && !pattern.test(item)))
+    .map(
+      ({ item, i }) => `${where}[${i}]: ${JSON.stringify(item)} is not valid`
+    )
+}
 
-// ---------------------------------------------------------------------------
-// Conditions — one parcel per condition band
-// ---------------------------------------------------------------------------
+function checkLengthRange(value, where) {
+  const valid =
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((n) => typeof n === 'number' && n > 0) &&
+    value[0] <= value[1]
+  return valid
+    ? []
+    : [`${where}: must be [min, max] metres, with 0 < min ≤ max`]
+}
 
-const conditionScenarios = [
-  {
-    id: 'conditions-area-spread',
-    purpose: 'conditions',
-    title: 'Area habitats across every condition band',
-    description:
-      'Five retained parcels, each pinned to a different condition (Good → Poor), same habitat.',
-    size: CONDITIONS.length,
-    overrides: {
-      habitats: CONDITIONS.map((condition) => ({
-        habitatFullName: HABITAT_MEDIUM,
-        retention: 'Retained',
-        baselineCondition: condition,
-        baselineStrategicSignificance: SS_LOW,
-        proposedStrategicSignificance: SS_LOW
-      }))
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'Good condition (H001) through Poor (H005)'
-    }
+function checkOverrideValue(field, value, where) {
+  if (field === 'lengthRange') {
+    return checkLengthRange(value, where)
   }
-]
-
-// ---------------------------------------------------------------------------
-// Strategic significance — one parcel per multiplier band
-// ---------------------------------------------------------------------------
-
-const strategicSignificanceScenarios = [
-  {
-    id: 'strategic-significance-spread',
-    purpose: 'strategic-significance',
-    title: 'Area habitats across every strategic-significance band',
-    description:
-      'Three retained parcels pinned to Low (1), Medium and High strategic significance.',
-    size: 3,
-    overrides: {
-      habitats: [SS_LOW, SS_MEDIUM, SS_HIGH].map((ss) => ({
-        habitatFullName: HABITAT_MEDIUM,
-        retention: 'Retained',
-        baselineCondition: 'Moderate',
-        baselineStrategicSignificance: ss,
-        proposedStrategicSignificance: ss
-      }))
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'H001 Low (1), H002 Medium, H003 High strategic significance'
-    }
+  if (field === 'incomplete') {
+    return typeof value === 'boolean' ? [] : [`${where}: must be true or false`]
   }
-]
+  return typeof value === 'string' ? [] : [`${where}: must be text`]
+}
 
-// ---------------------------------------------------------------------------
-// Met / unmet 10% net gain (engine-verified)
-// ---------------------------------------------------------------------------
-
-const netGainScenarios = [
-  {
-    id: 'net-gain-met',
-    purpose: 'net-gain',
-    title: 'Net gain met (≥ 10%)',
-    description:
-      'Every parcel enhanced from Low-distinctiveness/Poor to Medium-distinctiveness/Good — a large, unambiguous gain.',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_LOW,
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          retention: 'Enhanced',
-          baselineCondition: 'Poor',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        DEFAULT_SIZE
-      )
-    },
-    expectGain: 'met',
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'enhanced parcels driving a net gain over 10%'
-    }
-  },
-  {
-    id: 'net-gain-unmet',
-    purpose: 'net-gain',
-    title: 'Net gain unmet (< 10%)',
-    description:
-      'Every parcel retained unchanged — zero net change, so the 10% gain is not met.',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_MEDIUM,
-          retention: 'Retained',
-          baselineCondition: 'Moderate',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        DEFAULT_SIZE
-      )
-    },
-    expectGain: 'unmet',
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'retained parcels with no net gain'
-    }
+function checkOverrideRow(layer, row, where) {
+  if (!isObject(row)) {
+    return [`${where}: must be an object`]
   }
-]
-
-// ---------------------------------------------------------------------------
-// Trading rules — low → medium distinctiveness transfer
-// ---------------------------------------------------------------------------
-
-const tradingScenarios = [
-  {
-    id: 'trading-low-to-medium',
-    purpose: 'trading-rules',
-    title: 'Trading rules — Low → Medium distinctiveness',
-    description:
-      'Parcels enhanced from a Low-distinctiveness habitat to a Medium-distinctiveness one, exercising the low→medium trading rule.',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_LOW,
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          retention: 'Enhanced',
-          baselineCondition: 'Moderate',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        DEFAULT_SIZE
+  const allowed = [
+    ...COMMON_OVERRIDE_FIELDS,
+    ...OVERRIDE_FIELDS[layer],
+    COMMENT
+  ]
+  return [
+    ...unknownKeys(row, allowed, where),
+    ...Object.entries(row)
+      .filter(([field]) => field !== COMMENT && allowed.includes(field))
+      .flatMap(([field, value]) =>
+        checkOverrideValue(field, value, `${where}.${field}`)
       )
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'Low (baseline) → Medium (proposed) distinctiveness'
-    }
+  ]
+}
+
+function checkOverrides(overrides, where) {
+  if (!isObject(overrides)) {
+    return [`${where}: must be an object of layers`]
   }
-]
-
-// ---------------------------------------------------------------------------
-// Enhancement / creation advance & delay years
-// ---------------------------------------------------------------------------
-
-const advanceDelayScenarios = [
-  {
-    id: 'advance-delay-created-advance',
-    purpose: 'advance-delay',
-    title: 'Created habitat — advance years',
-    description:
-      'Created parcels with habitat creation started 5 years in advance (delay 0).',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_MEDIUM,
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          retention: 'Created',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW,
-          advanceYears: '5',
-          delayYears: '0'
-        },
-        DEFAULT_SIZE
+  const layers = Object.keys(OVERRIDE_FIELDS)
+  return [
+    ...unknownKeys(overrides, layers, where),
+    ...Object.entries(overrides)
+      .filter(([layer]) => layers.includes(layer))
+      .flatMap(([layer, rows]) =>
+        Array.isArray(rows)
+          ? rows.flatMap((row, i) =>
+              checkOverrideRow(layer, row, `${where}.${layer}[${i}]`)
+            )
+          : [`${where}.${layer}: must be a list of rows`]
       )
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'created parcel with 5 advance years'
-    }
-  },
-  {
-    id: 'advance-delay-created-delay',
-    purpose: 'advance-delay',
-    title: 'Created habitat — delay years',
-    description:
-      'Created parcels with habitat creation delayed by 3 years (advance 0).',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_MEDIUM,
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          retention: 'Created',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW,
-          advanceYears: '0',
-          delayYears: '3'
-        },
-        DEFAULT_SIZE
-      )
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'created parcel with 3 delay years'
-    }
+  ]
+}
+
+function checkTradingBands(type, bands, where) {
+  if (!isObject(bands)) {
+    return [`${where}: must be an object of bands`]
   }
-]
+  return [
+    ...unknownKeys(bands, TRADING_BANDS[type], where),
+    ...Object.entries(bands).flatMap(([band, verdict]) =>
+      checkOneOf(verdict, TRADING_VERDICTS, `${where}.${band}`)
+    )
+  ]
+}
 
-// ---------------------------------------------------------------------------
-// Complete vs incomplete post-intervention data
-// ---------------------------------------------------------------------------
-
-const completenessScenarios = [
-  {
-    id: 'data-complete',
-    purpose: 'data-completeness',
-    title: 'Complete post-intervention data',
-    description:
-      'Every enhanced parcel has all proposed attributes populated — a clean, complete file.',
-    overrides: {
-      habitats: repeat(
-        {
-          habitatFullName: HABITAT_MEDIUM,
-          proposedHabitatFullName: HABITAT_MEDIUM,
-          retention: 'Enhanced',
-          baselineCondition: 'Moderate',
-          proposedCondition: 'Good',
-          baselineStrategicSignificance: SS_LOW,
-          proposedStrategicSignificance: SS_LOW
-        },
-        DEFAULT_SIZE
-      )
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H001',
-      note: 'a complete enhanced parcel'
-    }
-  },
-  {
-    id: 'data-incomplete-mix',
-    purpose: 'data-completeness',
-    title: 'Mixed complete and incomplete data',
-    description:
-      'The first three parcels are complete; the last three are incomplete (blank proposed condition and strategic significance).',
-    overrides: {
-      habitats: [
-        ...repeat(
-          {
-            habitatFullName: HABITAT_MEDIUM,
-            proposedHabitatFullName: HABITAT_MEDIUM,
-            retention: 'Enhanced',
-            baselineCondition: 'Moderate',
-            proposedCondition: 'Good',
-            baselineStrategicSignificance: SS_LOW,
-            proposedStrategicSignificance: SS_LOW
-          },
-          3
-        ),
-        ...repeat(
-          {
-            habitatFullName: HABITAT_MEDIUM,
-            retention: 'Enhanced',
-            baselineCondition: 'Moderate',
-            baselineStrategicSignificance: SS_LOW,
-            incomplete: true
-          },
-          3
-        )
-      ]
-    },
-    subject: {
-      layer: 'Habitats',
-      ref: 'H004',
-      note: 'H004–H006 have blank proposed data'
-    }
+function checkTrading(expectTrading, where) {
+  if (!isObject(expectTrading)) {
+    return [`${where}: must be an object of habitat types`]
   }
+  const types = Object.keys(TRADING_BANDS)
+  return [
+    ...unknownKeys(expectTrading, types, where),
+    ...Object.entries(expectTrading)
+      .filter(([type]) => types.includes(type))
+      .flatMap(([type, bands]) =>
+        checkTradingBands(type, bands, `${where}.${type}`)
+      )
+  ]
+}
+
+function checkSubject(subject, where) {
+  if (!isObject(subject)) {
+    return [`${where}: must be an object with layer, ref and note`]
+  }
+  const fields = ['layer', 'ref', 'note']
+  return [
+    ...unknownKeys(subject, fields, where),
+    ...fields
+      .filter((field) => !isText(subject[field]))
+      .map((field) => `${where}.${field}: is required text`)
+  ]
+}
+
+function checkEmptyLayers(value, where) {
+  if (!Array.isArray(value)) {
+    return [`${where}: must be a list of layers`]
+  }
+  const repeated = value.filter((layer, i) => value.indexOf(layer) !== i)
+  return [
+    ...value.flatMap((layer, i) => checkOneOf(layer, LAYERS, `${where}[${i}]`)),
+    ...repeated.map((layer) => `${where}: "${layer}" is listed twice`)
+  ]
+}
+
+// Each optional field's check; a field not listed here is unknown.
+const OPTIONAL_FIELDS = {
+  size: (v, where) =>
+    isPositiveInteger(v) ? [] : [`${where}: must be a whole number above 0`],
+  emptyLayers: checkEmptyLayers,
+  overrides: checkOverrides,
+  expectGain: (v, where) => checkOneOf(v, GAIN_VERDICTS, where),
+  expectTrading: checkTrading,
+  expectMetricWarnings: (v, where) => checkTextList(v, where),
+  expectRejectedInputs: (v, where) => checkTextList(v, where, WORKBOOK_FIELD),
+  [COMMENT]: (v, where) =>
+    typeof v === 'string' ? [] : [`${where}: must be text`]
+}
+const REQUIRED_TEXT = ['id', 'purpose', 'title', 'description']
+const SCENARIO_FIELDS = [
+  ...REQUIRED_TEXT,
+  'subject',
+  ...Object.keys(OPTIONAL_FIELDS)
 ]
 
-export const SCENARIOS = [
-  ...interventionScenarios,
-  ...invalidInterventionScenarios,
-  ...conditionScenarios,
-  ...strategicSignificanceScenarios,
-  ...netGainScenarios,
-  ...tradingScenarios,
-  ...TRADING_MATRIX,
-  ...advanceDelayScenarios,
-  ...completenessScenarios
-]
+function checkScenario(scenario, where) {
+  if (!isObject(scenario)) {
+    return [`${where}: must be an object`]
+  }
+  return [
+    ...unknownKeys(scenario, SCENARIO_FIELDS, where),
+    ...REQUIRED_TEXT.filter((field) => !isText(scenario[field])).map(
+      (field) => `${where}.${field}: is required text`
+    ),
+    ...['id', 'purpose']
+      .filter(
+        (field) => isText(scenario[field]) && !KEBAB_CASE.test(scenario[field])
+      )
+      .map(
+        (field) => `${where}.${field}: must be kebab-case, like "net-gain-met"`
+      ),
+    ...checkSubject(scenario.subject, `${where}.subject`),
+    ...Object.entries(OPTIONAL_FIELDS)
+      .filter(([field]) => field in scenario)
+      .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))
+  ]
+}
 
-export const PURPOSES = [...new Set(SCENARIOS.map((s) => s.purpose))]
+function checkCatalogue(doc) {
+  if (!isObject(doc)) {
+    return ['the file must hold an object with defaultSize and scenarios']
+  }
+  const errors = unknownKeys(
+    doc,
+    [COMMENT, 'defaultSize', 'scenarios'],
+    'the file'
+  )
+  if (!isPositiveInteger(doc.defaultSize)) {
+    errors.push('defaultSize: must be a whole number above 0')
+  }
+  if (!Array.isArray(doc.scenarios) || doc.scenarios.length === 0) {
+    return [...errors, 'scenarios: must be a non-empty list']
+  }
+  const seen = new Set()
+  doc.scenarios.forEach((scenario, i) => {
+    const where = `scenarios[${i}]${isText(scenario?.id) ? ` (${scenario.id})` : ''}`
+    errors.push(...checkScenario(scenario, where))
+    if (seen.has(scenario?.id)) {
+      errors.push(
+        `${where}: id "${scenario.id}" is used by an earlier scenario`
+      )
+    }
+    seen.add(scenario?.id)
+  })
+  return errors
+}
 
-export { DEFAULT_SIZE }
+/**
+ * Check a parsed catalogue and return its scenarios.
+ *
+ * @param {unknown} doc the parsed JSON
+ * @param {string} [source] named in the error
+ * @returns {{ defaultSize: number, scenarios: object[], purposes: string[] }}
+ * @throws {ScenarioCatalogueError} listing every problem found
+ */
+export function parseScenarioCatalogue(doc, source = 'the scenario catalogue') {
+  const errors = checkCatalogue(doc)
+  if (errors.length > 0) {
+    throw new ScenarioCatalogueError(
+      `${source} has ${errors.length} problem(s):\n  ${errors.join('\n  ')}`
+    )
+  }
+  return {
+    defaultSize: doc.defaultSize,
+    scenarios: doc.scenarios,
+    purposes: [...new Set(doc.scenarios.map((s) => s.purpose))]
+  }
+}
+
+function loadCatalogue() {
+  let doc
+  try {
+    doc = JSON.parse(readFileSync(CATALOGUE_FILE, 'utf8'))
+  } catch (error) {
+    throw new ScenarioCatalogueError(
+      `Cannot read ${CATALOGUE_FILE.pathname}: ${error.message}`
+    )
+  }
+  return parseScenarioCatalogue(doc, CATALOGUE_FILE.pathname)
+}
+
+const catalogue = loadCatalogue()
+
+export const DEFAULT_SIZE = catalogue.defaultSize
+export const SCENARIOS = catalogue.scenarios
+export const PURPOSES = catalogue.purposes

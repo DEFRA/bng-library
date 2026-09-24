@@ -137,6 +137,81 @@ output. The harness's `npm run generate:scenarios` builds the whole corpus.
 The tests against the real template run when `METRIC_TEMPLATE` points at a
 metric v4 workbook, which is not committed here; otherwise they are skipped.
 
+### Scenario catalogue
+
+The test scenarios are configuration, kept in one file:
+[`src/permutations/scenarios.json`](src/permutations/scenarios.json). Each
+scenario becomes a baseline / post-intervention GeoPackage pair, and in the
+harness a metric workbook too. To add, change or remove a scenario, edit that
+file; no code changes are needed. `generatePermutations` and the harness's
+`npm run generate:scenarios` build whatever it holds.
+
+The file is checked when it is loaded, and every problem is reported at once.
+A misspelt field, an override the generator does not recognise, or an
+expectation it cannot check stops the load rather than being silently
+ignored. A `$comment` is allowed on any scenario or override row, for notes
+the file would otherwise lose.
+
+The file holds `defaultSize`, the habitat parcel count for a scenario with no
+`size`, and `scenarios`, a list of:
+
+| Field                  | Required | Meaning                                                                                                                                                                                              |
+| ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | yes      | Unique, kebab-case; names the output files                                                                                                                                                           |
+| `purpose`              | yes      | Kebab-case testing theme; the output folder, and the `--only` filter                                                                                                                                 |
+| `title`, `description` | yes      | What the scenario demonstrates, shown in the harness's `index.md`                                                                                                                                    |
+| `subject`              | yes      | `{ layer, ref, note }`: the feature a tester should open, such as `H001`                                                                                                                             |
+| `size`                 |          | Habitat parcel count; also scales the hedgerow, river and tree counts                                                                                                                                |
+| `overrides`            |          | Features to pin, as `{ habitats, hedgerows, rivers }` lists of rows. The first row pins the first feature, and so on; anything a row leaves out, and every feature past the list, is drawn at random |
+| `emptyLayers`          |          | Layers generated empty (`habitats`, `hedgerows`, `rivers`, `trees`), so random features cannot add warnings or trading breaches of their own                                                         |
+| `expectGain`           |          | `met` or `unmet`: the area net gain against 10%, checked through the engine and, with workbooks, the metric                                                                                          |
+| `expectTrading`        |          | `{ area \| hedgerow \| watercourse: { band: "met" \| "breached" } }`, checked against the metric's trading summaries                                                                                 |
+| `expectMetricWarnings` |          | Text of warnings the metric must raise on the subject                                                                                                                                                |
+| `expectRejectedInputs` |          | `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                                |
+
+Override rows take the fields of `generateOne`'s `attributeOverrides`:
+
+| Layer       | Fields                                                                                                                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| all         | `retention`, `baselineCondition`, `proposedCondition`, `baselineStrategicSignificance`, `proposedStrategicSignificance`, `advanceYears`, `delayYears`, `incomplete` (true blanks the proposed-side condition, strategic significance and encroachment) |
+| `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
+| `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`                                                                                                                                                                                                        |
+| `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`                                                                              |
+
+Values are the GeoPackage template's own spellings, such as
+`"Grassland - Other neutral grassland"` or `"Moderate"`. `lengthRange` is
+`[min, max]` metres; the line is redrawn until it fits.
+
+Things worth knowing when writing a scenario:
+
+- **Distinctiveness.** Pin only Medium or lower habitats: the service rejects
+  High and Very High at upload. The existing scenarios use
+  `Grassland - Modified grassland` (Low) and
+  `Grassland - Other neutral grassland` (Medium), which accept all five
+  conditions, so any condition can be pinned.
+- **Line lengths.** Random hedgerow and river lengths vary about 40-fold,
+  enough to swamp a designed margin between a loss and its replacement. The
+  trading-rule scenarios pin every linear feature to `[300, 400]`.
+- **Isolation.** A scenario that tests one feature should list the other
+  layers in `emptyLayers`, and pin every feature in its own layer, so nothing
+  random can move its verdict. A small fixture still draws at least two
+  hedgerows and two rivers, so pin at least that many.
+- **Trading rules**, as the metric's trading summaries state them: area
+  Medium needs the same broad habitat or higher distinctiveness, area Low the
+  same distinctiveness or better; hedgerows the same distinctiveness or
+  better; watercourse Medium the same habitat, watercourse Low better
+  distinctiveness. Each is a test of units as well as habitat, and a deficit
+  in a lower band may be met from a surplus in a higher one, never the other
+  way round. A created habitat is discounted for the years it takes to reach
+  condition, so one-for-one replacement usually falls short.
+- **Not asserted:** a culvert replaced by another culvert. The watercourse
+  Low rule reads "better distinctiveness habitat required", but the metric
+  meets it whenever the new culvert brings enough units.
+
+A few tests name scenarios by id (`invalid-area-condition-reduced`,
+`trading-higher-deficit-not-covered-from-below` here; five more in the
+harness), so renaming or removing one of those means updating the test.
+
 ## Entry points
 
 | Specifier                     | Purpose                                             |

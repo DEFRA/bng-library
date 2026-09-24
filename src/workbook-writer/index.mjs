@@ -39,6 +39,7 @@ export {
 export { readMetricResults } from './read-results.mjs'
 export { parseCsv, readCsvWorkbook } from './csv-sheets.mjs'
 export { checkScenarioExpectations } from './expectations.mjs'
+export { lintWorkbook } from './lint.mjs'
 export {
   PUBLISHED_METRIC_TEMPLATE,
   downloadPublishedTemplate,

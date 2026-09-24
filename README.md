@@ -116,6 +116,15 @@ offer. The metric's lookups are wrapped in `IFERROR`, so such a row raises
 nothing and generates no units. The lists are read from the template, never
 from this library's reference data.
 
+`lintWorkbook(buffer)` checks a workbook for the structural faults Excel
+"repairs" on opening, which LibreOffice and the spreadsheet libraries read
+straight past: a cached value that does not fit its cell's type, a stale
+`calcChain.xml` entry, a broken shared formula, rows or cells out of order,
+and missing parts or content types. It returns one `{ rule, part, ref,
+message }` per fault, so a clean workbook gives `[]`. Excel does not publish
+its repair rules, so this catches the faults a writer that edits worksheet XML
+can introduce, not every file Excel might refuse.
+
 No template to hand? `downloadPublishedTemplate()` fetches the calculation
 tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.0.4,
 checksum-pinned), the release the scenarios were validated against.

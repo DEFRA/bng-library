@@ -28,6 +28,7 @@ import {
   METRIC_SHEETS,
   checkScenarioExpectations,
   isLibreOfficeAvailable,
+  lintWorkbook,
   readMetricResults,
   readTemplateVocabulary,
   recalculateWorkbooks,
@@ -120,6 +121,10 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     expect(a3.Y12.v).toBe('Poor')
   })
 
+  it('lints the published template clean, so the lint has no false alarms', () => {
+    expect(lintWorkbook(template)).toEqual([])
+  })
+
   it('writes a workbook Excel opens without repairing', () => {
     const zip = readZip(written['invalid-area-condition-reduced'].buffer)
     // A formula list that names overridden cells is removed by Excel's repair.
@@ -130,24 +135,9 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     expect(zip.read('[Content_Types].xml').toString()).not.toContain(
       'calcChain'
     )
-    // A formula cell that lost its type but kept its result reads as a
-    // malformed number, and Excel repairs the cell.
-    const untypedResults = zip.names
-      .filter((name) => name.startsWith('xl/worksheets/'))
-      .flatMap(
-        (name) =>
-          zip
-            .read(name)
-            .toString()
-            .match(/<c\b[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g) ?? []
-      )
-      .filter(
-        (cell) =>
-          cell.includes('<f') &&
-          /<v[\s>/]/.test(cell) &&
-          !/^<c\b[^>]*\st="/.test(cell)
-      )
-    expect(untypedResults).toEqual([])
+    for (const { buffer } of Object.values(written)) {
+      expect(lintWorkbook(buffer)).toEqual([])
+    }
   })
 
   it('writes a workbook every input of which the template accepts', () => {

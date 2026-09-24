@@ -52,10 +52,11 @@ export const RESULT_SHEETS = [
 ]
 
 /**
- * The area habitat cumulative surplus. The published metric computes it with
- * a known error (K90 folds the Medium deficit into the running
- * total); it is reported as the workbook gives it, uncorrected, and named so
- * that nobody mistakes it for the corrected figure.
+ * The area habitat cumulative surplus: the units left for the Low band once
+ * its own losses are offset. The published metric computes it with a known
+ * error, which the writer corrects (see corrections.mjs), so a workbook it
+ * wrote reports the corrected figure. It is named for that, so nobody
+ * mistakes it for the figure the published metric would give.
  */
 const CUMULATIVE_SURPLUS_CELL = 'K125'
 
@@ -215,7 +216,7 @@ export function readMetricResults(source) {
   const results = {
     headline: readHeadline(headlineSheet),
     trading: readTrading(workbook),
-    uncorrected: {
+    corrected: {
       areaCumulativeSurplus: value(
         workbook.Sheets[TRADING_AREA],
         CUMULATIVE_SURPLUS_CELL

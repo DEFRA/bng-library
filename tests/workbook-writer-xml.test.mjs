@@ -166,6 +166,39 @@ describe('SheetXml', () => {
     expect(xml).toContain('<f>A18</f>')
     expect(xml).not.toContain('si="10"')
   })
+
+  it('replaces a formula it was told to expect, keeping the style', () => {
+    const s = sheet(
+      '<row r="91"><c r="K91" s="5"><f>K90+K88</f><v>-3</v></c></row>'
+    )
+    s.replaceFormula('K91', 'K90+K88', 'IF(K90>0,K90,0)+K88')
+    expect(s.toString()).toContain(
+      '<c r="K91" s="5"><f>IF(K90&gt;0,K90,0)+K88</f></c>'
+    )
+    expect(s.formula('K91')).toBe('IF(K90>0,K90,0)+K88')
+  })
+
+  it('refuses to replace a formula other than the one expected', () => {
+    const s = sheet(
+      '<row r="1"><c r="A1"><f>B1*3</f></c><c r="B1"><v>2</v></c></row>'
+    )
+    expect(() => s.replaceFormula('A1', 'B1*2', 'B1')).toThrow(
+      'A1 holds =B1*3, not =B1*2'
+    )
+    expect(() => s.replaceFormula('B1', 'B1*2', 'B1')).toThrow(
+      'B1 holds no formula'
+    )
+    expect(() => s.replaceFormula('C9', 'B1*2', 'B1')).toThrow(
+      'C9 holds no formula'
+    )
+  })
+
+  it('refuses to replace one cell of a shared formula', () => {
+    const s = sheet(
+      '<row r="1"><c r="A1"><f t="shared" ref="A1:A2" si="0">B1</f></c></row>'
+    )
+    expect(() => s.replaceFormula('A1', 'B1', 'C1')).toThrow(/shared/)
+  })
 })
 
 describe('shiftFormula', () => {

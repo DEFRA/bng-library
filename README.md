@@ -110,9 +110,18 @@ const [results] = await recalculateWorkbooks(['./out/site.xlsx'], {
 // results.headline.netUnitChange.area, results.trading, results.rowWarnings …
 ```
 
-Only input cells are written. The formulas are left as Defra wrote them,
-including the known cumulative-surplus error, so the results are the
-metric's, not ours. The workbook is edited in place inside its zip, which keeps
+Only input cells are written, and the formulas are left as Defra wrote them,
+so the results are the metric's, not ours. The exception is the metric's known
+bugs, which the service corrects and so must the corpus, or every site they
+touch would show a discrepancy that is not one. `METRIC_CORRECTIONS` lists
+each: the cell, the formula Defra published and the one written in its place.
+There is one so far. The area-habitat "Cumulative surplus of units"
+(Trading Summary Area Habitats `K91`) nets the Medium deficit off the Medium
+surplus before offering it to the Low band, so the metric can report a Low
+breach the service does not. A template whose formula is not the one a
+correction names is refused, not patched. Pass `corrections: []` to
+`workbookFromGeoPackage` or `writeMetricWorkbook` for the metric exactly as
+published. The workbook is edited in place inside its zip, which keeps
 it at the template's ~3.2MB. Re-saving through a spreadsheet library would
 take it to ~82MB. Every cached value is stripped, so a workbook that has not
 been recalculated reads as empty, never as stale.

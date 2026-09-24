@@ -319,6 +319,35 @@ export class SheetXml {
     row.put(ref, literalCell(ref, style, value))
   }
 
+  /** A cell's own formula text, or null when it holds none. */
+  formula(ref) {
+    const found = this.row(splitRef(ref).row)?.find(ref)
+    const text = found && /<f\b[^>]*>([\s\S]*?)<\/f>/.exec(found.xml)?.[1]
+    return text ? unescapeXml(text) : null
+  }
+
+  /**
+   * Replace a cell's formula, keeping its style. `expected` is the formula
+   * the cell must hold now: a template that holds anything else is not the
+   * one the replacement was written for, so it is refused, not overwritten.
+   */
+  replaceFormula(ref, expected, formula) {
+    const row = this.row(splitRef(ref).row)
+    const existing = row?.find(ref)
+    if (existing && sharedIndex(existing.xml) !== null) {
+      throw new Error(`${ref} holds a shared formula, which is not replaced`)
+    }
+    const actual = this.formula(ref)
+    if (actual !== expected) {
+      const holds = actual === null ? 'no formula' : `=${actual}`
+      throw new Error(`${ref} holds ${holds}, not =${expected}`)
+    }
+    row.put(
+      ref,
+      `<c r="${ref}"${styleAttr(existing.xml)}><f>${escapeXml(formula)}</f></c>`
+    )
+  }
+
   /** Empty an input cell, keeping its style. A missing cell is already empty. */
   clearValue(ref) {
     const row = this.row(splitRef(ref).row)

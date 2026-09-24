@@ -25,6 +25,7 @@ import {
   scenarioPlan
 } from '../src/permutations/generate.mjs'
 import {
+  METRIC_CORRECTIONS,
   METRIC_SHEETS,
   checkScenarioExpectations,
   isLibreOfficeAvailable,
@@ -83,6 +84,7 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     vocabulary = readTemplateVocabulary(template)
     write('invalid-area-condition-reduced')
     write('trading-higher-deficit-not-covered-from-below')
+    write('trading-low-deficit-covered-beside-medium-deficit')
   })
 
   afterAll(() => {
@@ -119,6 +121,42 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     const a3 = workbook.Sheets[METRIC_SHEETS.habitatEnhancement.sheet]
     expect(a3.Q12.v).toBe('Grassland')
     expect(a3.Y12.v).toBe('Poor')
+  })
+
+  it('corrects the metric’s known bugs, and nothing else', () => {
+    const corrected = XLSX.read(
+      written['invalid-area-condition-reduced'].buffer,
+      { type: 'buffer', cellFormula: true, sheetStubs: true }
+    )
+    const published = XLSX.read(template, {
+      type: 'buffer',
+      cellFormula: true,
+      sheetStubs: true
+    })
+    for (const {
+      sheet,
+      ref,
+      published: before,
+      corrected: after
+    } of METRIC_CORRECTIONS) {
+      expect(published.Sheets[sheet][ref].f).toBe(before)
+      expect(corrected.Sheets[sheet][ref].f).toBe(after)
+    }
+  })
+
+  it('refuses a template whose formula a correction does not expect', () => {
+    const [correction] = METRIC_CORRECTIONS
+    expect(() =>
+      workbookFromGeoPackage({
+        postInterventionPath: path.join(
+          dir,
+          'invalid-area-condition-reduced.gpkg'
+        ),
+        templateBuffer: template,
+        vocabulary,
+        corrections: [{ ...correction, published: 'K88' }]
+      })
+    ).toThrow(/Cannot correct Trading Summary Area Habitats!K91/)
   })
 
   it('lints the published template clean, so the lint has no false alarms', () => {

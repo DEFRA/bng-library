@@ -1,12 +1,14 @@
 /**
  * Write workbook rows into a copy of the metric template.
  *
- * Only input cells are written. The metric's formulas are left exactly as
- * Defra wrote them, so the recalculated workbook's answers are the metric's
- * own — comparing the service to them tests the service, not our agreement
- * with ourselves.
+ * Only input cells are written, and the metric's formulas are left as Defra
+ * wrote them, so the recalculated workbook's answers are the metric's own —
+ * comparing the service to them tests the service, not our agreement with
+ * ourselves. The one exception is the metric's known bugs, each corrected in
+ * the formula that makes it (see corrections.mjs).
  */
 
+import { METRIC_CORRECTIONS, applyCorrections } from './corrections.mjs'
 import { MetricTemplate } from './metric-template.mjs'
 import { ENHANCEMENT_OF, METRIC_SHEETS, capacity } from './template-layout.mjs'
 
@@ -101,15 +103,22 @@ function writeRows(template, key, sheetRows) {
  * @param {Buffer} options.templateBuffer a Statutory Biodiversity Metric v4
  *   workbook; any rows it already holds are cleared first
  * @param {Record<string, object[]>} options.rows keyed as METRIC_SHEETS
+ * @param {readonly object[]} [options.corrections] the known bugs to correct;
+ *   every one by default, and `[]` for the metric exactly as published
  * @returns {Buffer} the new workbook, with every formula's cached value
  *   removed so it must be recalculated before its answers can be read
  */
-export function writeMetricWorkbook({ templateBuffer, rows }) {
+export function writeMetricWorkbook({
+  templateBuffer,
+  rows,
+  corrections = METRIC_CORRECTIONS
+}) {
   const template = new MetricTemplate(templateBuffer)
   assertLayout(template)
   assertFits(rows)
   assertEnhancementsPaired(rows)
   clearInputs(template)
+  applyCorrections(template, corrections)
   for (const [key, sheetRows] of Object.entries(rows)) {
     writeRows(template, key, sheetRows)
   }

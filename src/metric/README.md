@@ -2,9 +2,9 @@
 
 Biodiversity Net Gain reference lookup tables and the statutory metric
 calculations built on them: baseline units, post-intervention units (retained /
-created / enhanced) for area habitats, hedgerows and watercourses, and the
-distinctiveness, condition, time-to-target and difficulty multipliers they
-depend on.
+created / enhanced) for area habitats, hedgerows and watercourses, trading-rules
+unit aggregates, and the distinctiveness, condition, time-to-target and difficulty
+multipliers they depend on.
 
 Consumed as `bng-library/metric`:
 

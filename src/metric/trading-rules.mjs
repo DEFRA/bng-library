@@ -12,10 +12,19 @@
 // for deriving and combining statuses, so every band's status module reports
 // in the same terms.
 
+import {
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+  WATERCOURSE_DISTINCTIVENESS_SCORES
+} from './reference-constants.mjs'
+import { resolveLinearDistinctiveness } from './linear-resolvers.mjs'
 import { roundToSigFigs } from './utils.mjs'
 
 /** Net unit change threshold separating a surplus (> 0) from a deficit (< 0). */
 const SURPLUS_THRESHOLD = 0
+
+/** Distinctiveness bands that carry trading rules in the MVS. */
+export const MEDIUM_BAND = 'Medium'
+export const LOW_BAND = 'Low'
 
 /**
  * Coerce a value to a finite number, treating anything else as 0. Mirrors the
@@ -118,6 +127,43 @@ export function calculateCumulativeAvailability(
   return roundToSigFigs(higherBandSurplus + lowerBandNetChange)
 }
 
+/**
+ * Surplus, deficit and cumulative availability for a module's Medium and Low
+ * bands, once that module has decided which net unit changes belong in each.
+ *
+ * Area habitats pass one net per broad habitat. Watercourses pass one net per
+ * habitat type. The arithmetic is the same either way: surplus and deficit are
+ * taken from the Medium list, and cumulative availability is the Medium surplus
+ * plus the Low net unit change. The Medium deficit is not subtracted.
+ *
+ * @param {number[]} mediumNetUnitChanges
+ * @param {number[]} lowNetUnitChanges
+ * @returns {{
+ *   medium: { surplus: number, deficit: number },
+ *   low: { netUnitChange: number, cumulativeAvailability: number }
+ * }}
+ */
+export function calculateBandTradingFigures(
+  mediumNetUnitChanges = [],
+  lowNetUnitChanges = []
+) {
+  const surplus = sumSurplus(mediumNetUnitChanges)
+  const netUnitChange = sumNetChange(lowNetUnitChanges)
+  return {
+    medium: {
+      surplus,
+      deficit: sumDeficit(mediumNetUnitChanges)
+    },
+    low: {
+      netUnitChange,
+      cumulativeAvailability: calculateCumulativeAvailability(
+        surplus,
+        netUnitChange
+      )
+    }
+  }
+}
+
 /** A trading rule that is satisfied. */
 export const TRADING_RULE_MET = 'Met'
 
@@ -148,4 +194,64 @@ export function combineTradingRuleStatuses(statuses = []) {
   return tradingRuleStatus(
     !statuses.some((status) => status === TRADING_RULE_NOT_MET)
   )
+}
+
+/**
+ * Resolve a watercourse type's distinctiveness band and score from the engine's
+ * reference tables. Thin wrapper over {@link resolveLinearDistinctiveness} that
+ * pins the watercourse category/score maps.
+ *
+ * @param {string} watercourseType e.g. 'Ditches', 'Canals', 'Culvert'
+ * @returns {{ distinctiveness: string, distinctivenessScore: number }}
+ */
+export function resolveWatercourseDistinctiveness(watercourseType) {
+  return resolveLinearDistinctiveness(
+    watercourseType,
+    WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+    WATERCOURSE_DISTINCTIVENESS_SCORES,
+    'watercourse'
+  )
+}
+
+/**
+ * @param {Array<{ habitatType: string, distinctiveness: string, netUnitChange: number }>} habitats
+ * @param {string} band
+ * @returns {number[]} the net unit changes of the habitats in that band
+ */
+function netChangesForBand(habitats, band) {
+  return habitats
+    .filter((habitat) => habitat.distinctiveness === band)
+    .map((habitat) => habitat.netUnitChange)
+}
+
+/**
+ * AC1–AC5 — the full watercourse trading-rules unit figures.
+ *
+ * @param {Record<string, number>} baselineUnitsByType type -> summed baseline units
+ * @param {Record<string, number>} deliveredUnitsByType type -> summed retained+created+enhanced units
+ * @returns {{
+ *   habitats: Array<{ habitatType: string, distinctiveness: string, netUnitChange: number }>,
+ *   medium: { surplus: number, deficit: number },
+ *   low: { netUnitChange: number, cumulativeAvailability: number }
+ * }}
+ */
+export function calculateWatercourseTradingRules(
+  baselineUnitsByType = {},
+  deliveredUnitsByType = {}
+) {
+  const habitats = calculateHabitatNetUnitChanges(
+    baselineUnitsByType,
+    deliveredUnitsByType
+  ).map((habitat) => ({
+    ...habitat,
+    distinctiveness: resolveWatercourseDistinctiveness(habitat.habitatType)
+      .distinctiveness
+  }))
+
+  const { medium, low } = calculateBandTradingFigures(
+    netChangesForBand(habitats, MEDIUM_BAND),
+    netChangesForBand(habitats, LOW_BAND)
+  )
+
+  return { habitats, medium, low }
 }

@@ -13,6 +13,7 @@ import {
   findRegressions,
   knownDiscrepanciesFrom,
   loadScenarioCorpus,
+  renderComparisonHtml,
   renderComparisonReport
 } from '../src/metric-compare/index.mjs'
 import { MERGED_INTERTIDAL_BROAD_HABITAT } from '../src/metric/area-trading-rules.mjs'
@@ -513,6 +514,78 @@ describe('renderComparisonReport', () => {
     )
     expect(report).toContain('hedgerow-trading-rules')
     expect(report).toContain('No change from the recorded discrepancies.')
+  })
+})
+
+describe('renderComparisonReport without details', () => {
+  it('is a summary, leaving out each scenario’s discrepancies', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [figure('totals|area|baseline', 10)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 9.5)]
+      }
+    })
+    const report = renderComparisonReport([result], { details: false })
+    expect(report).toContain('## Scenarios')
+    expect(report).not.toContain('## Discrepancies per scenario')
+  })
+})
+
+describe('renderComparisonHtml', () => {
+  const results = [
+    compareScenario({
+      scenario: { id: 'site' },
+      expected: [
+        figure('totals|area|baseline', 10),
+        figure('feature-units|area|baseline|<H1>', 0.01804, {
+          size: 0.0041,
+          strategicSignificanceMultiplier: 1.1
+        })
+      ],
+      service: {
+        accepted: true,
+        figures: [
+          figure('totals|area|baseline', 9.5),
+          figure('feature-units|area|baseline|<H1>', 0.0164, { size: 0.0041 })
+        ]
+      }
+    }),
+    compareScenario({
+      scenario: { id: 'invalid-x' },
+      expected: [],
+      service: {
+        accepted: false,
+        rejectedFile: 'postIntervention',
+        errors: [{ code: 'ADVANCE_AND_DELAY', message: 'Both set' }]
+      }
+    })
+  ]
+  const html = renderComparisonHtml(results, { context: ['Commit abc'] })
+
+  it('is a complete, self-contained page', () => {
+    expect(html).toMatch(/^<!doctype html>/)
+    expect(html).toContain('<title>Metric comparison</title>')
+    expect(html).not.toMatch(/<(script|link)[^>]+(src|href)=/)
+    expect(html).toContain('Commit abc')
+  })
+
+  it('shows each discrepancy with its difference, relative difference and cause', () => {
+    expect(html).toContain('>-0.5<')
+    expect(html).toContain('>-5%<')
+    expect(html).toContain('Strategic significance not applied')
+    expect(html).toContain('Unexplained')
+  })
+
+  it('escapes what it shows', () => {
+    expect(html).toContain('&lt;H1&gt;')
+    expect(html).not.toContain('<H1>')
+  })
+
+  it('lists why a refused scenario was refused', () => {
+    expect(html).toContain('ADVANCE_AND_DELAY')
+    expect(html).toContain('Rejected (invalid data)')
   })
 })
 

@@ -43,4 +43,6 @@ export {
 } from './compare.mjs'
 export { findRegressions, knownDiscrepanciesFrom } from './regressions.mjs'
 export { renderComparisonReport } from './report.mjs'
+export { renderComparisonHtml } from './report-html.mjs'
+export { summariseComparison } from './report-data.mjs'
 export { SCENARIO_CORPUS_DIR, loadScenarioCorpus } from './corpus.mjs'

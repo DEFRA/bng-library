@@ -176,6 +176,7 @@ import {
   figuresFromProject,
   figuresFromWorkbook,
   loadScenarioCorpus,
+  renderComparisonHtml,
   renderComparisonReport
 } from 'bng-library/metric-compare'
 
@@ -192,6 +193,7 @@ for (const scenario of loadScenarioCorpus().scenarios) {
     })
   )
 }
+writeFileSync('report.html', renderComparisonHtml(results))
 writeFileSync('report.md', renderComparisonReport(results))
 ```
 
@@ -205,11 +207,17 @@ cause accounts for exactly — the service rounding sizes to whole square metres
 or metres before pricing, or strategic significance (not implemented in the
 engine yet) — carries that cause, but still counts.
 
-The service does not agree with the metric everywhere yet, so
-`knownDiscrepanciesFrom(results)` records a run's discrepancies and
-`findRegressions(results, known)` lists every way a later run differs: a new
-or changed discrepancy, one that has gone, or a change of outcome. That is the
-regression gate the backend runs in CI.
+`renderComparisonHtml` gives a self-contained page (no external assets, so
+it opens straight from a CI artifact) that can be filtered by what was
+compared, by module, and to the differences no known cause explains.
+`renderComparisonReport` gives the same as Markdown; with `details: false` it
+is a summary short enough for a CI job summary.
+
+For now a comparison reports; it does not judge. When some differences
+should fail a build, `knownDiscrepanciesFrom(results)` records a run's
+discrepancies and `findRegressions(results, known)` lists every way a later
+run differs: a new or changed discrepancy, one that has gone, or a change of
+outcome.
 
 The corpus in `src/metric-compare/corpus/` is a `generate:scenarios` run from
 the harness, trimmed to the GeoPackages and `manifest.json` (the workbooks'

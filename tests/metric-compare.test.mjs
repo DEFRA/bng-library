@@ -422,6 +422,60 @@ describe('causesOfFeatureDifference', () => {
   })
 })
 
+describe('units', () => {
+  it('names the unit of every discrepancy, and of its difference', () => {
+    const units = (key, expected, actual) =>
+      compareFigures([figure(key, expected)], [figure(key, actual)])
+        .discrepancies[0]
+    expect(units('totals|hedgerow|baseline', 1, 2)).toMatchObject({
+      unit: 'hedgerow units',
+      differenceUnit: 'hedgerow units'
+    })
+    expect(units('net-gain|area|percentage', 9.09, 10.01)).toMatchObject({
+      unit: '% of baseline units',
+      differenceUnit: 'percentage points'
+    })
+    expect(units('trading-status|area|Low', 'Met', 'Not met')).toMatchObject({
+      unit: 'Met / Not met',
+      differenceUnit: null
+    })
+  })
+
+  it('gives a feature’s priced sizes and unit', () => {
+    const [d] = compareFigures(
+      [
+        figure('feature-units|hedgerow|baseline|HG1', 2, {
+          size: 0.5001,
+          strategicSignificanceMultiplier: 1
+        })
+      ],
+      [figure('feature-units|hedgerow|baseline|HG1', 1.9, { size: 0.5 })]
+    ).discrepancies
+    expect(d).toMatchObject({
+      unit: 'hedgerow units',
+      metricSize: 0.5001,
+      serviceSize: 0.5,
+      sizeUnit: 'km',
+      strategicSignificanceMultiplier: 1
+    })
+  })
+
+  it('shows the units and a guide to them in the HTML report', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [figure('net-gain|area|percentage', 9.09)],
+      service: {
+        accepted: true,
+        figures: [figure('net-gain|area|percentage', 10.01)]
+      }
+    })
+    const html = renderComparisonHtml([result])
+    expect(html).toContain('How to read this report')
+    expect(html).toContain('% of baseline units')
+    expect(html).toContain('percentage points')
+  })
+})
+
 describe('compareScenario', () => {
   const expected = [figure('totals|area|baseline', 1)]
 
@@ -513,7 +567,7 @@ describe('renderComparisonReport', () => {
     })
     const report = renderComparisonReport([result], { regressions: [] })
     expect(report).toContain(
-      '| totals\\|area\\|baseline | area | 10 | 9.5 | -0.5 | -5% | different |'
+      '| totals\\|area\\|baseline | area | 10 | 9.5 | habitat units | -0.5 | -5% | — | different |'
     )
     expect(report).toContain('hedgerow-trading-rules')
     expect(report).toContain('No change from the recorded discrepancies.')
@@ -627,9 +681,10 @@ describe('renderComparisonXlsx', () => {
   const workbook = XLSX.read(buffer, { type: 'buffer' })
   const rows = (name) => XLSX.utils.sheet_to_json(workbook.Sheets[name])
 
-  it('has a summary, then a sheet per scenario, discrepancy and gap', () => {
+  it('has a summary and a guide, then a sheet per scenario, discrepancy and gap', () => {
     expect(workbook.SheetNames).toEqual([
       'Summary',
+      'Guide',
       'Scenarios',
       'Discrepancies',
       'Not implemented'
@@ -645,14 +700,20 @@ describe('renderComparisonXlsx', () => {
     expect(discrepancies).toHaveLength(2)
     expect(discrepancies[0]).toMatchObject({
       Scenario: 'site',
-      Metric: 10,
-      Service: 9.5,
-      Difference: -0.5,
-      'Relative (%)': -5,
+      'Metric value': 10,
+      'Service value': 9.5,
+      Unit: 'habitat units',
+      'Difference (service − metric)': -0.5,
+      'Difference unit': 'habitat units',
+      'Relative difference (% of metric value)': -5,
       Unexplained: 'Yes'
     })
     expect(discrepancies[1]).toMatchObject({
       Figure: 'feature-units|area|baseline|H&1',
+      'Metric size': 0.0041,
+      'Service size': 0.0041,
+      'Size unit': 'ha',
+      'Strategic significance × (metric)': 1.1,
       'Explained by': 'Strategic significance not applied',
       Unexplained: 'No'
     })
@@ -665,7 +726,8 @@ describe('renderComparisonXlsx', () => {
     })
     expect(rows('Not implemented')[0]).toMatchObject({
       Gap: 'hedgerow-trading-rules',
-      Metric: 'Met'
+      'Metric value': 'Met',
+      Unit: 'Met / Not met'
     })
   })
 

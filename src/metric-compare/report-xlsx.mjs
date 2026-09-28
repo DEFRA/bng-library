@@ -15,7 +15,9 @@ import { CAUSES } from './causes.mjs'
 import { CATEGORY_TITLES } from './figures.mjs'
 import {
   CAUSES_NOTE,
+  COLUMN_GUIDE,
   EXACTNESS_NOTE,
+  UNITS_GUIDE,
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
@@ -183,15 +185,18 @@ function summarySheet(data, title, context) {
   const rows = [
     [{ v: title, s: STYLE.title }],
     ...context.map((line) => [line]),
+    [
+      'The Guide sheet explains every column and what each value is measured in.'
+    ],
     [],
-    header(['Scenarios', 'Count']),
+    header(['Scenarios', 'Count (scenarios)']),
     ['Scenarios', scenarios.total],
     ['Matched', scenarios.matched],
     ['With discrepancies', scenarios.discrepancies],
     ['Rejected by the service', scenarios.rejected],
     ['Rejected as expected (invalid data)', scenarios.rejectedAsExpected],
     [],
-    header(['Figures', 'Count']),
+    header(['Figures', 'Count (figures)']),
     ['Compared', figures.compared],
     ['Matched exactly', figures.matched],
     ['Differ', figures.discrepancies],
@@ -200,10 +205,10 @@ function summarySheet(data, title, context) {
     [],
     [wrap(EXACTNESS_NOTE)],
     [],
-    header(['Discrepancies by what was compared', 'Discrepancies']),
+    header(['Discrepancies by what was compared', 'Count (figures)']),
     ...data.byCategory.map((c) => [c.title, c.discrepancies]),
     [],
-    header(['Per-feature discrepancies explained by', 'Discrepancies']),
+    header(['Per-feature discrepancies explained by', 'Count (figures)']),
     ...data.causeCombinations.map((c) => [
       c.causes ?? bold('Nothing known'),
       c.discrepancies
@@ -216,8 +221,8 @@ function summarySheet(data, title, context) {
     header([
       'Not implemented in the service yet',
       'What the service does not do yet',
-      'Figures',
-      'Scenarios'
+      'Figures (count)',
+      'Scenarios (count)'
     ]),
     ...data.notImplemented.map((g) => [
       g.id,
@@ -234,10 +239,10 @@ function scenariosSheet(results) {
     header([
       'Scenario',
       'Outcome',
-      'Compared',
-      'Matched',
-      'Discrepancies',
-      'Not implemented',
+      'Figures compared',
+      'Figures matched',
+      'Discrepancies (figures)',
+      'Not implemented (figures)',
       'Refused file',
       'Why the service refused it'
     ]),
@@ -269,10 +274,16 @@ function discrepanciesSheet(results) {
       'What',
       'Module',
       'Figure',
-      'Metric',
-      'Service',
-      'Difference',
-      'Relative (%)',
+      'Metric value',
+      'Service value',
+      'Unit',
+      'Difference (service − metric)',
+      'Difference unit',
+      'Relative difference (% of metric value)',
+      'Metric size',
+      'Service size',
+      'Size unit',
+      'Strategic significance × (metric)',
       'Kind',
       'Explained by',
       'Unexplained',
@@ -290,8 +301,14 @@ function discrepanciesSheet(results) {
         d.label,
         d.expected,
         d.actual,
+        d.unit,
         d.difference,
+        d.difference === null ? null : d.differenceUnit,
         relativePercent(d.relativeDifference),
+        d.metricSize ?? null,
+        d.serviceSize ?? null,
+        d.sizeUnit ?? null,
+        d.strategicSignificanceMultiplier ?? null,
         d.kind,
         causes.join('; ') || null,
         causes.length > 0 ? 'No' : 'Yes',
@@ -302,7 +319,9 @@ function discrepanciesSheet(results) {
   }
   return {
     name: 'Discrepancies',
-    widths: [44, 26, 12, 56, 18, 18, 18, 13, 20, 44, 12, 26, 60],
+    widths: [
+      44, 26, 12, 56, 18, 18, 20, 18, 18, 16, 14, 14, 9, 16, 20, 44, 12, 26, 60
+    ],
     rows,
     table: true
   }
@@ -310,7 +329,15 @@ function discrepanciesSheet(results) {
 
 function notImplementedSheet(results) {
   const rows = [
-    header(['Scenario', 'Gap', 'What', 'Module', 'Figure', 'Metric'])
+    header([
+      'Scenario',
+      'Gap',
+      'What',
+      'Module',
+      'Figure',
+      'Metric value',
+      'Unit'
+    ])
   ]
   for (const r of results) {
     for (const n of r.notImplemented ?? []) {
@@ -320,16 +347,39 @@ function notImplementedSheet(results) {
         CATEGORY_TITLES[n.category],
         n.module,
         n.label,
-        n.expected
+        n.expected,
+        n.unit
       ])
     }
   }
   return {
     name: 'Not implemented',
-    widths: [44, 30, 26, 12, 56, 18],
+    widths: [44, 30, 26, 12, 56, 18, 20],
     rows,
     table: true
   }
+}
+
+function guideSheet() {
+  const rows = [
+    [{ v: 'How to read this report', s: STYLE.title }],
+    [
+      wrap(
+        'Every value in the Discrepancies and Not implemented sheets names its unit in the column beside it. Counts elsewhere are numbers of figures or scenarios.'
+      )
+    ],
+    [],
+    header(['Unit', 'What it means']),
+    ...UNITS_GUIDE.map(([unit, meaning]) => [bold(unit), wrap(meaning)]),
+    [],
+    header(['Column', 'What it means', 'Measured in']),
+    ...COLUMN_GUIDE.map(([column, meaning, unit]) => [
+      bold(column),
+      wrap(meaning),
+      wrap(unit)
+    ])
+  ]
+  return { name: 'Guide', widths: [30, 90, 40], rows }
 }
 
 /**
@@ -345,6 +395,7 @@ export function renderComparisonXlsx(results, options = {}) {
   const data = summariseComparison(results)
   const sheets = [
     summarySheet(data, title, context),
+    guideSheet(),
     scenariosSheet(results),
     discrepanciesSheet(results),
     notImplementedSheet(results)

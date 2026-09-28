@@ -12,6 +12,7 @@
 import { roundToSigFigs } from '../metric/utils.mjs'
 import { isInvalidScenario } from '../permutations/invalid-data.mjs'
 import { causesOfFeatureDifference } from './causes.mjs'
+import { CATEGORY, SIZE_UNIT, unitsOf } from './figures.mjs'
 import { gapCovering, SERVICE_GAPS } from './service-gaps.mjs'
 
 export const OUTCOME = Object.freeze({
@@ -41,7 +42,26 @@ function normalise(value) {
 
 function describe(figure) {
   const { key, category, module, label } = figure
-  return { key, category, module, label }
+  return { key, category, module, label, ...unitsOf(figure) }
+}
+
+/**
+ * For a feature's units, what they were priced on: the size on each side
+ * (hectares, or kilometres for the linear modules) and the strategic
+ * significance multiplier the metric applied. The service applies none.
+ */
+function pricedOn(expectedFigure, actualFigure) {
+  const figure = expectedFigure ?? actualFigure
+  if (figure.category !== CATEGORY.featureUnits) {
+    return {}
+  }
+  return {
+    metricSize: expectedFigure?.size ?? null,
+    serviceSize: actualFigure?.size ?? null,
+    sizeUnit: SIZE_UNIT[figure.module],
+    strategicSignificanceMultiplier:
+      expectedFigure?.strategicSignificanceMultiplier ?? null
+  }
 }
 
 /**
@@ -60,13 +80,16 @@ function distance(expected, actual) {
   }
 }
 
-function discrepancy(figure, expected, actual, kind) {
+function discrepancy(figures, expected, actual, kind) {
+  const [expectedFigure, actualFigure] = figures
+  const figure = expectedFigure ?? actualFigure
   return {
     ...describe(figure),
     kind,
     expected,
     actual,
     ...distance(expected, actual),
+    ...pricedOn(expectedFigure, actualFigure),
     ...(figure.source ? { source: figure.source } : {})
   }
 }
@@ -102,7 +125,7 @@ function compareKey(expectedFigure, actualFigure, gaps) {
   if (expected === undefined) {
     return {
       discrepancy: discrepancy(
-        figure,
+        [expectedFigure, actualFigure],
         null,
         actual,
         DIFFERENCE.missingFromWorkbook
@@ -112,7 +135,7 @@ function compareKey(expectedFigure, actualFigure, gaps) {
   if (actual === undefined) {
     return {
       discrepancy: discrepancy(
-        figure,
+        [expectedFigure, actualFigure],
         expected,
         null,
         DIFFERENCE.missingFromService
@@ -125,7 +148,12 @@ function compareKey(expectedFigure, actualFigure, gaps) {
   const causes = causesOfFeatureDifference(expectedFigure, actualFigure)
   return {
     discrepancy: {
-      ...discrepancy(figure, expected, actual, DIFFERENCE.different),
+      ...discrepancy(
+        [expectedFigure, actualFigure],
+        expected,
+        actual,
+        DIFFERENCE.different
+      ),
       ...(causes.length > 0 ? { causes } : {})
     }
   }

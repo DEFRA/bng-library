@@ -58,6 +58,51 @@ export const NOT_APPLICABLE = 'N/A'
  */
 
 /**
+ * What the numbers are measured in. The metric keeps its three modules'
+ * units apart — an area habitat unit is not a hedgerow unit — so each figure
+ * names its own.
+ */
+export const UNIT = Object.freeze({
+  area: 'habitat units',
+  hedgerow: 'hedgerow units',
+  watercourse: 'watercourse units',
+  percent: '% of baseline units',
+  percentagePoints: 'percentage points',
+  verdict: 'Met / Not met',
+  hectares: 'ha',
+  kilometres: 'km'
+})
+
+/** The unit a feature's size is priced in, per module. */
+export const SIZE_UNIT = Object.freeze({
+  area: UNIT.hectares,
+  hedgerow: UNIT.kilometres,
+  watercourse: UNIT.kilometres
+})
+
+const NET_GAIN_PERCENTAGE = 'percentage'
+
+/**
+ * The unit a figure's value is in, and the unit a difference between two of
+ * its values is in: the same, except that two percentages differ by
+ * percentage points, and verdicts do not differ by an amount at all.
+ *
+ * @param {{ category: string, module: string, key: string }} figure
+ * @returns {{ unit: string, differenceUnit: string | null }}
+ */
+export function unitsOf({ category, module, key }) {
+  if (category === CATEGORY.tradingStatus) {
+    return { unit: UNIT.verdict, differenceUnit: null }
+  }
+  if (category === CATEGORY.netGain) {
+    return key.split(KEY_SEPARATOR)[2] === NET_GAIN_PERCENTAGE
+      ? { unit: UNIT.percent, differenceUnit: UNIT.percentagePoints }
+      : { unit: UNIT.verdict, differenceUnit: null }
+  }
+  return { unit: UNIT[module], differenceUnit: UNIT[module] }
+}
+
+/**
  * @param {string[]} parts
  * @returns {string}
  */

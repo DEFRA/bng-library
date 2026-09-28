@@ -11,13 +11,16 @@ import { OUTCOME } from './compare.mjs'
 import { CATEGORY_ORDER, CATEGORY_TITLES, MODULES } from './figures.mjs'
 import {
   CAUSES_NOTE,
+  COLUMN_GUIDE,
   EXACTNESS_NOTE,
+  UNITS_GUIDE,
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
   relative,
   signed,
-  summariseComparison
+  summariseComparison,
+  withUnit
 } from './report-data.mjs'
 
 // Relative differences at or above these are shaded as moderate / large.
@@ -61,10 +64,58 @@ function magnitude(relativeDifference) {
   return size >= MODERATE_RELATIVE ? 'moderate' : 'small'
 }
 
+/** The column guide's explanation of a column, shown as its header's tooltip. */
+function guideFor(label) {
+  const entry = COLUMN_GUIDE.find(
+    ([column]) => label === column || label.startsWith(`${column} `)
+  )
+  return entry ? `${entry[1]} Measured in: ${entry[2]}` : null
+}
+
 function table(headers, rows, className = '') {
   return `<table class="${className}"><thead><tr>${headers
-    .map((h) => `<th scope="col">${escape(h)}</th>`)
+    .map((h) => {
+      const title = guideFor(h)
+      return `<th scope="col"${title ? ` title="${escape(title)}"` : ''}>${escape(h)}</th>`
+    })
     .join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`
+}
+
+function guideSection() {
+  const units = UNITS_GUIDE.map(
+    ([unit, meaning]) =>
+      `<tr><td><strong>${escape(unit)}</strong></td><td>${escape(meaning)}</td></tr>`
+  )
+  const columns = COLUMN_GUIDE.map(
+    ([column, meaning, unit]) =>
+      `<tr><td><strong>${escape(column)}</strong></td><td>${escape(meaning)}</td><td>${escape(unit)}</td></tr>`
+  )
+  return `<details class="guide" open><summary><strong>How to read this report: units and columns</strong></summary>
+<p>Every value names its unit: the <em>Unit</em> column in the discrepancy tables, and the difference’s own unit where it is not the same. Counts elsewhere are numbers of figures or scenarios. Hover over a column heading for its explanation.</p>
+<h3>Units</h3>${table(['Unit', 'What it means'], units)}
+<h3>Columns</h3><div class="scroll">${table(['Column', 'What it means', 'Measured in'], columns)}</div>
+</details>`
+}
+
+/** A feature's size on each side and the metric's strategic significance. */
+function pricedOnLine(d) {
+  if (!d.sizeUnit) {
+    return ''
+  }
+  const multiplier =
+    typeof d.strategicSignificanceMultiplier === 'number' &&
+    d.strategicSignificanceMultiplier !== 1
+      ? ` · strategic significance ×${d.strategicSignificanceMultiplier} (metric; the service applies ×1)`
+      : ''
+  return `<div class="source">Priced on ${escape(withUnit(d.metricSize, d.sizeUnit))} (metric), ${escape(withUnit(d.serviceSize, d.sizeUnit))} (service)${escape(multiplier)}</div>`
+}
+
+function differenceCell(d) {
+  const unit =
+    d.difference !== null && d.differenceUnit && d.differenceUnit !== d.unit
+      ? ` <span class="unit">${escape(d.differenceUnit)}</span>`
+      : ''
+  return `<td class="num">${escape(signed(d.difference))}${unit}</td>`
 }
 
 function tile(label, value, tone = '') {
@@ -98,8 +149,8 @@ function scenarioTable(results) {
     [
       'Scenario',
       'Outcome',
-      'Compared',
-      'Matched',
+      'Figures compared',
+      'Figures matched',
       'Discrepancies',
       'Not implemented'
     ],
@@ -115,12 +166,17 @@ function causesSection(data) {
   const definitions = Object.values(CAUSES)
     .map((c) => `<dt>${escape(c.title)}</dt><dd>${escape(c.description)}</dd>`)
     .join('')
-  return `<p>${escape(CAUSES_NOTE)}</p>${table(['Explained by', 'Per-feature discrepancies'], rows)}<dl>${definitions}</dl>`
+  return `<p>${escape(CAUSES_NOTE)}</p>${table(['Explained by', 'Per-feature discrepancies (count)'], rows)}<dl>${definitions}</dl>`
 }
 
 function notImplementedSection(data) {
   return table(
-    ['Gap', 'What the service does not do yet', 'Figures', 'Scenarios'],
+    [
+      'Gap',
+      'What the service does not do yet',
+      'Figures (count)',
+      'Scenarios (count)'
+    ],
     data.notImplemented.map(
       (g) =>
         `<tr><td><code>${escape(g.id)}</code></td><td>${escape(g.description)}</td><td class="num">${g.figures}</td><td class="num">${g.scenarios}</td></tr>`
@@ -131,7 +187,7 @@ function notImplementedSection(data) {
 function discrepancyRow(d) {
   const causes = causeTitles(d.causes)
   const explained = causes.length > 0
-  return `<tr data-category="${escape(d.category)}" data-module="${escape(d.module)}" data-explained="${explained}" data-text="${escape(`${d.label} ${d.key}`.toLowerCase())}"><td>${escape(d.label)}${d.source ? `<div class="source">${escape(d.source)}</div>` : ''}</td><td>${escape(CATEGORY_TITLES[d.category])}</td><td>${escape(d.module)}</td><td class="num">${escape(d.expected)}</td><td class="num">${escape(d.actual)}</td><td class="num">${escape(signed(d.difference))}</td><td class="num mag-${magnitude(d.relativeDifference)}">${escape(relative(d.relativeDifference))}</td><td>${explained ? causes.map((c) => `<span class="badge muted">${escape(c)}</span>`).join(' ') : `<span class="badge ${d.kind === 'different' ? 'bad' : 'warn'}">${escape(d.kind === 'different' ? 'Unexplained' : d.kind)}</span>`}</td></tr>`
+  return `<tr data-category="${escape(d.category)}" data-module="${escape(d.module)}" data-explained="${explained}" data-text="${escape(`${d.label} ${d.key}`.toLowerCase())}"><td>${escape(d.label)}${d.source ? `<div class="source">Metric cell: ${escape(d.source)}</div>` : ''}${pricedOnLine(d)}</td><td>${escape(CATEGORY_TITLES[d.category])}</td><td>${escape(d.module)}</td><td class="num">${escape(d.expected)}</td><td class="num">${escape(d.actual)}</td><td class="unit-col">${escape(d.unit)}</td>${differenceCell(d)}<td class="num mag-${magnitude(d.relativeDifference)}">${escape(relative(d.relativeDifference))}</td><td>${explained ? causes.map((c) => `<span class="badge muted">${escape(c)}</span>`).join(' ') : `<span class="badge ${d.kind === 'different' ? 'bad' : 'warn'}">${escape(d.kind === 'different' ? 'Unexplained' : d.kind)}</span>`}</td></tr>`
 }
 
 function scenarioDetail(result) {
@@ -155,8 +211,9 @@ function scenarioDetail(result) {
       'Module',
       'Metric',
       'Service',
-      'Difference',
-      'Relative',
+      'Unit',
+      'Difference (service − metric)',
+      'Relative (% of metric value)',
       'Explained by'
     ],
     ordered.map((d) => discrepancyRow(d)),
@@ -202,6 +259,9 @@ th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 th{font-size:12px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--bg)}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .source{color:var(--muted);font-size:11px}
+.unit,.unit-col{color:var(--muted);font-size:12px}.unit-col{white-space:nowrap}
+details.guide{border:1px solid var(--line);border-radius:8px;padding:0 12px;margin:16px 0;background:var(--panel)}details.guide>summary{cursor:pointer;padding:10px 0}h3{font-size:15px;margin:16px 0 4px}
+th[title]{cursor:help;text-decoration:underline dotted}
 .mag-moderate{background:var(--mod)}.mag-large{background:var(--large)}
 .badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;white-space:nowrap}
 .badge.good{background:var(--good-bg);color:var(--good)}.badge.bad{background:var(--bad-bg);color:var(--bad)}
@@ -260,11 +320,12 @@ export function renderComparisonHtml(results, options = {}) {
     tiles(data),
     `<p>${data.scenarios.total} scenarios: ${data.scenarios.matched} matched, ${data.scenarios.discrepancies} with discrepancies, ${data.scenarios.rejected} rejected by the service, ${data.scenarios.rejectedAsExpected} rejected as expected (invalid data).</p>`,
     `<p>${escape(EXACTNESS_NOTE)}</p>`,
+    guideSection(),
     '<h2>Scenarios</h2>',
     `<div class="scroll">${scenarioTable(results)}</div>`,
     '<h2>Discrepancies by what was compared</h2>',
     table(
-      ['What', 'Discrepancies'],
+      ['What', 'Discrepancies (count)'],
       data.byCategory.map(
         (c) =>
           `<tr><td>${escape(c.title)}</td><td class="num">${c.discrepancies}</td></tr>`

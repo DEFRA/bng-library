@@ -29,7 +29,10 @@ export {
   KEY_SEPARATOR,
   MET,
   NOT_APPLICABLE,
-  NOT_MET
+  NOT_MET,
+  SIZE_UNIT,
+  UNIT,
+  unitsOf
 } from './figures.mjs'
 export { figuresFromWorkbook } from './from-workbook.mjs'
 export { figuresFromProject } from './from-project.mjs'
@@ -45,5 +48,9 @@ export { findRegressions, knownDiscrepanciesFrom } from './regressions.mjs'
 export { renderComparisonReport } from './report.mjs'
 export { renderComparisonHtml } from './report-html.mjs'
 export { renderComparisonXlsx } from './report-xlsx.mjs'
-export { summariseComparison } from './report-data.mjs'
+export {
+  COLUMN_GUIDE,
+  UNITS_GUIDE,
+  summariseComparison
+} from './report-data.mjs'
 export { SCENARIO_CORPUS_DIR, loadScenarioCorpus } from './corpus.mjs'

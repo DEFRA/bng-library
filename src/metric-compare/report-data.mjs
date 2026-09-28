@@ -22,8 +22,120 @@ export const OUTCOME_TITLES = Object.freeze({
 export const EXACTNESS_NOTE =
   'Figures are compared exactly, to the 15 significant figures both the engine and the recalculated workbook carry. Difference is the service less the metric; Relative is that as a share of the metric’s value.'
 
+/**
+ * What each unit means. Every value in a report names one of these.
+ */
+export const UNITS_GUIDE = Object.freeze([
+  [
+    'habitat units',
+    'Biodiversity units for area habitats, individual trees included, as the Statutory Biodiversity Metric calculates them: size in hectares × distinctiveness × condition × strategic significance, and for created or enhanced habitat × the time-to-target and difficulty multipliers. Not interchangeable with hedgerow or watercourse units.'
+  ],
+  [
+    'hedgerow units',
+    'Biodiversity units for hedgerows, calculated the same way from length in kilometres.'
+  ],
+  [
+    'watercourse units',
+    'Biodiversity units for watercourses, calculated the same way from length in kilometres, with the encroachment multipliers.'
+  ],
+  [
+    '% of baseline units',
+    'Net change as a percentage of the module’s baseline units: 12.5 means post-intervention units are 12.5% above baseline. The net gain target is 10%.'
+  ],
+  [
+    'percentage points',
+    'The difference between two percentages: 10.01% against 9.09% is +0.92 percentage points.'
+  ],
+  ['Met / Not met', 'A verdict, not an amount: it has no difference.'],
+  [
+    'ha / km',
+    'Hectares for an area habitat’s or tree’s size; kilometres for a hedgerow’s or watercourse’s length.'
+  ]
+])
+
+/**
+ * What each column of a discrepancy table means, and what it is measured in.
+ */
+export const COLUMN_GUIDE = Object.freeze([
+  [
+    'Scenario',
+    'The corpus scenario: one baseline and post-intervention GeoPackage pair, and the metric workbook describing the same site.',
+    '—'
+  ],
+  [
+    'What',
+    'What was compared: unit calculations per feature, unit totals, net gain, trading rules figures, or trading rules statuses.',
+    '—'
+  ],
+  [
+    'Module',
+    'area (area habitats and individual trees), hedgerow, or watercourse.',
+    '—'
+  ],
+  [
+    'Figure',
+    'The value compared: for a feature, its reference and stage (baseline, retained, enhanced or created).',
+    '—'
+  ],
+  [
+    'Metric',
+    'The value the Statutory Biodiversity Metric workbook calculates: the expected value.',
+    'The Unit column'
+  ],
+  [
+    'Service',
+    'The value the BNG service calculates for the same GeoPackage pair.',
+    'The Unit column'
+  ],
+  [
+    'Unit',
+    'What the Metric and Service values are measured in (see Units).',
+    '—'
+  ],
+  [
+    'Difference',
+    'Service value minus metric value. Positive: the service is higher.',
+    'The Difference unit column: the value’s unit, or percentage points for a net change %'
+  ],
+  [
+    'Relative',
+    'The difference as a percentage of the metric value: −9.09 means the service is 9.09% lower. Blank where the metric value is 0 or not a number.',
+    '% of the metric value'
+  ],
+  [
+    'Metric size / Service size',
+    'For a feature, the size each side priced its units on. A difference here is size rounding.',
+    'Size unit: ha or km'
+  ],
+  [
+    'Strategic significance ×',
+    'For a feature, the strategic significance multiplier the metric applied (1, 1.1 or 1.15). The service applies 1 to every feature.',
+    'A multiplier, no unit'
+  ],
+  [
+    'Kind',
+    'different: both sides have a value and they differ. missing-from-service / missing-from-workbook: only one side has the figure.',
+    '—'
+  ],
+  [
+    'Explained by',
+    'A known cause that accounts for a feature’s difference exactly. The difference still counts.',
+    '—'
+  ],
+  [
+    'Unexplained',
+    'Yes where no known cause accounts for the difference: the ones to look at first.',
+    '—'
+  ]
+])
+
 export const CAUSES_NOTE =
   'A feature’s units are its size times its multipliers, so where the service’s units are exactly the metric’s rescaled to the service’s size, or with a multiplier the service does not apply divided out, the cause is known. Totals, net gain and trading figures are sums of the feature units, so they inherit these differences.'
+
+/** A size with its unit, e.g. "14.4529 ha", or "—". */
+export function withUnit(value, unit) {
+  return typeof value === 'number' ? `${value} ${unit}` : '—'
+}
 
 /** A difference with its sign, e.g. "+0.5". */
 export function signed(value) {

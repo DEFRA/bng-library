@@ -1,19 +1,15 @@
 /**
- * The scenario corpus the comparison runs over: each scenario's GeoPackage
- * pair and the metric's answers for it.
+ * Load a scenario corpus: each scenario's GeoPackage pair and the metric's
+ * answers for it.
  *
- * The corpus is a `generate:scenarios` run (in bng-metric-harness), trimmed to
- * what a comparison needs: the GeoPackages and `manifest.json`. The workbooks
- * themselves are left out — their answers are already in the manifest, so
- * nothing downstream needs LibreOffice or the Defra template. Refresh it with
- * `npm run corpus:import -- <generate:scenarios output folder>`.
+ * A corpus is a `generate:scenarios` run — in bng-metric-harness, committed at
+ * `example-files/permutations/` — whose `manifest.json` records every
+ * recalculated workbook's answers. This library ships no corpus of its own:
+ * the caller says where one is.
  */
 
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-
-/** Where the committed corpus lives. */
-export const SCENARIO_CORPUS_DIR = path.join(import.meta.dirname, 'corpus')
 
 const MANIFEST = 'manifest.json'
 
@@ -27,16 +23,21 @@ const MANIFEST = 'manifest.json'
  */
 
 /**
- * @param {string} [dir] a corpus folder: the committed one by default, or any
- *   `generate:scenarios` output
+ * @param {string} dir a `generate:scenarios` output folder
  * @returns {{ seed: number, template: string, corrections: object[],
  *   scenarios: CorpusScenario[] }}
  */
-export function loadScenarioCorpus(dir = SCENARIO_CORPUS_DIR) {
-  const manifest = JSON.parse(readFileSync(path.join(dir, MANIFEST), 'utf8'))
+export function loadScenarioCorpus(dir) {
+  if (!dir) {
+    throw new Error(
+      'loadScenarioCorpus needs a corpus folder: a generate:scenarios output, such as bng-metric-harness/example-files/permutations'
+    )
+  }
+  const manifestPath = path.join(dir, MANIFEST)
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   if (!manifest.recalculated) {
     throw new Error(
-      `${path.join(dir, MANIFEST)} has no metric results: generate the corpus with workbooks, recalculated`
+      `${manifestPath} has no metric results: generate the corpus with workbooks, recalculated`
     )
   }
   const scenarios = manifest.scenarios.map((s) => ({

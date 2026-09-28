@@ -8,7 +8,7 @@
  * unit calculations per feature, unit totals, net gain, trading rules figures
  * and trading rules statuses — compared exactly, figure by figure.
  *
- *   const { scenarios } = loadScenarioCorpus()
+ *   const { scenarios } = loadScenarioCorpus(corpusDir)
  *   for (const scenario of scenarios) {
  *     const imported = await importIntoTheService(scenario.files)
  *     const result = compareScenario({
@@ -53,4 +53,4 @@ export {
   UNITS_GUIDE,
   summariseComparison
 } from './report-data.mjs'
-export { SCENARIO_CORPUS_DIR, loadScenarioCorpus } from './corpus.mjs'
+export { loadScenarioCorpus } from './corpus.mjs'

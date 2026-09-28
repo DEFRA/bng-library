@@ -7,7 +7,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 - **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
-- **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a committed corpus of scenarios.
+- **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a scenario corpus (committed in the harness).
 
 ## Install
 
@@ -182,7 +182,7 @@ import {
 } from 'bng-library/metric-compare'
 
 const results = []
-for (const scenario of loadScenarioCorpus().scenarios) {
+for (const scenario of loadScenarioCorpus(corpusDir).scenarios) {
   const imported = await importIntoTheService(scenario.files)
   results.push(
     compareScenario({
@@ -225,21 +225,13 @@ discrepancies and `findRegressions(results, known)` lists every way a later
 run differs: a new or changed discrepancy, one that has gone, or a change of
 outcome.
 
-The corpus in `src/metric-compare/corpus/` is a `generate:scenarios` run from
-the harness, trimmed to the GeoPackages and `manifest.json` (the workbooks'
-answers are in the manifest, so nothing downstream needs LibreOffice). After
-changing the catalogue, the workbook reader or the template, regenerate it in
-the harness and import it:
-
-```sh
-# in bng-metric-harness, with this library linked (npm run lib:link)
-npm run generate:scenarios -- --outdir example-files/permutations --seed 1
-# here
-npm run corpus:import -- ../bng-metric-harness/example-files/permutations
-```
-
-The service side runs in the backend: `npm run compare:metric` there imports
-every corpus scenario through its upload pipeline and writes the report.
+This library ships no corpus: `loadScenarioCorpus(dir)` reads any
+`generate:scenarios` output. The committed one is in the harness, at
+`example-files/permutations/`, each GeoPackage pair beside its metric workbook;
+its `manifest.json` holds the workbooks' answers, so a comparison needs neither
+LibreOffice nor the template. The service side runs in the backend:
+`npm run compare:metric` there imports every scenario through its upload
+pipeline and writes the reports.
 
 ### Scenario catalogue
 

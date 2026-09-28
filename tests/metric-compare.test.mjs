@@ -1,7 +1,8 @@
-import { existsSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { afterAll, describe, expect, it } from 'vitest'
 import {
-  CATEGORY,
   CAUSES,
   DIFFERENCE,
   causesOfFeatureDifference,
@@ -737,29 +738,47 @@ describe('renderComparisonXlsx', () => {
   })
 })
 
-describe('the committed scenario corpus', () => {
-  const corpus = loadScenarioCorpus()
+describe('loadScenarioCorpus', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'corpus-'))
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
-  it('holds every catalogue scenario with its GeoPackage pair', () => {
-    expect(corpus.scenarios.length).toBeGreaterThan(0)
-    for (const s of corpus.scenarios) {
-      expect(existsSync(s.files.baseline), s.files.baseline).toBe(true)
-      expect(
-        existsSync(s.files.postIntervention),
-        s.files.postIntervention
-      ).toBe(true)
-    }
+  const write = (manifest) =>
+    writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest))
+
+  it('resolves each scenario’s GeoPackage pair against the corpus folder', () => {
+    write({
+      seed: 1,
+      template: 't.xlsx',
+      corrections: [],
+      recalculated: true,
+      scenarios: [
+        {
+          id: 'net-gain-met',
+          purpose: 'net-gain',
+          title: 'Met',
+          files: {
+            baseline: 'net-gain/met-baseline.gpkg',
+            postIntervention: 'net-gain/met-post-intervention.gpkg',
+            workbook: 'net-gain/met.xlsx'
+          },
+          metric: { headline: {} }
+        }
+      ]
+    })
+    const corpus = loadScenarioCorpus(dir)
+    expect(corpus.seed).toBe(1)
+    expect(corpus.scenarios[0].files).toEqual({
+      baseline: path.join(dir, 'net-gain/met-baseline.gpkg'),
+      postIntervention: path.join(dir, 'net-gain/met-post-intervention.gpkg')
+    })
   })
 
-  it('records the metric figures the comparison needs for every scenario', () => {
-    for (const s of corpus.scenarios) {
-      expect(s.metric.features, s.id).toEqual(expect.any(Array))
-      expect(s.metric.tradingFigures.area.totals, s.id).toBeDefined()
-      const figures = figuresFromWorkbook(s.metric)
-      expect(
-        figures.some((f) => f.category === CATEGORY.featureUnits),
-        s.id
-      ).toBe(true)
-    }
+  it('refuses a corpus whose workbooks were never recalculated', () => {
+    write({ recalculated: false, scenarios: [] })
+    expect(() => loadScenarioCorpus(dir)).toThrow(/no metric results/)
+  })
+
+  it('needs to be told where the corpus is', () => {
+    expect(() => loadScenarioCorpus()).toThrow(/needs a corpus folder/)
   })
 })

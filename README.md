@@ -224,9 +224,12 @@ cause accounts for exactly — the service rounding sizes to whole square metres
 or metres before pricing, or strategic significance (not implemented in the
 engine yet) — carries that cause, but still counts.
 
-`renderComparisonHtml` gives a self-contained page (no external assets, so
-it opens straight from a CI artifact) that can be filtered by what was
-compared, by module, and to the differences no known cause explains.
+`renderComparisonHtml` gives a short, self-contained page (no external assets,
+so it opens straight from a CI artifact). It leads with the Met / Not met answers
+that differ, then the values no known cause explains, the known causes of the
+rest, and what the service does not implement yet, then each scenario's full
+list of differences. Values are shown to four decimal places with their unit,
+and differences as numbers in the same unit.
 `renderComparisonXlsx` gives a spreadsheet: a summary sheet, then one row per
 scenario, per discrepancy and per figure not implemented, each with a frozen,
 filterable header and real numbers to sort by. It is written with the

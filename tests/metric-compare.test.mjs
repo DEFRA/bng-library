@@ -463,7 +463,7 @@ describe('units', () => {
     })
   })
 
-  it('shows the units and a guide to them in the HTML report', () => {
+  it('shows each value and difference with its unit in the HTML report', () => {
     const result = compareScenario({
       scenario: { id: 'site' },
       expected: [figure('net-gain|area|percentage', 9.09)],
@@ -473,9 +473,9 @@ describe('units', () => {
       }
     })
     const html = renderComparisonHtml([result])
-    expect(html).toContain('How to read this report')
-    expect(html).toContain('% of baseline units')
-    expect(html).toContain('percentage points')
+    expect(html).toContain('9.0900%')
+    expect(html).toContain('10.0100%')
+    expect(html).toContain('+0.9200 percentage points')
   })
 })
 
@@ -643,11 +643,11 @@ describe('renderComparisonHtml', () => {
     expect(html).toContain('Commit abc')
   })
 
-  it('shows each discrepancy with its difference, relative difference and cause', () => {
-    expect(html).toContain('>-0.5<')
-    expect(html).toContain('>-5%<')
+  it('shows each difference as a number in its unit, with its cause', () => {
+    expect(html).toContain('10.0000 habitat units')
+    expect(html).toContain('9.5000 habitat units')
+    expect(html).toContain('−0.5000 habitat units')
     expect(html).toContain('Strategic significance not applied')
-    expect(html).toContain('Unexplained')
   })
 
   it('escapes what it shows', () => {
@@ -655,9 +655,46 @@ describe('renderComparisonHtml', () => {
     expect(html).not.toContain('<H1>')
   })
 
+  it('leads with the answers that differ and the values no cause explains', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [
+        figure('net-gain|area|verdict', 'Not met'),
+        figure('net-gain|area|percentage', 9.09),
+        figure('feature-units|area|created|T5', 0.1378)
+      ],
+      service: {
+        accepted: true,
+        figures: [
+          figure('net-gain|area|verdict', 'Met'),
+          figure('net-gain|area|percentage', 10.01),
+          figure('feature-units|area|created|T5', 0.1116)
+        ]
+      }
+    })
+    const page = renderComparisonHtml([result])
+    expect(page).toContain('1 Met / Not met answer differs from the metric')
+    expect(page).toContain('1 feature value differs for no known reason')
+    expect(page).toContain(
+      'Net change: 9.0900% in the metric, 10.0100% in the service'
+    )
+  })
+
+  it('never shows a tiny difference as zero', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [figure('totals|area|baseline', 97.3095391601563)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 97.3096)]
+      }
+    })
+    expect(renderComparisonHtml([result])).toContain('+0.000061 habitat units')
+  })
+
   it('lists why a refused scenario was refused', () => {
     expect(html).toContain('ADVANCE_AND_DELAY')
-    expect(html).toContain('Rejected (invalid data)')
+    expect(html).toContain('Refused, as expected (invalid data)')
   })
 })
 

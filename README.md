@@ -177,7 +177,8 @@ import {
   figuresFromWorkbook,
   loadScenarioCorpus,
   renderComparisonHtml,
-  renderComparisonReport
+  renderComparisonReport,
+  renderComparisonXlsx
 } from 'bng-library/metric-compare'
 
 const results = []
@@ -194,6 +195,7 @@ for (const scenario of loadScenarioCorpus().scenarios) {
   )
 }
 writeFileSync('report.html', renderComparisonHtml(results))
+writeFileSync('report.xlsx', renderComparisonXlsx(results))
 writeFileSync('report.md', renderComparisonReport(results))
 ```
 
@@ -210,6 +212,10 @@ engine yet) — carries that cause, but still counts.
 `renderComparisonHtml` gives a self-contained page (no external assets, so
 it opens straight from a CI artifact) that can be filtered by what was
 compared, by module, and to the differences no known cause explains.
+`renderComparisonXlsx` gives a spreadsheet: a summary sheet, then one row per
+scenario, per discrepancy and per figure not implemented, each with a frozen,
+filterable header and real numbers to sort by. It is written with the
+library's own zip writer, so it needs no spreadsheet dependency.
 `renderComparisonReport` gives the same as Markdown; with `details: false` it
 is a summary short enough for a CI job summary.
 

@@ -14,8 +14,11 @@ import {
   knownDiscrepanciesFrom,
   loadScenarioCorpus,
   renderComparisonHtml,
-  renderComparisonReport
+  renderComparisonReport,
+  renderComparisonXlsx
 } from '../src/metric-compare/index.mjs'
+import { lintWorkbook } from '../src/workbook-writer/lint.mjs'
+import { createRequire } from 'node:module'
 import { MERGED_INTERTIDAL_BROAD_HABITAT } from '../src/metric/area-trading-rules.mjs'
 
 const byModule = (area, hedgerow, watercourse) => ({
@@ -586,6 +589,89 @@ describe('renderComparisonHtml', () => {
   it('lists why a refused scenario was refused', () => {
     expect(html).toContain('ADVANCE_AND_DELAY')
     expect(html).toContain('Rejected (invalid data)')
+  })
+})
+
+describe('renderComparisonXlsx', () => {
+  const XLSX = createRequire(import.meta.url)('xlsx')
+  const results = [
+    compareScenario({
+      scenario: { id: 'site' },
+      expected: [
+        figure('totals|area|baseline', 10),
+        figure('feature-units|area|baseline|H&1', 0.01804, {
+          size: 0.0041,
+          strategicSignificanceMultiplier: 1.1
+        }),
+        figure('trading-status|hedgerow|Low', 'Met', { distinctiveness: 'Low' })
+      ],
+      service: {
+        accepted: true,
+        figures: [
+          figure('totals|area|baseline', 9.5),
+          figure('feature-units|area|baseline|H&1', 0.0164, { size: 0.0041 })
+        ]
+      }
+    }),
+    compareScenario({
+      scenario: { id: 'invalid-x' },
+      expected: [],
+      service: {
+        accepted: false,
+        rejectedFile: 'postIntervention',
+        errors: [{ code: 'ADVANCE_AND_DELAY', message: 'Both set' }]
+      }
+    })
+  ]
+  const buffer = renderComparisonXlsx(results, { context: ['Commit abc'] })
+  const workbook = XLSX.read(buffer, { type: 'buffer' })
+  const rows = (name) => XLSX.utils.sheet_to_json(workbook.Sheets[name])
+
+  it('has a summary, then a sheet per scenario, discrepancy and gap', () => {
+    expect(workbook.SheetNames).toEqual([
+      'Summary',
+      'Scenarios',
+      'Discrepancies',
+      'Not implemented'
+    ])
+  })
+
+  it('has none of the faults Excel would repair on opening', () => {
+    expect(lintWorkbook(buffer)).toEqual([])
+  })
+
+  it('writes one row per discrepancy, with numbers as numbers', () => {
+    const discrepancies = rows('Discrepancies')
+    expect(discrepancies).toHaveLength(2)
+    expect(discrepancies[0]).toMatchObject({
+      Scenario: 'site',
+      Metric: 10,
+      Service: 9.5,
+      Difference: -0.5,
+      'Relative (%)': -5,
+      Unexplained: 'Yes'
+    })
+    expect(discrepancies[1]).toMatchObject({
+      Figure: 'feature-units|area|baseline|H&1',
+      'Explained by': 'Strategic significance not applied',
+      Unexplained: 'No'
+    })
+  })
+
+  it('lists why a refused scenario was refused, and what is not implemented', () => {
+    expect(rows('Scenarios')[1]).toMatchObject({
+      Outcome: 'Rejected (invalid data)',
+      'Why the service refused it': 'ADVANCE_AND_DELAY: Both set'
+    })
+    expect(rows('Not implemented')[0]).toMatchObject({
+      Gap: 'hedgerow-trading-rules',
+      Metric: 'Met'
+    })
+  })
+
+  it('gives the same bytes for the same results', () => {
+    const again = renderComparisonXlsx(results, { context: ['Commit abc'] })
+    expect(Buffer.compare(again, buffer)).toBe(0)
   })
 })
 

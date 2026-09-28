@@ -22,6 +22,8 @@ import {
   existsSync,
   linkSync,
   mkdirSync,
+  readFileSync,
+  renameSync,
   rmSync,
   writeFileSync
 } from 'node:fs'
@@ -30,8 +32,12 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { readCsvWorkbook } from './csv-sheets.mjs'
 import { RESULT_SHEETS, readMetricResults } from './read-results.mjs'
+import { readWorkbookValues } from './read-values.mjs'
+import { normaliseSavedWorkbook } from './repair.mjs'
 
 const RECALC_ALWAYS = 0
+// Save as .xlsx, values and formulas both.
+const XLSX_FILTER = 'xlsx:Calc MS Excel 2007 XML'
 // Recalculating the metric takes a few seconds a workbook.
 const TIMEOUT_PER_WORKBOOK_MS = 120_000
 // Every sheet, unformatted, UTF-8, comma-separated, with "-1" asking for one
@@ -72,13 +78,13 @@ export function isLibreOfficeAvailable(soffice = defaultSofficeCommand()) {
   return result.status === 0
 }
 
-function runSoffice(command, profile, files, outDir) {
+function runSoffice(command, profile, files, outDir, filter = CSV_FILTER) {
   const args = [
     `-env:UserInstallation=${pathToFileURL(profile).href}`,
     '--headless',
     '--norestore',
     '--convert-to',
-    CSV_FILTER,
+    filter,
     '--outdir',
     outDir,
     ...files
@@ -198,6 +204,86 @@ export async function recalculateWorkbooks(
       // start-up is a small part of each workbook's time.
       for (const job of hand) {
         results[job.index] = await recalculateOne(job, {
+          command,
+          profile,
+          exported,
+          read
+        })
+        done += 1
+        onProgress?.(done, jobs.length)
+      }
+    })
+  )
+  return results
+}
+
+/** Recalculate one staged workbook and save it, values in, over its source. */
+async function saveOne(job, { command, profile, exported, read }) {
+  const exportDir = path.join(exported, job.name)
+  mkdirSync(exportDir, { recursive: true })
+  await runSoffice(command, profile, [job.stagedFile], exportDir, XLSX_FILTER)
+  try {
+    const saved = path.join(exportDir, `${job.name}.xlsx`)
+    if (!existsSync(saved)) {
+      throw new Error(`LibreOffice did not save ${job.file}`)
+    }
+    const buffer = normaliseSavedWorkbook(readFileSync(saved))
+    // Written beside the original and renamed over it: the replacement is
+    // atomic, so the file is never half-written, and the original — which the
+    // staged copy may be a hard link to — is replaced, not written through.
+    rmSync(job.stagedFile, { force: true })
+    const replacement = `${job.file}.saving`
+    writeFileSync(replacement, buffer)
+    renameSync(replacement, job.file)
+    return read(readWorkbookValues(buffer, RESULT_SHEETS))
+  } finally {
+    rmSync(exportDir, { recursive: true, force: true })
+    rmSync(job.stagedFile, { force: true })
+  }
+}
+
+/**
+ * Recalculate workbooks and save each over itself with its values in, so it
+ * can be read later — by `readMetricResults`, or by a person opening it —
+ * without recalculating again.
+ *
+ * LibreOffice keeps every formula but drops the template's customXml parts,
+ * leaving relationships to them that Excel would offer to repair, and makes
+ * up fresh identifiers on every save. The relationships are removed and the
+ * identifiers renumbered (see repair.mjs), so the same workbook saved twice
+ * gives the same bytes.
+ *
+ * @param {string[]} files .xlsx paths, each replaced by its recalculated copy
+ * @param {object} options as recalculateWorkbooks
+ * @returns {Promise<any[]>} `read`'s result per input, in order
+ */
+export async function saveRecalculatedWorkbooks(
+  files,
+  { workDir, processes, soffice, read = readMetricResults, onProgress } = {}
+) {
+  if (files.length === 0) {
+    return []
+  }
+  const command = soffice ?? defaultSofficeCommand()
+  const staged = path.join(workDir, 'staged')
+  const exported = path.join(workDir, 'exported')
+  mkdirSync(staged, { recursive: true })
+
+  const jobs = files.map((file, i) => {
+    const name = `wb${String(i + 1).padStart(STAGED_NAME_WIDTH, '0')}`
+    const stagedFile = path.join(staged, `${name}.xlsx`)
+    stage(file, stagedFile)
+    return { file, name, stagedFile, index: i }
+  })
+
+  const results = new Array(jobs.length)
+  const workers = processes ?? availableParallelism()
+  let done = 0
+  await Promise.all(
+    deal(jobs, workers).map(async (hand, w) => {
+      const profile = createRecalcProfile(path.join(workDir, `profile-${w}`))
+      for (const job of hand) {
+        results[job.index] = await saveOne(job, {
           command,
           profile,
           exported,

@@ -21,6 +21,7 @@ import {
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
+  isUnreadable,
   summariseComparison
 } from './report-data.mjs'
 
@@ -195,6 +196,7 @@ function summarySheet(data, title, context) {
     ['With discrepancies', scenarios.discrepancies],
     ['Rejected by the service', scenarios.rejected],
     ['Rejected as expected (invalid data)', scenarios.rejectedAsExpected],
+    ['Workbook unreadable (nothing compared)', scenarios.workbookUnreadable],
     [],
     header(['Figures', 'Count (figures)']),
     ['Compared', figures.compared],
@@ -234,6 +236,13 @@ function summarySheet(data, title, context) {
   return { name: 'Summary', widths: [48, 90, 10, 10], rows }
 }
 
+function refusedFile(result) {
+  if (isUnreadable(result)) {
+    return 'workbook'
+  }
+  return isRejected(result) ? result.rejectedFile : null
+}
+
 function scenariosSheet(results) {
   const rows = [
     header([
@@ -243,8 +252,8 @@ function scenariosSheet(results) {
       'Figures matched',
       'Discrepancies (figures)',
       'Not implemented (figures)',
-      'Refused file',
-      'Why the service refused it'
+      'Refused or unreadable file',
+      'Why'
     ]),
     ...results.map((r) => [
       r.id,
@@ -253,8 +262,8 @@ function scenariosSheet(results) {
       r.matched ?? null,
       r.discrepancies?.length ?? null,
       r.notImplemented?.length ?? null,
-      isRejected(r) ? r.rejectedFile : null,
-      isRejected(r)
+      refusedFile(r),
+      isRejected(r) || isUnreadable(r)
         ? r.errors.map((e) => `${e.code}: ${e.message}`).join('\n')
         : null
     ])

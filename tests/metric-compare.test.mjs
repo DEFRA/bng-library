@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -13,12 +13,14 @@ import {
   figuresFromWorkbook,
   findRegressions,
   knownDiscrepanciesFrom,
-  loadScenarioCorpus,
+  findScenarios,
+  readWorkbookAnswers,
   renderComparisonHtml,
   renderComparisonReport,
   renderComparisonXlsx
 } from '../src/metric-compare/index.mjs'
 import { lintWorkbook } from '../src/workbook-writer/lint.mjs'
+import { createZip } from '../src/workbook-writer/xlsx-zip.mjs'
 import { createRequire } from 'node:module'
 import { MERGED_INTERTIDAL_BROAD_HABITAT } from '../src/metric/area-trading-rules.mjs'
 
@@ -498,6 +500,18 @@ describe('compareScenario', () => {
     expect(result.outcome).toBe(OUTCOME.rejected)
   })
 
+  it('reports, without comparing, a scenario whose workbook could not be read', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      workbookError: 'no values',
+      service: { accepted: true, figures: [] }
+    })
+    expect(result).toMatchObject({
+      outcome: OUTCOME.workbookUnreadable,
+      errors: [{ code: 'WORKBOOK_UNREADABLE', message: 'no values' }]
+    })
+  })
+
   it('expects a scenario built on invalid data to be refused', () => {
     const result = compareScenario({
       scenario: { id: 'invalid-x' },
@@ -723,7 +737,7 @@ describe('renderComparisonXlsx', () => {
   it('lists why a refused scenario was refused, and what is not implemented', () => {
     expect(rows('Scenarios')[1]).toMatchObject({
       Outcome: 'Rejected (invalid data)',
-      'Why the service refused it': 'ADVANCE_AND_DELAY: Both set'
+      Why: 'ADVANCE_AND_DELAY: Both set'
     })
     expect(rows('Not implemented')[0]).toMatchObject({
       Gap: 'hedgerow-trading-rules',
@@ -738,47 +752,110 @@ describe('renderComparisonXlsx', () => {
   })
 })
 
-describe('loadScenarioCorpus', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'corpus-'))
+describe('findScenarios', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'scenarios-'))
   afterAll(() => rmSync(dir, { recursive: true, force: true }))
+  const touch = (file) => {
+    mkdirSync(path.dirname(path.join(dir, file)), { recursive: true })
+    writeFileSync(path.join(dir, file), '')
+  }
+  for (const file of [
+    'net-gain/met-baseline.gpkg',
+    'net-gain/met-post-intervention.gpkg',
+    'net-gain/met.xlsx',
+    'invalid-interventions/invalid-x-baseline.gpkg',
+    'invalid-interventions/invalid-x-post-intervention.gpkg',
+    'invalid-interventions/invalid-x.xlsx',
+    'site-baseline.gpkg',
+    'site-post-intervention.gpkg',
+    'site.xlsx',
+    'lonely.xlsx',
+    '.recalc-1/wb0001.xlsx'
+  ]) {
+    touch(file)
+  }
+  const { scenarios, unmatched } = findScenarios(dir)
 
-  const write = (manifest) =>
-    writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest))
+  it('pairs each workbook with the GeoPackages named after it', () => {
+    expect(scenarios.map((s) => s.id)).toEqual([
+      'invalid-interventions/invalid-x',
+      'net-gain/met',
+      'site'
+    ])
+    expect(scenarios[1]).toMatchObject({
+      name: 'met',
+      purpose: 'net-gain',
+      invalidData: false,
+      files: {
+        baseline: path.join(dir, 'net-gain/met-baseline.gpkg'),
+        postIntervention: path.join(dir, 'net-gain/met-post-intervention.gpkg'),
+        workbook: path.join(dir, 'net-gain/met.xlsx')
+      }
+    })
+  })
 
-  it('resolves each scenario’s GeoPackage pair against the corpus folder', () => {
-    write({
-      seed: 1,
-      template: 't.xlsx',
-      corrections: [],
-      recalculated: true,
-      scenarios: [
-        {
-          id: 'net-gain-met',
-          purpose: 'net-gain',
-          title: 'Met',
-          files: {
-            baseline: 'net-gain/met-baseline.gpkg',
-            postIntervention: 'net-gain/met-post-intervention.gpkg',
-            workbook: 'net-gain/met.xlsx'
-          },
-          metric: { headline: {} }
-        }
+  it('knows a scenario holds invalid data by its name', () => {
+    expect(scenarios[0].invalidData).toBe(true)
+  })
+
+  it('lists a workbook without its GeoPackages, and ignores hidden folders', () => {
+    expect(unmatched).toEqual(['lonely.xlsx'])
+  })
+
+  it('needs to be told where the scenarios are', () => {
+    expect(() => findScenarios()).toThrow(/needs a folder/)
+  })
+})
+
+/** The smallest workbook readMetricResults accepts, with the values given. */
+function minimalWorkbook(headlineCells) {
+  const cells = Object.entries(headlineCells)
+    .map(([ref, v]) =>
+      v === undefined
+        ? `<c r="${ref}"><f>1+1</f></c>`
+        : `<c r="${ref}"><v>${v}</v></c>`
+    )
+    .join('')
+  const rows = `<row r="8">${cells}</row>`
+  return createZip(
+    new Map([
+      [
+        '[Content_Types].xml',
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>'
+      ],
+      [
+        'xl/workbook.xml',
+        '<workbook xmlns:r="r"><sheets><sheet name="Headline Results" sheetId="1" r:id="rId1"/></sheets></workbook>'
+      ],
+      [
+        'xl/_rels/workbook.xml.rels',
+        '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>'
+      ],
+      [
+        'xl/worksheets/sheet1.xml',
+        `<worksheet><sheetData>${rows}</sheetData></worksheet>`
       ]
-    })
-    const corpus = loadScenarioCorpus(dir)
-    expect(corpus.seed).toBe(1)
-    expect(corpus.scenarios[0].files).toEqual({
-      baseline: path.join(dir, 'net-gain/met-baseline.gpkg'),
-      postIntervention: path.join(dir, 'net-gain/met-post-intervention.gpkg')
-    })
+    ])
+  )
+}
+
+describe('readWorkbookAnswers', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'answers-'))
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+  const saved = path.join(dir, 'saved.xlsx')
+  const formulasOnly = path.join(dir, 'formulas-only.xlsx')
+  writeFileSync(saved, minimalWorkbook({ H8: 12.5 }))
+  writeFileSync(formulasOnly, minimalWorkbook({ H8: undefined }))
+
+  it('reads the values a workbook was saved with', async () => {
+    const [answer] = await readWorkbookAnswers([saved])
+    expect(answer.results.headline.baselineUnits.area).toBe(12.5)
   })
 
-  it('refuses a corpus whose workbooks were never recalculated', () => {
-    write({ recalculated: false, scenarios: [] })
-    expect(() => loadScenarioCorpus(dir)).toThrow(/no metric results/)
-  })
-
-  it('needs to be told where the corpus is', () => {
-    expect(() => loadScenarioCorpus()).toThrow(/needs a corpus folder/)
+  it('reports a workbook with no values when LibreOffice is not there to recalculate it', async () => {
+    const [answer] = await readWorkbookAnswers([formulasOnly], {
+      soffice: path.join(dir, 'no-such-soffice')
+    })
+    expect(answer.error).toMatch(/without its calculated values/)
   })
 })

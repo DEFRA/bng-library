@@ -2,24 +2,28 @@
  * bng-library/metric-compare — compare the service's figures for a site with
  * the Statutory Biodiversity Metric's own (BMD-1036).
  *
- * The metric's answers come from a recalculated workbook (readMetricResults,
- * or a scenario corpus manifest); the service's from its project response
- * for the same GeoPackage pair. Both become flat lists of comparable figures —
- * unit calculations per feature, unit totals, net gain, trading rules figures
- * and trading rules statuses — compared exactly, figure by figure.
+ * Feed it a folder of scenarios: each a baseline and post-intervention
+ * GeoPackage beside the metric workbook for the same site. The metric's
+ * answers are read from each workbook; the service's come from its project
+ * response for the GeoPackage pair. Both become flat lists of comparable
+ * figures — unit calculations per feature, unit totals, net gain, trading
+ * rules figures and trading rules statuses — compared exactly.
  *
- *   const { scenarios } = loadScenarioCorpus(corpusDir)
- *   for (const scenario of scenarios) {
+ *   const { scenarios } = findScenarios(folder)
+ *   const answers = await readWorkbookAnswers(scenarios.map((s) => s.files.workbook))
+ *   const results = []
+ *   for (const [i, scenario] of scenarios.entries()) {
  *     const imported = await importIntoTheService(scenario.files)
- *     const result = compareScenario({
+ *     results.push(compareScenario({
  *       scenario,
- *       expected: figuresFromWorkbook(scenario.metric),
+ *       workbookError: answers[i].error,
+ *       expected: answers[i].results && figuresFromWorkbook(answers[i].results),
  *       service: imported.accepted
  *         ? { accepted: true, figures: figuresFromProject(imported.project) }
  *         : imported
- *     })
+ *     }))
  *   }
- *   renderComparisonReport(results)
+ *   renderComparisonHtml(results)
  */
 
 export {
@@ -53,4 +57,4 @@ export {
   UNITS_GUIDE,
   summariseComparison
 } from './report-data.mjs'
-export { loadScenarioCorpus } from './corpus.mjs'
+export { findScenarios, readWorkbookAnswers } from './corpus.mjs'

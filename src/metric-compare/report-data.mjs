@@ -16,7 +16,8 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.matched]: 'Matched',
   [OUTCOME.discrepancies]: 'Discrepancies',
   [OUTCOME.rejected]: 'Rejected by the service',
-  [OUTCOME.rejectedAsExpected]: 'Rejected (invalid data)'
+  [OUTCOME.rejectedAsExpected]: 'Rejected (invalid data)',
+  [OUTCOME.workbookUnreadable]: 'Workbook unreadable'
 })
 
 export const EXACTNESS_NOTE =
@@ -167,6 +168,10 @@ export function isRejected(result) {
   )
 }
 
+export function isUnreadable(result) {
+  return result.outcome === OUTCOME.workbookUnreadable
+}
+
 function count(results, outcome) {
   return results.filter((r) => r.outcome === outcome).length
 }
@@ -248,7 +253,8 @@ export function summariseComparison(results) {
       matched: count(results, OUTCOME.matched),
       discrepancies: count(results, OUTCOME.discrepancies),
       rejected: count(results, OUTCOME.rejected),
-      rejectedAsExpected: count(results, OUTCOME.rejectedAsExpected)
+      rejectedAsExpected: count(results, OUTCOME.rejectedAsExpected),
+      workbookUnreadable: count(results, OUTCOME.workbookUnreadable)
     },
     figures: {
       compared: total(results, 'compared'),

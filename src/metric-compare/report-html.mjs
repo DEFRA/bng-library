@@ -17,6 +17,7 @@ import {
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
+  isUnreadable,
   relative,
   signed,
   summariseComparison,
@@ -31,7 +32,8 @@ const OUTCOME_TONES = {
   [OUTCOME.matched]: 'good',
   [OUTCOME.discrepancies]: 'bad',
   [OUTCOME.rejected]: 'bad',
-  [OUTCOME.rejectedAsExpected]: 'good'
+  [OUTCOME.rejectedAsExpected]: 'good',
+  [OUTCOME.workbookUnreadable]: 'warn'
 }
 
 const HTML_ESCAPES = {
@@ -192,6 +194,9 @@ function discrepancyRow(d) {
 
 function scenarioDetail(result) {
   const heading = `<summary><span class="badge ${OUTCOME_TONES[result.outcome]}">${escape(OUTCOME_TITLES[result.outcome])}</span> <strong>${escape(result.id)}</strong> <span class="count" data-total="${result.discrepancies?.length ?? 0}">${escape(result.discrepancies?.length ?? 0)} discrepancies</span></summary>`
+  if (isUnreadable(result)) {
+    return `<details class="scenario rejected" id="${anchor(result.id)}">${heading}<p>Nothing was compared: ${escape(result.errors[0].message)}</p></details>`
+  }
   if (isRejected(result)) {
     const errors = result.errors
       .map(
@@ -318,7 +323,7 @@ export function renderComparisonHtml(results, options = {}) {
     `<h1>${escape(title)}</h1>`,
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
     tiles(data),
-    `<p>${data.scenarios.total} scenarios: ${data.scenarios.matched} matched, ${data.scenarios.discrepancies} with discrepancies, ${data.scenarios.rejected} rejected by the service, ${data.scenarios.rejectedAsExpected} rejected as expected (invalid data).</p>`,
+    `<p>${data.scenarios.total} scenarios: ${data.scenarios.matched} matched, ${data.scenarios.discrepancies} with discrepancies, ${data.scenarios.rejected} rejected by the service, ${data.scenarios.rejectedAsExpected} rejected as expected (invalid data)${data.scenarios.workbookUnreadable ? `, ${data.scenarios.workbookUnreadable} whose workbook could not be read` : ''}.</p>`,
     `<p>${escape(EXACTNESS_NOTE)}</p>`,
     guideSection(),
     '<h2>Scenarios</h2>',

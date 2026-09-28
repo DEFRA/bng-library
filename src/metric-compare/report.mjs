@@ -15,6 +15,7 @@ import {
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
+  isUnreadable,
   relative,
   signed,
   summariseComparison,
@@ -25,7 +26,8 @@ const OUTCOME_ICONS = {
   [OUTCOME.matched]: '✅',
   [OUTCOME.discrepancies]: '❌',
   [OUTCOME.rejected]: '❌',
-  [OUTCOME.rejectedAsExpected]: '✅'
+  [OUTCOME.rejectedAsExpected]: '✅',
+  [OUTCOME.workbookUnreadable]: '⚠️'
 }
 
 const CHANGE_LABELS = {
@@ -62,7 +64,7 @@ function anchor(id) {
 
 function summary({ scenarios, figures }) {
   return [
-    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data).`,
+    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}.`,
     '',
     `**${figures.compared} figures compared** — ${figures.matched} matched exactly, ${figures.discrepancies} differ; ${figures.notImplemented} not implemented in the service yet.`,
     '',
@@ -152,6 +154,10 @@ function guideSection() {
 
 function scenarioDetail(result) {
   const lines = [`### ${result.id}`, '']
+  if (isUnreadable(result)) {
+    lines.push(`Nothing was compared: ${cell(result.errors[0].message)}`, '')
+    return lines.join('\n')
+  }
   if (isRejected(result)) {
     lines.push(
       `The service refused the ${result.rejectedFile} file:`,

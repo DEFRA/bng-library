@@ -23,7 +23,9 @@ export const OUTCOME = Object.freeze({
   /** The service refused a file of a scenario whose data is valid. */
   rejected: 'rejected',
   /** The service refused a file of a scenario built to hold invalid data. */
-  rejectedAsExpected: 'rejected-as-expected'
+  rejectedAsExpected: 'rejected-as-expected',
+  /** The metric workbook's answers could not be read, so nothing was compared. */
+  workbookUnreadable: 'workbook-unreadable'
 })
 
 export const DIFFERENCE = Object.freeze({
@@ -207,9 +209,27 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
  * @param {{ accepted: true, figures: import('./figures.mjs').Figure[] } |
  *   { accepted: false, rejectedFile: string, errors: object[] }} options.service
  * @param {readonly import('./service-gaps.mjs').ServiceGap[]} [options.gaps]
+ * @param {string} [options.workbookError] why the metric workbook's answers
+ *   could not be read; the scenario is then reported, not compared
  */
-export function compareScenario({ scenario, expected, service, gaps }) {
-  const base = { id: scenario.id, invalidData: isInvalidScenario(scenario) }
+export function compareScenario({
+  scenario,
+  expected,
+  service,
+  gaps,
+  workbookError
+}) {
+  const base = {
+    id: scenario.id,
+    invalidData: scenario.invalidData ?? isInvalidScenario(scenario)
+  }
+  if (workbookError) {
+    return {
+      ...base,
+      outcome: OUTCOME.workbookUnreadable,
+      errors: [{ code: 'WORKBOOK_UNREADABLE', message: workbookError }]
+    }
+  }
   if (!service.accepted) {
     return {
       ...base,

@@ -145,6 +145,13 @@ No template to hand? `downloadPublishedTemplate()` fetches the calculation
 tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.0.4,
 checksum-pinned), the release the scenarios were validated against.
 
+`saveRecalculatedWorkbooks(files, { workDir })` recalculates and saves each
+workbook over itself with its values in, so `readMetricResults(buffer)` — or a
+person opening it — can read the answers later without recalculating. The save
+is normalised (LibreOffice's made-up identifiers renumbered, its dangling
+relationships removed), so the same workbook saved twice gives the same bytes
+and Excel has nothing to repair.
+
 Recalculation needs LibreOffice (`soffice`, or `SOFFICE_PATH`). Excel
 recalculates a generated workbook on open. `generatePermutations({
 workbookTemplate })` adds each scenario's workbook to the permutations
@@ -175,19 +182,27 @@ import {
   compareScenario,
   figuresFromProject,
   figuresFromWorkbook,
-  loadScenarioCorpus,
+  findScenarios,
+  readWorkbookAnswers,
   renderComparisonHtml,
   renderComparisonReport,
   renderComparisonXlsx
 } from 'bng-library/metric-compare'
 
+// Each scenario: <name>-baseline.gpkg, <name>-post-intervention.gpkg and
+// <name>.xlsx, side by side
+const { scenarios } = findScenarios(folder)
+const answers = await readWorkbookAnswers(
+  scenarios.map((s) => s.files.workbook)
+)
 const results = []
-for (const scenario of loadScenarioCorpus(corpusDir).scenarios) {
+for (const [i, scenario] of scenarios.entries()) {
   const imported = await importIntoTheService(scenario.files)
   results.push(
     compareScenario({
       scenario,
-      expected: figuresFromWorkbook(scenario.metric),
+      workbookError: answers[i].error,
+      expected: answers[i].results && figuresFromWorkbook(answers[i].results),
       service: imported.accepted
         ? { accepted: true, figures: figuresFromProject(imported.project) }
         : imported
@@ -225,11 +240,21 @@ discrepancies and `findRegressions(results, known)` lists every way a later
 run differs: a new or changed discrepancy, one that has gone, or a change of
 outcome.
 
-This library ships no corpus: `loadScenarioCorpus(dir)` reads any
-`generate:scenarios` output. The committed one is in the harness, at
-`example-files/permutations/`, each GeoPackage pair beside its metric workbook;
-its `manifest.json` holds the workbooks' answers, so a comparison needs neither
-LibreOffice nor the template. The service side runs in the backend:
+**Input.** A folder of scenarios, each three files side by side:
+`<name>-baseline.gpkg`, `<name>-post-intervention.gpkg`, and `<name>.xlsx`,
+the metric workbook for the same site. `findScenarios(folder)` pairs them by
+name, so any folder named this way will do, hand-built test spreadsheets
+included. `readWorkbookAnswers` reads each workbook's answers from the values it
+was saved with (as Excel saves them, and as `generate:scenarios` saves them
+after recalculating), with the library's own reader, so no spreadsheet
+dependency is needed. A workbook saved with formulas only is recalculated with
+LibreOffice first, when it is installed; otherwise it is reported as unreadable
+and nothing is compared for it. A hand-built workbook compares feature by
+feature only where its rows' references match the GeoPackages' feature
+references; totals, net gain and trading are compared regardless.
+
+This library ships no scenarios. The committed ones are in the harness, at
+`example-files/permutations/`. The service side runs in the backend:
 `npm run compare:metric` there imports every scenario through its upload
 pipeline and writes the reports.
 

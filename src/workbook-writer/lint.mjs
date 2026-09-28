@@ -85,7 +85,7 @@ function relsBaseDir(relsName) {
   return dir === '.' ? '' : dir
 }
 
-function resolveTarget(relsName, target) {
+export function resolveTarget(relsName, target) {
   if (target.startsWith('/')) {
     return target.slice(1)
   }

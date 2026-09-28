@@ -8,7 +8,8 @@
     ".": "./index.mjs",
     "./gpkg-io": "./src/gpkg-io/index.mjs",
     "./metric": "./src/metric/index.mjs",
-    "./workbook-writer": "./src/workbook-writer/index.mjs"
+    "./workbook-writer": "./src/workbook-writer/index.mjs",
+    "./metric-compare": "./src/metric-compare/index.mjs"
   },
   "files": [
     "index.mjs",
@@ -48,6 +49,7 @@
     "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\"",
     "postinstall": "node scripts/postinstall.mjs",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
-    "install:gitleaks": "node scripts/install-gitleaks.mjs"
+    "install:gitleaks": "node scripts/install-gitleaks.mjs",
+    "corpus:import": "node scripts/import-scenario-corpus.mjs"
   }
 }

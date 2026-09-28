@@ -7,6 +7,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 - **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
+- **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a committed corpus of scenarios.
 
 ## Install
 
@@ -152,6 +153,80 @@ output. The harness's `npm run generate:scenarios` builds the whole corpus.
 The tests against the real template run when `METRIC_TEMPLATE` points at a
 metric v4 workbook, which is not committed here; otherwise they are skipped.
 
+### Metric comparison
+
+`bng-library/metric-compare` checks the service against the Statutory
+Biodiversity Metric (BMD-1036). The metric's answers come from a recalculated
+workbook; the service's from its project response (`GET /projects/{id}`) for
+the same GeoPackage pair. Each becomes a flat list of figures keyed the same
+way, and the two lists are compared exactly, to the 15 significant figures
+both sides carry:
+
+| What                          | Figures                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Unit calculations per feature | each feature's baseline, retained, enhanced and created units, by reference                                        |
+| Unit totals                   | baseline, post-intervention and net change, per module                                                             |
+| Net gain                      | net change (%) and the 10% verdict, per module the site has                                                        |
+| Trading rules figures         | each habitat's net change, the Medium broad habitat totals, surplus, deficit, Low net change and cumulative figure |
+| Trading rules statuses        | Met / Not met per distinctiveness band                                                                             |
+
+```js
+import {
+  compareScenario,
+  figuresFromProject,
+  figuresFromWorkbook,
+  loadScenarioCorpus,
+  renderComparisonReport
+} from 'bng-library/metric-compare'
+
+const results = []
+for (const scenario of loadScenarioCorpus().scenarios) {
+  const imported = await importIntoTheService(scenario.files)
+  results.push(
+    compareScenario({
+      scenario,
+      expected: figuresFromWorkbook(scenario.metric),
+      service: imported.accepted
+        ? { accepted: true, figures: figuresFromProject(imported.project) }
+        : imported
+    })
+  )
+}
+writeFileSync('report.md', renderComparisonReport(results))
+```
+
+Every discrepancy is reported with both values, the difference (service less
+metric) and the difference relative to the metric's value. What the metric
+computes and the service does not yet — hedgerow trading rules, and the Very
+High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
+_not implemented_ rather than as a failure; once the service produces such a
+figure it is compared like any other. A per-feature difference that a known
+cause accounts for exactly — the service rounding sizes to whole square metres
+or metres before pricing, or strategic significance (not implemented in the
+engine yet) — carries that cause, but still counts.
+
+The service does not agree with the metric everywhere yet, so
+`knownDiscrepanciesFrom(results)` records a run's discrepancies and
+`findRegressions(results, known)` lists every way a later run differs: a new
+or changed discrepancy, one that has gone, or a change of outcome. That is the
+regression gate the backend runs in CI.
+
+The corpus in `src/metric-compare/corpus/` is a `generate:scenarios` run from
+the harness, trimmed to the GeoPackages and `manifest.json` (the workbooks'
+answers are in the manifest, so nothing downstream needs LibreOffice). After
+changing the catalogue, the workbook reader or the template, regenerate it in
+the harness and import it:
+
+```sh
+# in bng-metric-harness, with this library linked (npm run lib:link)
+npm run generate:scenarios -- --outdir example-files/permutations --seed 1
+# here
+npm run corpus:import -- ../bng-metric-harness/example-files/permutations
+```
+
+The service side runs in the backend: `npm run compare:metric` there imports
+every corpus scenario through its upload pipeline and writes the report.
+
 ### Scenario catalogue
 
 The test scenarios are configuration, kept in one file:
@@ -243,6 +318,7 @@ harness), so renaming or removing one of those means updating the test.
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
 | `bng-library/workbook-writer` | Synthetic metric workbooks for QA.                  |
+| `bng-library/metric-compare`  | Compare the service with the metric (BMD-1036).     |
 
 See `index.mjs` for the full list of named exports, and `src/metric/README.md`
 for the metric engine.

@@ -1,12 +1,18 @@
 /**
  * Read a recalculated metric workbook's answers: the headline figures, the
- * trading-rule verdicts, and every warning the metric raised on a row.
+ * trading-rule verdicts, the units on every feature, the trading summaries'
+ * figures, and every warning the metric raised on a row.
  *
  * These are the metric's own outputs — nothing here computes anything — so
  * they are the expected results a service run is compared against.
  */
 
 import { createRequire } from 'node:module'
+import {
+  FIGURE_SHEETS,
+  readFeatureUnits,
+  readTradingFigures
+} from './read-figures.mjs'
 import { columnIndex, columnLetters } from './sheet-xml.mjs'
 import { METRIC_SHEETS } from './template-layout.mjs'
 
@@ -44,11 +50,14 @@ const TRADING_SUMMARIES = {
 
 /** Every sheet the results are read from. */
 export const RESULT_SHEETS = [
-  HEADLINE,
-  TRADING_AREA,
-  TRADING_HEDGEROW,
-  TRADING_WATERCOURSE,
-  ...Object.values(METRIC_SHEETS).map((layout) => layout.sheet)
+  ...new Set([
+    HEADLINE,
+    TRADING_AREA,
+    TRADING_HEDGEROW,
+    TRADING_WATERCOURSE,
+    ...FIGURE_SHEETS,
+    ...Object.values(METRIC_SHEETS).map((layout) => layout.sheet)
+  ])
 ]
 
 /**
@@ -216,6 +225,8 @@ export function readMetricResults(source) {
   const results = {
     headline: readHeadline(headlineSheet),
     trading: readTrading(workbook),
+    features: readFeatureUnits(workbook),
+    tradingFigures: readTradingFigures(workbook),
     corrected: {
       areaCumulativeSurplus: value(
         workbook.Sheets[TRADING_AREA],

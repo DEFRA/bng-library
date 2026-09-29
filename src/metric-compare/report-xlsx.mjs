@@ -196,6 +196,10 @@ function summarySheet(data, title, context) {
     ['With discrepancies', scenarios.discrepancies],
     ['Rejected by the service', scenarios.rejected],
     ['Rejected as expected (invalid data)', scenarios.rejectedAsExpected],
+    [
+      'Accepted, though its data is invalid (should be rejected)',
+      scenarios.acceptedInvalid
+    ],
     ['Workbook unreadable (nothing compared)', scenarios.workbookUnreadable],
     [],
     header(['Figures', 'Count (figures)']),

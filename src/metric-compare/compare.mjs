@@ -24,6 +24,12 @@ export const OUTCOME = Object.freeze({
   rejected: 'rejected',
   /** The service refused a file of a scenario built to hold invalid data. */
   rejectedAsExpected: 'rejected-as-expected',
+  /**
+   * The service accepted a scenario built to hold invalid data. Its figures
+   * are still compared, but however they compare the scenario fails: the
+   * service should have refused it.
+   */
+  acceptedInvalid: 'accepted-invalid',
   /** The metric workbook's answers could not be read, so nothing was compared. */
   workbookUnreadable: 'workbook-unreadable'
 })
@@ -199,6 +205,15 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
   return result
 }
 
+function acceptedOutcome(invalidData, comparison) {
+  if (invalidData) {
+    return OUTCOME.acceptedInvalid
+  }
+  return comparison.discrepancies.length === 0
+    ? OUTCOME.matched
+    : OUTCOME.discrepancies
+}
+
 /**
  * Compare one scenario: the metric's answers against the service's import of
  * the same GeoPackage pair.
@@ -241,10 +256,7 @@ export function compareScenario({
   const comparison = compareFigures(expected, service.figures, { gaps })
   return {
     ...base,
-    outcome:
-      comparison.discrepancies.length === 0
-        ? OUTCOME.matched
-        : OUTCOME.discrepancies,
+    outcome: acceptedOutcome(base.invalidData, comparison),
     ...comparison
   }
 }

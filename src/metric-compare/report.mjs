@@ -27,6 +27,7 @@ const OUTCOME_ICONS = {
   [OUTCOME.discrepancies]: '❌',
   [OUTCOME.rejected]: '❌',
   [OUTCOME.rejectedAsExpected]: '✅',
+  [OUTCOME.acceptedInvalid]: '❌',
   [OUTCOME.workbookUnreadable]: '⚠️'
 }
 
@@ -64,7 +65,7 @@ function anchor(id) {
 
 function summary({ scenarios, figures }) {
   return [
-    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}.`,
+    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.acceptedInvalid ? `, ${scenarios.acceptedInvalid} accepted though their data is invalid` : ''}${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}.`,
     '',
     `**${figures.compared} figures compared** — ${figures.matched} matched exactly, ${figures.discrepancies} differ; ${figures.notImplemented} not implemented in the service yet.`,
     '',

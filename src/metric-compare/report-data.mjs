@@ -17,6 +17,7 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.discrepancies]: 'Discrepancies',
   [OUTCOME.rejected]: 'Rejected by the service',
   [OUTCOME.rejectedAsExpected]: 'Rejected (invalid data)',
+  [OUTCOME.acceptedInvalid]: 'Accepted, though its data is invalid',
   [OUTCOME.workbookUnreadable]: 'Workbook unreadable'
 })
 
@@ -254,6 +255,7 @@ export function summariseComparison(results) {
       discrepancies: count(results, OUTCOME.discrepancies),
       rejected: count(results, OUTCOME.rejected),
       rejectedAsExpected: count(results, OUTCOME.rejectedAsExpected),
+      acceptedInvalid: count(results, OUTCOME.acceptedInvalid),
       workbookUnreadable: count(results, OUTCOME.workbookUnreadable)
     },
     figures: {

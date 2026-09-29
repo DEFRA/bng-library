@@ -75,18 +75,22 @@ function formatNumber(value) {
 /**
  * A difference with its sign. One too small to show at four decimal places
  * is shown to its first two significant digits instead, so it never reads as
- * zero.
+ * zero: in fixed notation while that needs no more than twelve decimal
+ * places, and in scientific notation below that.
  */
 function formatDifference(value) {
   if (value === 0) {
     return '0'
   }
+  const sign = value > 0 ? '+' : '−'
   const size = Math.abs(value)
-  const places =
-    size >= SMALLEST_SHOWN
-      ? DECIMAL_PLACES
-      : Math.min(MAX_DECIMAL_PLACES, Math.ceil(-Math.log10(size)) + 1)
-  return `${value > 0 ? '+' : '−'}${size.toFixed(places)}`
+  if (size >= SMALLEST_SHOWN) {
+    return `${sign}${size.toFixed(DECIMAL_PLACES)}`
+  }
+  const places = Math.ceil(-Math.log10(size)) + 1
+  return places <= MAX_DECIMAL_PLACES
+    ? `${sign}${size.toFixed(places)}`
+    : `${sign}${size.toExponential(1)}`
 }
 
 /** A value with its unit: "97.3095 habitat units", "9.0898%", "Met". */
@@ -152,6 +156,8 @@ function statusOf(result) {
       return { tone: 'warn', text: 'Workbook could not be read' }
     case OUTCOME.rejectedAsExpected:
       return { tone: 'good', text: 'Refused, as expected (invalid data)' }
+    case OUTCOME.acceptedInvalid:
+      return { tone: 'bad', text: 'Accepted, though its data is invalid' }
     default:
       break
   }
@@ -192,6 +198,9 @@ function scenarioCount(found) {
 
 function headline(results, answers, unexplained, explained) {
   const refused = results.filter((r) => r.outcome === OUTCOME.rejected)
+  const acceptedInvalid = results.filter(
+    (r) => r.outcome === OUTCOME.acceptedInvalid
+  )
   const unreadable = results.filter(
     (r) => r.outcome === OUTCOME.workbookUnreadable
   )
@@ -217,6 +226,12 @@ function headline(results, answers, unexplained, explained) {
     lines.unshift([
       'bad',
       `The service refused ${plural(refused.length, 'scenario')} whose data is valid.`
+    ])
+  }
+  if (acceptedInvalid.length) {
+    lines.unshift([
+      'bad',
+      `The service accepted ${plural(acceptedInvalid.length, 'scenario')} whose data is invalid.`
     ])
   }
   if (unreadable.length) {
@@ -368,9 +383,12 @@ function scenarioBody(result) {
   if (result.outcome === OUTCOME.workbookUnreadable) {
     return `<p>${escape(result.errors[0].message)}</p>`
   }
-  return result.discrepancies.length
+  const differences = result.discrepancies.length
     ? scenarioDifferences(result)
     : '<p>Every value matches the metric.</p>'
+  return result.outcome === OUTCOME.acceptedInvalid
+    ? `<p>The service accepted this scenario, which is built to hold invalid data, so it should have refused it.</p>${differences}`
+    : differences
 }
 
 function scenariosSection(results) {

@@ -229,13 +229,19 @@ so it opens straight from a CI artifact). It leads with the Met / Not met answer
 that differ, then the values no known cause explains, the known causes of the
 rest, and what the service does not implement yet, then each scenario's full
 list of differences. Values are shown to four decimal places with their unit,
-and differences as numbers in the same unit.
+and differences as numbers in the same unit; one too small for twelve decimal
+places is shown in scientific notation, so it never reads as zero.
 `renderComparisonXlsx` gives a spreadsheet: a summary sheet, then one row per
 scenario, per discrepancy and per figure not implemented, each with a frozen,
 filterable header and real numbers to sort by. It is written with the
 library's own zip writer, so it needs no spreadsheet dependency.
 `renderComparisonReport` gives the same as Markdown; with `details: false` it
 is a summary short enough for a CI job summary.
+
+A scenario built on invalid data (its id starts `invalid-`) should be refused
+by the service. If the service accepts it instead, the outcome is
+`accepted-invalid` however its figures compare, so it is never reported as
+matched.
 
 For now a comparison reports; it does not judge. When some differences
 should fail a build, `knownDiscrepanciesFrom(results)` records a run's

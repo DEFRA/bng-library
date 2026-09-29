@@ -520,6 +520,23 @@ describe('compareScenario', () => {
     })
     expect(result.outcome).toBe(OUTCOME.rejectedAsExpected)
   })
+
+  it('fails a scenario built on invalid data that the service accepts, even when its figures agree', () => {
+    const result = compareScenario({
+      scenario: { id: 'invalid-x' },
+      expected,
+      service: { accepted: true, figures: expected }
+    })
+    expect(result).toMatchObject({
+      outcome: OUTCOME.acceptedInvalid,
+      compared: 1,
+      matched: 1,
+      discrepancies: []
+    })
+    expect(knownDiscrepanciesFrom([result])['invalid-x'].outcome).toBe(
+      OUTCOME.acceptedInvalid
+    )
+  })
 })
 
 describe('regressions', () => {
@@ -690,6 +707,36 @@ describe('renderComparisonHtml', () => {
       }
     })
     expect(renderComparisonHtml([result])).toContain('+0.000061 habitat units')
+  })
+
+  it('shows a difference too small for fixed notation in scientific notation', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [figure('totals|area|baseline', 97.3095391601563)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 97.3095391601564)]
+      }
+    })
+    const html = renderComparisonHtml([result])
+    expect(html).toMatch(/\+\d\.\de-1[34] habitat units/)
+    expect(html).not.toContain('+0.000000000000')
+  })
+
+  it('fails a scenario with invalid data that the service accepted', () => {
+    const result = compareScenario({
+      scenario: { id: 'invalid-x' },
+      expected: [figure('totals|area|baseline', 1)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 1)]
+      }
+    })
+    const page = renderComparisonHtml([result])
+    expect(page).toContain('Accepted, though its data is invalid')
+    expect(page).toContain(
+      'The service accepted 1 scenario whose data is invalid.'
+    )
   })
 
   it('lists why a refused scenario was refused', () => {

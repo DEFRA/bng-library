@@ -3,7 +3,8 @@ import {
   validateHabitat,
   validateCondition,
   validateAdvanceAndDelayYears,
-  validateHabitatChange
+  validateHabitatChange,
+  MAX_YEARS_PLUS
 } from './validate.mjs'
 import {
   CONDITION_SCORES,
@@ -11,6 +12,7 @@ import {
   DISTINCTIVENESS_CATEGORIES,
   DISTINCTIVENESS_SCORES,
   HABITAT_DIFFICULTY,
+  POOR_THRESHOLD_EXEMPT_HABITATS,
   TIME_TO_TARGET_CREATION,
   TIME_TO_TARGET_ENHANCEMENT,
   TIME_TO_TARGET_MULTIPLIER
@@ -120,23 +122,52 @@ function lookupEnhancementTimeToTarget(
   return timeToTargetValue
 }
 
+function lookupReferenceTimeToTarget(
+  habitat,
+  creationOrEnhancement,
+  startCondition,
+  endCondition
+) {
+  return creationOrEnhancement === CREATION
+    ? lookupCreationTimeToTarget(habitat, endCondition)
+    : lookupEnhancementTimeToTarget(
+        habitat,
+        creationOrEnhancement,
+        startCondition,
+        endCondition
+      )
+}
+
 function lookupRawTimeToTarget(
   habitat,
   creationOrEnhancement,
   startCondition,
   endCondition
 ) {
-  const rawValue =
-    creationOrEnhancement === CREATION
-      ? lookupCreationTimeToTarget(habitat, endCondition)
-      : lookupEnhancementTimeToTarget(
-          habitat,
-          creationOrEnhancement,
-          startCondition,
-          endCondition
-        )
+  return normaliseReferenceYears(
+    lookupReferenceTimeToTarget(
+      habitat,
+      creationOrEnhancement,
+      startCondition,
+      endCondition
+    )
+  )
+}
 
-  return normaliseReferenceYears(rawValue)
+/**
+ * True when the advance covers a standard (unadjusted) time-to-target. The
+ * metric holds "30+" as text, which Excel ranks above every number, so no
+ * advance ever covers it (metric tab A-2, column R).
+ *
+ * @param {number} validatedAdvanceYears
+ * @param {number | string} referenceValue - Reference years or "30+"
+ * @returns {boolean}
+ */
+function advanceCoversReference(validatedAdvanceYears, referenceValue) {
+  if (referenceValue === MAX_YEARS_PLUS) {
+    return false
+  }
+  return validatedAdvanceYears >= normaliseReferenceYears(referenceValue)
 }
 
 /**
@@ -251,8 +282,8 @@ function validateEnhancementStartCondition(
 
 /**
  * Difficulty band for the habitat. Low only when the advance covers the
- * unadjusted standard time-to-target. Advance and delay change the temporal
- * multiplier, not this choice.
+ * unadjusted standard time-to-target (never a "30+" one). Advance and delay
+ * change the temporal multiplier, not this choice.
  *
  * @param {string} habitat
  * @param {string} creationOrEnhancement
@@ -268,13 +299,13 @@ function resolveDifficultyDesc(
   endCondition,
   validatedAdvanceYears
 ) {
-  const standardYears = lookupRawTimeToTarget(
+  const standardValue = lookupReferenceTimeToTarget(
     habitat,
     creationOrEnhancement,
     startCondition,
     endCondition
   )
-  if (validatedAdvanceYears >= standardYears) {
+  if (advanceCoversReference(validatedAdvanceYears, standardValue)) {
     return 'Low'
   }
   const difficultyChangeType = resolveDifficultyChangeType(
@@ -309,7 +340,8 @@ function lookupHabitatDifficultyLabel(habitat, creationOrEnhancement) {
 
 /**
  * Statutory tool: Creation projects with enough advance time to reach Poor but not
- * the full target use Enhancement difficulty bands for lookup.
+ * the full target use Enhancement difficulty bands for lookup, except for the
+ * habitats listed in reference/habitat-area-poor-threshold-exempt.json.
  *
  * @param {string} habitat
  * @param {string} creationOrEnhancement
@@ -342,14 +374,20 @@ function resolveDifficultyChangeType(
     return CREATION
   }
 
-  const poorTargetYears = lookupRawTimeToTarget(
+  if (POOR_THRESHOLD_EXEMPT_HABITATS.includes(habitat)) {
+    return CREATION
+  }
+
+  const poorTargetValue = lookupReferenceTimeToTarget(
     habitat,
     CREATION,
     startCondition,
     POOR
   )
 
-  return validatedAdvanceYears >= poorTargetYears ? ENHANCEMENT : CREATION
+  return advanceCoversReference(validatedAdvanceYears, poorTargetValue)
+    ? ENHANCEMENT
+    : CREATION
 }
 
 /**

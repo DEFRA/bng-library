@@ -612,3 +612,150 @@ describe('difficulty band uses the unadjusted time-to-target', () => {
     ).toBe('Low')
   })
 })
+
+describe('difficulty for habitat created in advance matches the metric (BMD-1041)', () => {
+  const RESERVOIRS = 'Lakes - Reservoirs'
+  const NON_PRIORITY_PONDS = 'Lakes - Ponds (non-priority habitat)'
+  const MAX_ADVANCE_YEARS = 30
+  const NOT_POSSIBLE = 'Not Possible'
+
+  // Excel ranks text ("30+", "Not Possible") above every number, so only a
+  // numeric reference can be covered by an advance.
+  const excelAtMost = (reference, advanceYears) =>
+    typeof reference === 'number' && reference <= advanceYears
+
+  /**
+   * The metric's difficulty (tab A-2, columns R, V and W) for creation with an
+   * advance: O is the standard time to target, AE the time to Poor, P the advance.
+   */
+  function metricDifficulty(habitat, condition, advanceYears) {
+    const times = referenceConstants.TIME_TO_TARGET_CREATION[habitat]
+    const bands = referenceConstants.HABITAT_DIFFICULTY[habitat]
+    if (excelAtMost(times[condition], advanceYears)) {
+      return 'Low'
+    }
+    const exempt =
+      referenceConstants.POOR_THRESHOLD_EXEMPT_HABITATS.includes(habitat)
+    const poorReached =
+      advanceYears > 0 && excelAtMost(times.Poor, advanceYears)
+    if (poorReached && !exempt) {
+      return bands.Enhancement
+    }
+    return bands.Creation
+  }
+
+  it('uses Medium for H005 in intervention/watercourse-created (Reservoirs, Moderate, 4 years)', () => {
+    expect(
+      getDifficultyLabel(RESERVOIRS, 'Creation', '', 'Moderate', 4, 0)
+    ).toBe('Medium')
+    expect(
+      getDifficultyMultiplier(RESERVOIRS, 'Creation', '', 'Moderate', 4, 0)
+    ).toBe(DIFFICULTY_MEDIUM)
+  })
+
+  it('switches Reservoirs Moderate to Low only once the advance covers 5 years', () => {
+    for (const advanceYears of [3, 4]) {
+      expect(
+        getDifficultyLabel(
+          RESERVOIRS,
+          'Creation',
+          '',
+          'Moderate',
+          advanceYears,
+          0
+        )
+      ).toBe('Medium')
+    }
+    for (const advanceYears of [5, 6, MAX_ADVANCE_YEARS]) {
+      expect(
+        getDifficultyLabel(
+          RESERVOIRS,
+          'Creation',
+          '',
+          'Moderate',
+          advanceYears,
+          0
+        )
+      ).toBe('Low')
+    }
+  })
+
+  it('keeps non-priority ponds on their creation difficulty once Poor is reached', () => {
+    for (const advanceYears of [1, 2]) {
+      expect(
+        getDifficultyLabel(
+          NON_PRIORITY_PONDS,
+          'Creation',
+          '',
+          'Good',
+          advanceYears,
+          0
+        )
+      ).toBe('Low')
+      expect(
+        getDifficultyMultiplier(
+          NON_PRIORITY_PONDS,
+          'Creation',
+          '',
+          'Good',
+          advanceYears,
+          0
+        )
+      ).toBe(DIFFICULTY_LOW)
+    }
+  })
+
+  it('lists only habitats with creation difficulty reference data', () => {
+    const unknown = referenceConstants.POOR_THRESHOLD_EXEMPT_HABITATS.filter(
+      (habitat) => !referenceConstants.HABITAT_DIFFICULTY[habitat]
+    )
+    expect(unknown).toEqual([])
+  })
+
+  it('never treats a "30+" time to target as covered by an advance', () => {
+    // Lowland dry acid grassland Good is "30+"; Creation High, Enhancement Medium.
+    expect(
+      getDifficultyLabel(H_30PLUS, 'Creation', '', 'Good', MAX_ADVANCE_YEARS, 0)
+    ).not.toBe('Low')
+  })
+
+  // Every creation habitat and reachable condition. A habitat with no difficulty
+  // row has no difficulty to compare ('Coastal lagoons - Coastal lagoons' is
+  // keyed 'Coastal lagoons' there).
+  const creationTargets = () =>
+    Object.entries(referenceConstants.TIME_TO_TARGET_CREATION)
+      .filter(([habitat]) => referenceConstants.HABITAT_DIFFICULTY[habitat])
+      .flatMap(([habitat, times]) =>
+        Object.entries(times)
+          .filter(([, reference]) => reference !== NOT_POSSIBLE)
+          .map(([condition]) => ({ habitat, condition }))
+      )
+
+  it('agrees with the metric for every habitat, condition and advance of 1-30 years', () => {
+    const advances = Array.from(
+      { length: MAX_ADVANCE_YEARS },
+      (_, index) => index + 1
+    )
+    const disagreements = creationTargets().flatMap(({ habitat, condition }) =>
+      advances
+        .map((advanceYears) => ({
+          advanceYears,
+          expected: metricDifficulty(habitat, condition, advanceYears),
+          actual: getDifficultyLabel(
+            habitat,
+            'Creation',
+            '',
+            condition,
+            advanceYears,
+            0
+          )
+        }))
+        .filter(({ expected, actual }) => expected !== actual)
+        .map(
+          ({ advanceYears, expected, actual }) =>
+            `${habitat} / ${condition} / ${advanceYears}: engine ${actual}, metric ${expected}`
+        )
+    )
+    expect(disagreements).toEqual([])
+  })
+})

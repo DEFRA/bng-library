@@ -1,16 +1,20 @@
 /**
  * Read a recalculated metric workbook's answers: the headline figures, the
- * trading-rule verdicts, and every warning the metric raised on a row.
+ * trading-rule verdicts, the units on every feature, the trading summaries'
+ * figures, and every warning the metric raised on a row.
  *
  * These are the metric's own outputs — nothing here computes anything — so
  * they are the expected results a service run is compared against.
  */
 
-import { createRequire } from 'node:module'
+import {
+  FIGURE_SHEETS,
+  readFeatureUnits,
+  readTradingFigures
+} from './read-figures.mjs'
+import { readWorkbookValues } from './read-values.mjs'
 import { columnIndex, columnLetters } from './sheet-xml.mjs'
 import { METRIC_SHEETS } from './template-layout.mjs'
-
-const require = createRequire(import.meta.url)
 
 const HEADLINE = 'Headline Results'
 const TRADING_AREA = 'Trading Summary Area Habitats'
@@ -44,11 +48,14 @@ const TRADING_SUMMARIES = {
 
 /** Every sheet the results are read from. */
 export const RESULT_SHEETS = [
-  HEADLINE,
-  TRADING_AREA,
-  TRADING_HEDGEROW,
-  TRADING_WATERCOURSE,
-  ...Object.values(METRIC_SHEETS).map((layout) => layout.sheet)
+  ...new Set([
+    HEADLINE,
+    TRADING_AREA,
+    TRADING_HEDGEROW,
+    TRADING_WATERCOURSE,
+    ...FIGURE_SHEETS,
+    ...Object.values(METRIC_SHEETS).map((layout) => layout.sheet)
+  ])
 ]
 
 /**
@@ -80,16 +87,6 @@ const TEMPLATE_DEFECT_COLUMNS = {
 
 // A metric warning carries one of these markers.
 const WARNING_MARKERS = ['▲', '⚠', 'Check Data', 'Error']
-
-function loadXlsx() {
-  try {
-    return require('xlsx')
-  } catch {
-    throw new Error(
-      'Reading metric results needs the optional peer dependency "xlsx" — npm install xlsx'
-    )
-  }
-}
 
 function value(sheet, ref) {
   const v = sheet?.[ref]?.v
@@ -199,10 +196,9 @@ function readWarnings(workbook) {
 }
 
 function loadWorkbook(source) {
-  if (!Buffer.isBuffer(source)) {
-    return source
-  }
-  return loadXlsx().read(source, { type: 'buffer' })
+  return Buffer.isBuffer(source)
+    ? readWorkbookValues(source, RESULT_SHEETS)
+    : source
 }
 
 /**
@@ -216,6 +212,8 @@ export function readMetricResults(source) {
   const results = {
     headline: readHeadline(headlineSheet),
     trading: readTrading(workbook),
+    features: readFeatureUnits(workbook),
+    tradingFigures: readTradingFigures(workbook),
     corrected: {
       areaCumulativeSurplus: value(
         workbook.Sheets[TRADING_AREA],

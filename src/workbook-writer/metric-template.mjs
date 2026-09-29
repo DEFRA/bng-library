@@ -16,7 +16,7 @@ const SHARED_STRINGS_PART = 'xl/sharedStrings.xml'
 const CALC_CHAIN_PART = 'xl/calcChain.xml'
 const CONTENT_TYPES_PART = '[Content_Types].xml'
 
-function decodeEntities(text) {
+export function decodeEntities(text) {
   return text
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>')
@@ -25,7 +25,7 @@ function decodeEntities(text) {
     .replaceAll('&amp;', '&')
 }
 
-function readSharedStrings(zip) {
+export function readSharedStrings(zip) {
   if (!zip.has(SHARED_STRINGS_PART)) {
     return []
   }
@@ -37,7 +37,7 @@ function readSharedStrings(zip) {
   )
 }
 
-function readSheetParts(zip) {
+export function readSheetParts(zip) {
   const workbook = zip.read(WORKBOOK_PART).toString('utf8')
   const rels = zip.read(WORKBOOK_RELS_PART).toString('utf8')
   const targets = new Map()

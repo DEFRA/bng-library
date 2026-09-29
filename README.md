@@ -7,6 +7,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 - **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
+- **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a scenario corpus (committed in the harness).
 
 ## Install
 
@@ -144,6 +145,13 @@ No template to hand? `downloadPublishedTemplate()` fetches the calculation
 tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.0.4,
 checksum-pinned), the release the scenarios were validated against.
 
+`saveRecalculatedWorkbooks(files, { workDir })` recalculates and saves each
+workbook over itself with its values in, so `readMetricResults(buffer)` — or a
+person opening it — can read the answers later without recalculating. The save
+is normalised (LibreOffice's made-up identifiers renumbered, its dangling
+relationships removed), so the same workbook saved twice gives the same bytes
+and Excel has nothing to repair.
+
 Recalculation needs LibreOffice (`soffice`, or `SOFFICE_PATH`). Excel
 recalculates a generated workbook on open. `generatePermutations({
 workbookTemplate })` adds each scenario's workbook to the permutations
@@ -151,6 +159,113 @@ output. The harness's `npm run generate:scenarios` builds the whole corpus.
 
 The tests against the real template run when `METRIC_TEMPLATE` points at a
 metric v4 workbook, which is not committed here; otherwise they are skipped.
+
+### Metric comparison
+
+`bng-library/metric-compare` checks the service against the Statutory
+Biodiversity Metric (BMD-1036). The metric's answers come from a recalculated
+workbook; the service's from its project response (`GET /projects/{id}`) for
+the same GeoPackage pair. Each becomes a flat list of figures keyed the same
+way, and the two lists are compared exactly, to the 15 significant figures
+both sides carry:
+
+| What                          | Figures                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Unit calculations per feature | each feature's baseline, retained, enhanced and created units, by reference                                        |
+| Unit totals                   | baseline, post-intervention and net change, per module                                                             |
+| Net gain                      | net change (%) and the 10% verdict, per module the site has                                                        |
+| Trading rules figures         | each habitat's net change, the Medium broad habitat totals, surplus, deficit, Low net change and cumulative figure |
+| Trading rules statuses        | Met / Not met per distinctiveness band                                                                             |
+
+```js
+import {
+  compareScenario,
+  figuresFromProject,
+  figuresFromWorkbook,
+  findScenarios,
+  readWorkbookAnswers,
+  renderComparisonHtml,
+  renderComparisonReport,
+  renderComparisonXlsx
+} from 'bng-library/metric-compare'
+
+// Each scenario: <name>-baseline.gpkg, <name>-post-intervention.gpkg and
+// <name>.xlsx, side by side
+const { scenarios } = findScenarios(folder)
+const answers = await readWorkbookAnswers(
+  scenarios.map((s) => s.files.workbook)
+)
+const results = []
+for (const [i, scenario] of scenarios.entries()) {
+  const imported = await importIntoTheService(scenario.files)
+  results.push(
+    compareScenario({
+      scenario,
+      workbookError: answers[i].error,
+      expected: answers[i].results && figuresFromWorkbook(answers[i].results),
+      service: imported.accepted
+        ? { accepted: true, figures: figuresFromProject(imported.project) }
+        : imported
+    })
+  )
+}
+writeFileSync('report.html', renderComparisonHtml(results))
+writeFileSync('report.xlsx', renderComparisonXlsx(results))
+writeFileSync('report.md', renderComparisonReport(results))
+```
+
+Every discrepancy is reported with both values, the difference (service less
+metric) and the difference relative to the metric's value. What the metric
+computes and the service does not yet — hedgerow trading rules, and the Very
+High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
+_not implemented_ rather than as a failure; once the service produces such a
+figure it is compared like any other. A per-feature difference that a known
+cause accounts for exactly — the service rounding sizes to whole square metres
+or metres before pricing, or strategic significance (not implemented in the
+engine yet) — carries that cause, but still counts.
+
+`renderComparisonHtml` gives a short, self-contained page (no external assets,
+so it opens straight from a CI artifact). It leads with the Met / Not met answers
+that differ, then the values no known cause explains, the known causes of the
+rest, and what the service does not implement yet, then each scenario's full
+list of differences. Values are shown to four decimal places with their unit,
+and differences as numbers in the same unit; one too small for twelve decimal
+places is shown in scientific notation, so it never reads as zero.
+`renderComparisonXlsx` gives a spreadsheet: a summary sheet, then one row per
+scenario, per discrepancy and per figure not implemented, each with a frozen,
+filterable header and real numbers to sort by. It is written with the
+library's own zip writer, so it needs no spreadsheet dependency.
+`renderComparisonReport` gives the same as Markdown; with `details: false` it
+is a summary short enough for a CI job summary.
+
+A scenario built on invalid data (its id starts `invalid-`) should be refused
+by the service. If the service accepts it instead, the outcome is
+`accepted-invalid` however its figures compare, so it is never reported as
+matched.
+
+For now a comparison reports; it does not judge. When some differences
+should fail a build, `knownDiscrepanciesFrom(results)` records a run's
+discrepancies and `findRegressions(results, known)` lists every way a later
+run differs: a new or changed discrepancy, one that has gone, or a change of
+outcome.
+
+**Input.** A folder of scenarios, each three files side by side:
+`<name>-baseline.gpkg`, `<name>-post-intervention.gpkg`, and `<name>.xlsx`,
+the metric workbook for the same site. `findScenarios(folder)` pairs them by
+name, so any folder named this way will do, hand-built test spreadsheets
+included. `readWorkbookAnswers` reads each workbook's answers from the values it
+was saved with (as Excel saves them, and as `generate:scenarios` saves them
+after recalculating), with the library's own reader, so no spreadsheet
+dependency is needed. A workbook saved with formulas only is recalculated with
+LibreOffice first, when it is installed; otherwise it is reported as unreadable
+and nothing is compared for it. A hand-built workbook compares feature by
+feature only where its rows' references match the GeoPackages' feature
+references; totals, net gain and trading are compared regardless.
+
+This library ships no scenarios. The committed ones are in the harness, at
+`example-files/permutations/`. The service side runs in the backend:
+`npm run compare:metric` there imports every scenario through its upload
+pipeline and writes the reports.
 
 ### Scenario catalogue
 
@@ -243,6 +358,7 @@ harness), so renaming or removing one of those means updating the test.
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
 | `bng-library/workbook-writer` | Synthetic metric workbooks for QA.                  |
+| `bng-library/metric-compare`  | Compare the service with the metric (BMD-1036).     |
 
 See `index.mjs` for the full list of named exports, and `src/metric/README.md`
 for the metric engine.

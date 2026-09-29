@@ -37,10 +37,16 @@ export {
   createRecalcProfile,
   defaultSofficeCommand,
   isLibreOfficeAvailable,
-  recalculateWorkbooks
+  recalculateWorkbooks,
+  saveRecalculatedWorkbooks
 } from './recalculate.mjs'
 export { readMetricResults } from './read-results.mjs'
 export { parseCsv, readCsvWorkbook } from './csv-sheets.mjs'
+export { readWorkbookValues } from './read-values.mjs'
+export {
+  normaliseSavedWorkbook,
+  removeDanglingRelationships
+} from './repair.mjs'
 export { checkScenarioExpectations } from './expectations.mjs'
 export { lintWorkbook } from './lint.mjs'
 export {

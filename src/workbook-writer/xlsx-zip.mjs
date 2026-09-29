@@ -230,3 +230,34 @@ export function writeZip(zip, replacements, removals = new Set()) {
   end.writeUInt32LE(offset, 16)
   return Buffer.concat([...chunks, centralDirectory, end])
 }
+
+// A fixed modification time (1980-01-01 00:00, the zip epoch) so the same
+// content always gives the same bytes.
+const DOS_EPOCH_DATE = (1 << 5) | 1
+const DOS_EPOCH_TIME = 0
+
+/**
+ * Write a new zip holding `files`, in the order given.
+ *
+ * @param {Map<string, Buffer|string>} files entry name → content
+ * @returns {Buffer}
+ */
+export function createZip(files) {
+  const entries = [...files.keys()].map((name) => ({
+    name,
+    flags: 0,
+    method: METHOD_STORED,
+    time: DOS_EPOCH_TIME,
+    date: DOS_EPOCH_DATE,
+    crc: 0,
+    size: 0,
+    compressedSize: 0,
+    externalAttributes: 0,
+    data: Buffer.alloc(0)
+  }))
+  const zip = {
+    entries,
+    has: (name) => files.has(name)
+  }
+  return writeZip(zip, files)
+}

@@ -25,6 +25,8 @@ const SURPLUS_THRESHOLD = 0
 /** Distinctiveness bands that carry trading rules in the MVS. */
 export const MEDIUM_BAND = 'Medium'
 export const LOW_BAND = 'Low'
+/** Spelled as the reference data spells it. Only hedgerows trade this band. */
+export const VERY_LOW_BAND = 'V.Low'
 
 /**
  * Coerce a value to a finite number, treating anything else as 0. Mirrors the

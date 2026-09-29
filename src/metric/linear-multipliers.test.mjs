@@ -24,6 +24,8 @@ import {
 // Statutory multiplier constants — extracted to avoid magic number literals
 const MULTIPLIER_30_YRS = 0.8368287006
 const MULTIPLIER_10_YRS = 0.898632125
+const MULTIPLIER_OVER_30_YRS = 0.3197967361
+const MULTIPLIER_25_YRS = 0.4103768311
 const DIFFICULTY_LOW = 1
 const DIFFICULTY_MEDIUM = 0.67
 const DIFFICULTY_CREATION = 0.33
@@ -36,6 +38,7 @@ const GOOD = 'Good'
 const POOR = 'Poor'
 const CONDITION_ASSESSMENT_NA = 'Condition Assessment N/A'
 const WATERCOURSE_DITCHES = 'Ditches'
+const LINE_OF_TREES = 'Line of trees'
 
 // ---------------------------------------------------------------------------
 // Hedgerow creation
@@ -58,6 +61,32 @@ describe('getHedgerowCreationTimeMultiplier', () => {
     expect(() =>
       getHedgerowCreationTimeMultiplier(NATIVE_HEDGEROW, 'N/A', 0, 0)
     ).toThrow(BaselineLookupError)
+  })
+})
+
+describe('hedgerow creation with a "30+" time to target (BMD-1040)', () => {
+  it('uses the "30+" multiplier with no advance or delay', () => {
+    expect(
+      getHedgerowCreationTimeToTargetValue(LINE_OF_TREES, GOOD, 0, 0)
+    ).toBe('>30')
+    expect(getHedgerowCreationTimeMultiplier(LINE_OF_TREES, GOOD, 0, 0)).toBe(
+      MULTIPLIER_OVER_30_YRS
+    )
+  })
+
+  it('counts down from 30 when advanced', () => {
+    expect(
+      getHedgerowCreationTimeToTargetValue(LINE_OF_TREES, GOOD, 5, 0)
+    ).toBe('25')
+    expect(getHedgerowCreationTimeMultiplier(LINE_OF_TREES, GOOD, 5, 0)).toBe(
+      MULTIPLIER_25_YRS
+    )
+  })
+
+  it('uses the "30+" multiplier when delayed', () => {
+    expect(getHedgerowCreationTimeMultiplier(LINE_OF_TREES, GOOD, 0, 2)).toBe(
+      MULTIPLIER_OVER_30_YRS
+    )
   })
 })
 

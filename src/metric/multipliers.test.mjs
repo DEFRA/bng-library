@@ -37,6 +37,7 @@ const DIFFICULTY_HIGH = 0.33
 // Statutory multiplier constants — extracted to avoid magic number literals
 const MULTIPLIER_4_YRS = 0.8671800006
 const MULTIPLIER_OVER_30_YRS = 0.3197967361
+const MULTIPLIER_29_YRS = 0.3558705807
 const DIFFICULTY_LOW = 1
 const DIFFICULTY_MEDIUM = 0.67
 const DIFFICULTY_CREATION = 0.33
@@ -146,7 +147,7 @@ describe('getTimeToTargetValue', () => {
     ).toBe('0')
   })
 
-  it('Creation: normalises "30+" reference values', () => {
+  it('Creation: keeps "30+" as ">30" with no advance or delay (BMD-1040)', () => {
     const v = getTimeToTargetValue(
       H_30PLUS,
       'Creation',
@@ -155,7 +156,55 @@ describe('getTimeToTargetValue', () => {
       0,
       0
     )
-    expect(v).toBe('30')
+    expect(v).toBe('>30')
+  })
+
+  it('Creation: counts "30+" down from 30 when advanced', () => {
+    const v = getTimeToTargetValue(
+      H_30PLUS,
+      'Creation',
+      undefined,
+      'Good',
+      1,
+      0
+    )
+    expect(v).toBe('29')
+  })
+
+  it('Enhancement: keeps "30+" as ">30" with no advance or delay (BMD-1040)', () => {
+    const v = getTimeToTargetValue(
+      H_30PLUS,
+      'Enhancement',
+      'Poor',
+      'Good',
+      0,
+      0
+    )
+    expect(v).toBe('>30')
+  })
+
+  it('Enhancement: counts "30+" down from 30 when advanced', () => {
+    const v = getTimeToTargetValue(
+      H_30PLUS,
+      'Enhancement',
+      'Poor',
+      'Good',
+      5,
+      0
+    )
+    expect(v).toBe('25')
+  })
+
+  it('Enhancement: caps "30+" at >30 when delayed', () => {
+    const v = getTimeToTargetValue(
+      H_30PLUS,
+      'Enhancement',
+      'Poor',
+      'Good',
+      0,
+      1
+    )
+    expect(v).toBe('>30')
   })
 
   it('Creation: caps result at >30 when delay pushes total', () => {
@@ -225,6 +274,30 @@ describe('getTimeMultiplier', () => {
   it('returns multiplier from time-to-target value', () => {
     const m = getTimeMultiplier(H, 'Creation', undefined, 'Moderate', 0, 0)
     expect(m).toBe(MULTIPLIER_4_YRS)
+  })
+
+  it('uses the "30+" multiplier for a "30+" creation with no advance or delay (BMD-1040)', () => {
+    expect(
+      getTimeMultiplier(H_30PLUS, 'Creation', undefined, 'Good', 0, 0)
+    ).toBe(MULTIPLIER_OVER_30_YRS)
+  })
+
+  it('uses the "30+" multiplier for a "30+" enhancement with no advance or delay (BMD-1040)', () => {
+    expect(
+      getTimeMultiplier(H_30PLUS, 'Enhancement', 'Poor', 'Good', 0, 0)
+    ).toBe(MULTIPLIER_OVER_30_YRS)
+  })
+
+  it('uses the 30 - N year multiplier for a "30+" creation advanced N years', () => {
+    expect(
+      getTimeMultiplier(H_30PLUS, 'Creation', undefined, 'Good', 1, 0)
+    ).toBe(MULTIPLIER_29_YRS)
+  })
+
+  it('uses the "30+" multiplier for a "30+" creation with a delay', () => {
+    expect(
+      getTimeMultiplier(H_30PLUS, 'Creation', undefined, 'Good', 0, 1)
+    ).toBe(MULTIPLIER_OVER_30_YRS)
   })
 
   it('throws when start condition missing for Enhancement', () => {

@@ -16,9 +16,8 @@ import {
   TIME_TO_TARGET_MULTIPLIER
 } from './reference-constants.mjs'
 import {
-  applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
-  toTimeToTargetBucketKey
+  referenceToTimeToTargetBucketKey
 } from './linear-time-target-utils.mjs'
 
 const NOT_POSSIBLE = 'Not Possible'
@@ -120,23 +119,36 @@ function lookupEnhancementTimeToTarget(
   return timeToTargetValue
 }
 
+function lookupReferenceTimeToTarget(
+  habitat,
+  creationOrEnhancement,
+  startCondition,
+  endCondition
+) {
+  return creationOrEnhancement === CREATION
+    ? lookupCreationTimeToTarget(habitat, endCondition)
+    : lookupEnhancementTimeToTarget(
+        habitat,
+        creationOrEnhancement,
+        startCondition,
+        endCondition
+      )
+}
+
 function lookupRawTimeToTarget(
   habitat,
   creationOrEnhancement,
   startCondition,
   endCondition
 ) {
-  const rawValue =
-    creationOrEnhancement === CREATION
-      ? lookupCreationTimeToTarget(habitat, endCondition)
-      : lookupEnhancementTimeToTarget(
-          habitat,
-          creationOrEnhancement,
-          startCondition,
-          endCondition
-        )
-
-  return normaliseReferenceYears(rawValue)
+  return normaliseReferenceYears(
+    lookupReferenceTimeToTarget(
+      habitat,
+      creationOrEnhancement,
+      startCondition,
+      endCondition
+    )
+  )
 }
 
 /**
@@ -164,18 +176,17 @@ function getTimeToTargetValue(
   const { validatedAdvanceYears, validatedDelayYears } =
     validateAdvanceAndDelayYears(advanceYears, delayYears)
 
-  const referenceYears = lookupRawTimeToTarget(
+  const referenceValue = lookupReferenceTimeToTarget(
     habitat,
     creationOrEnhancement,
     startCondition,
     endCondition
   )
-  const computedYears = applyDelayAdvanceAndClamp(
-    referenceYears,
+  return referenceToTimeToTargetBucketKey(
+    referenceValue,
     validatedAdvanceYears,
     validatedDelayYears
   )
-  return toTimeToTargetBucketKey(computedYears)
 }
 
 /**

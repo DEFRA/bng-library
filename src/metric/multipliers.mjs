@@ -16,7 +16,6 @@ import {
   TIME_TO_TARGET_MULTIPLIER
 } from './reference-constants.mjs'
 import {
-  advanceMeetsTimeToTarget,
   applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
   toTimeToTargetBucketKey
@@ -251,31 +250,38 @@ function validateEnhancementStartCondition(
 }
 
 /**
+ * Difficulty band for the habitat. Low only when the advance covers the
+ * unadjusted standard time-to-target. Advance and delay change the temporal
+ * multiplier, not this choice.
+ *
  * @param {string} habitat
  * @param {string} creationOrEnhancement
  * @param {string | undefined} startCondition
+ * @param {string} endCondition
  * @param {number} validatedAdvanceYears
- * @param {number} validatedDelayYears
- * @param {string} timeToTargetValue
  * @returns {string}
  */
 function resolveDifficultyDesc(
   habitat,
   creationOrEnhancement,
   startCondition,
-  validatedAdvanceYears,
-  validatedDelayYears,
-  timeToTargetValue
+  endCondition,
+  validatedAdvanceYears
 ) {
-  if (advanceMeetsTimeToTarget(validatedAdvanceYears, timeToTargetValue)) {
+  const standardYears = lookupRawTimeToTarget(
+    habitat,
+    creationOrEnhancement,
+    startCondition,
+    endCondition
+  )
+  if (validatedAdvanceYears >= standardYears) {
     return 'Low'
   }
   const difficultyChangeType = resolveDifficultyChangeType(
     habitat,
     creationOrEnhancement,
     startCondition,
-    validatedAdvanceYears,
-    validatedDelayYears
+    validatedAdvanceYears
   )
   return lookupHabitatDifficultyLabel(habitat, difficultyChangeType)
 }
@@ -309,15 +315,13 @@ function lookupHabitatDifficultyLabel(habitat, creationOrEnhancement) {
  * @param {string} creationOrEnhancement
  * @param {string} [startCondition]
  * @param {number} validatedAdvanceYears
- * @param {number} validatedDelayYears
  * @returns {CREATION | ENHANCEMENT}
  */
 function resolveDifficultyChangeType(
   habitat,
   creationOrEnhancement,
   startCondition,
-  validatedAdvanceYears,
-  validatedDelayYears
+  validatedAdvanceYears
 ) {
   if (creationOrEnhancement === ENHANCEMENT) {
     return ENHANCEMENT
@@ -338,18 +342,14 @@ function resolveDifficultyChangeType(
     return CREATION
   }
 
-  const poorTargetYears = getTimeToTargetValue(
+  const poorTargetYears = lookupRawTimeToTarget(
     habitat,
-    creationOrEnhancement,
+    CREATION,
     startCondition,
-    POOR,
-    validatedAdvanceYears,
-    validatedDelayYears
+    POOR
   )
 
-  return advanceMeetsTimeToTarget(validatedAdvanceYears, poorTargetYears)
-    ? ENHANCEMENT
-    : CREATION
+  return validatedAdvanceYears >= poorTargetYears ? ENHANCEMENT : CREATION
 }
 
 /**
@@ -387,30 +387,22 @@ function getDifficultyLabel(
   validateHabitat(habitat)
   validateHabitatChange(creationOrEnhancement)
   validateCondition(habitat, endCondition)
-  const { validatedAdvanceYears, validatedDelayYears } =
-    validateAdvanceAndDelayYears(advanceYears, delayYears)
+  const { validatedAdvanceYears } = validateAdvanceAndDelayYears(
+    advanceYears,
+    delayYears
+  )
   validateEnhancementStartCondition(
     habitat,
     creationOrEnhancement,
     startCondition
   )
 
-  const timeToTargetValue = getTimeToTargetValue(
-    habitat,
-    creationOrEnhancement,
-    startCondition,
-    endCondition,
-    validatedAdvanceYears,
-    validatedDelayYears
-  )
-
   return resolveDifficultyDesc(
     habitat,
     creationOrEnhancement,
     startCondition,
-    validatedAdvanceYears,
-    validatedDelayYears,
-    timeToTargetValue
+    endCondition,
+    validatedAdvanceYears
   )
 }
 

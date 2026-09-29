@@ -533,3 +533,82 @@ describe('creation difficulty for habitats with no route to Poor condition', () 
     ).toBe(DIFFICULTY_MEDIUM)
   })
 })
+
+describe('difficulty band uses the unadjusted time-to-target', () => {
+  const SALTMARSH = 'Coastal saltmarsh - Saltmarshes and saline reedbeds'
+  // Creation Poor is 5 years and Moderate is 10, so an advance can clear a
+  // reduced key without covering either unadjusted figure. Creation is High
+  // and Enhancement is Medium, so the two bands are distinguishable.
+  const SLOW_POOR = 'Grassland - Lowland meadows'
+
+  it('keeps saltmarsh Moderate creation on Enhancement until the advance covers 7 years', () => {
+    expect(
+      getDifficultyLabel(SALTMARSH, 'Creation', '', 'Moderate', 0, 0)
+    ).toBe('High')
+    for (const advanceYears of [1, 3, 4, 6]) {
+      expect(
+        getDifficultyLabel(
+          SALTMARSH,
+          'Creation',
+          '',
+          'Moderate',
+          advanceYears,
+          0
+        )
+      ).toBe('Medium')
+      expect(
+        getDifficultyMultiplier(
+          SALTMARSH,
+          'Creation',
+          '',
+          'Moderate',
+          advanceYears,
+          0
+        )
+      ).toBe(DIFFICULTY_MEDIUM)
+    }
+    expect(
+      getDifficultyLabel(SALTMARSH, 'Creation', '', 'Moderate', 7, 0)
+    ).toBe('Low')
+    expect(
+      getDifficultyMultiplier(SALTMARSH, 'Creation', '', 'Moderate', 7, 0)
+    ).toBe(DIFFICULTY_LOW)
+  })
+
+  it('stays on the Creation band until the advance covers an unadjusted Poor target above 1 year', () => {
+    expect(
+      getDifficultyLabel(SLOW_POOR, 'Creation', '', 'Moderate', 4, 0)
+    ).toBe('High')
+    expect(
+      getDifficultyLabel(SLOW_POOR, 'Creation', '', 'Moderate', 5, 0)
+    ).toBe('Medium')
+    expect(
+      getDifficultyLabel(SLOW_POOR, 'Creation', '', 'Moderate', 9, 0)
+    ).toBe('Medium')
+    expect(
+      getDifficultyLabel(SLOW_POOR, 'Creation', '', 'Moderate', 10, 0)
+    ).toBe('Low')
+  })
+
+  it('keeps the temporal multiplier on the reduced years', () => {
+    // Moderate creation is 7 years. An advance of 4 leaves 3, whose multiplier
+    // is unchanged by the difficulty-band correction.
+    expect(getTimeMultiplier(SALTMARSH, 'Creation', '', 'Moderate', 4, 0)).toBe(
+      0.898632125
+    )
+    expect(
+      getTimeToTargetValue(SALTMARSH, 'Creation', '', 'Moderate', 4, 0)
+    ).toBe('3')
+  })
+
+  it('uses the unadjusted enhancement years for the Low override', () => {
+    // Poor to Moderate enhancement is 6 years. An advance of 3 used to read as
+    // Low because 3 covers the reduced key of 3.
+    expect(
+      getDifficultyLabel(SALTMARSH, 'Enhancement', 'Poor', 'Moderate', 3, 0)
+    ).toBe('Medium')
+    expect(
+      getDifficultyLabel(SALTMARSH, 'Enhancement', 'Poor', 'Moderate', 6, 0)
+    ).toBe('Low')
+  })
+})

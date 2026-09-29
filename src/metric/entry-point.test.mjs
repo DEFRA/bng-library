@@ -57,6 +57,7 @@ const PUBLIC_EXPORTS = [
   'calculateEnhancedWatercoursePostIntervention',
   'calculateHabitatNetUnitChanges',
   'calculateHedgerowBaseline',
+  'calculateHedgerowTradingRules',
   'calculatePostInterventionNetUnitChanges',
   'calculateRetainedAreaHabitatPostIntervention',
   'calculateRetainedHedgerowPostIntervention',

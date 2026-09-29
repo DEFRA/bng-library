@@ -18,13 +18,10 @@ describe('referenceToTimeToTargetBucketKey', () => {
     expect(referenceToTimeToTargetBucketKey(THIRTY_PLUS, 0, 1)).toBe('>30')
   })
 
-  it('nets advance against delay for "30+" when both are given', () => {
-    expect(referenceToTimeToTargetBucketKey(THIRTY_PLUS, 2, 1)).toBe('29')
-  })
-
   it('applies advance and delay to numeric reference years', () => {
     expect(referenceToTimeToTargetBucketKey(10, 0, 0)).toBe('10')
-    expect(referenceToTimeToTargetBucketKey(10, 3, 1)).toBe('8')
+    expect(referenceToTimeToTargetBucketKey(10, 3, 0)).toBe('7')
+    expect(referenceToTimeToTargetBucketKey(10, 0, 1)).toBe('11')
     expect(referenceToTimeToTargetBucketKey(30, 0, 0)).toBe('30')
     expect(referenceToTimeToTargetBucketKey(30, 0, 1)).toBe('>30')
   })

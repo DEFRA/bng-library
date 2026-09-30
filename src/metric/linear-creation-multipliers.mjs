@@ -2,9 +2,8 @@ import { BaselineLookupError } from './errors.mjs'
 import { CREATION } from './multipliers.mjs'
 import { TIME_TO_TARGET_MULTIPLIER } from './reference-constants.mjs'
 import {
-  applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
-  toTimeToTargetBucketKey
+  referenceToTimeToTargetBucketKey
 } from './linear-time-target-utils.mjs'
 import {
   validateAdvanceAndDelayYears,
@@ -66,15 +65,11 @@ export function getLinearCreationTimeToTargetValue(
   const { validatedAdvanceYears, validatedDelayYears } =
     validateAdvanceAndDelayYears(advanceYears, delayYears)
 
-  const referenceYears = normaliseReferenceYears(
-    lookupLinearCreationTimeToTarget(cfg, linearType, endCondition)
-  )
-  const computedYears = applyDelayAdvanceAndClamp(
-    referenceYears,
+  return referenceToTimeToTargetBucketKey(
+    lookupLinearCreationTimeToTarget(cfg, linearType, endCondition),
     validatedAdvanceYears,
     validatedDelayYears
   )
-  return toTimeToTargetBucketKey(computedYears)
 }
 
 /**

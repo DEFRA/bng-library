@@ -150,6 +150,8 @@ function decidedBy(d, result) {
 function statusOf(result) {
   const differences = result.discrepancies ?? []
   switch (result.outcome) {
+    case OUTCOME.importFailed:
+      return { tone: 'bad', text: 'The service failed to import it' }
     case OUTCOME.rejected:
       return { tone: 'bad', text: 'Refused by the service' }
     case OUTCOME.workbookUnreadable:
@@ -204,6 +206,7 @@ function headline(results, answers, unexplained, explained) {
   const unreadable = results.filter(
     (r) => r.outcome === OUTCOME.workbookUnreadable
   )
+  const failed = results.filter((r) => r.outcome === OUTCOME.importFailed)
   const lines = [
     [
       answers.length ? 'bad' : 'good',
@@ -226,6 +229,12 @@ function headline(results, answers, unexplained, explained) {
     lines.unshift([
       'bad',
       `The service refused ${plural(refused.length, 'scenario')} whose data is valid.`
+    ])
+  }
+  if (failed.length) {
+    lines.unshift([
+      'bad',
+      `The service failed to import ${plural(failed.length, 'scenario')}, so ${failed.length === 1 ? 'it was' : 'they were'} not compared.`
     ])
   }
   if (acceptedInvalid.length) {
@@ -382,6 +391,9 @@ function scenarioBody(result) {
   }
   if (result.outcome === OUTCOME.workbookUnreadable) {
     return `<p>${escape(result.errors[0].message)}</p>`
+  }
+  if (result.outcome === OUTCOME.importFailed) {
+    return `<p>The service threw an error importing this scenario, so nothing was compared:</p><pre>${escape(result.errors[0].message)}</pre>`
   }
   const differences = result.discrepancies.length
     ? scenarioDifferences(result)

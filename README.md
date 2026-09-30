@@ -167,7 +167,8 @@ Biodiversity Metric (BMD-1036). The metric's answers come from a recalculated
 workbook; the service's from its project response (`GET /projects/{id}`) for
 the same GeoPackage pair. Each becomes a flat list of figures keyed the same
 way, and the two lists are compared exactly, to the 15 significant figures
-both sides carry:
+both sides carry, give or take one in the 15th — floating-point noise from the
+two sides multiplying the same factors in a different order:
 
 | What                          | Figures                                                                                                            |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -220,9 +221,10 @@ computes and the service does not yet — hedgerow trading rules, and the Very
 High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
 _not implemented_ rather than as a failure; once the service produces such a
 figure it is compared like any other. A per-feature difference that a known
-cause accounts for exactly — the service rounding sizes to whole square metres
-or metres before pricing, or strategic significance (not implemented in the
-engine yet) — carries that cause, but still counts.
+cause accounts for exactly — the service pricing a different size from the
+metric's (it rounded sizes to whole square metres or metres before BMD-1042),
+or strategic significance (not implemented in the engine yet) — carries that
+cause, but still counts.
 
 `renderComparisonHtml` gives a short, self-contained page (no external assets,
 so it opens straight from a CI artifact). It leads with the Met / Not met answers

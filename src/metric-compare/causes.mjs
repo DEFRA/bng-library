@@ -25,9 +25,9 @@ import { CATEGORY } from './figures.mjs'
 export const CAUSES = Object.freeze({
   sizeRounding: Object.freeze({
     id: 'size-rounding',
-    title: 'Sizes rounded before pricing',
+    title: 'Priced on a different size',
     description:
-      'The service rounds each area to the whole square metre and each length to the whole metre before pricing the feature; the metric prices the size as measured.',
+      'The service priced the feature on a different size from the metric. Both should price the size measured from the geometry, unrounded; a service before BMD-1042 rounded each area to the whole square metre and each length to the whole metre first.',
     notImplemented: false
   }),
   strategicSignificance: Object.freeze({

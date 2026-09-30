@@ -245,6 +245,32 @@ describe('figuresFromProject', () => {
     expect(valueOf(figures, 'totals|area|baseline')).toBe(10.5)
   })
 
+  it('gives each feature the measured size it was priced on', () => {
+    const response = projectResponse()
+    response.project.baseline.habitats = [
+      { ref: 'H1', units: 4, sizeSquareMetres: 10_000.4, area: 10_000 }
+    ]
+    response.project.baseline.hedgerows = [
+      { ref: 'HG1', units: 1, sizeMetres: 500.7, length: 501 }
+    ]
+    const figures = figuresFromProject(response)
+    const sizeOf = (key) => figures.find((f) => f.key === key)?.size
+    expect(sizeOf('feature-units|area|baseline|H1')).toBeCloseTo(1.00004, 12)
+    expect(sizeOf('feature-units|hedgerow|baseline|HG1')).toBeCloseTo(
+      0.5007,
+      12
+    )
+  })
+
+  it('falls back to the rounded size from a service that priced it', () => {
+    const response = projectResponse()
+    response.project.baseline.habitats = [{ ref: 'H1', units: 4, area: 10_000 }]
+    const figures = figuresFromProject(response)
+    expect(
+      figures.find((f) => f.key === 'feature-units|area|baseline|H1')?.size
+    ).toBe(1)
+  })
+
   it('skips a feature the service gave no units', () => {
     const response = projectResponse()
     response.project.baseline.trees = [{ ref: 'T5', units: undefined }]
@@ -285,6 +311,37 @@ describe('compareFigures', () => {
       [figure('totals|area|baseline', 108.288166104)]
     )
     expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
+  })
+
+  // Pairs from the corpus once the service priced the measured size
+  // (BMD-1042): the same factors multiplied in a different order, one apart in
+  // the 15th significant figure.
+  it.each([
+    [80.7823849663891, 80.782384966389],
+    [0.443142747869206, 0.443142747869205],
+    [347.485266934266, 347.485266934265]
+  ])('matches %s and %s, one apart in the last digit', (metric, service) => {
+    const result = compareFigures(
+      [figure('feature-units|area|baseline|H1', metric)],
+      [figure('feature-units|area|baseline|H1', service)]
+    )
+    expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
+  })
+
+  it('reports figures two apart in the last digit', () => {
+    const result = compareFigures(
+      [figure('totals|area|baseline', 80.7823849663891)],
+      [figure('totals|area|baseline', 80.7823849663889)]
+    )
+    expect(result.discrepancies).toHaveLength(1)
+  })
+
+  it('counts the last digit of the larger figure across a power of ten', () => {
+    const result = compareFigures(
+      [figure('totals|area|baseline', 10)],
+      [figure('totals|area|baseline', 9.99999999999999)]
+    )
+    expect(result.matched).toBe(1)
   })
 
   it('reports how far a differing figure is from the metric', () => {
@@ -715,7 +772,7 @@ describe('renderComparisonHtml', () => {
       expected: [figure('totals|area|baseline', 97.3095391601563)],
       service: {
         accepted: true,
-        figures: [figure('totals|area|baseline', 97.3095391601564)]
+        figures: [figure('totals|area|baseline', 97.3095391601566)]
       }
     })
     const html = renderComparisonHtml([result])

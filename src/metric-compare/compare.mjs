@@ -1,15 +1,19 @@
 /**
  * Compare the service's figures with the metric's, figure by figure.
  *
- * The comparison is exact. Both sides carry at most 15 significant figures —
- * the engine rounds every result to that (roundToSigFigs), and a workbook's
- * recalculated values are exported at that precision — so each number is
- * taken to 15 significant figures and they must then be equal. Any difference
- * is reported with how far the service is from the metric, in units and
- * relative to the metric's value.
+ * The comparison is exact, bar floating-point noise. Both sides carry at most
+ * 15 significant figures — the engine rounds every result to that
+ * (roundToSigFigs), and a workbook's recalculated values are exported at that
+ * precision — so each number is taken to 15 significant figures and they must
+ * then agree to within one in the 15th. That one digit is not a tolerance for
+ * rounding or pricing: the engine and the spreadsheet multiply the same
+ * factors in a different order, and a last-bit difference in the product can
+ * land either side of a 15th-digit rounding boundary. Any difference is
+ * reported with how far the service is from the metric, in units and relative
+ * to the metric's value.
  */
 
-import { roundToSigFigs } from '../metric/utils.mjs'
+import { MAX_SIG_FIGS, roundToSigFigs } from '../metric/utils.mjs'
 import { isInvalidScenario } from '../permutations/invalid-data.mjs'
 import { causesOfFeatureDifference } from './causes.mjs'
 import { CATEGORY, SIZE_UNIT, unitsOf } from './figures.mjs'
@@ -46,6 +50,34 @@ function isNumber(value) {
 
 function normalise(value) {
   return isNumber(value) ? roundToSigFigs(value) : (value ?? null)
+}
+
+// Most apart two figures can be, in units of their 15th significant figure,
+// and still be the same figure computed in a different order.
+const LAST_DIGITS_OF_NOISE = 1
+
+/**
+ * Whether two figures, already at 15 significant figures, are equal or differ
+ * only by floating-point noise: by at most one in the 15th significant figure
+ * of the larger. Counted in whole last digits, so the subtraction's own
+ * rounding cannot push a one-digit difference over.
+ */
+export function agreesToLastDigit(expected, actual) {
+  if (expected === actual) {
+    return true
+  }
+  if (!isNumber(expected) || !isNumber(actual)) {
+    return false
+  }
+  const magnitude = Math.floor(
+    Math.log10(Math.max(Math.abs(expected), Math.abs(actual)))
+  )
+  const lastDigit = 10 ** (magnitude - (MAX_SIG_FIGS - 1))
+  return (
+    Math.abs(
+      Math.round(expected / lastDigit) - Math.round(actual / lastDigit)
+    ) <= LAST_DIGITS_OF_NOISE
+  )
 }
 
 function describe(figure) {
@@ -150,7 +182,7 @@ function compareKey(expectedFigure, actualFigure, gaps) {
       )
     }
   }
-  if (expected === actual) {
+  if (agreesToLastDigit(expected, actual)) {
     return { match: true }
   }
   const causes = causesOfFeatureDifference(expectedFigure, actualFigure)

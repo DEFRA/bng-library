@@ -11,6 +11,10 @@ import {
 } from './multipliers.mjs'
 import { CONDITION_SCORES } from './reference-constants.mjs'
 import { roundToSigFigs } from './utils.mjs'
+import {
+  LOW_STRATEGIC_SIGNIFICANCE,
+  resolveStrategicSignificance
+} from './strategic-significance.mjs'
 
 const STATUTORY_TIME_TO_TARGET_ADVANCE_YEARS = 0
 const STATUTORY_TIME_TO_TARGET_DELAY_YEARS = 0
@@ -55,9 +59,6 @@ function resolveEnhancementConditionScore(habitat, condition) {
   }
   return getConditionMultiplier(habitat, condition)
 }
-
-/** Metric uses 1 for post-intervention */
-const POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER = 1
 
 /**
  * @param {string} postInterventionHabitatType
@@ -158,8 +159,8 @@ export function calculateRetainedAreaHabitatPostIntervention(
   const { distinctiveness, distinctivenessScore } =
     resolveDistinctiveness(habitat)
   const conditionScore = getConditionMultiplier(habitat, condition)
-  const strategicSignificanceScore =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  // Retained habitat carries its baseline strategic significance, which is always Low
+  const { strategicSignificanceScore } = LOW_STRATEGIC_SIGNIFICANCE
 
   const units = roundToSigFigs(
     size * distinctivenessScore * conditionScore * strategicSignificanceScore
@@ -222,20 +223,32 @@ function resolveCreatedAreaDerivedMetrics(
   }
 }
 
+/**
+ * Get area-habitat post-intervention created biodiversity units.
+ * @param {number} size - The size of the habitat in hectares
+ * @param {string} habitat - The habitat name (e.g., "Grassland - Modified grassland")
+ * @param {string} condition - The target condition (e.g., "Moderate")
+ * @param {number} advanceYears - Years the habitat is created in advance
+ * @param {number} delayYears - Years the start of creation is delayed
+ * @param {string | null} [strategicSignificance] - Proposed Strategic Significance (e.g. "Formally identified in local strategy"); absent resolves to Low
+ * @returns {object} units, distinctiveness, scores, strategicSignificanceCategory, strategicSignificanceScore, time and difficulty metrics
+ * @throws {BaselineLookupError} If habitat, condition or strategic significance is not recognised
+ */
 export function calculateCreatedAreaHabitatPostIntervention(
   size,
   habitat,
   condition,
   advanceYears,
-  delayYears
+  delayYears,
+  strategicSignificance = null
 ) {
   validateSize(size)
 
   const { distinctiveness, distinctivenessScore } =
     resolveDistinctiveness(habitat)
   const conditionScore = getConditionMultiplier(habitat, condition)
-  const strategicSignificanceScore =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  const { strategicSignificanceCategory, strategicSignificanceScore } =
+    resolveStrategicSignificance(strategicSignificance)
   const metrics = resolveCreatedAreaDerivedMetrics(
     habitat,
     condition,
@@ -258,11 +271,26 @@ export function calculateCreatedAreaHabitatPostIntervention(
     distinctiveness,
     distinctivenessScore,
     conditionScore,
+    strategicSignificanceCategory,
     strategicSignificanceScore,
     ...metrics
   }
 }
 
+/**
+ * Get area-habitat post-intervention enhanced biodiversity units. The proposed strategic
+ * significance multiplies the whole enhanced value, as in the metric's A-3 sheet.
+ * @param {number} size - The size of the habitat in hectares
+ * @param {string} baselineHabitatType
+ * @param {string} postInterventionHabitatType
+ * @param {string} baselineCondition
+ * @param {string} postInterventionCondition
+ * @param {number} advanceYears
+ * @param {number} delayYears
+ * @param {string | null} [strategicSignificance] - Proposed Strategic Significance; absent resolves to Low
+ * @returns {object} units, post-intervention distinctiveness and scores, strategicSignificanceCategory, strategicSignificanceScore, time and difficulty metrics
+ * @throws {BaselineLookupError} If a habitat, condition or strategic significance is not recognised
+ */
 export function calculateEnhancedAreaHabitatPostIntervention(
   size,
   baselineHabitatType,
@@ -270,7 +298,8 @@ export function calculateEnhancedAreaHabitatPostIntervention(
   baselineCondition,
   postInterventionCondition,
   advanceYears,
-  delayYears
+  delayYears,
+  strategicSignificance = null
 ) {
   validateSize(size)
 
@@ -289,8 +318,8 @@ export function calculateEnhancedAreaHabitatPostIntervention(
     postInterventionHabitatType,
     postInterventionCondition
   )
-  const strategicSignificanceScore =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  const { strategicSignificanceCategory, strategicSignificanceScore } =
+    resolveStrategicSignificance(strategicSignificance)
   const timeStartCondition = resolveEnhancementTimeStartCondition(
     baselineDistinctivenessScore,
     postInterventionDistinctivenessScore,
@@ -320,6 +349,7 @@ export function calculateEnhancedAreaHabitatPostIntervention(
     postInterventionDistinctiveness,
     postInterventionDistinctivenessScore,
     postInterventionConditionScore,
+    strategicSignificanceCategory,
     strategicSignificanceScore,
     ...metrics
   }

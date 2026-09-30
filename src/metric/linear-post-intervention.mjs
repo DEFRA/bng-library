@@ -5,9 +5,10 @@ import {
   resolveLinearDistinctiveness,
   validateLinearLength
 } from './linear-resolvers.mjs'
-
-/** Metric uses 1 for post-intervention */
-export const POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER = 1
+import {
+  LOW_STRATEGIC_SIGNIFICANCE,
+  resolveStrategicSignificance
+} from './strategic-significance.mjs'
 
 /**
  * Returned by {@link applyEncroachment} for linear types that have no
@@ -75,8 +76,8 @@ export function calculateRetainedLinearPostIntervention(
     encroachment,
     { required: false }
   )
-  const strategicSignificanceScore =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  // Retained habitat carries its baseline strategic significance, which is always Low
+  const { strategicSignificanceScore } = LOW_STRATEGIC_SIGNIFICANCE
 
   let product = lengthKm * distinctivenessScore * conditionScore
   for (const factor of factors) {
@@ -99,12 +100,20 @@ export function calculateRetainedLinearPostIntervention(
  * type, including time and difficulty multipliers.
  *
  * @param {LinearPostInterventionConfig} cfg
- * @param {{ lengthKm: number, type: string, condition: string, advanceYears: number, delayYears: number, encroachment?: object }} params
- * @returns {object} units, distinctiveness scores, optional encroachment fields, strategicSignificanceScore, timeMultiplier, difficultyMultiplier
+ * @param {{ lengthKm: number, type: string, condition: string, advanceYears: number, delayYears: number, encroachment?: object, strategicSignificance?: string | null }} params
+ * @returns {object} units, distinctiveness scores, optional encroachment fields, strategicSignificanceCategory, strategicSignificanceScore, timeMultiplier, difficultyMultiplier
  */
 export function calculateCreatedLinearPostIntervention(
   cfg,
-  { lengthKm, type, condition, advanceYears, delayYears, encroachment }
+  {
+    lengthKm,
+    type,
+    condition,
+    advanceYears,
+    delayYears,
+    encroachment,
+    strategicSignificance = null
+  }
 ) {
   validateLinearLength(lengthKm, cfg.label)
 
@@ -126,8 +135,8 @@ export function calculateCreatedLinearPostIntervention(
     encroachment,
     { required: true }
   )
-  const strategicSignificanceScore =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  const { strategicSignificanceCategory, strategicSignificanceScore } =
+    resolveStrategicSignificance(strategicSignificance)
   const timeMultiplier = cfg.getCreationTimeMultiplier(
     type,
     condition,
@@ -155,6 +164,7 @@ export function calculateCreatedLinearPostIntervention(
     distinctivenessScore,
     conditionScore,
     ...fields,
+    strategicSignificanceCategory,
     strategicSignificanceScore,
     timeMultiplier,
     difficultyMultiplier
@@ -223,8 +233,9 @@ export function resolveEnhancedLinearScores(
 }
 
 /**
- * Compute enhanced linear units from resolved scores, lengths, multipliers, and
- * any extra encroachment factors folded into the strategic significance term.
+ * Compute enhanced linear units from resolved scores, lengths, multipliers, the
+ * proposed strategic significance, and any extra encroachment factors folded into
+ * the strategic significance term (as in the metric's B-3 / C-3 sheets).
  *
  * @param {object} params
  * @param {number} params.baselineLengthKm
@@ -235,6 +246,7 @@ export function resolveEnhancedLinearScores(
  * @param {number} params.postInterventionConditionScore
  * @param {number} params.timeMultiplier
  * @param {number} params.difficultyMultiplier
+ * @param {number} params.strategicSignificanceScore
  * @param {number[]} [params.encroachmentFactors]
  * @returns {number}
  */
@@ -247,6 +259,7 @@ function computeEnhancedLinearUnits({
   postInterventionConditionScore,
   timeMultiplier,
   difficultyMultiplier,
+  strategicSignificanceScore,
   encroachmentFactors = []
 }) {
   const {
@@ -262,8 +275,7 @@ function computeEnhancedLinearUnits({
     baseLengthKm * baselineDistinctivenessScore * baselineConditionScore
   const riskMultiplier = timeMultiplier * difficultyMultiplier
 
-  let strategicSignificanceFactor =
-    POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER
+  let strategicSignificanceFactor = strategicSignificanceScore
   for (const factor of encroachmentFactors) {
     strategicSignificanceFactor *= factor
   }
@@ -290,6 +302,7 @@ function computeEnhancedLinearUnits({
  * @param {number} params.advanceYears
  * @param {number} params.delayYears
  * @param {object} [params.encroachment]
+ * @param {string | null} [params.strategicSignificance] - Proposed Strategic Significance; absent resolves to Low
  * @returns {object}
  */
 export function calculateEnhancedLinearPostIntervention(
@@ -303,7 +316,8 @@ export function calculateEnhancedLinearPostIntervention(
     postCondition,
     advanceYears,
     delayYears,
-    encroachment
+    encroachment,
+    strategicSignificance = null
   }
 ) {
   validateLinearLength(baselineLengthKm, `${cfg.label} baseline`)
@@ -324,6 +338,8 @@ export function calculateEnhancedLinearPostIntervention(
     encroachment,
     {}
   )
+  const { strategicSignificanceCategory, strategicSignificanceScore } =
+    resolveStrategicSignificance(strategicSignificance)
   const enhancementMetrics = cfg.resolveEnhancementMultipliers({
     baselineDistinctivenessScore: scores.baselineDistinctivenessScore,
     postInterventionDistinctivenessScore:
@@ -346,6 +362,7 @@ export function calculateEnhancedLinearPostIntervention(
     postInterventionConditionScore: scores.postInterventionConditionScore,
     timeMultiplier: enhancementMetrics.timeMultiplier,
     difficultyMultiplier: enhancementMetrics.difficultyMultiplier,
+    strategicSignificanceScore,
     encroachmentFactors: factors
   })
 
@@ -356,8 +373,8 @@ export function calculateEnhancedLinearPostIntervention(
       scores.postInterventionDistinctivenessScore,
     postInterventionConditionScore: scores.postInterventionConditionScore,
     ...fields,
-    strategicSignificanceScore:
-      POST_INTERVENTION_STRATEGIC_SIGNIFICANCE_MULTIPLIER,
+    strategicSignificanceCategory,
+    strategicSignificanceScore,
     ...enhancementMetrics
   }
 }

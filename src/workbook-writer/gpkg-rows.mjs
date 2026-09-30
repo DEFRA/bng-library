@@ -8,8 +8,10 @@
  * The mapping follows what the service does with the same file, not what the
  * GeoPackage template might allow:
  *
- * - Sizes are measured from the geometry, as the backend measures them. The
- *   "Area" / "Length" attributes are rounded and never read by the service.
+ * - Sizes are measured from the geometry, as the backend measures them, to
+ *   the last digit, and left unrounded: the backend prices the size as
+ *   measured, as the metric does (BMD-1042). The "Area" / "Length"
+ *   attributes are rounded and never read by the service.
  * - An area habitat's "Lost" is a creation: the baseline parcel is lost and
  *   its proposed habitat created in its place (A-1 loss plus an A-2 row).
  * - A lost hedgerow, watercourse or tree is simply lost: a baseline row with
@@ -25,7 +27,7 @@
 
 import { INDIVIDUAL_TREE_AREA_HECTARES } from '../metric/index.mjs'
 import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
-import { polygonAreaSqm } from '../gpkg-io/src/read.mjs'
+import { lineLengthMetres, polygonAreaSqm } from '../gpkg-io/src/read.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
@@ -72,23 +74,6 @@ function normaliseRetention(value) {
   const trimmed = value.trim().replace(NUMBERED_PREFIX, '')
   const known = [RETAINED, ENHANCED, LOST, CREATED]
   return known.find((k) => k.toLowerCase() === trimmed.toLowerCase()) ?? null
-}
-
-function lineLengthMetres(geometry) {
-  const lines =
-    geometry?.type === 'MultiLineString'
-      ? geometry.coordinates
-      : [geometry?.coordinates ?? []]
-  let total = 0
-  for (const coords of lines) {
-    for (let i = 1; i < coords.length; i += 1) {
-      total += Math.hypot(
-        coords[i][0] - coords[i - 1][0],
-        coords[i][1] - coords[i - 1][1]
-      )
-    }
-  }
-  return total
 }
 
 /** Years as the workbook's list holds them: a number where there is one. */

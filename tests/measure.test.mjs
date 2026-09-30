@@ -8,8 +8,8 @@ import { areaSquareMetres, lengthMetres } from 'bng-library/measure'
 // example-files/permutations/intervention/area-enhanced-baseline.gpkg, on
 // British National Grid, with the area and length the backend priced them on
 // when it measured with GEOS (geos-wasm 3.1.1). Pinned to the last digit: the
-// backend's sizes must not move now that it measures with this module
-// (BMD-1042). The textbook shoelace gives H001 as 144529.08115386963.
+// backend's sizes must not move now that it measures with this module. The
+// textbook shoelace gives H001 as 144529.08115386963.
 const H001 = [
   [530066.9373186704, 179556.3807426773],
   [530136.902344139, 179534.75631210193],

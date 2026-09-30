@@ -27,7 +27,7 @@ export const CAUSES = Object.freeze({
     id: 'size-rounding',
     title: 'Priced on a different size',
     description:
-      'The service priced the feature on a different size from the metric. Both should price the size measured from the geometry, unrounded; a service before BMD-1042 rounded each area to the whole square metre and each length to the whole metre first.',
+      'The service priced the feature on a different size from the metric. Both should price the size measured from the geometry, unrounded; an earlier service rounded each area to the whole square metre and each length to the whole metre first.',
     notImplemented: false
   }),
   strategicSignificance: Object.freeze({

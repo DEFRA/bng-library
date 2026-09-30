@@ -10,8 +10,8 @@
  *
  * - Sizes are measured from the geometry with bng-library/measure, the same
  *   functions the backend prices with, and left unrounded, as the metric
- *   prices them (BMD-1042). The "Area" / "Length"
- *   attributes are rounded and never read by the service.
+ *   prices them. The "Area" / "Length" attributes are rounded and never
+ *   read by the service.
  * - An area habitat's "Lost" is a creation: the baseline parcel is lost and
  *   its proposed habitat created in its place (A-1 loss plus an A-2 row).
  * - A lost hedgerow, watercourse or tree is simply lost: a baseline row with

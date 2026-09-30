@@ -313,8 +313,8 @@ describe('compareFigures', () => {
     expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
   })
 
-  // Pairs from the corpus once the service priced the measured size
-  // (BMD-1042): the same factors multiplied in a different order, one apart in
+  // Pairs from the corpus once the service priced the measured size: the
+  // same factors multiplied in a different order, one apart in
   // the 15th significant figure.
   it.each([
     [80.7823849663891, 80.782384966389],

@@ -5,11 +5,11 @@
  * of the metric's arithmetic and belongs beside it. The service prices each
  * area habitat on its area and each hedgerow and watercourse on its length,
  * measured from the geometry and left unrounded, as the metric prices "the
- * true value entered in each row" (User Guide, July 2025, Appendix Table F;
- * BMD-1042). The backend measures every feature it prices with these
- * functions, the red line boundary too, and the workbook writer measures the
- * metric's rows with them, so the two sides of the metric comparison carry the
- * same size by construction, to the last digit.
+ * true value entered in each row" (User Guide, July 2025, Appendix Table F).
+ * The backend measures every feature it prices with these functions, the red
+ * line boundary too, and the workbook writer measures the metric's rows with
+ * them, so the two sides of the metric comparison carry the same size by
+ * construction, to the last digit.
  *
  * Planar, over GeoJSON in British National Grid (EPSG:27700), so areas are in
  * square metres and lengths in metres. A caller holding another projection

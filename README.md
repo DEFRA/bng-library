@@ -223,7 +223,7 @@ High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
 _not implemented_ rather than as a failure; once the service produces such a
 figure it is compared like any other. A per-feature difference that a known
 cause accounts for exactly — the service pricing a different size from the
-metric's (it rounded sizes to whole square metres or metres before BMD-1042),
+metric's (it once rounded sizes to whole square metres or metres first),
 or strategic significance (not implemented in the engine yet) — carries that
 cause, but still counts.
 

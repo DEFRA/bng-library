@@ -44,7 +44,7 @@ const BANDS = { medium: 'Medium', low: 'Low' }
 
 // The size a feature was priced on, in the metric's terms: hectares, or
 // kilometres for the linear modules. The service stores square metres and
-// metres, and prices the measured size, unrounded (BMD-1042). The rounded
+// metres, and prices the measured size, unrounded. The rounded
 // `area` / `length` stand in only for a service that predates that, which
 // priced them.
 const SQ_METRES_PER_HECTARE = 10_000

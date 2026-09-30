@@ -9,7 +9,6 @@ import {
   envelopeFromCoords,
   gpkgLineString,
   gpkgPolygon,
-  lineLengthMetres,
   openGeoPackage,
   polygonAreaSqm,
   readGeoPackage,
@@ -22,28 +21,6 @@ import {
 // Areas here are planar over the raw coordinates (the shoelace formula), so the
 // declared SRS does not affect the numbers the reader returns.
 const SRS = 4326
-
-// Baseline parcel H001 and hedgerow HG001 of the harness's
-// example-files/permutations/intervention/area-enhanced-baseline.gpkg, on
-// British National Grid, with the area and length GEOS (geos-wasm, as the
-// backend uses) measures for them. The backend prices these figures unrounded
-// (BMD-1042), so the reader must reproduce them to the last digit; the
-// textbook shoelace gives H001 as 144529.08115386963.
-const H001 = [
-  [530066.9373186704, 179556.3807426773],
-  [530136.902344139, 179534.75631210193],
-  [530408.2527507545, 179680.27897243464],
-  [530444.5050301832, 179786.91852747035],
-  [530109.2448720403, 180220.78137088363],
-  [530066.9373186704, 179556.3807426773]
-]
-const H001_GEOS_AREA = 144529.0811549303
-const HG001 = [
-  [530025.3587009454, 180211.10748672587],
-  [530055.2245340901, 180027.52660581493],
-  [530045.4303503721, 179841.79028252096]
-]
-const HG001_GEOS_LENGTH = 371.98875157975516
 
 // A 10 × 20 axis-aligned rectangle: shoelace area = 200.
 const RECT = [
@@ -176,18 +153,6 @@ describe('gpkg-io reader', () => {
       ).toBe(RECT_AREA + SQUARE_AREA)
     })
 
-    it('matches GEOS to the last digit on British National Grid coordinates', () => {
-      expect(polygonAreaSqm({ type: 'Polygon', coordinates: [H001] })).toBe(
-        H001_GEOS_AREA
-      )
-    })
-
-    it('subtracts holes from the exterior ring', () => {
-      expect(
-        polygonAreaSqm({ type: 'Polygon', coordinates: [RECT, SQUARE] })
-      ).toBe(RECT_AREA - SQUARE_AREA)
-    })
-
     it('returns 0 for non-areal geometry', () => {
       expect(
         polygonAreaSqm({
@@ -198,49 +163,6 @@ describe('gpkg-io reader', () => {
           ]
         })
       ).toBe(0)
-    })
-  })
-
-  describe('lineLengthMetres', () => {
-    it('sums the segments of a line string', () => {
-      expect(
-        lineLengthMetres({
-          type: 'LineString',
-          coordinates: [
-            [0, 0],
-            [3, 4],
-            [3, 10]
-          ]
-        })
-      ).toBe(11)
-    })
-
-    it('sums the lines of a multi line string', () => {
-      expect(
-        lineLengthMetres({
-          type: 'MultiLineString',
-          coordinates: [
-            [
-              [0, 0],
-              [3, 4]
-            ],
-            [
-              [0, 0],
-              [0, 2]
-            ]
-          ]
-        })
-      ).toBe(7)
-    })
-
-    it('matches GEOS to the last digit on British National Grid coordinates', () => {
-      expect(lineLengthMetres({ type: 'LineString', coordinates: HG001 })).toBe(
-        HG001_GEOS_LENGTH
-      )
-    })
-
-    it('returns 0 for non-linear geometry', () => {
-      expect(lineLengthMetres({ type: 'Polygon', coordinates: [RECT] })).toBe(0)
     })
   })
 

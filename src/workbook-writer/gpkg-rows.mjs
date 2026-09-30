@@ -8,9 +8,9 @@
  * The mapping follows what the service does with the same file, not what the
  * GeoPackage template might allow:
  *
- * - Sizes are measured from the geometry, as the backend measures them, to
- *   the last digit, and left unrounded: the backend prices the size as
- *   measured, as the metric does (BMD-1042). The "Area" / "Length"
+ * - Sizes are measured from the geometry with bng-library/measure, the same
+ *   functions the backend prices with, and left unrounded, as the metric
+ *   prices them (BMD-1042). The "Area" / "Length"
  *   attributes are rounded and never read by the service.
  * - An area habitat's "Lost" is a creation: the baseline parcel is lost and
  *   its proposed habitat created in its place (A-1 loss plus an A-2 row).
@@ -27,7 +27,7 @@
 
 import { INDIVIDUAL_TREE_AREA_HECTARES } from '../metric/index.mjs'
 import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
-import { lineLengthMetres, polygonAreaSqm } from '../gpkg-io/src/read.mjs'
+import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
@@ -154,7 +154,7 @@ function placeFeature({ retention, baseline, proposed, notes, ref }) {
 function habitatEntries(features, notes) {
   return features.map((f) => {
     const ref = f['Parcel Ref']
-    const size = polygonAreaSqm(f.geometry) / SQ_METRES_PER_HECTARE
+    const size = areaSquareMetres(f.geometry) / SQ_METRES_PER_HECTARE
     const baseline = {
       reference: ref,
       broadHabitat: f['Baseline Broad Habitat Type'],
@@ -221,7 +221,7 @@ function treeEntries(features, notes) {
 function linearEntries(features, notes, typeColumn, extra) {
   return features.map((f) => {
     const ref = f['Parcel Ref']
-    const size = lineLengthMetres(f.geometry) / METRES_PER_KM
+    const size = lengthMetres(f.geometry) / METRES_PER_KM
     const baseline = {
       reference: ref,
       habitatType: f[`Baseline ${typeColumn}`],

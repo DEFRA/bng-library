@@ -19,7 +19,6 @@ export {
 } from './src/wkb.mjs'
 
 export {
-  lineLengthMetres,
   polygonAreaSqm,
   readFeatures,
   readGeoPackage,

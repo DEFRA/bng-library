@@ -5,6 +5,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI.
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
+- **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 - **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
 - **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a scenario corpus (committed in the harness).
@@ -358,6 +359,7 @@ harness), so renaming or removing one of those means updating the test.
 | ----------------------------- | --------------------------------------------------- |
 | `bng-library`                 | Main API — synthesis, workbook reading, flaws, etc. |
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
+| `bng-library/measure`         | The area and length a feature is priced on.         |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
 | `bng-library/workbook-writer` | Synthetic metric workbooks for QA.                  |
 | `bng-library/metric-compare`  | Compare the service with the metric (BMD-1036).     |

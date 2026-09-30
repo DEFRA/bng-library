@@ -10,9 +10,7 @@
 import wkx from 'wkx'
 import { decodeGpkgBinary } from './wkb.mjs'
 import { openGeoPackageReadonly } from './init.mjs'
-
-// A closed ring needs at least three distinct points plus the closing one.
-const MIN_RING_POINTS = 4
+import { areaSquareMetres } from '../../measure/index.mjs'
 
 /**
  * Decode a single GeoPackage-Binary geometry blob to a GeoJSON geometry.
@@ -27,98 +25,16 @@ export function wkbToGeoJSON(blob) {
 }
 
 /**
- * Planar area of a GeoJSON Polygon / MultiPolygon, measured the way GEOS's
- * `GEOSArea` measures it: each polygon is its exterior ring less its holes,
- * and each ring is summed relative to its first vertex. The result is in the
- * square of the coordinates' own units, so it is only meaningful for projected
- * coordinate systems (e.g. m² on a metric grid such as EPSG:27700).
- * Non-areal geometries return 0.
- *
- * The backend prices each area habitat on its GEOS-measured area, unrounded
- * (BMD-1042), so a workbook built from this figure must carry the same number
- * to the last digit. The textbook shoelace (`x[i]·y[i+1] − x[i+1]·y[i]`) does
- * not: on British National Grid coordinates its products run to ~10¹¹, and
- * the cancellation between them loses about five significant figures. Taking
- * each vertex relative to the first keeps the products small, and matches
- * GEOS bit for bit.
+ * Planar area of a GeoJSON Polygon / MultiPolygon, in the square of the
+ * coordinates' units. Kept for existing callers; the measurement itself is
+ * bng-library/measure's `areaSquareMetres`, the one definition of a feature's
+ * size.
  *
  * @param {object} geometry  GeoJSON geometry
  * @returns {number}
  */
 export function polygonAreaSqm(geometry) {
-  if (!geometry) {
-    return 0
-  }
-  if (geometry.type === 'Polygon') {
-    return polygonArea(geometry.coordinates)
-  }
-  if (geometry.type === 'MultiPolygon') {
-    let total = 0
-    for (const polygon of geometry.coordinates) {
-      total += polygonArea(polygon)
-    }
-    return total
-  }
-  return 0
-}
-
-function polygonArea(rings) {
-  const [shell, ...holes] = rings ?? []
-  let area = ringArea(shell)
-  for (const hole of holes) {
-    area -= ringArea(hole)
-  }
-  return area
-}
-
-// GEOS's Area::ofRing: the shoelace in its "x times the change in y" form,
-// with x taken relative to the first vertex.
-function ringArea(ring) {
-  if (!ring || ring.length < MIN_RING_POINTS) {
-    return 0
-  }
-  const x0 = ring[0][0]
-  let sum = 0
-  for (let i = 1; i < ring.length - 1; i++) {
-    const x = ring[i][0] - x0
-    sum += x * (ring[i - 1][1] - ring[i + 1][1])
-  }
-  return Math.abs(sum / 2)
-}
-
-/**
- * Planar length of a GeoJSON LineString / MultiLineString, measured the way
- * GEOS's `GEOSLength` measures it — each segment as `√(dx² + dy²)` rather than
- * `Math.hypot`, whose extra care over range can differ in the last bit, and
- * each line summed before the lines are added — so a workbook carries the
- * length the backend prices, to the last digit (BMD-1042). Other geometries
- * return 0.
- *
- * @param {object} geometry  GeoJSON geometry
- * @returns {number}
- */
-export function lineLengthMetres(geometry) {
-  if (geometry?.type === 'LineString') {
-    return lineLength(geometry.coordinates)
-  }
-  if (geometry?.type === 'MultiLineString') {
-    let total = 0
-    for (const line of geometry.coordinates) {
-      total += lineLength(line)
-    }
-    return total
-  }
-  return 0
-}
-
-function lineLength(coords) {
-  let length = 0
-  for (let i = 1; i < (coords?.length ?? 0); i++) {
-    const dx = coords[i][0] - coords[i - 1][0]
-    const dy = coords[i][1] - coords[i - 1][1]
-    length += Math.sqrt(dx * dx + dy * dy)
-  }
-  return length
+  return areaSquareMetres(geometry)
 }
 
 /**

@@ -1000,3 +1000,68 @@ describe('readWorkbookAnswers', () => {
     expect(answer.error).toMatch(/without its calculated values/)
   })
 })
+
+describe('a scenario the service failed to import', () => {
+  const XLSX = createRequire(import.meta.url)('xlsx')
+  const failed = compareScenario({
+    scenario: { id: 'net-gain/met' },
+    serviceError: 'GEOS threw: TopologyException'
+  })
+  const compared = compareScenario({
+    scenario: { id: 'net-gain/unmet' },
+    expected: [figure('totals|area|baseline', 10)],
+    service: { accepted: true, figures: [figure('totals|area|baseline', 10)] }
+  })
+
+  it('is reported, with the error, and nothing compared', () => {
+    expect(failed).toEqual({
+      id: 'net-gain/met',
+      invalidData: false,
+      outcome: OUTCOME.importFailed,
+      errors: [
+        { code: 'IMPORT_FAILED', message: 'GEOS threw: TopologyException' }
+      ]
+    })
+  })
+
+  it('is reported as unreadable when the workbook could not be read either', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      workbookError: 'no values',
+      serviceError: 'boom'
+    })
+    expect(result.outcome).toBe(OUTCOME.workbookUnreadable)
+  })
+
+  it('leads the HTML report, and shows the error on the scenario', () => {
+    const page = renderComparisonHtml([compared, failed])
+    expect(page).toContain(
+      'The service failed to import 1 scenario, so it was not compared.'
+    )
+    expect(page).toContain('The service failed to import it')
+    expect(page).toContain('GEOS threw: TopologyException')
+  })
+
+  it('is counted in the Markdown summary and detailed with its error', () => {
+    const report = renderComparisonReport([compared, failed])
+    expect(report).toContain('1 the service failed to import')
+    expect(report).toContain(
+      'The service threw an error importing this scenario, so nothing was compared: GEOS threw: TopologyException'
+    )
+  })
+
+  it('is counted in the spreadsheet and gives its error on the scenario row', () => {
+    const workbook = XLSX.read(renderComparisonXlsx([compared, failed]), {
+      type: 'buffer'
+    })
+    const rows = (name) =>
+      XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 })
+    expect(rows('Summary')).toContainEqual([
+      'Import failed in the service (nothing compared)',
+      1
+    ])
+    const scenario = rows('Scenarios').find((r) => r[0] === 'net-gain/met')
+    expect(scenario).toContain('Import failed in the service')
+    expect(scenario).toContain('IMPORT_FAILED: GEOS threw: TopologyException')
+  })
+})

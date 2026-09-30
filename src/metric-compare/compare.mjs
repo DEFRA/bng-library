@@ -35,7 +35,13 @@ export const OUTCOME = Object.freeze({
    */
   acceptedInvalid: 'accepted-invalid',
   /** The metric workbook's answers could not be read, so nothing was compared. */
-  workbookUnreadable: 'workbook-unreadable'
+  workbookUnreadable: 'workbook-unreadable',
+  /**
+   * The service threw while importing the pair, so nothing was compared. A
+   * crash is a finding in its own right, so the scenario is reported rather
+   * than stopping the run.
+   */
+  importFailed: 'import-failed'
 })
 
 export const DIFFERENCE = Object.freeze({
@@ -264,7 +270,8 @@ export function compareScenario({
   expected,
   service,
   gaps,
-  workbookError
+  workbookError,
+  serviceError
 }) {
   const base = {
     id: scenario.id,
@@ -275,6 +282,13 @@ export function compareScenario({
       ...base,
       outcome: OUTCOME.workbookUnreadable,
       errors: [{ code: 'WORKBOOK_UNREADABLE', message: workbookError }]
+    }
+  }
+  if (serviceError) {
+    return {
+      ...base,
+      outcome: OUTCOME.importFailed,
+      errors: [{ code: 'IMPORT_FAILED', message: serviceError }]
     }
   }
   if (!service.accepted) {

@@ -18,7 +18,8 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.rejected]: 'Rejected by the service',
   [OUTCOME.rejectedAsExpected]: 'Rejected (invalid data)',
   [OUTCOME.acceptedInvalid]: 'Accepted, though its data is invalid',
-  [OUTCOME.workbookUnreadable]: 'Workbook unreadable'
+  [OUTCOME.workbookUnreadable]: 'Workbook unreadable',
+  [OUTCOME.importFailed]: 'Import failed in the service'
 })
 
 export const EXACTNESS_NOTE =
@@ -173,6 +174,10 @@ export function isUnreadable(result) {
   return result.outcome === OUTCOME.workbookUnreadable
 }
 
+export function isImportFailure(result) {
+  return result.outcome === OUTCOME.importFailed
+}
+
 function count(results, outcome) {
   return results.filter((r) => r.outcome === outcome).length
 }
@@ -256,7 +261,8 @@ export function summariseComparison(results) {
       rejected: count(results, OUTCOME.rejected),
       rejectedAsExpected: count(results, OUTCOME.rejectedAsExpected),
       acceptedInvalid: count(results, OUTCOME.acceptedInvalid),
-      workbookUnreadable: count(results, OUTCOME.workbookUnreadable)
+      workbookUnreadable: count(results, OUTCOME.workbookUnreadable),
+      importFailed: count(results, OUTCOME.importFailed)
     },
     figures: {
       compared: total(results, 'compared'),

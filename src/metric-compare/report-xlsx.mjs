@@ -21,6 +21,7 @@ import {
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
+  isImportFailure,
   isUnreadable,
   summariseComparison
 } from './report-data.mjs'
@@ -201,6 +202,7 @@ function summarySheet(data, title, context) {
       scenarios.acceptedInvalid
     ],
     ['Workbook unreadable (nothing compared)', scenarios.workbookUnreadable],
+    ['Import failed in the service (nothing compared)', scenarios.importFailed],
     [],
     header(['Figures', 'Count (figures)']),
     ['Compared', figures.compared],
@@ -267,7 +269,7 @@ function scenariosSheet(results) {
       r.discrepancies?.length ?? null,
       r.notImplemented?.length ?? null,
       refusedFile(r),
-      isRejected(r) || isUnreadable(r)
+      isRejected(r) || isUnreadable(r) || isImportFailure(r)
         ? r.errors.map((e) => `${e.code}: ${e.message}`).join('\n')
         : null
     ])

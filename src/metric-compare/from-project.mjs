@@ -7,6 +7,7 @@
 import {
   CATEGORY,
   FigureList,
+  habitatKeyPart,
   MET,
   MODULES,
   NOT_APPLICABLE,
@@ -196,7 +197,7 @@ function addTradingFigures(list, tradingRules) {
       })
     for (const h of figures[names.habitats] ?? []) {
       add(
-        ['habitat', h.habitatType],
+        ['habitat', habitatKeyPart(h.habitatType)],
         `${h.habitatType} (${h.distinctiveness}) net unit change`,
         h.netUnitChange,
         { distinctiveness: h.distinctiveness, zeroWhenAbsent: true }

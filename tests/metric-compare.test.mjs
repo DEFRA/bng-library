@@ -226,6 +226,23 @@ describe('figuresFromProject', () => {
     expect(comparison.discrepancies).toEqual([])
   })
 
+  // From the corpus: the metric's trading summary spells the habitat
+  // "Ruderal/ephemeral"; the template and the service, "Ruderal/Ephemeral".
+  it('matches a trading habitat the metric spells in a different case', () => {
+    const workbook = workbookResults()
+    workbook.tradingFigures.area.habitats[0].habitatType =
+      'Sparsely vegetated land - Ruderal/ephemeral'
+    const response = projectResponse()
+    response.project.postIntervention.tradingRules.areaHabitats.habitatTypes[0].habitatType =
+      'Sparsely vegetated land - Ruderal/Ephemeral'
+
+    const comparison = compareFigures(
+      figuresFromWorkbook(workbook),
+      figuresFromProject(response)
+    )
+    expect(comparison.discrepancies).toEqual([])
+  })
+
   it('treats a lost area habitat as a creation, as the metric does', () => {
     const response = projectResponse()
     response.project.postIntervention.habitats = [

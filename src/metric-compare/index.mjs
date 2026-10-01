@@ -7,7 +7,8 @@
  * answers are read from each workbook; the service's come from its project
  * response for the GeoPackage pair. Both become flat lists of comparable
  * figures — unit calculations per feature, unit totals, net gain, trading
- * rules figures and trading rules statuses — compared exactly.
+ * rules figures and trading rules statuses — compared to within a tolerance
+ * too small to change any project's outcome (TOLERANCE).
  *
  *   const { scenarios } = findScenarios(folder)
  *   const answers = await readWorkbookAnswers(scenarios.map((s) => s.files.workbook))
@@ -45,6 +46,7 @@ export { CAUSES, CAUSES_BY_ID, causesOfFeatureDifference } from './causes.mjs'
 export {
   DIFFERENCE,
   OUTCOME,
+  TOLERANCE,
   compareFigures,
   compareScenario
 } from './compare.mjs'

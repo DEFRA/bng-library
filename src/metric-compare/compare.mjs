@@ -1,19 +1,18 @@
 /**
  * Compare the service's figures with the metric's, figure by figure.
  *
- * The comparison is exact, bar floating-point noise. Both sides carry at most
- * 15 significant figures — the engine rounds every result to that
- * (roundToSigFigs), and a workbook's recalculated values are exported at that
- * precision — so each number is taken to 15 significant figures and they must
- * then agree to within one in the 15th. That one digit is not a tolerance for
- * rounding or pricing: the engine and the spreadsheet multiply the same
- * factors in a different order, and a last-bit difference in the product can
- * land either side of a 15th-digit rounding boundary. Any difference is
- * reported with how far the service is from the metric, in units and relative
- * to the metric's value.
+ * Two numbers match when they differ by too little to change any project's
+ * outcome: within TOLERANCE.relative of the metric's value, or within
+ * TOLERANCE.absolute where that value is at or near zero. Both sides carry at
+ * most 15 significant figures, but the engine and the workbook sum and
+ * multiply in a different order, so a total can differ in its 14th figure;
+ * that is arithmetic, not a disagreement. A match that is not exact is still
+ * recorded, with its difference, so it stays visible. A verdict (Met / Not
+ * met) must be equal. Any other difference is reported with how far the
+ * service is from the metric, in units and relative to the metric's value.
  */
 
-import { MAX_SIG_FIGS, roundToSigFigs } from '../metric/utils.mjs'
+import { roundToSigFigs } from '../metric/utils.mjs'
 import { isInvalidScenario } from '../permutations/invalid-data.mjs'
 import { causesOfFeatureDifference } from './causes.mjs'
 import { CATEGORY, SIZE_UNIT, unitsOf } from './figures.mjs'
@@ -50,6 +49,17 @@ export const DIFFERENCE = Object.freeze({
   missingFromWorkbook: 'missing-from-workbook'
 })
 
+/**
+ * How close two numbers must be to match. The metric shows units and
+ * percentages to 2 decimal places, so 0.01 is the smallest difference that
+ * changes what a developer, a planning authority or a credit purchase sees.
+ * The scenario sites are small, and a pricing error grows with the site, so
+ * the tolerance is relative: one part in 100,000 is 0.01 units on a site of
+ * 1,000 units. The absolute floor is for figures at zero, where no relative
+ * tolerance can pass anything.
+ */
+export const TOLERANCE = Object.freeze({ relative: 1e-5, absolute: 1e-6 })
+
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value)
 }
@@ -58,31 +68,14 @@ function normalise(value) {
   return isNumber(value) ? roundToSigFigs(value) : (value ?? null)
 }
 
-// Most apart two figures can be, in units of their 15th significant figure,
-// and still be the same figure computed in a different order.
-const LAST_DIGITS_OF_NOISE = 1
-
-/**
- * Whether two figures, already at 15 significant figures, are equal or differ
- * only by floating-point noise: by at most one in the 15th significant figure
- * of the larger. Counted in whole last digits, so the subtraction's own
- * rounding cannot push a one-digit difference over.
- */
-export function agreesToLastDigit(expected, actual) {
-  if (expected === actual) {
-    return true
-  }
+function withinTolerance(expected, actual) {
   if (!isNumber(expected) || !isNumber(actual)) {
     return false
   }
-  const magnitude = Math.floor(
-    Math.log10(Math.max(Math.abs(expected), Math.abs(actual)))
-  )
-  const lastDigit = 10 ** (magnitude - (MAX_SIG_FIGS - 1))
+  const difference = Math.abs(actual - expected)
   return (
-    Math.abs(
-      Math.round(expected / lastDigit) - Math.round(actual / lastDigit)
-    ) <= LAST_DIGITS_OF_NOISE
+    difference <= TOLERANCE.absolute ||
+    difference <= TOLERANCE.relative * Math.abs(expected)
   )
 }
 
@@ -188,8 +181,19 @@ function compareKey(expectedFigure, actualFigure, gaps) {
       )
     }
   }
-  if (agreesToLastDigit(expected, actual)) {
+  if (expected === actual) {
     return { match: true }
+  }
+  if (withinTolerance(expected, actual)) {
+    return {
+      match: true,
+      withinTolerance: discrepancy(
+        [expectedFigure, actualFigure],
+        expected,
+        actual,
+        DIFFERENCE.different
+      )
+    }
   }
   const causes = causesOfFeatureDifference(expectedFigure, actualFigure)
   return {
@@ -209,8 +213,9 @@ function compareKey(expectedFigure, actualFigure, gaps) {
  * @param {import('./figures.mjs').Figure[]} expected the workbook's figures
  * @param {import('./figures.mjs').Figure[]} actual the service's figures
  * @param {{ gaps?: readonly import('./service-gaps.mjs').ServiceGap[] }} [options]
- * @returns {{ compared: number, matched: number, discrepancies: object[],
- *   notImplemented: object[] }}
+ * @returns {{ compared: number, matched: number, withinTolerance: object[],
+ *   discrepancies: object[], notImplemented: object[] }} `withinTolerance`
+ *   lists the matches that are not exact, each with its difference
  */
 export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
   const expectedByKey = new Map(expected.map((f) => [f.key, f]))
@@ -220,6 +225,7 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
   const result = {
     compared: 0,
     matched: 0,
+    withinTolerance: [],
     discrepancies: [],
     notImplemented: []
   }
@@ -236,6 +242,9 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
     result.compared += 1
     if (verdict.match) {
       result.matched += 1
+      if (verdict.withinTolerance) {
+        result.withinTolerance.push(verdict.withinTolerance)
+      }
     } else {
       result.discrepancies.push(verdict.discrepancy)
     }

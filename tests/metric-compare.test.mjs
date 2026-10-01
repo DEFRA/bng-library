@@ -328,10 +328,64 @@ describe('compareFigures', () => {
     expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
   })
 
-  it('reports figures two apart in the last digit', () => {
+  // From the corpus: a net change summed in a different order by the engine
+  // and the workbook, apart in the 14th significant figure.
+  it('matches figures apart by floating-point noise, and lists them', () => {
+    const result = compareFigures(
+      [figure('totals|area|net-change', 0.0586730378868658)],
+      [figure('totals|area|net-change', 0.0586730378868601)]
+    )
+    expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
+    expect(result.withinTolerance).toEqual([
+      expect.objectContaining({
+        key: 'totals|area|net-change',
+        expected: 0.0586730378868658,
+        actual: 0.0586730378868601
+      })
+    ])
+  })
+
+  it('lists no match that is exact as within tolerance', () => {
     const result = compareFigures(
       [figure('totals|area|baseline', 80.7823849663891)],
-      [figure('totals|area|baseline', 80.7823849663889)]
+      [figure('totals|area|baseline', 80.7823849663891)]
+    )
+    expect(result.withinTolerance).toEqual([])
+  })
+
+  it.each([
+    ['inside', 1000, 1000 + 0.009, 1],
+    ['beyond', 1000, 1000 + 0.011, 0]
+  ])(
+    'matches a figure %s the relative tolerance (%s against %s)',
+    (_, metric, service, matched) => {
+      const result = compareFigures(
+        [figure('totals|area|baseline', metric)],
+        [figure('totals|area|baseline', service)]
+      )
+      expect(result.matched).toBe(matched)
+      expect(result.discrepancies).toHaveLength(1 - matched)
+    }
+  )
+
+  it.each([
+    ['inside', 0.0000009, 1],
+    ['beyond', 0.000002, 0]
+  ])(
+    'matches a figure %s the absolute tolerance where the metric has zero',
+    (_, service, matched) => {
+      const result = compareFigures(
+        [figure('trading-figures|area|low-surplus', 0)],
+        [figure('trading-figures|area|low-surplus', service)]
+      )
+      expect(result.matched).toBe(matched)
+    }
+  )
+
+  it('never matches a different verdict', () => {
+    const result = compareFigures(
+      [figure('net-gain|area|verdict', 'Met')],
+      [figure('net-gain|area|verdict', 'Not met')]
     )
     expect(result.discrepancies).toHaveLength(1)
   })
@@ -347,16 +401,16 @@ describe('compareFigures', () => {
   it('reports how far a differing figure is from the metric', () => {
     const [d] = compareFigures(
       [figure('totals|area|baseline', 115.623264923096)],
-      [figure('totals|area|baseline', 115.6232)]
+      [figure('totals|area|baseline', 115.62)]
     ).discrepancies
     expect(d).toMatchObject({
       kind: DIFFERENCE.different,
       expected: 115.623264923096,
-      actual: 115.6232
+      actual: 115.62
     })
-    expect(d.difference).toBeCloseTo(-0.000064923096, 12)
+    expect(d.difference).toBeCloseTo(-0.003264923096, 12)
     expect(d.relativeDifference).toBeCloseTo(
-      -0.000064923096 / 115.623264923096,
+      -0.003264923096 / 115.623264923096,
       15
     )
   })
@@ -757,10 +811,10 @@ describe('renderComparisonHtml', () => {
   it('never shows a tiny difference as zero', () => {
     const result = compareScenario({
       scenario: { id: 'site' },
-      expected: [figure('totals|area|baseline', 97.3095391601563)],
+      expected: [figure('totals|area|baseline', 1.2345391601563)],
       service: {
         accepted: true,
-        figures: [figure('totals|area|baseline', 97.3096)]
+        figures: [figure('totals|area|baseline', 1.2346)]
       }
     })
     expect(renderComparisonHtml([result])).toContain('+0.000061 habitat units')
@@ -772,9 +826,12 @@ describe('renderComparisonHtml', () => {
       expected: [figure('totals|area|baseline', 97.3095391601563)],
       service: {
         accepted: true,
-        figures: [figure('totals|area|baseline', 97.3095391601566)]
+        figures: [figure('totals|area|baseline', 97.4)]
       }
     })
+    // Inside the tolerance such a difference matches, but the report still
+    // has to show one it is given without rounding it to zero.
+    result.discrepancies[0].difference = 3e-13
     const html = renderComparisonHtml([result])
     expect(html).toMatch(/\+\d\.\de-1[34] habitat units/)
     expect(html).not.toContain('+0.000000000000')

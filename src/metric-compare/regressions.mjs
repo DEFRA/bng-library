@@ -2,7 +2,7 @@
  * Regression tracking: the discrepancies a run is known to have, recorded so
  * that CI fails on a change rather than on every difference already known.
  *
- * The comparison is exact, so a service that does not yet agree with the
+ * Any difference beyond the tolerance counts, so a service that does not yet agree with the
  * metric everywhere would fail every run until all of it was fixed. Instead
  * the current discrepancies are recorded as known, each with both values, and
  * a run fails when a scenario's outcome or discrepancies differ from what is

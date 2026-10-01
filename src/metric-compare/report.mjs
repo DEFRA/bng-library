@@ -69,7 +69,7 @@ function summary({ scenarios, figures }) {
   return [
     `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.acceptedInvalid ? `, ${scenarios.acceptedInvalid} accepted though their data is invalid` : ''}${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}${scenarios.importFailed ? `, ${scenarios.importFailed} the service failed to import` : ''}.`,
     '',
-    `**${figures.compared} figures compared** — ${figures.matched} matched exactly, ${figures.discrepancies} differ; ${figures.notImplemented} not implemented in the service yet.`,
+    `**${figures.compared} figures compared** — ${figures.matched} matched (${figures.withinTolerance} of them within tolerance rather than exactly), ${figures.discrepancies} differ; ${figures.notImplemented} not implemented in the service yet.`,
     '',
     EXACTNESS_NOTE
   ].join('\n')

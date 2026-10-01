@@ -5,7 +5,7 @@
  */
 
 import { CAUSES, CAUSES_BY_ID } from './causes.mjs'
-import { OUTCOME } from './compare.mjs'
+import { OUTCOME, TOLERANCE } from './compare.mjs'
 import { CATEGORY, CATEGORY_ORDER, CATEGORY_TITLES } from './figures.mjs'
 import { SERVICE_GAPS } from './service-gaps.mjs'
 
@@ -22,8 +22,7 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.importFailed]: 'Import failed in the service'
 })
 
-export const EXACTNESS_NOTE =
-  'Figures are compared exactly, to the 15 significant figures both the engine and the recalculated workbook carry. Difference is the service less the metric; Relative is that as a share of the metric’s value.'
+export const EXACTNESS_NOTE = `Two figures match when they differ by less than ${TOLERANCE.relative * PERCENT}% of the metric’s value (or ${TOLERANCE.absolute} where it is zero): far less than the 0.01 the metric shows, so too little to change any project’s outcome, while clearing the floating-point noise of the engine and the workbook adding up in a different order. Met / Not met answers must be equal. Difference is the service less the metric; Relative is that as a share of the metric’s value.`
 
 /**
  * What each unit means. Every value in a report names one of these.
@@ -267,6 +266,7 @@ export function summariseComparison(results) {
     figures: {
       compared: total(results, 'compared'),
       matched: total(results, 'matched'),
+      withinTolerance: total(results, 'withinTolerance'),
       discrepancies: total(results, 'discrepancies'),
       notImplemented: total(results, 'notImplemented'),
       unexplainedFeatures: features.filter((d) => !d.causes?.length).length

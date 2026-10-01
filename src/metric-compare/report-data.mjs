@@ -22,7 +22,7 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.importFailed]: 'Import failed in the service'
 })
 
-export const EXACTNESS_NOTE = `Two figures match when they differ by less than ${TOLERANCE.relative * PERCENT}% of the metric’s value (or ${TOLERANCE.absolute} where it is zero): far less than the 0.01 the metric shows, so too little to change any project’s outcome, while clearing the floating-point noise of the engine and the workbook adding up in a different order. Met / Not met answers must be equal. Difference is the service less the metric; Relative is that as a share of the metric’s value.`
+export const EXACTNESS_NOTE = `Two figures match when they differ by less than ${TOLERANCE.relative} of the metric’s value, relatively (or ${TOLERANCE.absolute} where it is zero): just enough to clear the floating-point noise of the engine and the workbook adding up in a different order, so any real difference in how the service calculates shows, however small. Met / Not met answers must be equal. Difference is the service less the metric; Relative is that as a share of the metric’s value.`
 
 /**
  * What each unit means. Every value in a report names one of these.

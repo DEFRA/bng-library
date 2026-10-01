@@ -1,8 +1,8 @@
 /**
  * Compare the service's figures with the metric's, figure by figure.
  *
- * Two numbers match when they differ by too little to change any project's
- * outcome: within TOLERANCE.relative of the metric's value, or within
+ * Two numbers match when they differ by no more than floating-point noise:
+ * within TOLERANCE.relative of the metric's value, or within
  * TOLERANCE.absolute where that value is at or near zero. Both sides carry at
  * most 15 significant figures, but the engine and the workbook sum and
  * multiply in a different order, so a total can differ in its 14th figure;
@@ -50,15 +50,17 @@ export const DIFFERENCE = Object.freeze({
 })
 
 /**
- * How close two numbers must be to match. The metric shows units and
- * percentages to 2 decimal places, so 0.01 is the smallest difference that
- * changes what a developer, a planning authority or a credit purchase sees.
- * The scenario sites are small, and a pricing error grows with the site, so
- * the tolerance is relative: one part in 100,000 is 0.01 units on a site of
- * 1,000 units. The absolute floor is for figures at zero, where no relative
- * tolerance can pass anything.
+ * How close two numbers must be to match: close enough to absorb the
+ * floating-point noise of the engine and the workbook adding up the same
+ * figures in a different order (up to ~1e-13 relative on the corpus), and no
+ * closer. The comparison exists to catch the service calculating differently,
+ * however little that moves a figure — pricing a rounded size moves a
+ * feature's units by ~1e-8 relative even on a very large parcel — so the
+ * tolerance is not sized by what could change a project's outcome. The
+ * absolute floor is for figures at zero, where no relative tolerance can pass
+ * anything.
  */
-export const TOLERANCE = Object.freeze({ relative: 1e-5, absolute: 1e-6 })
+export const TOLERANCE = Object.freeze({ relative: 1e-12, absolute: 1e-12 })
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value)

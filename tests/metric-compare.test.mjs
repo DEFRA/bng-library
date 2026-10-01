@@ -371,8 +371,8 @@ describe('compareFigures', () => {
   })
 
   it.each([
-    ['inside', 1000, 1000 + 0.009, 1],
-    ['beyond', 1000, 1000 + 0.011, 0]
+    ['inside', 1000, 1000 + 9e-10, 1],
+    ['beyond', 1000, 1000 + 1.1e-9, 0]
   ])(
     'matches a figure %s the relative tolerance (%s against %s)',
     (_, metric, service, matched) => {
@@ -386,8 +386,8 @@ describe('compareFigures', () => {
   )
 
   it.each([
-    ['inside', 0.0000009, 1],
-    ['beyond', 0.000002, 0]
+    ['inside', 9e-13, 1],
+    ['beyond', 2e-12, 0]
   ])(
     'matches a figure %s the absolute tolerance where the metric has zero',
     (_, service, matched) => {
@@ -398,6 +398,27 @@ describe('compareFigures', () => {
       expect(result.matched).toBe(matched)
     }
   )
+
+  // The size-rounding regression the tolerance must not hide: a 1,000 ha
+  // parcel priced at 8 units/ha on its area rounded to the whole square
+  // metre is ~4e-8 out — far too little to change an outcome, but a
+  // difference in how the service calculates.
+  it('reports units priced on a size rounded to the whole square metre', () => {
+    const measured = 1000.00004
+    const rounded = 1000
+    const result = compareFigures(
+      [
+        figure('feature-units|area|baseline|H1', 8 * measured, {
+          size: measured
+        })
+      ],
+      [figure('feature-units|area|baseline|H1', 8 * rounded, { size: rounded })]
+    )
+    expect(result.withinTolerance).toEqual([])
+    expect(result.discrepancies).toEqual([
+      expect.objectContaining({ causes: [CAUSES.sizeDiffers.id] })
+    ])
+  })
 
   it('never matches a different verdict', () => {
     const result = compareFigures(

@@ -15,7 +15,6 @@ import { CATEGORY, UNIT } from './figures.mjs'
 import { SERVICE_GAPS } from './service-gaps.mjs'
 
 const DECIMAL_PLACES = 4
-const PERCENT = 100
 const SMALLEST_SHOWN = 10 ** -DECIMAL_PLACES
 const MAX_DECIMAL_PLACES = 12
 const NET_GAIN_TARGET = '10%'
@@ -461,7 +460,7 @@ export function renderComparisonHtml(results, options = {}) {
     `<h1>${escape(title)} — ${plural(results.length, 'scenario')}</h1>`,
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
     headline(results, answers, unexplained, explained),
-    `<p class="how">Each value is compared with the metric's, and matches when it differs by less than ${TOLERANCE.relative * PERCENT}% of it: too little to change any project's outcome. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
+    `<p class="how">Each value is compared with the metric's, and matches when it differs by less than ${TOLERANCE.relative} of it, relatively: just enough to clear the floating-point noise of adding up in a different order, so any real difference shows, however small. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
     '<h2>1. Answers that differ</h2>',
     answersSection(answers),
     '<h2>2. Values that differ for no known reason</h2>',

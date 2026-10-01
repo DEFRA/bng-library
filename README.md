@@ -168,12 +168,13 @@ Biodiversity Metric (BMD-1036). The metric's answers come from a recalculated
 workbook; the service's from its project response (`GET /projects/{id}`) for
 the same GeoPackage pair. Each becomes a flat list of figures keyed the same
 way, and the two lists are compared. Two numbers match when they differ by
-less than `TOLERANCE.relative` (0.001%) of the metric's value, or by less than
-`TOLERANCE.absolute` (0.000001) where that value is zero. The metric shows
-units and percentages to 2 decimal places, and one part in 100,000 is 0.01
-units on a site of 1,000 units, so a difference inside the tolerance cannot
-change a project's outcome; it clears the floating-point noise of the engine
-and the workbook adding up the same figures in a different order. A match that
+less than `TOLERANCE.relative` (1e-12) of the metric's value, or by less than
+`TOLERANCE.absolute` (1e-12) where that value is zero. That clears the
+floating-point noise of the engine and the workbook adding up the same figures
+in a different order (up to ~1e-13 relative on the corpus) and nothing more:
+the comparison is there to catch the service calculating differently, so even
+a difference too small to change a project's outcome — such as pricing a
+size rounded to the whole square metre — is a discrepancy. A match that
 is not exact is listed in the result's `withinTolerance`, with its difference.
 Met / Not met answers must be equal:
 

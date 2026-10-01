@@ -109,6 +109,37 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('allows only the strategic significance the LNRS guidance does', () => {
+    const LOW = 'Area/compensation not in local strategy/ no local strategy'
+    const MEDIUM = 'Location ecologically desirable but not in local strategy'
+    const HIGH = 'Formally identified in local strategy'
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          habitats: [
+            {
+              baselineStrategicSignificance: LOW,
+              proposedStrategicSignificance: HIGH
+            },
+            { proposedStrategicSignificance: LOW },
+            {
+              baselineStrategicSignificance: HIGH,
+              proposedStrategicSignificance: MEDIUM
+            }
+          ]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /habitats\[2\]\.baselineStrategicSignificance: "Formally identified in local strategy" is not one of/
+      ),
+      expect.stringMatching(
+        /habitats\[2\]\.proposedStrategicSignificance: "Location ecologically desirable but not in local strategy" is not one of/
+      )
+    ])
+  })
+
   it('checks trading expectations band by band', () => {
     const doc = catalogue(
       scenario({

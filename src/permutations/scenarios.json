@@ -682,38 +682,44 @@
     {
       "id": "strategic-significance-spread",
       "purpose": "strategic-significance",
-      "title": "Area habitats across every strategic-significance band",
-      "description": "Three retained parcels pinned to Low (1), Medium and High strategic significance.",
+      "title": "Area habitats at each strategic significance a published LNRS allows",
+      "description": "Every baseline is Low, as the LNRS guidance requires. H001 is created at Low (1), H002 is created at High (1.15) and H003 is enhanced at High. Medium is not used: where an LNRS is published, only Low or High may be.",
       "size": 3,
       "overrides": {
         "habitats": [
           {
             "habitatFullName": "Grassland - Other neutral grassland",
-            "retention": "Retained",
+            "retention": "Created",
             "baselineCondition": "Moderate",
             "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
           },
           {
             "habitatFullName": "Grassland - Other neutral grassland",
-            "retention": "Retained",
+            "retention": "Created",
             "baselineCondition": "Moderate",
-            "baselineStrategicSignificance": "Location ecologically desirable but not in local strategy",
-            "proposedStrategicSignificance": "Location ecologically desirable but not in local strategy"
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Formally identified in local strategy"
           },
           {
             "habitatFullName": "Grassland - Other neutral grassland",
-            "retention": "Retained",
+            "retention": "Enhanced",
             "baselineCondition": "Moderate",
-            "baselineStrategicSignificance": "Formally identified in local strategy",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
             "proposedStrategicSignificance": "Formally identified in local strategy"
           }
         ]
       },
       "subject": {
         "layer": "Habitats",
-        "ref": "H001",
-        "note": "H001 Low (1), H002 Medium, H003 High strategic significance"
+        "ref": "H002",
+        "note": "H001 created at Low (1), H002 created at High (1.15), H003 enhanced at High (1.15); every baseline Low"
       }
     },
     {

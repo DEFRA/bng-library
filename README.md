@@ -331,6 +331,12 @@ Values are the GeoPackage template's own spellings, such as
 
 Things worth knowing when writing a scenario:
 
+- **Strategic significance.** Follow Defra's LNRS guidance, as the service
+  does: every baseline is Low
+  (`"Area/compensation not in local strategy/ no local strategy"`), and a
+  proposed feature is Low or High (`"Formally identified in local strategy"`),
+  never Medium. The catalogue rejects any other value, and features drawn at
+  random follow the same rule.
 - **Distinctiveness.** Pin only Medium or lower habitats: the service rejects
   High and Very High at upload. The existing scenarios use
   `Grassland - Modified grassland` (Low) and

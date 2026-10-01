@@ -796,7 +796,8 @@
       "id": "net-gain-unmet",
       "purpose": "net-gain",
       "title": "Net gain unmet (< 10%)",
-      "description": "Every parcel retained unchanged — zero net change, so the 10% gain is not met.",
+      "description": "Every habitat parcel, hedgerow and watercourse retained unchanged (and no urban trees) — zero net change, so the 10% gain is not met.",
+      "emptyLayers": ["trees"],
       "overrides": {
         "habitats": [
           {
@@ -840,6 +841,58 @@
             "baselineCondition": "Moderate",
             "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          },
+          {
+            "riverType": "Canals",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
           }
         ]
       },

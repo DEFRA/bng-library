@@ -26,9 +26,14 @@ export function wkbToGeoJSON(blob) {
 
 /**
  * Planar area of a GeoJSON Polygon / MultiPolygon, in the square of the
- * coordinates' units. Kept for existing callers; the measurement itself is
- * bng-library/measure's `areaSquareMetres`, the one definition of a feature's
- * size.
+ * coordinates' units: bng-library/measure's `areaSquareMetres`, the one
+ * definition of a feature's size, which `readFeatures` sums into
+ * `totalAreaSqm`.
+ *
+ * Changed in BMD-1042. It used to add up each polygon's exterior ring only.
+ * It now subtracts holes, as GEOS and the service do, so a parcel with an
+ * interior ring measures smaller than before, and a ring with fewer than four
+ * points (too short to enclose anything) measures 0.
  *
  * @param {object} geometry  GeoJSON geometry
  * @returns {number}

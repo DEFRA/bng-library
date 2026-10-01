@@ -229,9 +229,10 @@ High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
 _not implemented_ rather than as a failure; once the service produces such a
 figure it is compared like any other. A per-feature difference that a known
 cause accounts for exactly — the service pricing a different size from the
-metric's (it once rounded sizes to whole square metres or metres first),
-or strategic significance (not implemented in the engine yet) — carries that
-cause, but still counts.
+metric's (`size-differs`; it once rounded sizes to whole square metres or
+metres first), or a strategic significance multiplier the service did not
+apply (`strategic-significance`; it prices every baseline at Low, per the LNRS
+guidance) — carries that cause, but still counts.
 
 `renderComparisonHtml` gives a short, self-contained page (no external assets,
 so it opens straight from a CI artifact). It leads with the Met / Not met answers

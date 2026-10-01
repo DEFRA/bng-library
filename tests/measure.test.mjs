@@ -81,6 +81,28 @@ describe('areaSquareMetres', () => {
     expect(areaSquareMetres(undefined)).toBe(0)
   })
 
+  // GEOS (geos-wasm 3.1.1, GEOSArea) gives -96 for this invalid polygon too:
+  // the measurement follows GEOS rather than clamp at 0.
+  it('measures an invalid polygon whose hole exceeds its shell as GEOS does', () => {
+    const shell = [
+      [4, 4],
+      [6, 4],
+      [6, 6],
+      [4, 6],
+      [4, 4]
+    ]
+    const hole = [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+      [0, 0]
+    ]
+    expect(
+      areaSquareMetres({ type: 'Polygon', coordinates: [shell, hole] })
+    ).toBe(-96)
+  })
+
   it('measures 0 for a ring too short to enclose anything', () => {
     expect(
       areaSquareMetres({

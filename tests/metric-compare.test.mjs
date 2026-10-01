@@ -513,7 +513,7 @@ describe('causesOfFeatureDifference', () => {
         metric(115.6232648, 14.4529081),
         service(115.6232, 14.4529)
       )
-    ).toEqual([CAUSES.sizeRounding.id])
+    ).toEqual([CAUSES.sizeDiffers.id])
   })
 
   it('recognises a strategic significance multiplier the service leaves out', () => {
@@ -531,7 +531,7 @@ describe('causesOfFeatureDifference', () => {
         metric(8 * 2.00004 * 1.15, 2.00004, 1.15),
         service(16, 2)
       )
-    ).toEqual([CAUSES.sizeRounding.id, CAUSES.strategicSignificance.id])
+    ).toEqual([CAUSES.sizeDiffers.id, CAUSES.strategicSignificance.id])
   })
 
   it('explains nothing it cannot account for exactly', () => {

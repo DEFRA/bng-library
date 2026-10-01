@@ -15,6 +15,10 @@
  * square metres and lengths in metres. A caller holding another projection
  * reprojects first. The geometry is measured as given: the backend refuses a
  * GeoPackage with an invalid area parcel, so everything it prices is valid.
+ * Invalid geometry gets GEOS's answer, which is not clamped: a polygon whose
+ * holes add up to more than its exterior ring has a negative area, in GEOS
+ * and here alike. Clamping would make the two disagree on exactly the
+ * flawed files a test is most likely to measure both ways.
  *
  * Pure arithmetic with no dependencies, so the backend's validation worker
  * threads can load it without the GeoPackage or workbook machinery.
@@ -32,7 +36,8 @@ const MIN_RING_POINTS = 4
 
 /**
  * Area of a GeoJSON Polygon or MultiPolygon: each polygon's exterior ring less
- * its holes. Anything else measures 0.
+ * its holes. Anything else measures 0. For an invalid polygon whose holes
+ * exceed its exterior ring the result is negative, as GEOSArea's is.
  *
  * @param {object | null | undefined} geometry GeoJSON geometry, EPSG:27700
  * @returns {number} square metres

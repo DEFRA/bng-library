@@ -31,7 +31,13 @@ export const OUTCOME = Object.freeze({
    */
   acceptedInvalid: 'accepted-invalid',
   /** The metric workbook's answers could not be read, so nothing was compared. */
-  workbookUnreadable: 'workbook-unreadable'
+  workbookUnreadable: 'workbook-unreadable',
+  /**
+   * The service threw while importing the pair, so nothing was compared. A
+   * crash is a finding in its own right, so the scenario is reported rather
+   * than stopping the run.
+   */
+  importFailed: 'import-failed'
 })
 
 export const DIFFERENCE = Object.freeze({
@@ -222,17 +228,22 @@ function acceptedOutcome(invalidData, comparison) {
  * @param {{ id: string }} options.scenario a catalogue or manifest entry
  * @param {import('./figures.mjs').Figure[]} options.expected
  * @param {{ accepted: true, figures: import('./figures.mjs').Figure[] } |
- *   { accepted: false, rejectedFile: string, errors: object[] }} options.service
+ *   { accepted: false, rejectedFile: string, errors: object[] }} [options.service]
+ *   what the service made of the pair; absent when its import threw
+ *   (`serviceError`)
  * @param {readonly import('./service-gaps.mjs').ServiceGap[]} [options.gaps]
  * @param {string} [options.workbookError] why the metric workbook's answers
  *   could not be read; the scenario is then reported, not compared
+ * @param {string} [options.serviceError] why the service's import threw; the
+ *   scenario is then reported as import-failed, not compared
  */
 export function compareScenario({
   scenario,
   expected,
   service,
   gaps,
-  workbookError
+  workbookError,
+  serviceError
 }) {
   const base = {
     id: scenario.id,
@@ -243,6 +254,13 @@ export function compareScenario({
       ...base,
       outcome: OUTCOME.workbookUnreadable,
       errors: [{ code: 'WORKBOOK_UNREADABLE', message: workbookError }]
+    }
+  }
+  if (serviceError) {
+    return {
+      ...base,
+      outcome: OUTCOME.importFailed,
+      errors: [{ code: 'IMPORT_FAILED', message: serviceError }]
     }
   }
   if (!service.accepted) {

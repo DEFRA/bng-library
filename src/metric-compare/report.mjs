@@ -15,6 +15,7 @@ import {
   OUTCOME_TITLES,
   causeTitles,
   isRejected,
+  isImportFailure,
   isUnreadable,
   relative,
   signed,
@@ -28,7 +29,8 @@ const OUTCOME_ICONS = {
   [OUTCOME.rejected]: '❌',
   [OUTCOME.rejectedAsExpected]: '✅',
   [OUTCOME.acceptedInvalid]: '❌',
-  [OUTCOME.workbookUnreadable]: '⚠️'
+  [OUTCOME.workbookUnreadable]: '⚠️',
+  [OUTCOME.importFailed]: '❌'
 }
 
 const CHANGE_LABELS = {
@@ -65,7 +67,7 @@ function anchor(id) {
 
 function summary({ scenarios, figures }) {
   return [
-    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.acceptedInvalid ? `, ${scenarios.acceptedInvalid} accepted though their data is invalid` : ''}${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}.`,
+    `**${scenarios.total} scenarios** — ${scenarios.matched} matched, ${scenarios.discrepancies} with discrepancies, ${scenarios.rejected} rejected by the service, ${scenarios.rejectedAsExpected} rejected as expected (invalid data)${scenarios.acceptedInvalid ? `, ${scenarios.acceptedInvalid} accepted though their data is invalid` : ''}${scenarios.workbookUnreadable ? `, ${scenarios.workbookUnreadable} whose workbook could not be read` : ''}${scenarios.importFailed ? `, ${scenarios.importFailed} the service failed to import` : ''}.`,
     '',
     `**${figures.compared} figures compared** — ${figures.matched} matched exactly, ${figures.discrepancies} differ; ${figures.notImplemented} not implemented in the service yet.`,
     '',
@@ -157,6 +159,13 @@ function scenarioDetail(result) {
   const lines = [`### ${result.id}`, '']
   if (isUnreadable(result)) {
     lines.push(`Nothing was compared: ${cell(result.errors[0].message)}`, '')
+    return lines.join('\n')
+  }
+  if (isImportFailure(result)) {
+    lines.push(
+      `The service threw an error importing this scenario, so nothing was compared: ${cell(result.errors[0].message)}`,
+      ''
+    )
     return lines.join('\n')
   }
   if (isRejected(result)) {

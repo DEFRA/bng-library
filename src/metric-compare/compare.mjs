@@ -228,10 +228,14 @@ function acceptedOutcome(invalidData, comparison) {
  * @param {{ id: string }} options.scenario a catalogue or manifest entry
  * @param {import('./figures.mjs').Figure[]} options.expected
  * @param {{ accepted: true, figures: import('./figures.mjs').Figure[] } |
- *   { accepted: false, rejectedFile: string, errors: object[] }} options.service
+ *   { accepted: false, rejectedFile: string, errors: object[] }} [options.service]
+ *   what the service made of the pair; absent when its import threw
+ *   (`serviceError`)
  * @param {readonly import('./service-gaps.mjs').ServiceGap[]} [options.gaps]
  * @param {string} [options.workbookError] why the metric workbook's answers
  *   could not be read; the scenario is then reported, not compared
+ * @param {string} [options.serviceError] why the service's import threw; the
+ *   scenario is then reported as import-failed, not compared
  */
 export function compareScenario({
   scenario,

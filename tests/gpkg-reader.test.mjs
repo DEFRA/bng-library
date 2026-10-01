@@ -42,6 +42,16 @@ const SQUARE = [
 ]
 const SQUARE_AREA = 25
 
+// A 2 × 2 hole inside RECT.
+const HOLE = [
+  [4, 4],
+  [6, 4],
+  [6, 6],
+  [4, 6],
+  [4, 4]
+]
+const HOLE_AREA = 4
+
 function addPolygonTable(db, table, attr, rows) {
   db.exec(
     `CREATE TABLE "${table}" (fid INTEGER PRIMARY KEY, geometry BLOB, "${attr}" TEXT)`
@@ -142,6 +152,38 @@ describe('gpkg-io reader', () => {
       expect(polygonAreaSqm({ type: 'Polygon', coordinates: [RECT] })).toBe(
         RECT_AREA
       )
+    })
+
+    // BMD-1042: holes are subtracted, as GEOS and the service do. Before, only
+    // the exterior ring was measured.
+    it('subtracts a hole from the exterior ring', () => {
+      expect(
+        polygonAreaSqm({ type: 'Polygon', coordinates: [RECT, HOLE] })
+      ).toBe(RECT_AREA - HOLE_AREA)
+    })
+
+    it("subtracts each polygon's holes in a multipolygon", () => {
+      expect(
+        polygonAreaSqm({
+          type: 'MultiPolygon',
+          coordinates: [[RECT, HOLE], [SQUARE]]
+        })
+      ).toBe(RECT_AREA - HOLE_AREA + SQUARE_AREA)
+    })
+
+    it('measures 0 for a ring too short to enclose anything', () => {
+      expect(
+        polygonAreaSqm({
+          type: 'Polygon',
+          coordinates: [
+            [
+              [0, 0],
+              [1, 1],
+              [0, 0]
+            ]
+          ]
+        })
+      ).toBe(0)
     })
 
     it('sums exterior rings of a multipolygon', () => {

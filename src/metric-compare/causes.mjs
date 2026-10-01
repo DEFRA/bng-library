@@ -23,18 +23,18 @@ import { CATEGORY } from './figures.mjs'
  */
 
 export const CAUSES = Object.freeze({
-  sizeRounding: Object.freeze({
-    id: 'size-rounding',
-    title: 'Sizes rounded before pricing',
+  sizeDiffers: Object.freeze({
+    id: 'size-differs',
+    title: 'Priced on a different size',
     description:
-      'The service rounds each area to the whole square metre and each length to the whole metre before pricing the feature; the metric prices the size as measured.',
+      'The service priced the feature on a different size from the metric. Both should price the size measured from the geometry, unrounded; an earlier service rounded each area to the whole square metre and each length to the whole metre first.',
     notImplemented: false
   }),
   strategicSignificance: Object.freeze({
     id: 'strategic-significance',
     title: 'Strategic significance not applied',
     description:
-      'Strategic significance is not implemented in the engine: every feature is priced with a strategic significance multiplier of 1, where the metric applies 1.1 (location ecologically desirable) or 1.15 (formally identified in a local strategy).',
+      "The service priced the feature at a strategic significance multiplier of 1 where the metric applied 1.1 (location ecologically desirable) or 1.15 (formally identified in a local strategy). The service prices every baseline and retained feature at Low (1), as Defra's LNRS guidance requires, and created and enhanced features at their Proposed Strategic Significance; a workbook with a higher baseline, or a proposed value the service did not read, differs this way.",
     notImplemented: true
   })
 })
@@ -88,7 +88,7 @@ export function causesOfFeatureDifference(expected, actual) {
   }
   const causes = []
   if (!agrees(expected.size, actual.size)) {
-    causes.push(CAUSES.sizeRounding.id)
+    causes.push(CAUSES.sizeDiffers.id)
   }
   if (multiplier !== NO_MULTIPLIER) {
     causes.push(CAUSES.strategicSignificance.id)

@@ -235,6 +235,26 @@ export const STRATEGIC_SIGNIFICANCE = [
   'Area/compensation not in local strategy/ no local strategy'
 ]
 
+const [HIGH_STRATEGIC_SIGNIFICANCE, , LOW_STRATEGIC_SIGNIFICANCE] =
+  STRATEGIC_SIGNIFICANCE
+
+/**
+ * Baseline strategic significance is always Low: once a Local Nature Recovery
+ * Strategy is published, Defra's guidance is that it "should always be scored
+ * as low" (User Guide, July 2025, p. 29), and the service prices it so.
+ */
+export const BASELINE_STRATEGIC_SIGNIFICANCE = LOW_STRATEGIC_SIGNIFICANCE
+
+/**
+ * Where a Local Nature Recovery Strategy is published, the user guide allows
+ * only Low or High for a proposed feature, not Medium ("Location ecologically
+ * desirable but not in local strategy").
+ */
+export const PROPOSED_STRATEGIC_SIGNIFICANCE = Object.freeze([
+  HIGH_STRATEGIC_SIGNIFICANCE,
+  LOW_STRATEGIC_SIGNIFICANCE
+])
+
 export const RETENTION_CATEGORIES = ['Retained', 'Enhanced', 'Lost', 'Created']
 
 export const LOCATIONS = ['On-site', 'Off-site']

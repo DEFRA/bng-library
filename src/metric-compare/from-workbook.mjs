@@ -8,6 +8,7 @@ import { MERGED_INTERTIDAL_BROAD_HABITAT } from '../metric/area-trading-rules.mj
 import {
   CATEGORY,
   FigureList,
+  habitatKeyPart,
   MET,
   MODULES,
   NOT_APPLICABLE,
@@ -176,7 +177,7 @@ function addTradingFigures(list, tradingFigures) {
       list.add({
         category: CATEGORY.tradingFigures,
         module,
-        parts: ['habitat', h.habitatType],
+        parts: ['habitat', habitatKeyPart(h.habitatType)],
         label: `${h.habitatType} (${h.distinctiveness}) net unit change`,
         value: h.netUnitChange,
         distinctiveness: h.distinctiveness,

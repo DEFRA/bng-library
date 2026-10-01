@@ -226,6 +226,23 @@ describe('figuresFromProject', () => {
     expect(comparison.discrepancies).toEqual([])
   })
 
+  // From the corpus: the metric's trading summary spells the habitat
+  // "Ruderal/ephemeral"; the template and the service, "Ruderal/Ephemeral".
+  it('matches a trading habitat the metric spells in a different case', () => {
+    const workbook = workbookResults()
+    workbook.tradingFigures.area.habitats[0].habitatType =
+      'Sparsely vegetated land - Ruderal/ephemeral'
+    const response = projectResponse()
+    response.project.postIntervention.tradingRules.areaHabitats.habitatTypes[0].habitatType =
+      'Sparsely vegetated land - Ruderal/Ephemeral'
+
+    const comparison = compareFigures(
+      figuresFromWorkbook(workbook),
+      figuresFromProject(response)
+    )
+    expect(comparison.discrepancies).toEqual([])
+  })
+
   it('treats a lost area habitat as a creation, as the metric does', () => {
     const response = projectResponse()
     response.project.postIntervention.habitats = [
@@ -243,6 +260,32 @@ describe('figuresFromProject', () => {
     const figures = figuresFromProject(response)
     expect(valueOf(figures, 'feature-units|area|baseline|T1')).toBe(0.5)
     expect(valueOf(figures, 'totals|area|baseline')).toBe(10.5)
+  })
+
+  it('gives each feature the measured size it was priced on', () => {
+    const response = projectResponse()
+    response.project.baseline.habitats = [
+      { ref: 'H1', units: 4, sizeSquareMetres: 10_000.4, area: 10_000 }
+    ]
+    response.project.baseline.hedgerows = [
+      { ref: 'HG1', units: 1, sizeMetres: 500.7, length: 501 }
+    ]
+    const figures = figuresFromProject(response)
+    const sizeOf = (key) => figures.find((f) => f.key === key)?.size
+    expect(sizeOf('feature-units|area|baseline|H1')).toBeCloseTo(1.00004, 12)
+    expect(sizeOf('feature-units|hedgerow|baseline|HG1')).toBeCloseTo(
+      0.5007,
+      12
+    )
+  })
+
+  it('falls back to the rounded size from a service that priced it', () => {
+    const response = projectResponse()
+    response.project.baseline.habitats = [{ ref: 'H1', units: 4, area: 10_000 }]
+    const figures = figuresFromProject(response)
+    expect(
+      figures.find((f) => f.key === 'feature-units|area|baseline|H1')?.size
+    ).toBe(1)
   })
 
   it('skips a feature the service gave no units', () => {
@@ -287,19 +330,125 @@ describe('compareFigures', () => {
     expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
   })
 
+  // Pairs from the corpus once the service priced the measured size: the
+  // same factors multiplied in a different order, one apart in
+  // the 15th significant figure.
+  it.each([
+    [80.7823849663891, 80.782384966389],
+    [0.443142747869206, 0.443142747869205],
+    [347.485266934266, 347.485266934265]
+  ])('matches %s and %s, one apart in the last digit', (metric, service) => {
+    const result = compareFigures(
+      [figure('feature-units|area|baseline|H1', metric)],
+      [figure('feature-units|area|baseline|H1', service)]
+    )
+    expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
+  })
+
+  // From the corpus: a net change summed in a different order by the engine
+  // and the workbook, apart in the 14th significant figure.
+  it('matches figures apart by floating-point noise, and lists them', () => {
+    const result = compareFigures(
+      [figure('totals|area|net-change', 0.0586730378868658)],
+      [figure('totals|area|net-change', 0.0586730378868601)]
+    )
+    expect(result).toMatchObject({ compared: 1, matched: 1, discrepancies: [] })
+    expect(result.withinTolerance).toEqual([
+      expect.objectContaining({
+        key: 'totals|area|net-change',
+        expected: 0.0586730378868658,
+        actual: 0.0586730378868601
+      })
+    ])
+  })
+
+  it('lists no match that is exact as within tolerance', () => {
+    const result = compareFigures(
+      [figure('totals|area|baseline', 80.7823849663891)],
+      [figure('totals|area|baseline', 80.7823849663891)]
+    )
+    expect(result.withinTolerance).toEqual([])
+  })
+
+  it.each([
+    ['inside', 1000, 1000 + 9e-10, 1],
+    ['beyond', 1000, 1000 + 1.1e-9, 0]
+  ])(
+    'matches a figure %s the relative tolerance (%s against %s)',
+    (_, metric, service, matched) => {
+      const result = compareFigures(
+        [figure('totals|area|baseline', metric)],
+        [figure('totals|area|baseline', service)]
+      )
+      expect(result.matched).toBe(matched)
+      expect(result.discrepancies).toHaveLength(1 - matched)
+    }
+  )
+
+  it.each([
+    ['inside', 9e-13, 1],
+    ['beyond', 2e-12, 0]
+  ])(
+    'matches a figure %s the absolute tolerance where the metric has zero',
+    (_, service, matched) => {
+      const result = compareFigures(
+        [figure('trading-figures|area|low-surplus', 0)],
+        [figure('trading-figures|area|low-surplus', service)]
+      )
+      expect(result.matched).toBe(matched)
+    }
+  )
+
+  // The size-rounding regression the tolerance must not hide: a 1,000 ha
+  // parcel priced at 8 units/ha on its area rounded to the whole square
+  // metre is ~4e-8 out — far too little to change an outcome, but a
+  // difference in how the service calculates.
+  it('reports units priced on a size rounded to the whole square metre', () => {
+    const measured = 1000.00004
+    const rounded = 1000
+    const result = compareFigures(
+      [
+        figure('feature-units|area|baseline|H1', 8 * measured, {
+          size: measured
+        })
+      ],
+      [figure('feature-units|area|baseline|H1', 8 * rounded, { size: rounded })]
+    )
+    expect(result.withinTolerance).toEqual([])
+    expect(result.discrepancies).toEqual([
+      expect.objectContaining({ causes: [CAUSES.sizeDiffers.id] })
+    ])
+  })
+
+  it('never matches a different verdict', () => {
+    const result = compareFigures(
+      [figure('net-gain|area|verdict', 'Met')],
+      [figure('net-gain|area|verdict', 'Not met')]
+    )
+    expect(result.discrepancies).toHaveLength(1)
+  })
+
+  it('counts the last digit of the larger figure across a power of ten', () => {
+    const result = compareFigures(
+      [figure('totals|area|baseline', 10)],
+      [figure('totals|area|baseline', 9.99999999999999)]
+    )
+    expect(result.matched).toBe(1)
+  })
+
   it('reports how far a differing figure is from the metric', () => {
     const [d] = compareFigures(
       [figure('totals|area|baseline', 115.623264923096)],
-      [figure('totals|area|baseline', 115.6232)]
+      [figure('totals|area|baseline', 115.62)]
     ).discrepancies
     expect(d).toMatchObject({
       kind: DIFFERENCE.different,
       expected: 115.623264923096,
-      actual: 115.6232
+      actual: 115.62
     })
-    expect(d.difference).toBeCloseTo(-0.000064923096, 12)
+    expect(d.difference).toBeCloseTo(-0.003264923096, 12)
     expect(d.relativeDifference).toBeCloseTo(
-      -0.000064923096 / 115.623264923096,
+      -0.003264923096 / 115.623264923096,
       15
     )
   })
@@ -385,7 +534,7 @@ describe('causesOfFeatureDifference', () => {
         metric(115.6232648, 14.4529081),
         service(115.6232, 14.4529)
       )
-    ).toEqual([CAUSES.sizeRounding.id])
+    ).toEqual([CAUSES.sizeDiffers.id])
   })
 
   it('recognises a strategic significance multiplier the service leaves out', () => {
@@ -403,7 +552,7 @@ describe('causesOfFeatureDifference', () => {
         metric(8 * 2.00004 * 1.15, 2.00004, 1.15),
         service(16, 2)
       )
-    ).toEqual([CAUSES.sizeRounding.id, CAUSES.strategicSignificance.id])
+    ).toEqual([CAUSES.sizeDiffers.id, CAUSES.strategicSignificance.id])
   })
 
   it('explains nothing it cannot account for exactly', () => {
@@ -700,10 +849,10 @@ describe('renderComparisonHtml', () => {
   it('never shows a tiny difference as zero', () => {
     const result = compareScenario({
       scenario: { id: 'site' },
-      expected: [figure('totals|area|baseline', 97.3095391601563)],
+      expected: [figure('totals|area|baseline', 1.2345391601563)],
       service: {
         accepted: true,
-        figures: [figure('totals|area|baseline', 97.3096)]
+        figures: [figure('totals|area|baseline', 1.2346)]
       }
     })
     expect(renderComparisonHtml([result])).toContain('+0.000061 habitat units')
@@ -715,9 +864,12 @@ describe('renderComparisonHtml', () => {
       expected: [figure('totals|area|baseline', 97.3095391601563)],
       service: {
         accepted: true,
-        figures: [figure('totals|area|baseline', 97.3095391601564)]
+        figures: [figure('totals|area|baseline', 97.4)]
       }
     })
+    // Inside the tolerance such a difference matches, but the report still
+    // has to show one it is given without rounding it to zero.
+    result.discrepancies[0].difference = 3e-13
     const html = renderComparisonHtml([result])
     expect(html).toMatch(/\+\d\.\de-1[34] habitat units/)
     expect(html).not.toContain('+0.000000000000')

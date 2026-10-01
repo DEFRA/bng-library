@@ -10,7 +10,7 @@
  */
 
 import { CAUSES, CAUSES_BY_ID } from './causes.mjs'
-import { OUTCOME } from './compare.mjs'
+import { OUTCOME, TOLERANCE } from './compare.mjs'
 import { CATEGORY, UNIT } from './figures.mjs'
 import { SERVICE_GAPS } from './service-gaps.mjs'
 
@@ -460,7 +460,7 @@ export function renderComparisonHtml(results, options = {}) {
     `<h1>${escape(title)} — ${plural(results.length, 'scenario')}</h1>`,
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
     headline(results, answers, unexplained, explained),
-    `<p class="how">Each value is compared exactly with the metric's. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
+    `<p class="how">Each value is compared with the metric's, and matches when it differs by less than ${TOLERANCE.relative} of it, relatively: just enough to clear the floating-point noise of adding up in a different order, so any real difference shows, however small. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
     '<h2>1. Answers that differ</h2>',
     answersSection(answers),
     '<h2>2. Values that differ for no known reason</h2>',

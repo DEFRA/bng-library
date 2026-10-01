@@ -9,6 +9,10 @@
  */
 
 import { readFileSync } from 'node:fs'
+import {
+  BASELINE_STRATEGIC_SIGNIFICANCE,
+  PROPOSED_STRATEGIC_SIGNIFICANCE
+} from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
@@ -99,7 +103,17 @@ function checkLengthRange(value, where) {
     : [`${where}: must be [min, max] metres, with 0 < min ≤ max`]
 }
 
+// The strategic significance a scenario may pin, per Defra's LNRS guidance:
+// Low at baseline, and Low or High for a proposed feature.
+const ALLOWED_STRATEGIC_SIGNIFICANCE = {
+  baselineStrategicSignificance: [BASELINE_STRATEGIC_SIGNIFICANCE],
+  proposedStrategicSignificance: PROPOSED_STRATEGIC_SIGNIFICANCE
+}
+
 function checkOverrideValue(field, value, where) {
+  if (ALLOWED_STRATEGIC_SIGNIFICANCE[field]) {
+    return checkOneOf(value, ALLOWED_STRATEGIC_SIGNIFICANCE[field], where)
+  }
   if (field === 'lengthRange') {
     return checkLengthRange(value, where)
   }

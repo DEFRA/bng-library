@@ -5,6 +5,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI.
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
+- **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
 - **Synthetic metric workbooks** (`bng-library/workbook-writer`) — write a scenario's GeoPackage into a copy of the Defra metric workbook, so the metric's own formulas give the expected results for QA.
 - **Metric comparison** (`bng-library/metric-compare`) — compare the service's figures for a site with the metric's own, figure by figure, over a scenario corpus (committed in the harness).
@@ -166,8 +167,16 @@ metric v4 workbook, which is not committed here; otherwise they are skipped.
 Biodiversity Metric (BMD-1036). The metric's answers come from a recalculated
 workbook; the service's from its project response (`GET /projects/{id}`) for
 the same GeoPackage pair. Each becomes a flat list of figures keyed the same
-way, and the two lists are compared exactly, to the 15 significant figures
-both sides carry:
+way, and the two lists are compared. Two numbers match when they differ by
+less than `TOLERANCE.relative` (1e-12) of the metric's value, or by less than
+`TOLERANCE.absolute` (1e-12) where that value is zero. That clears the
+floating-point noise of the engine and the workbook adding up the same figures
+in a different order (up to ~1e-13 relative on the corpus) and nothing more:
+the comparison is there to catch the service calculating differently, so even
+a difference too small to change a project's outcome — such as pricing a
+size rounded to the whole square metre — is a discrepancy. A match that
+is not exact is listed in the result's `withinTolerance`, with its difference.
+Met / Not met answers must be equal:
 
 | What                          | Figures                                                                                                            |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -220,9 +229,11 @@ computes and the service does not yet — hedgerow trading rules, and the Very
 High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
 _not implemented_ rather than as a failure; once the service produces such a
 figure it is compared like any other. A per-feature difference that a known
-cause accounts for exactly — the service rounding sizes to whole square metres
-or metres before pricing, or strategic significance (not implemented in the
-engine yet) — carries that cause, but still counts.
+cause accounts for exactly — the service pricing a different size from the
+metric's (`size-differs`; it once rounded sizes to whole square metres or
+metres first), or a strategic significance multiplier the service did not
+apply (`strategic-significance`; it prices every baseline at Low, per the LNRS
+guidance) — carries that cause, but still counts.
 
 `renderComparisonHtml` gives a short, self-contained page (no external assets,
 so it opens straight from a CI artifact). It leads with the Met / Not met answers
@@ -322,6 +333,12 @@ Values are the GeoPackage template's own spellings, such as
 
 Things worth knowing when writing a scenario:
 
+- **Strategic significance.** Follow Defra's LNRS guidance, as the service
+  does: every baseline is Low
+  (`"Area/compensation not in local strategy/ no local strategy"`), and a
+  proposed feature is Low or High (`"Formally identified in local strategy"`),
+  never Medium. The catalogue rejects any other value, and features drawn at
+  random follow the same rule.
 - **Distinctiveness.** Pin only Medium or lower habitats: the service rejects
   High and Very High at upload. The existing scenarios use
   `Grassland - Modified grassland` (Low) and
@@ -356,6 +373,7 @@ harness), so renaming or removing one of those means updating the test.
 | ----------------------------- | --------------------------------------------------- |
 | `bng-library`                 | Main API — synthesis, workbook reading, flaws, etc. |
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
+| `bng-library/measure`         | The area and length a feature is priced on.         |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
 | `bng-library/workbook-writer` | Synthetic metric workbooks for QA.                  |
 | `bng-library/metric-compare`  | Compare the service with the metric (BMD-1036).     |

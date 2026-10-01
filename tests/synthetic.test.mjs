@@ -13,6 +13,10 @@ import {
   CULVERT_ENCROACHMENT,
   CULVERT_TYPE
 } from '../src/data/watercourse-encroachment.mjs'
+import {
+  BASELINE_STRATEGIC_SIGNIFICANCE,
+  PROPOSED_STRATEGIC_SIGNIFICANCE
+} from '../src/synthetic/synthetic-constants.mjs'
 
 // Small but non-trivial: 5 parcels exercises partition + line + point pipelines
 // without making the test slow.
@@ -726,6 +730,55 @@ describe('synthetic generateOne — habitat distinctiveness stays in scope', () 
 // Writing a created hedgerow as Lost made it indistinguishable from a removal,
 // which the backend is entitled to drop — so the whole feature vanished on
 // upload. See docs/ne-template-linear-retention.md in bng-metric-harness.
+// Defra's LNRS guidance: baseline strategic significance is always Low, and a
+// proposed feature is Low or High, never Medium. A created linear feature or
+// newly planted tree has no baseline, so its baseline column is N/A.
+describe('synthetic generateOne — strategic significance follows the LNRS guidance', () => {
+  const LNRS_PARCELS = 60
+  const NOT_APPLICABLE = 'N/A'
+  const LAYERS = ['Habitats', 'Hedgerows', 'Rivers', 'Urban Trees']
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-lnrs-'))
+    outPath = path.join(outDir, 'lnrs.gpkg')
+    generateOne(outPath, CENTRE, { numParcels: LNRS_PARCELS })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  function distinctValues(layer, column) {
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      return db
+        .prepare(`SELECT DISTINCT "${column}" AS value FROM "${layer}"`)
+        .all()
+        .map((row) => row.value)
+    } finally {
+      db.close()
+    }
+  }
+
+  it.each(LAYERS)('writes every %s baseline at Low', (layer) => {
+    const values = distinctValues(layer, 'Baseline Strategic Significance')
+    expect(values).toContain(BASELINE_STRATEGIC_SIGNIFICANCE)
+    for (const value of values) {
+      expect([BASELINE_STRATEGIC_SIGNIFICANCE, NOT_APPLICABLE]).toContain(value)
+    }
+  })
+
+  it.each(LAYERS)('writes every %s proposed value at Low or High', (layer) => {
+    const values = distinctValues(layer, 'Proposed Strategic Significance')
+    expect(values.length).toBeGreaterThan(0)
+    for (const value of values) {
+      expect(PROPOSED_STRATEGIC_SIGNIFICANCE).toContain(value)
+    }
+  })
+})
+
 describe('synthetic generateOne — created retention by layer type', () => {
   // Hedgerow retention is drawn at random from four values, so the fixture
   // needs enough hedgerows (one per three parcels) that drawing no Created row

@@ -103,6 +103,23 @@ export function unitsOf({ category, module, key }) {
 }
 
 /**
+ * A habitat name as a key part. The metric does not always spell a habitat
+ * the same way: its trading summary has "Sparsely vegetated land -
+ * Ruderal/ephemeral" where its habitat list, the GeoPackage template and the
+ * service have "Ruderal/Ephemeral". Case and spacing are ignored, so the two
+ * are one figure; the label keeps each side's own spelling.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+export function habitatKeyPart(name) {
+  return String(name ?? '')
+    .trim()
+    .replaceAll(/\s+/g, ' ')
+    .toLowerCase()
+}
+
+/**
  * @param {string[]} parts
  * @returns {string}
  */

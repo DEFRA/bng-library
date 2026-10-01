@@ -4,7 +4,7 @@ import { TIME_TO_TARGET_MULTIPLIER } from './reference-constants.mjs'
 import {
   applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
-  toTimeToTargetBucketKey
+  referenceToTimeToTargetBucketKey
 } from './linear-time-target-utils.mjs'
 import {
   validateAdvanceAndDelayYears,
@@ -81,20 +81,16 @@ export function getLinearEnhancementTimeToTargetValue(
   const { validatedAdvanceYears, validatedDelayYears } =
     validateAdvanceAndDelayYears(advanceYears, delayYears)
 
-  const referenceYears = normaliseReferenceYears(
+  return referenceToTimeToTargetBucketKey(
     lookupLinearEnhancementTimeToTarget(
       cfg,
       linearType,
       startCondition,
       endCondition
-    )
-  )
-  const computedYears = applyDelayAdvanceAndClamp(
-    referenceYears,
+    ),
     validatedAdvanceYears,
     validatedDelayYears
   )
-  return toTimeToTargetBucketKey(computedYears)
 }
 
 /**

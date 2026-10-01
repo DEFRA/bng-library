@@ -16,7 +16,11 @@ import {
   WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER
 } from './reference-constants.mjs'
 
-/** Metric uses 1 for baseline */
+/**
+ * Baseline strategic significance is fixed at Low (×1). The metric itself multiplies
+ * baseline units by it too; the fixed Low comes from Defra's LNRS guidance, not the
+ * metric (see LOW_STRATEGIC_SIGNIFICANCE in strategic-significance.mjs).
+ */
 const BASELINE_STRATEGIC_SIGNIFICANCE_MULTIPLIER = 1
 
 /**

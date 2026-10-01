@@ -11,6 +11,7 @@ import HEDGEROW_TIME_TO_TARGET_CREATION from './reference/hedgerow-time-to-targe
 import HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT from './reference/hedgerow-time-to-target-distinctiveness-enhancement.json' with { type: 'json' }
 import HEDGEROW_TIME_TO_TARGET_ENHANCEMENT from './reference/hedgerow-time-to-target-enhancement.json' with { type: 'json' }
 import INDIVIDUAL_TREE_AREA_HECTARES from './reference/individual-tree-area.json' with { type: 'json' }
+import STRATEGIC_SIGNIFICANCE_MULTIPLIER from './reference/strategic-significance-multiplier.json' with { type: 'json' }
 import TIME_TO_TARGET_CREATION from './reference/habitat-area-time-to-target-creation.json' with { type: 'json' }
 import TIME_TO_TARGET_ENHANCEMENT from './reference/habitat-area-time-to-target-enhancement.json' with { type: 'json' }
 import TIME_TO_TARGET_MULTIPLIER from './reference/time-to-target-multiplier.json' with { type: 'json' }
@@ -38,6 +39,7 @@ export {
   HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   HEDGEROW_TIME_TO_TARGET_ENHANCEMENT,
   INDIVIDUAL_TREE_AREA_HECTARES,
+  STRATEGIC_SIGNIFICANCE_MULTIPLIER,
   TIME_TO_TARGET_CREATION,
   TIME_TO_TARGET_ENHANCEMENT,
   TIME_TO_TARGET_MULTIPLIER,

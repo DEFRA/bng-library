@@ -241,7 +241,8 @@ export function calculateRetainedHedgerowPostIntervention(
  * @param {string} condition - Condition band (e.g. "Good", "Moderate")
  * @param {number} advanceYears - Years habitat is advanced beyond 30 years
  * @param {number} delayYears - Years delivery is delayed
- * @returns {{ units: number, distinctiveness: string, distinctivenessScore: number, conditionScore: number, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
+ * @param {string | null} [strategicSignificance] - Proposed Strategic Significance; absent resolves to Low
+ * @returns {{ units: number, distinctiveness: string, distinctivenessScore: number, conditionScore: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
  * @throws {TypeError} If length is invalid
  * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables
  */
@@ -250,14 +251,16 @@ export function calculateCreatedHedgerowPostIntervention(
   hedgeType,
   condition,
   advanceYears,
-  delayYears
+  delayYears,
+  strategicSignificance = null
 ) {
   const result = calculateCreatedLinearPostIntervention(HEDGEROW_PI_CONFIG, {
     lengthKm,
     type: hedgeType,
     condition,
     advanceYears,
-    delayYears
+    delayYears,
+    strategicSignificance
   })
   return {
     ...result,
@@ -280,8 +283,8 @@ export function calculateCreatedHedgerowPostIntervention(
  * @param {string} postInterventionHedgeType - Post-intervention hedge type
  * @param {string} baselineCondition - Baseline condition band
  * @param {string} postInterventionCondition - Post-intervention condition band
- * @param {{ advanceYears?: number, delayYears?: number }} [options] - Advance and delay years
- * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
+ * @param {{ advanceYears?: number, delayYears?: number, strategicSignificance?: string | null }} [options] - Advance and delay years, and the Proposed Strategic Significance (absent resolves to Low)
+ * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
  * @throws {TypeError} If either length is invalid
  * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables
  */
@@ -292,7 +295,7 @@ export function calculateEnhancedHedgerowPostIntervention(
   postInterventionHedgeType,
   baselineCondition,
   postInterventionCondition,
-  { advanceYears = 0, delayYears = 0 } = {}
+  { advanceYears = 0, delayYears = 0, strategicSignificance = null } = {}
 ) {
   return calculateEnhancedLinearPostIntervention(HEDGEROW_PI_CONFIG, {
     baselineLengthKm,
@@ -302,6 +305,7 @@ export function calculateEnhancedHedgerowPostIntervention(
     baselineCondition,
     postCondition: postInterventionCondition,
     advanceYears,
-    delayYears
+    delayYears,
+    strategicSignificance
   })
 }

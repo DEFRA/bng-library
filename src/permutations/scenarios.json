@@ -2393,6 +2393,177 @@
       }
     },
     {
+      "id": "advance-delay-thirty-plus",
+      "purpose": "advance-delay",
+      "title": "\"30+\" years to target condition — no advance, advance and delay",
+      "description": "Every kind of feature the metric gives a \"30+\" standard time to target condition (more than 30 years), each with no advance or delay, 5 years in advance and 5 years' delay (BMD-1040). H001–H003: Other woodland; broadleaved created to Good. H004–H006: Other coniferous woodland enhanced from Moderate to Good. HG001–HG003: Line of trees created to Good. T001–T003: identical urban trees planted to Good; T004: a rural tree enhanced from Poor to Good. With no advance the final time to target is \"30+\" (×0.3197967361); a service that reads \"30+\" as 30 uses ×0.3434151104 and over-counts by 7.4%. With 5 years in advance the metric counts down from 30, to 25. With a delay it stays \"30+\".",
+      "size": 6,
+      "treeCount": 4,
+      "emptyLayers": ["rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "$comment": "Created \"30+\", no advance or delay: \"30+\" (×0.3197967361), not 30.",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Woodland and forest - Other woodland; broadleaved",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\", 5 years in advance: 30 − 5 = 25 years.",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Woodland and forest - Other woodland; broadleaved",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\", 5 years' delay: still \"30+\".",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Woodland and forest - Other woodland; broadleaved",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          },
+          {
+            "$comment": "Enhanced \"30+\", no advance or delay: \"30+\" (×0.3197967361), not 30.",
+            "habitatFullName": "Woodland and forest - Other coniferous woodland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Enhanced \"30+\", 5 years in advance: 30 − 5 = 25 years.",
+            "habitatFullName": "Woodland and forest - Other coniferous woodland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Enhanced \"30+\", 5 years' delay: still \"30+\".",
+            "habitatFullName": "Woodland and forest - Other coniferous woodland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          }
+        ],
+        "hedgerows": [
+          {
+            "$comment": "Created \"30+\" hedgerow, no advance or delay: \"30+\" (×0.3197967361), not 30.",
+            "lengthRange": [300, 400],
+            "hedgeType": "Line of trees",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\" hedgerow, 5 years in advance: 25 years.",
+            "lengthRange": [300, 400],
+            "hedgeType": "Line of trees",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\" hedgerow, 5 years' delay: still \"30+\".",
+            "lengthRange": [300, 400],
+            "hedgeType": "Line of trees",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Created \"30+\" tree, no advance or delay: \"30+\" (×0.3197967361), not 30.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\" tree, 5 years in advance: 25 years.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Created \"30+\" tree, 5 years' delay: still \"30+\", so the same units as T001.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          },
+          {
+            "$comment": "Enhanced \"30+\" tree (Poor to Good), no advance or delay: \"30+\" (×0.3197967361), not 30.",
+            "retention": "Enhanced",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectUnitOrder": {
+        "stage": "created",
+        "references": ["T002", "T001"]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "no advance → \"30+\", 5 years in advance → 25, 5 years' delay → \"30+\""
+      }
+    },
+    {
       "id": "data-complete",
       "purpose": "data-completeness",
       "title": "Complete post-intervention data",

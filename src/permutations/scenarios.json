@@ -2300,6 +2300,59 @@
       }
     },
     {
+      "id": "advance-delay-created-advance-difficulty",
+      "purpose": "advance-delay",
+      "title": "Created habitat — difficulty when created in advance",
+      "description": "Three parcels created in advance, each testing one of the metric's difficulty rules (BMD-1041). H001: Reservoirs, Moderate (5 years to target, 1 to Poor), 4 years in advance — short of the target, so Medium (×0.67); counting the advance twice gives Low. H002: the same with 5 years — the target is reached, so Low (×1). H003: Ponds (non-priority habitat), Good, 2 years in advance — exempt from the switch to enhancement difficulty, so it keeps its Low creation difficulty (×1); without the exemption it gets Medium (×0.67).",
+      "size": 3,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "$comment": "Advance short of the 5-year target: Medium (×0.67).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Lakes - Reservoirs",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "4",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Advance reaches the 5-year target: Low (×1).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Lakes - Reservoirs",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Exempt from the Poor threshold: keeps Low creation difficulty (×1).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Lakes - Ponds (non-priority habitat)",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "H001 Medium (×0.67), H002 Low (×1), H003 Low (×1, exempt)"
+      }
+    },
+    {
       "id": "data-complete",
       "purpose": "data-completeness",
       "title": "Complete post-intervention data",

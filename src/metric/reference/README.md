@@ -77,6 +77,22 @@ a habitat that can be assessed — so the V.Low band, not the condition row, was
 Distinctiveness bands feed the distinctiveness **score** (Medium 4, Low 2, V.Low 0), so
 this changes unit values for these two habitat types wherever they appear.
 
+## Known issues
+
+### `Coastal lagoons` difficulty row is keyed by the short name
+
+`habitat-area-difficulty.json` keys this habitat `Coastal lagoons`, where every other
+habitat-area table uses `Coastal lagoons - Coastal lagoons`. The engine looks difficulty
+up by the full name, so it finds no row and throws
+`No difficulty reference data for habitat: Coastal lagoons - Coastal lagoons` for a
+created or enhanced Coastal lagoon.
+
+Deliberately not fixed yet. Coastal lagoons is High distinctiveness, and the service
+accepts only V.Low, Low and Medium during the beta, so an upload holding one is refused
+as out of scope before any units are calculated. Fix it when High habitats come into
+scope: rename the key, and drop the `NO_DIFFICULTY_ROW` skip from the BMD-1041 sweep in
+`../multipliers.test.mjs`.
+
 ## Licence
 
 Same as the parent package — see `package.json` at the bng-library root (`OGL-UK-3.0`). Statutory Metric data is published by Natural England under Open Government Licence terms.

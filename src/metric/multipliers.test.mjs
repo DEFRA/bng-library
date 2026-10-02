@@ -706,8 +706,9 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
   ]
 
   // Its difficulty row is keyed 'Coastal lagoons', so the engine has no
-  // difficulty for it; a separate bug, so the sweep skips it by name and any
-  // other habitat without a difficulty row still fails.
+  // difficulty for it. Left unfixed while the beta excludes High habitats (see
+  // "Known issues" in reference/README.md), so the sweep skips it by name and
+  // any other habitat without a difficulty row still fails.
   const NO_DIFFICULTY_ROW = 'Coastal lagoons - Coastal lagoons'
 
   // Excel ranks text ("30+", "Not Possible") above every number, so only a

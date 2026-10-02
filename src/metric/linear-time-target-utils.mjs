@@ -51,6 +51,36 @@ export function applyDelayAdvanceAndClamp(
 }
 
 /**
+ * Resolve a raw time-to-target reference value, with advance and delay, to the
+ * key used in time-to-target lookup tables.
+ *
+ * Statutory rule (metric tabs A-2 column S, A-3 column AH, B-2 column Q): a
+ * "30+" reference with no advance keeps its own "30+" multiplier (key ">30"),
+ * not the 30-year one. With an advance it counts down from 30, and a delay
+ * already pushes it past 30.
+ *
+ * @param {number | string} timeToTargetValue - Reference years or "30+"
+ * @param {number} validatedAdvanceYears
+ * @param {number} validatedDelayYears
+ * @returns {string} e.g. "5", ">30"
+ */
+export function referenceToTimeToTargetBucketKey(
+  timeToTargetValue,
+  validatedAdvanceYears,
+  validatedDelayYears
+) {
+  if (timeToTargetValue === MAX_YEARS_PLUS && validatedAdvanceYears === 0) {
+    return OVER_MAX_YEARS
+  }
+  const computedYears = applyDelayAdvanceAndClamp(
+    normaliseReferenceYears(timeToTargetValue),
+    validatedAdvanceYears,
+    validatedDelayYears
+  )
+  return toTimeToTargetBucketKey(computedYears)
+}
+
+/**
  * Convert numeric years to the string key used in time-to-target lookup tables.
  *
  * @param {number} years

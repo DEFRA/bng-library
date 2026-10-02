@@ -80,7 +80,8 @@ import {
   SITE_NAME,
   SPATIAL_RISK_HABITAT,
   SPATIAL_RISK_RIVER,
-  STRATEGIC_SIGNIFICANCE,
+  BASELINE_STRATEGIC_SIGNIFICANCE,
+  PROPOSED_STRATEGIC_SIGNIFICANCE,
   SURVEY_COMPANY,
   SURVEY_DATE,
   SYNTHETIC_RLB_RADIUS_M,
@@ -402,7 +403,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       overrideOr(
         override,
         'baselineStrategicSignificance',
-        pick(STRATEGIC_SIGNIFICANCE)
+        BASELINE_STRATEGIC_SIGNIFICANCE
       ),
       gpkgAreaRetention(retention),
       proposed.broad,
@@ -411,7 +412,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       resolveProposed(
         override,
         'proposedStrategicSignificance',
-        pick(STRATEGIC_SIGNIFICANCE)
+        pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
       ),
       advanceYears,
       delayYears,
@@ -560,7 +561,7 @@ function buildHedgerowRow(coords, i, override) {
       overrideOr(
         override,
         'baselineStrategicSignificance',
-        pick(STRATEGIC_SIGNIFICANCE)
+        BASELINE_STRATEGIC_SIGNIFICANCE
       )
     ),
     retention,
@@ -569,7 +570,7 @@ function buildHedgerowRow(coords, i, override) {
     resolveProposed(
       override,
       'proposedStrategicSignificance',
-      pick(STRATEGIC_SIGNIFICANCE)
+      pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
     ),
     linestringLength(coords),
     advanceYears,
@@ -838,7 +839,7 @@ function buildRiverRow(coords, i, override) {
       overrideOr(
         override,
         'baselineStrategicSignificance',
-        pick(STRATEGIC_SIGNIFICANCE)
+        BASELINE_STRATEGIC_SIGNIFICANCE
       )
     ),
     baselineLinearAttribute(retention, baselineEncroachment.water),
@@ -849,7 +850,7 @@ function buildRiverRow(coords, i, override) {
     resolveProposed(
       override,
       'proposedStrategicSignificance',
-      pick(STRATEGIC_SIGNIFICANCE)
+      pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
     ),
     linestringLength(coords),
     advanceYears,
@@ -979,13 +980,13 @@ function generateUrbanTrees(db, boundaryRing, count) {
       syntheticRef('T', produced),
       baselineLinearAttribute(retention, size),
       baselineLinearAttribute(retention, conditions.baseline),
-      baselineLinearAttribute(retention, pick(STRATEGIC_SIGNIFICANCE)),
+      baselineLinearAttribute(retention, BASELINE_STRATEGIC_SIGNIFICANCE),
       baselineLinearAttribute(retention, type),
       retention,
       treeCategory(retention),
       retention === 'Lost' ? pick(TREE_SIZES) : size,
       conditions.proposed,
-      pick(STRATEGIC_SIGNIFICANCE),
+      pick(PROPOSED_STRATEGIC_SIGNIFICANCE),
       retention === 'Lost' ? pick(TREE_TYPES) : type,
       pick(LOCATIONS),
       treeAdvanceYears,

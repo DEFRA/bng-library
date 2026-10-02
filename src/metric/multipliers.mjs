@@ -18,9 +18,8 @@ import {
   TIME_TO_TARGET_MULTIPLIER
 } from './reference-constants.mjs'
 import {
-  applyDelayAdvanceAndClamp,
   normaliseReferenceYears,
-  toTimeToTargetBucketKey
+  referenceToTimeToTargetBucketKey
 } from './linear-time-target-utils.mjs'
 
 const NOT_POSSIBLE = 'Not Possible'
@@ -138,22 +137,6 @@ function lookupReferenceTimeToTarget(
       )
 }
 
-function lookupRawTimeToTarget(
-  habitat,
-  creationOrEnhancement,
-  startCondition,
-  endCondition
-) {
-  return normaliseReferenceYears(
-    lookupReferenceTimeToTarget(
-      habitat,
-      creationOrEnhancement,
-      startCondition,
-      endCondition
-    )
-  )
-}
-
 /**
  * True when the advance covers a standard (unadjusted) time-to-target. The
  * metric holds "30+" as text, which Excel ranks above every number, so no
@@ -195,18 +178,17 @@ function getTimeToTargetValue(
   const { validatedAdvanceYears, validatedDelayYears } =
     validateAdvanceAndDelayYears(advanceYears, delayYears)
 
-  const referenceYears = lookupRawTimeToTarget(
+  const referenceValue = lookupReferenceTimeToTarget(
     habitat,
     creationOrEnhancement,
     startCondition,
     endCondition
   )
-  const computedYears = applyDelayAdvanceAndClamp(
-    referenceYears,
+  return referenceToTimeToTargetBucketKey(
+    referenceValue,
     validatedAdvanceYears,
     validatedDelayYears
   )
-  return toTimeToTargetBucketKey(computedYears)
 }
 
 /**

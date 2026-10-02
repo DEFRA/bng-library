@@ -1,12 +1,15 @@
 /**
  * Compare the service's figures with the metric's, figure by figure.
  *
- * The comparison is exact. Both sides carry at most 15 significant figures —
- * the engine rounds every result to that (roundToSigFigs), and a workbook's
- * recalculated values are exported at that precision — so each number is
- * taken to 15 significant figures and they must then be equal. Any difference
- * is reported with how far the service is from the metric, in units and
- * relative to the metric's value.
+ * Two numbers match when they differ by no more than floating-point noise:
+ * within TOLERANCE.relative of the metric's value, or within
+ * TOLERANCE.absolute where that value is at or near zero. Both sides carry at
+ * most 15 significant figures, but the engine and the workbook sum and
+ * multiply in a different order, so a total can differ in its 14th figure;
+ * that is arithmetic, not a disagreement. A match that is not exact is still
+ * recorded, with its difference, so it stays visible. A verdict (Met / Not
+ * met) must be equal. Any other difference is reported with how far the
+ * service is from the metric, in units and relative to the metric's value.
  */
 
 import { roundToSigFigs } from '../metric/utils.mjs'
@@ -31,7 +34,13 @@ export const OUTCOME = Object.freeze({
    */
   acceptedInvalid: 'accepted-invalid',
   /** The metric workbook's answers could not be read, so nothing was compared. */
-  workbookUnreadable: 'workbook-unreadable'
+  workbookUnreadable: 'workbook-unreadable',
+  /**
+   * The service threw while importing the pair, so nothing was compared. A
+   * crash is a finding in its own right, so the scenario is reported rather
+   * than stopping the run.
+   */
+  importFailed: 'import-failed'
 })
 
 export const DIFFERENCE = Object.freeze({
@@ -40,12 +49,36 @@ export const DIFFERENCE = Object.freeze({
   missingFromWorkbook: 'missing-from-workbook'
 })
 
+/**
+ * How close two numbers must be to match: close enough to absorb the
+ * floating-point noise of the engine and the workbook adding up the same
+ * figures in a different order (up to ~1e-13 relative on the corpus), and no
+ * closer. The comparison exists to catch the service calculating differently,
+ * however little that moves a figure — pricing a rounded size moves a
+ * feature's units by ~1e-8 relative even on a very large parcel — so the
+ * tolerance is not sized by what could change a project's outcome. The
+ * absolute floor is for figures at zero, where no relative tolerance can pass
+ * anything.
+ */
+export const TOLERANCE = Object.freeze({ relative: 1e-12, absolute: 1e-12 })
+
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
 function normalise(value) {
   return isNumber(value) ? roundToSigFigs(value) : (value ?? null)
+}
+
+function withinTolerance(expected, actual) {
+  if (!isNumber(expected) || !isNumber(actual)) {
+    return false
+  }
+  const difference = Math.abs(actual - expected)
+  return (
+    difference <= TOLERANCE.absolute ||
+    difference <= TOLERANCE.relative * Math.abs(expected)
+  )
 }
 
 function describe(figure) {
@@ -153,6 +186,17 @@ function compareKey(expectedFigure, actualFigure, gaps) {
   if (expected === actual) {
     return { match: true }
   }
+  if (withinTolerance(expected, actual)) {
+    return {
+      match: true,
+      withinTolerance: discrepancy(
+        [expectedFigure, actualFigure],
+        expected,
+        actual,
+        DIFFERENCE.different
+      )
+    }
+  }
   const causes = causesOfFeatureDifference(expectedFigure, actualFigure)
   return {
     discrepancy: {
@@ -171,8 +215,9 @@ function compareKey(expectedFigure, actualFigure, gaps) {
  * @param {import('./figures.mjs').Figure[]} expected the workbook's figures
  * @param {import('./figures.mjs').Figure[]} actual the service's figures
  * @param {{ gaps?: readonly import('./service-gaps.mjs').ServiceGap[] }} [options]
- * @returns {{ compared: number, matched: number, discrepancies: object[],
- *   notImplemented: object[] }}
+ * @returns {{ compared: number, matched: number, withinTolerance: object[],
+ *   discrepancies: object[], notImplemented: object[] }} `withinTolerance`
+ *   lists the matches that are not exact, each with its difference
  */
 export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
   const expectedByKey = new Map(expected.map((f) => [f.key, f]))
@@ -182,6 +227,7 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
   const result = {
     compared: 0,
     matched: 0,
+    withinTolerance: [],
     discrepancies: [],
     notImplemented: []
   }
@@ -198,6 +244,9 @@ export function compareFigures(expected, actual, { gaps = SERVICE_GAPS } = {}) {
     result.compared += 1
     if (verdict.match) {
       result.matched += 1
+      if (verdict.withinTolerance) {
+        result.withinTolerance.push(verdict.withinTolerance)
+      }
     } else {
       result.discrepancies.push(verdict.discrepancy)
     }
@@ -222,17 +271,22 @@ function acceptedOutcome(invalidData, comparison) {
  * @param {{ id: string }} options.scenario a catalogue or manifest entry
  * @param {import('./figures.mjs').Figure[]} options.expected
  * @param {{ accepted: true, figures: import('./figures.mjs').Figure[] } |
- *   { accepted: false, rejectedFile: string, errors: object[] }} options.service
+ *   { accepted: false, rejectedFile: string, errors: object[] }} [options.service]
+ *   what the service made of the pair; absent when its import threw
+ *   (`serviceError`)
  * @param {readonly import('./service-gaps.mjs').ServiceGap[]} [options.gaps]
  * @param {string} [options.workbookError] why the metric workbook's answers
  *   could not be read; the scenario is then reported, not compared
+ * @param {string} [options.serviceError] why the service's import threw; the
+ *   scenario is then reported as import-failed, not compared
  */
 export function compareScenario({
   scenario,
   expected,
   service,
   gaps,
-  workbookError
+  workbookError,
+  serviceError
 }) {
   const base = {
     id: scenario.id,
@@ -243,6 +297,13 @@ export function compareScenario({
       ...base,
       outcome: OUTCOME.workbookUnreadable,
       errors: [{ code: 'WORKBOOK_UNREADABLE', message: workbookError }]
+    }
+  }
+  if (serviceError) {
+    return {
+      ...base,
+      outcome: OUTCOME.importFailed,
+      errors: [{ code: 'IMPORT_FAILED', message: serviceError }]
     }
   }
   if (!service.accepted) {

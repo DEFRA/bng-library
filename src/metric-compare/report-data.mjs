@@ -5,7 +5,7 @@
  */
 
 import { CAUSES, CAUSES_BY_ID } from './causes.mjs'
-import { OUTCOME } from './compare.mjs'
+import { OUTCOME, TOLERANCE } from './compare.mjs'
 import { CATEGORY, CATEGORY_ORDER, CATEGORY_TITLES } from './figures.mjs'
 import { SERVICE_GAPS } from './service-gaps.mjs'
 
@@ -18,11 +18,11 @@ export const OUTCOME_TITLES = Object.freeze({
   [OUTCOME.rejected]: 'Rejected by the service',
   [OUTCOME.rejectedAsExpected]: 'Rejected (invalid data)',
   [OUTCOME.acceptedInvalid]: 'Accepted, though its data is invalid',
-  [OUTCOME.workbookUnreadable]: 'Workbook unreadable'
+  [OUTCOME.workbookUnreadable]: 'Workbook unreadable',
+  [OUTCOME.importFailed]: 'Import failed in the service'
 })
 
-export const EXACTNESS_NOTE =
-  'Figures are compared exactly, to the 15 significant figures both the engine and the recalculated workbook carry. Difference is the service less the metric; Relative is that as a share of the metric’s value.'
+export const EXACTNESS_NOTE = `Two figures match when they differ by less than ${TOLERANCE.relative} of the metric’s value, relatively (or ${TOLERANCE.absolute} where it is zero): just enough to clear the floating-point noise of the engine and the workbook adding up in a different order, so any real difference in how the service calculates shows, however small. Met / Not met answers must be equal. Difference is the service less the metric; Relative is that as a share of the metric’s value.`
 
 /**
  * What each unit means. Every value in a report names one of these.
@@ -173,6 +173,10 @@ export function isUnreadable(result) {
   return result.outcome === OUTCOME.workbookUnreadable
 }
 
+export function isImportFailure(result) {
+  return result.outcome === OUTCOME.importFailed
+}
+
 function count(results, outcome) {
   return results.filter((r) => r.outcome === outcome).length
 }
@@ -256,11 +260,13 @@ export function summariseComparison(results) {
       rejected: count(results, OUTCOME.rejected),
       rejectedAsExpected: count(results, OUTCOME.rejectedAsExpected),
       acceptedInvalid: count(results, OUTCOME.acceptedInvalid),
-      workbookUnreadable: count(results, OUTCOME.workbookUnreadable)
+      workbookUnreadable: count(results, OUTCOME.workbookUnreadable),
+      importFailed: count(results, OUTCOME.importFailed)
     },
     figures: {
       compared: total(results, 'compared'),
       matched: total(results, 'matched'),
+      withinTolerance: total(results, 'withinTolerance'),
       discrepancies: total(results, 'discrepancies'),
       notImplemented: total(results, 'notImplemented'),
       unexplainedFeatures: features.filter((d) => !d.causes?.length).length

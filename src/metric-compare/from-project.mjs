@@ -7,6 +7,7 @@
 import {
   CATEGORY,
   FigureList,
+  habitatKeyPart,
   MET,
   MODULES,
   NOT_APPLICABLE,
@@ -44,12 +45,17 @@ const BANDS = { medium: 'Medium', low: 'Low' }
 
 // The size a feature was priced on, in the metric's terms: hectares, or
 // kilometres for the linear modules. The service stores square metres and
-// metres.
+// metres, and prices the measured size, unrounded. The rounded
+// `area` / `length` stand in only for a service that predates that, which
+// priced them.
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
 
 function pricedSize(module, feature) {
-  const size = module === 'area' ? feature.area : feature.length
+  const size =
+    module === 'area'
+      ? (feature.sizeSquareMetres ?? feature.area)
+      : (feature.sizeMetres ?? feature.length)
   if (!isNumber(size)) {
     return null
   }
@@ -191,7 +197,7 @@ function addTradingFigures(list, tradingRules) {
       })
     for (const h of figures[names.habitats] ?? []) {
       add(
-        ['habitat', h.habitatType],
+        ['habitat', habitatKeyPart(h.habitatType)],
         `${h.habitatType} (${h.distinctiveness}) net unit change`,
         h.netUnitChange,
         { distinctiveness: h.distinctiveness, zeroWhenAbsent: true }

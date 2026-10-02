@@ -7,6 +7,7 @@
   "exports": {
     ".": "./index.mjs",
     "./gpkg-io": "./src/gpkg-io/index.mjs",
+    "./measure": "./src/measure/index.mjs",
     "./metric": "./src/metric/index.mjs",
     "./workbook-writer": "./src/workbook-writer/index.mjs",
     "./metric-compare": "./src/metric-compare/index.mjs"

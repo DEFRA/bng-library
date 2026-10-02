@@ -10,6 +10,7 @@
 import wkx from 'wkx'
 import { decodeGpkgBinary } from './wkb.mjs'
 import { openGeoPackageReadonly } from './init.mjs'
+import { areaSquareMetres } from '../../measure/index.mjs'
 
 /**
  * Decode a single GeoPackage-Binary geometry blob to a GeoJSON geometry.
@@ -24,42 +25,21 @@ export function wkbToGeoJSON(blob) {
 }
 
 /**
- * Planar area of a GeoJSON Polygon / MultiPolygon via the shoelace formula,
- * summed over exterior rings. The result is in the square of the coordinates'
- * own units, so it is only meaningful for projected coordinate systems (e.g.
- * m² on a metric grid such as EPSG:27700). Non-areal geometries return 0.
+ * Planar area of a GeoJSON Polygon / MultiPolygon, in the square of the
+ * coordinates' units: bng-library/measure's `areaSquareMetres`, the one
+ * definition of a feature's size, which `readFeatures` sums into
+ * `totalAreaSqm`.
+ *
+ * Changed in BMD-1042. It used to add up each polygon's exterior ring only.
+ * It now subtracts holes, as GEOS and the service do, so a parcel with an
+ * interior ring measures smaller than before, and a ring with fewer than four
+ * points (too short to enclose anything) measures 0.
  *
  * @param {object} geometry  GeoJSON geometry
  * @returns {number}
  */
 export function polygonAreaSqm(geometry) {
-  if (!geometry) {
-    return 0
-  }
-  if (geometry.type === 'Polygon') {
-    return ringArea(geometry.coordinates[0])
-  }
-  if (geometry.type === 'MultiPolygon') {
-    let total = 0
-    for (const polygon of geometry.coordinates) {
-      total += ringArea(polygon[0])
-    }
-    return total
-  }
-  return 0
-}
-
-function ringArea(ring) {
-  if (!ring) {
-    return 0
-  }
-  let area = 0
-  const n = ring.length
-  for (let i = 0; i < n - 1; i++) {
-    area += ring[i][0] * ring[i + 1][1]
-    area -= ring[i + 1][0] * ring[i][1]
-  }
-  return Math.abs(area / 2)
+  return areaSquareMetres(geometry)
 }
 
 /**

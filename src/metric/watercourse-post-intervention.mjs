@@ -299,7 +299,8 @@ export function calculateRetainedWatercoursePostIntervention(
  * @param {string} riparianEncroachment - Encroachment into riparian zone
  * @param {number} [advanceYears=0] - Years habitat is advanced beyond 30 years
  * @param {number} [delayYears=0] - Years delivery is delayed
- * @returns {{ units: number, distinctiveness: string, distinctivenessScore: number, conditionScore: number, waterEncroachmentMultiplier: number, riparianEncroachmentMultiplier: number, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
+ * @param {string | null} [strategicSignificance] - Proposed Strategic Significance; absent resolves to Low
+ * @returns {{ units: number, distinctiveness: string, distinctivenessScore: number, conditionScore: number, waterEncroachmentMultiplier: number, riparianEncroachmentMultiplier: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
  */
 export function calculateCreatedWatercoursePostIntervention(
   lengthKm,
@@ -308,7 +309,8 @@ export function calculateCreatedWatercoursePostIntervention(
   watercourseEncroachment,
   riparianEncroachment,
   advanceYears = 0,
-  delayYears = 0
+  delayYears = 0,
+  strategicSignificance = null
 ) {
   const result = calculateCreatedLinearPostIntervention(WATERCOURSE_PI_CONFIG, {
     lengthKm,
@@ -316,7 +318,8 @@ export function calculateCreatedWatercoursePostIntervention(
     condition,
     advanceYears,
     delayYears,
-    encroachment: { watercourseEncroachment, riparianEncroachment }
+    encroachment: { watercourseEncroachment, riparianEncroachment },
+    strategicSignificance
   })
   return {
     ...result,
@@ -340,8 +343,8 @@ export function calculateCreatedWatercoursePostIntervention(
  * @param {string} postInterventionWatercourseType - Post-intervention watercourse type
  * @param {string} baselineCondition - Baseline condition band
  * @param {string} postInterventionCondition - Post-intervention condition band
- * @param {{ watercourseEncroachment?: string | null, riparianEncroachment?: string | null, advanceYears?: number, delayYears?: number }} [options] - Post-intervention encroachment and timing
- * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, postInterventionWaterEncroachmentMultiplier: number, postInterventionRiparianEncroachmentMultiplier: number, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
+ * @param {{ watercourseEncroachment?: string | null, riparianEncroachment?: string | null, advanceYears?: number, delayYears?: number, strategicSignificance?: string | null }} [options] - Post-intervention encroachment and timing, and the Proposed Strategic Significance (absent resolves to Low)
+ * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, postInterventionWaterEncroachmentMultiplier: number, postInterventionRiparianEncroachmentMultiplier: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
  * @throws {TypeError} If either length is invalid
  * @throws {BaselineLookupError} If watercourse type, condition, or encroachment is not found in the reference tables
  */
@@ -356,7 +359,8 @@ export function calculateEnhancedWatercoursePostIntervention(
     watercourseEncroachment: postInterventionWatercourseEncroachment = null,
     riparianEncroachment: postInterventionRiparianEncroachment = null,
     advanceYears = 0,
-    delayYears = 0
+    delayYears = 0,
+    strategicSignificance = null
   } = {}
 ) {
   return calculateEnhancedLinearPostIntervention(WATERCOURSE_PI_CONFIG, {
@@ -371,6 +375,7 @@ export function calculateEnhancedWatercoursePostIntervention(
     encroachment: {
       watercourseEncroachment: postInterventionWatercourseEncroachment,
       riparianEncroachment: postInterventionRiparianEncroachment
-    }
+    },
+    strategicSignificance
   })
 }

@@ -8,6 +8,7 @@ export {
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_SCORES,
   INDIVIDUAL_TREE_AREA_HECTARES,
+  STRATEGIC_SIGNIFICANCE_MULTIPLIER,
   TIME_TO_TARGET_CREATION,
   TIME_TO_TARGET_ENHANCEMENT,
   TIME_TO_TARGET_MULTIPLIER,
@@ -47,6 +48,10 @@ export {
   normaliseEncroachmentLabel
 } from './linear-resolvers.mjs'
 export { resolveDistinctiveness } from './multipliers.mjs'
+export {
+  isRecognisedStrategicSignificance,
+  resolveStrategicSignificance
+} from './strategic-significance.mjs'
 export {
   calculateHabitatNetUnitChanges,
   calculateBandTradingFigures,

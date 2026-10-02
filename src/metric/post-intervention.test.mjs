@@ -13,6 +13,7 @@ const H = 'Grassland - Modified grassland'
 const MULTIPLIER_4_YRS = 0.8671800006
 const MULTIPLIER_ENHANCEMENT = 0.7002822742
 const MULTIPLIER_HIGH_DIST_ENHANCEMENT = 0.343
+const MULTIPLIER_OVER_30_YRS = 0.3197967361
 const DIFFICULTY_LOW = 1
 const DIFFICULTY_CREATION = 0.33
 const DISTINCTIVENESS_LOW = 'Low'
@@ -71,6 +72,23 @@ describe('calculateCreatedAreaHabitatPostIntervention', () => {
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_LOW)
     expect(result.standardTimeToTargetCondition).toBe('4')
     expect(result.difficulty).toBe('Low')
+  })
+
+  it('uses the "30+" multiplier for a "30+" habitat with no advance or delay (BMD-1040)', () => {
+    // intervention/watercourse-retained, parcel H006: 80,550 m² of broadleaved
+    // woodland created in Good condition. The metric (A-2, H006) gives 30.9116.
+    const H006_AREA_HECTARES = 8.055
+    const H006_METRIC_UNITS = 30.9116
+    const result = calculateCreatedAreaHabitatPostIntervention(
+      H006_AREA_HECTARES,
+      'Woodland and forest - Other woodland; broadleaved',
+      'Good',
+      0,
+      0
+    )
+    expect(result.timeMultiplier).toBe(MULTIPLIER_OVER_30_YRS)
+    expect(result.standardTimeToTargetCondition).toBe('>30')
+    expect(result.units).toBeCloseTo(H006_METRIC_UNITS, 4)
   })
 
   it('forces difficulty to Low when advance years meet the time-to-target', () => {

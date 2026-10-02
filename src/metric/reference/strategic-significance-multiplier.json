@@ -1,0 +1,14 @@
+{
+  "Formally identified in local strategy": {
+    "Category": "High",
+    "Multiplier": 1.15
+  },
+  "Location ecologically desirable but not in local strategy": {
+    "Category": "Medium",
+    "Multiplier": 1.1
+  },
+  "Area/compensation not in local strategy/ no local strategy": {
+    "Category": "Low",
+    "Multiplier": 1
+  }
+}

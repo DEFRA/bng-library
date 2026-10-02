@@ -692,6 +692,24 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
   const MAX_ADVANCE_YEARS = 30
   const NOT_POSSIBLE = 'Not Possible'
 
+  // The habitats the metric keeps on their creation difficulty when the advance
+  // reaches Poor (tab A-2, column V), written out here rather than read from
+  // the reference data, so a habitat dropped from or misspelt in
+  // habitat-area-poor-threshold-exempt.json fails these tests.
+  const METRIC_EXEMPT_HABITATS = [
+    'Grassland - Traditional orchards',
+    'Lakes - Ornamental lake or pond',
+    'Lakes - Ponds (non-priority habitat)',
+    'Sparsely vegetated land - Ruderal/Ephemeral',
+    'Sparsely vegetated land - Tall forbs',
+    'Urban - Developed land; sealed surface'
+  ]
+
+  // Its difficulty row is keyed 'Coastal lagoons', so the engine has no
+  // difficulty for it; a separate bug, so the sweep skips it by name and any
+  // other habitat without a difficulty row still fails.
+  const NO_DIFFICULTY_ROW = 'Coastal lagoons - Coastal lagoons'
+
   // Excel ranks text ("30+", "Not Possible") above every number, so only a
   // numeric reference can be covered by an advance.
   const excelAtMost = (reference, advanceYears) =>
@@ -707,8 +725,7 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
     if (excelAtMost(times[condition], advanceYears)) {
       return 'Low'
     }
-    const exempt =
-      referenceConstants.POOR_THRESHOLD_EXEMPT_HABITATS.includes(habitat)
+    const exempt = METRIC_EXEMPT_HABITATS.includes(habitat)
     const poorReached =
       advanceYears > 0 && excelAtMost(times.Poor, advanceYears)
     if (poorReached && !exempt) {
@@ -717,7 +734,7 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
     return bands.Creation
   }
 
-  it('uses Medium for H005 in intervention/watercourse-created (Reservoirs, Moderate, 4 years)', () => {
+  it('uses Medium for Reservoirs, Moderate, created 4 years in advance', () => {
     expect(
       getDifficultyLabel(RESERVOIRS, 'Creation', '', 'Moderate', 4, 0)
     ).toBe('Medium')
@@ -778,6 +795,14 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
     }
   })
 
+  it("exempts exactly the metric's six habitats", () => {
+    expect(
+      [...referenceConstants.POOR_THRESHOLD_EXEMPT_HABITATS].sort((a, b) =>
+        a.localeCompare(b)
+      )
+    ).toEqual(METRIC_EXEMPT_HABITATS)
+  })
+
   it('lists only habitats with creation difficulty reference data', () => {
     const unknown = referenceConstants.POOR_THRESHOLD_EXEMPT_HABITATS.filter(
       (habitat) => !referenceConstants.HABITAT_DIFFICULTY[habitat]
@@ -792,12 +817,10 @@ describe('difficulty for habitat created in advance matches the metric (BMD-1041
     ).not.toBe('Low')
   })
 
-  // Every creation habitat and reachable condition. A habitat with no difficulty
-  // row has no difficulty to compare ('Coastal lagoons - Coastal lagoons' is
-  // keyed 'Coastal lagoons' there).
+  // Every creation habitat and reachable condition.
   const creationTargets = () =>
     Object.entries(referenceConstants.TIME_TO_TARGET_CREATION)
-      .filter(([habitat]) => referenceConstants.HABITAT_DIFFICULTY[habitat])
+      .filter(([habitat]) => habitat !== NO_DIFFICULTY_ROW)
       .flatMap(([habitat, times]) =>
         Object.entries(times)
           .filter(([, reference]) => reference !== NOT_POSSIBLE)

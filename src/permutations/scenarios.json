@@ -2303,8 +2303,8 @@
       "id": "advance-delay-created-advance-difficulty",
       "purpose": "advance-delay",
       "title": "Created habitat — difficulty when created in advance",
-      "description": "Three parcels created in advance, each testing one of the metric's difficulty rules (BMD-1041). H001: Reservoirs, Moderate (5 years to target, 1 to Poor), 4 years in advance — short of the target, so Medium (×0.67); counting the advance twice gives Low. H002: the same with 5 years — the target is reached, so Low (×1). H003: Ponds (non-priority habitat), Good, 2 years in advance — exempt from the switch to enhancement difficulty, so it keeps its Low creation difficulty (×1); without the exemption it gets Medium (×0.67).",
-      "size": 3,
+      "description": "Six parcels created in advance, testing the metric's difficulty rules (BMD-1041). H001: Reservoirs, Moderate (5 years to target, 1 to Poor), 4 years in advance — short of the target, so Medium (×0.67); counting the advance twice gives Low. H002: the same with 5 years — the target is reached, so Low (×1). H003–H006: four of the habitats exempt from the switch to enhancement difficulty — Ponds (non-priority habitat), Ornamental lake or pond, Ruderal/Ephemeral and Tall forbs — each created to Good (5 years, 1 to Poor) 2 years in advance. Each keeps its Low creation difficulty (×1); without the exemption H003, H005 and H006 get Medium (×0.67) and H004 High (×0.33). The other two exempt habitats are left out: Traditional orchards is High distinctiveness, outside the service's scope, and Developed land; sealed surface has Low creation and enhancement difficulty, so the exemption changes nothing.",
+      "size": 6,
       "emptyLayers": ["hedgerows", "rivers", "trees"],
       "overrides": {
         "habitats": [
@@ -2343,13 +2343,49 @@
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "2",
             "delayYears": "0"
+          },
+          {
+            "$comment": "Exempt from the Poor threshold: keeps Low creation difficulty (×1) rather than its enhancement difficulty, High (×0.33).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Lakes - Ornamental lake or pond",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Exempt from the Poor threshold: keeps Low creation difficulty (×1) rather than its enhancement difficulty, Medium (×0.67).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Sparsely vegetated land - Ruderal/Ephemeral",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "Exempt from the Poor threshold: keeps Low creation difficulty (×1) rather than its enhancement difficulty, Medium (×0.67).",
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Sparsely vegetated land - Tall forbs",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2",
+            "delayYears": "0"
           }
         ]
       },
       "subject": {
         "layer": "Habitats",
         "ref": "H001",
-        "note": "H001 Medium (×0.67), H002 Low (×1), H003 Low (×1, exempt)"
+        "note": "H001 Medium (×0.67), H002 Low (×1), H003–H006 Low (×1, exempt)"
       }
     },
     {

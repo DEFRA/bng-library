@@ -2293,6 +2293,10 @@
           }
         ]
       },
+      "expectUnitOrder": {
+        "stage": "created",
+        "references": ["T002", "T001", "T003"]
+      },
       "subject": {
         "layer": "Urban Trees",
         "ref": "T002",

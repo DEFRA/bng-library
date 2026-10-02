@@ -326,6 +326,55 @@ describe('checkScenarioExpectations', () => {
     ])
   })
 
+  describe('unit order', () => {
+    const order = { stage: 'created', references: ['T002', 'T001', 'T003'] }
+    const created = (...units) => ({
+      ...results,
+      features: [
+        { stage: 'baseline', reference: 'T001', units: 9 },
+        ...['T002', 'T001', 'T003'].map((reference, i) => ({
+          stage: 'created',
+          reference,
+          units: units[i]
+        }))
+      ]
+    })
+    const check = (res) =>
+      checkScenarioExpectations(
+        { id: 'invalid-x', subject, expectUnitOrder: order },
+        res
+      )
+
+    it('passes units that fall in the order listed', () => {
+      expect(check(created(0.3, 0.2, 0.1))).toEqual([
+        {
+          check: 'created units in order',
+          expected: 'T002 > T001 > T003',
+          actual: 'T002 0.3, T001 0.2, T003 0.1',
+          passed: true
+        }
+      ])
+    })
+
+    it.each([
+      ['out of order', [0.2, 0.3, 0.1]],
+      // A metric that ignores what sets them apart prices them all the same.
+      ['all the same', [0.2, 0.2, 0.2]],
+      ['not a number', [0.3, 'Error', 0.1]]
+    ])('fails units %s', (_, units) => {
+      expect(check(created(...units))[0].passed).toBe(false)
+    })
+
+    it('fails a feature the metric has no row for', () => {
+      const [result] = check({
+        ...results,
+        features: created(0.3, 0.2, 0.1).features.slice(0, 2)
+      })
+      expect(result.passed).toBe(false)
+      expect(result.actual).toBe('T002 0.3, T001 missing, T003 missing')
+    })
+  })
+
   it('declares nothing for an invalid- scenario with no expectations', () => {
     expect(
       checkScenarioExpectations({ id: 'invalid-x', subject }, results)

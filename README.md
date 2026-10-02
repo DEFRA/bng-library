@@ -316,6 +316,7 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `emptyLayers`          |          | Layers generated empty (`habitats`, `hedgerows`, `rivers`, `trees`), so random features cannot add warnings or trading breaches of their own                                                                |
 | `expectGain`           |          | `met` or `unmet`: the area net gain against 10%, checked through the engine and, with workbooks, the metric                                                                                                 |
 | `expectTrading`        |          | `{ area \| hedgerow \| watercourse: { band: "met" \| "breached" } }`, checked against the metric's trading summaries                                                                                        |
+| `expectUnitOrder`      |          | `{ stage, references }`: features whose units at one stage (`baseline`, `retained`, `created` or `enhanced`) must fall strictly in the order listed, checked against the metric's rows                      |
 | `expectMetricWarnings` |          | `invalid-` only. Text of warnings the metric must raise on the subject                                                                                                                                      |
 | `expectRejectedInputs` |          | `invalid-` only. `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                      |
 

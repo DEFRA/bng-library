@@ -172,6 +172,35 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('checks a unit order expectation', () => {
+    const doc = catalogue(
+      scenario({
+        id: 'a',
+        expectUnitOrder: { stage: 'planted', references: ['T001'], by: 'x' }
+      }),
+      scenario({
+        id: 'b',
+        expectUnitOrder: { stage: 'created', references: ['T001', 'T001'] }
+      }),
+      scenario({
+        id: 'c',
+        expectUnitOrder: { stage: 'created', references: ['T002', 'T001'] }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(/\(a\)\.expectUnitOrder: unknown field "by"/),
+      expect.stringMatching(
+        /\(a\)\.expectUnitOrder\.stage: "planted" is not one of/
+      ),
+      expect.stringMatching(
+        /\(a\)\.expectUnitOrder\.references: must list at least two features/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitOrder\.references: "T001" is listed twice/
+      )
+    ])
+  })
+
   it('checks the other expectations and settings', () => {
     const doc = catalogue(
       scenario({

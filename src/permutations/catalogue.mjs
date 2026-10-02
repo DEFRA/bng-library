@@ -24,6 +24,8 @@ const COMMENT = '$comment'
 const LAYERS = ['habitats', 'hedgerows', 'rivers', 'trees']
 const GAIN_VERDICTS = ['met', 'unmet']
 const TRADING_VERDICTS = ['met', 'breached']
+const UNIT_STAGES = ['baseline', 'retained', 'created', 'enhanced']
+const UNIT_ORDER_FIELDS = ['stage', 'references']
 const TRADING_BANDS = {
   area: ['Very High', 'High', 'Medium', 'Low'],
   hedgerow: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
@@ -189,6 +191,26 @@ function checkTrading(expectTrading, where) {
   ]
 }
 
+function checkUnitOrder(expectUnitOrder, where) {
+  if (!isObject(expectUnitOrder)) {
+    return [`${where}: must be an object with stage and references`]
+  }
+  const { stage, references } = expectUnitOrder
+  const problems = [
+    ...unknownKeys(expectUnitOrder, UNIT_ORDER_FIELDS, where),
+    ...checkOneOf(stage, UNIT_STAGES, `${where}.stage`)
+  ]
+  if (!Array.isArray(references) || references.length < 2) {
+    return [...problems, `${where}.references: must list at least two features`]
+  }
+  const repeated = references.filter((ref, i) => references.indexOf(ref) !== i)
+  return [
+    ...problems,
+    ...checkTextList(references, `${where}.references`),
+    ...repeated.map((ref) => `${where}.references: "${ref}" is listed twice`)
+  ]
+}
+
 function checkSubject(subject, where) {
   if (!isObject(subject)) {
     return [`${where}: must be an object with layer, ref and note`]
@@ -223,6 +245,7 @@ const OPTIONAL_FIELDS = {
   overrides: checkOverrides,
   expectGain: (v, where) => checkOneOf(v, GAIN_VERDICTS, where),
   expectTrading: checkTrading,
+  expectUnitOrder: checkUnitOrder,
   expectMetricWarnings: (v, where) => checkTextList(v, where),
   expectRejectedInputs: (v, where) => checkTextList(v, where, WORKBOOK_FIELD),
   [COMMENT]: (v, where) =>

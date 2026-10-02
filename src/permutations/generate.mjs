@@ -49,6 +49,7 @@ function manifestEntry(scenario, size, withWorkbook = false) {
     expectGain: scenario.expectGain ?? null,
     expectMetricWarnings: scenario.expectMetricWarnings ?? [],
     expectTrading: scenario.expectTrading ?? {},
+    expectUnitOrder: scenario.expectUnitOrder ?? null,
     expectRejectedInputs: scenario.expectRejectedInputs ?? [],
     size,
     files

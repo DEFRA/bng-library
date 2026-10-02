@@ -94,6 +94,19 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts the tree fields on trees only', () => {
+    const tree = { treeSize: 'Medium', treeType: 'Street tree' }
+    expect(
+      problems(catalogue(scenario({ overrides: { trees: [tree] } })))
+    ).toEqual([])
+    expect(
+      problems(catalogue(scenario({ overrides: { habitats: [tree] } })))
+    ).toEqual([
+      expect.stringMatching(/habitats\[0\]: unknown field "treeSize"/),
+      expect.stringMatching(/habitats\[0\]: unknown field "treeType"/)
+    ])
+  })
+
   it('checks override values', () => {
     const doc = catalogue(
       scenario({
@@ -159,11 +172,41 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('checks a unit order expectation', () => {
+    const doc = catalogue(
+      scenario({
+        id: 'a',
+        expectUnitOrder: { stage: 'planted', references: ['T001'], by: 'x' }
+      }),
+      scenario({
+        id: 'b',
+        expectUnitOrder: { stage: 'created', references: ['T001', 'T001'] }
+      }),
+      scenario({
+        id: 'c',
+        expectUnitOrder: { stage: 'created', references: ['T002', 'T001'] }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(/\(a\)\.expectUnitOrder: unknown field "by"/),
+      expect.stringMatching(
+        /\(a\)\.expectUnitOrder\.stage: "planted" is not one of/
+      ),
+      expect.stringMatching(
+        /\(a\)\.expectUnitOrder\.references: must list at least two features/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitOrder\.references: "T001" is listed twice/
+      )
+    ])
+  })
+
   it('checks the other expectations and settings', () => {
     const doc = catalogue(
       scenario({
         id: 'invalid-area-enhanced',
         size: 0,
+        treeCount: 1.5,
         emptyLayers: ['trees', 'ponds', 'trees'],
         expectGain: 'yes',
         expectMetricWarnings: [],
@@ -172,6 +215,7 @@ describe('parseScenarioCatalogue', () => {
     )
     expect(problems(doc)).toEqual([
       expect.stringMatching(/size: must be a whole number above 0/),
+      expect.stringMatching(/treeCount: must be a whole number above 0/),
       expect.stringMatching(/emptyLayers\[1\]: "ponds" is not one of/),
       expect.stringMatching(/emptyLayers: "trees" is listed twice/),
       expect.stringMatching(/expectGain: "yes" is not one of "met", "unmet"/),

@@ -49,6 +49,7 @@ function manifestEntry(scenario, size, withWorkbook = false) {
     expectGain: scenario.expectGain ?? null,
     expectMetricWarnings: scenario.expectMetricWarnings ?? [],
     expectTrading: scenario.expectTrading ?? {},
+    expectUnitOrder: scenario.expectUnitOrder ?? null,
     expectRejectedInputs: scenario.expectRejectedInputs ?? [],
     size,
     files
@@ -74,6 +75,7 @@ function scenarioWorkbook(piPath, entry, workbook) {
 export function scenarioPlan(scenario, size = scenario.size ?? DEFAULT_SIZE) {
   return {
     numParcels: size,
+    numTrees: scenario.treeCount,
     emptyLayers: new Set(scenario.emptyLayers ?? []),
     attributeOverrides: scenario.overrides ?? {}
   }

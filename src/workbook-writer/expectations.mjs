@@ -3,9 +3,10 @@
  *
  * A scenario can say what the metric should make of it — the 10% net gain met
  * or not, a trading rule breached, a particular warning raised on its subject
- * feature. Checking those against the recalculated workbook keeps the corpus
- * honest: a scenario that no longer demonstrates what it claims to fails
- * here, before anyone compares a service run against it.
+ * feature, or its features' units falling in a particular order. Checking
+ * those against the recalculated workbook keeps the corpus honest: a scenario
+ * that no longer demonstrates what it claims to fails here, before anyone
+ * compares a service run against it.
  */
 
 import {
@@ -90,6 +91,27 @@ function rejectedInputCheck(target, scenario, issues) {
 }
 
 /**
+ * The features' units at one stage must fall strictly, in the order listed.
+ * Strictly, so a metric that prices them all the same fails.
+ */
+function unitOrderCheck({ stage, references }, results) {
+  const units = references.map(
+    (ref) =>
+      results.features.find((f) => f.stage === stage && f.reference === ref)
+        ?.units ?? 'missing'
+  )
+  const descending = units.every(
+    (u, i) => typeof u === 'number' && (i === 0 || u < units[i - 1])
+  )
+  return {
+    check: `${stage} units in order`,
+    expected: references.join(' > '),
+    actual: references.map((ref, i) => `${ref} ${units[i]}`).join(', '),
+    passed: descending
+  }
+}
+
+/**
  * A scenario not named `invalid-` must be valid throughout: no metric error
  * on any row and no input the workbook rejects, filler features included.
  */
@@ -134,6 +156,9 @@ export function checkScenarioExpectations(scenario, results, issues = []) {
     for (const [band, expected] of Object.entries(bands)) {
       checks.push(tradingCheck(kind, band, expected, results))
     }
+  }
+  if (scenario.expectUnitOrder) {
+    checks.push(unitOrderCheck(scenario.expectUnitOrder, results))
   }
   for (const target of scenario.expectRejectedInputs ?? []) {
     checks.push(rejectedInputCheck(target, scenario, issues))

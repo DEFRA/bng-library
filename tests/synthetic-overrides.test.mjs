@@ -404,3 +404,122 @@ describe('attributeOverrides — lengthRange', () => {
     )
   })
 })
+
+describe('attributeOverrides — trees', () => {
+  let outDir
+  let gpkgPath
+
+  beforeAll(() => {
+    setMode('silent')
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-tree-overrides-'))
+    gpkgPath = path.join(outDir, 'trees.gpkg')
+    generateOne(gpkgPath, CENTRE, {
+      numParcels: 1,
+      numTrees: 4,
+      attributeOverrides: {
+        trees: [
+          {
+            retention: 'Created',
+            treeSize: 'Large',
+            treeType: 'Street tree',
+            ruralOrUrban: 'Urban',
+            proposedCondition: 'Poor',
+            proposedStrategicSignificance: SS_OTHER,
+            advanceYears: '5'
+          },
+          { retention: 'Created', delayYears: '4' },
+          {
+            retention: 'Enhanced',
+            treeSize: 'Small',
+            ruralOrUrban: 'Rural',
+            baselineCondition: 'Poor',
+            proposedCondition: 'Good',
+            baselineStrategicSignificance: SS_LOCAL
+          },
+          { retention: 'Retained', incomplete: true }
+        ]
+      }
+    })
+  })
+
+  afterAll(() => {
+    setMode('cli')
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  const readTree = (ref) => {
+    const db = openGeoPackageReadonly(gpkgPath)
+    try {
+      return db
+        .prepare(`SELECT * FROM "Urban Trees" WHERE "Tree Ref" = ?`)
+        .get(ref)
+    } finally {
+      db.close()
+    }
+  }
+
+  it('pins a created tree, leaving its baseline "N/A"', () => {
+    const row = readTree('T001')
+    expect(row['Retention Category']).toBe('Created')
+    expect(row.Category).toBe('Newly Planted')
+    expect(row['Proposed Tree Size']).toBe('Large')
+    expect(row['Proposed Tree Type']).toBe('Street tree')
+    expect(row['Proposed Rural or Urban Tree']).toBe('Urban')
+    expect(row['Proposed Condition']).toBe('Poor')
+    expect(row['Proposed Strategic Significance']).toBe(SS_OTHER)
+    expect(row['Baseline Tree Size']).toBe('N/A')
+    expect(row['Baseline Condition']).toBe('N/A')
+  })
+
+  it('pins the advance/delay pair on the tree columns as a unit', () => {
+    const advanced = readTree('T001')
+    expect(advanced['Habitat Created/Enhanced in advance/years']).toBe('5')
+    expect(
+      advanced['Delay in starting habitat creation/enhancement in years']
+    ).toBe('0')
+    const delayed = readTree('T002')
+    expect(delayed['Habitat Created/Enhanced in advance/years']).toBe('0')
+    expect(
+      delayed['Delay in starting habitat creation/enhancement in years']
+    ).toBe('4')
+  })
+
+  it('pins both sides of an existing tree', () => {
+    const row = readTree('T003')
+    expect(row['Retention Category']).toBe('Enhanced')
+    expect(row['Baseline Tree Size']).toBe('Small')
+    expect(row['Proposed Tree Size']).toBe('Small')
+    expect(row['Baseline Rural or Urban Tree']).toBe('Rural')
+    expect(row['Proposed Rural or Urban Tree']).toBe('Rural')
+    expect(row['Baseline Condition']).toBe('Poor')
+    expect(row['Proposed Condition']).toBe('Good')
+    expect(row['Baseline Strategic Significance']).toBe(SS_LOCAL)
+  })
+
+  it('blanks proposed cells on an incomplete tree', () => {
+    const row = readTree('T004')
+    expect(row['Proposed Condition']).toBeNull()
+    expect(row['Proposed Strategic Significance']).toBeNull()
+  })
+
+  it('leaves an unpinned tree to the ordinary draw', () => {
+    const plain = path.join(outDir, 'plain-trees.gpkg')
+    const pinnedSecond = path.join(outDir, 'pinned-second-tree.gpkg')
+    generateOne(plain, CENTRE, { numParcels: 1, numTrees: 2, seed: 9 })
+    generateOne(pinnedSecond, CENTRE, {
+      numParcels: 1,
+      numTrees: 2,
+      seed: 9,
+      attributeOverrides: { trees: [{}, { treeSize: 'Very large' }] }
+    })
+    const firstTree = (file) => {
+      const db = openGeoPackageReadonly(file)
+      try {
+        return db.prepare(`SELECT * FROM "Urban Trees" ORDER BY rowid`).get()
+      } finally {
+        db.close()
+      }
+    }
+    expect(firstTree(pinnedSecond)).toEqual(firstTree(plain))
+  })
+})

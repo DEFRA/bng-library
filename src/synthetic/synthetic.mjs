@@ -939,7 +939,12 @@ function pickTreeRetention(index) {
   return pick(TREE_RETENTION_WITH_BASELINE)
 }
 
-function generateUrbanTrees(db, boundaryRing, count) {
+/**
+ * Inserts `count` individual trees. `perRowOverrides[i]`, if provided, pins
+ * column values on tree i; fields not set there are randomised as normal. See
+ * `generateOne`'s `attributeOverrides` contract for the recognised fields.
+ */
+function generateUrbanTrees(db, boundaryRing, count, perRowOverrides) {
   const stmt = db.prepare(URBAN_TREES_SQL_SYNTH)
   const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
   let produced = 0
@@ -950,43 +955,67 @@ function generateUrbanTrees(db, boundaryRing, count) {
     }
     const [x, y] = point
     expandEnvelope(allEnvelope, [x, x, y, y])
+    const override = perRowOverrides?.[produced]
     // Deterministically seed one tree of each size band before falling back to
     // random sizes, so a fixture covers all bands (incl. "Very large") as long
     // as it has at least TREE_SIZES.length trees. A smaller explicit count
     // simply covers the first few bands.
-    const size =
+    const size = overrideOr(
+      override,
+      'treeSize',
       produced < TREE_SIZES.length ? TREE_SIZES[produced] : pick(TREE_SIZES)
+    )
     // Alternate urban/rural so both habitat types appear once there are at
     // least two trees (the engine keys area/units off this, not the layer).
-    const ruralOrUrban = TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
-    const type = pick(TREE_TYPES)
-    const retention = pickTreeRetention(produced)
+    const ruralOrUrban = overrideOr(
+      override,
+      'ruralOrUrban',
+      TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
+    )
+    const type = overrideOr(override, 'treeType', pick(TREE_TYPES))
+    const retention = override?.retention ?? pickTreeRetention(produced)
     const treeHabitat = `Individual trees - ${ruralOrUrban} tree`
     const conditions = drawConditions(
       AREA,
       treeHabitat,
       treeHabitat,
       retention,
-      undefined
+      override
     )
     // Only a newly planted (Created) tree carries creation-in-advance / delay
     // years, and at most one of the pair — as with hedgerows and habitats.
-    const [treeAdvanceYears, treeDelayYears] =
-      retention === RETENTION_CREATED
-        ? randomAdvanceDelay(MAX_TREE_ADVANCE_YEARS, MAX_TREE_DELAY_YEARS)
-        : [ZERO_YEARS, ZERO_YEARS]
+    const [treeAdvanceYears, treeDelayYears] = resolveAdvanceDelay(
+      override,
+      retention,
+      MAX_TREE_ADVANCE_YEARS,
+      MAX_TREE_DELAY_YEARS
+    )
     stmt.run(
       gpkgPoint(SRS_ID, x, y),
       syntheticRef('T', produced),
       baselineLinearAttribute(retention, size),
-      baselineLinearAttribute(retention, conditions.baseline),
-      baselineLinearAttribute(retention, BASELINE_STRATEGIC_SIGNIFICANCE),
+      baselineLinearAttribute(
+        retention,
+        overrideOr(override, 'baselineCondition', conditions.baseline)
+      ),
+      baselineLinearAttribute(
+        retention,
+        overrideOr(
+          override,
+          'baselineStrategicSignificance',
+          BASELINE_STRATEGIC_SIGNIFICANCE
+        )
+      ),
       baselineLinearAttribute(retention, type),
       retention,
       treeCategory(retention),
       retention === 'Lost' ? pick(TREE_SIZES) : size,
-      conditions.proposed,
-      pick(PROPOSED_STRATEGIC_SIGNIFICANCE),
+      resolveProposed(override, 'proposedCondition', conditions.proposed),
+      resolveProposed(
+        override,
+        'proposedStrategicSignificance',
+        pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
+      ),
       retention === 'Lost' ? pick(TREE_TYPES) : type,
       pick(LOCATIONS),
       treeAdvanceYears,
@@ -1115,7 +1144,8 @@ function runLayerGenerators(db, ring, ctx) {
       ),
     rivers: () =>
       generateRivers(db, ring, counts.numRivers, attributeOverrides.rivers),
-    trees: () => generateUrbanTrees(db, ring, counts.numTrees)
+    trees: () =>
+      generateUrbanTrees(db, ring, counts.numTrees, attributeOverrides.trees)
   }
   for (const [key, generate] of Object.entries(generators)) {
     if (!emptyLayers.has(key)) {
@@ -1136,7 +1166,7 @@ function runLayerGenerators(db, ring, ctx) {
  *                        registered, just has zero rows)
  *   attributeOverrides   per-layer arrays of per-row overrides pinned on the
  *                        first N rows. Recognised layer keys: `habitats`,
- *                        `hedgerows`, `rivers`. Any field left unset on a row
+ *                        `hedgerows`, `rivers`, `trees`. Any field left unset on a row
  *                        falls back to the random draw. Recognised fields:
  *                          all layers  retention, baselineCondition,
  *                                      proposedCondition,
@@ -1156,6 +1186,11 @@ function runLayerGenerators(db, ring, ctx) {
  *                                      proposedWaterEncroachment,
  *                                      baselineRiparianEncroachment,
  *                                      proposedRiparianEncroachment
+ *                          trees       treeSize, treeType, ruralOrUrban —
+ *                                      each pins both sides of the row (a
+ *                                      Lost tree's proposed size and type
+ *                                      stay random; a Created tree's
+ *                                      baseline stays "N/A")
  *                        `incomplete: true` blanks the row's proposed-side
  *                        condition, strategic-significance and encroachment
  *                        cells to model unfinished post-intervention data;

@@ -52,7 +52,8 @@ const OVERRIDE_FIELDS = {
     'baselineRiparianEncroachment',
     'proposedRiparianEncroachment',
     'lengthRange'
-  ]
+  ],
+  trees: ['treeSize', 'treeType', 'ruralOrUrban']
 }
 
 /** A catalogue that cannot be read or does not check out; a CLI can report it plainly. */
@@ -215,6 +216,8 @@ function checkEmptyLayers(value, where) {
 // Each optional field's check; a field not listed here is unknown.
 const OPTIONAL_FIELDS = {
   size: (v, where) =>
+    isPositiveInteger(v) ? [] : [`${where}: must be a whole number above 0`],
+  treeCount: (v, where) =>
     isPositiveInteger(v) ? [] : [`${where}: must be a whole number above 0`],
   emptyLayers: checkEmptyLayers,
   overrides: checkOverrides,

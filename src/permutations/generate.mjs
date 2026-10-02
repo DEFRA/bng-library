@@ -74,6 +74,7 @@ function scenarioWorkbook(piPath, entry, workbook) {
 export function scenarioPlan(scenario, size = scenario.size ?? DEFAULT_SIZE) {
   return {
     numParcels: size,
+    numTrees: scenario.treeCount,
     emptyLayers: new Set(scenario.emptyLayers ?? []),
     attributeOverrides: scenario.overrides ?? {}
   }

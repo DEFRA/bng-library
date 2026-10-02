@@ -482,6 +482,46 @@
       }
     },
     {
+      "id": "invalid-tree-advance-and-delay",
+      "purpose": "invalid-interventions",
+      "title": "Created tree — both advance and delay years",
+      "description": "T001 is planted 2 years in advance and also delayed by 3 years. The metric allows one or the other, never both, for a tree as for a habitat parcel.",
+      "size": 1,
+      "treeCount": 1,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Both set, which the metric refuses.",
+            "retention": "Created",
+            "treeSize": "Medium",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "2",
+            "delayYears": "3"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["both advance and delayed"],
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "created tree with advance and delay both set"
+      }
+    },
+    {
       "id": "invalid-hedgerow-condition-reduced",
       "purpose": "invalid-interventions",
       "title": "Hedgerow — enhancement that lowers condition",
@@ -2196,6 +2236,67 @@
         "layer": "Habitats",
         "ref": "H001",
         "note": "created parcel with 3 delay years"
+      }
+    },
+    {
+      "id": "advance-delay-created-trees",
+      "purpose": "advance-delay",
+      "title": "Created trees — advance and delay years",
+      "description": "Three identical newly planted trees on one retained parcel: T001 has neither advance nor delay, T002 is planted 5 years in advance and T003 is delayed by 5 years. The trees' units should differ, T002 highest and T003 lowest; a service that ignores the trees' advance and delay columns (BMD-1039) gives all three the same.",
+      "size": 1,
+      "treeCount": 3,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "The control: neither advance nor delay.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "5 years in advance: 5 years fewer to target condition.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "5",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "5 years' delay: 5 years more to target condition.",
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T002",
+        "note": "T001 neither, T002 5 years in advance, T003 5 years' delay"
       }
     },
     {

@@ -94,6 +94,19 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts the tree fields on trees only', () => {
+    const tree = { treeSize: 'Medium', treeType: 'Street tree' }
+    expect(
+      problems(catalogue(scenario({ overrides: { trees: [tree] } })))
+    ).toEqual([])
+    expect(
+      problems(catalogue(scenario({ overrides: { habitats: [tree] } })))
+    ).toEqual([
+      expect.stringMatching(/habitats\[0\]: unknown field "treeSize"/),
+      expect.stringMatching(/habitats\[0\]: unknown field "treeType"/)
+    ])
+  })
+
   it('checks override values', () => {
     const doc = catalogue(
       scenario({
@@ -164,6 +177,7 @@ describe('parseScenarioCatalogue', () => {
       scenario({
         id: 'invalid-area-enhanced',
         size: 0,
+        treeCount: 1.5,
         emptyLayers: ['trees', 'ponds', 'trees'],
         expectGain: 'yes',
         expectMetricWarnings: [],
@@ -172,6 +186,7 @@ describe('parseScenarioCatalogue', () => {
     )
     expect(problems(doc)).toEqual([
       expect.stringMatching(/size: must be a whole number above 0/),
+      expect.stringMatching(/treeCount: must be a whole number above 0/),
       expect.stringMatching(/emptyLayers\[1\]: "ponds" is not one of/),
       expect.stringMatching(/emptyLayers: "trees" is listed twice/),
       expect.stringMatching(/expectGain: "yes" is not one of "met", "unmet"/),

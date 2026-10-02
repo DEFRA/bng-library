@@ -3,6 +3,7 @@ import DIFFICULTY_MULTIPLIER from './reference/difficulty-multiplier.json' with 
 import DISTINCTIVENESS_CATEGORIES from './reference/habitat-area-distinctiveness-categories.json' with { type: 'json' }
 import DISTINCTIVENESS_SCORES from './reference/habitat-area-distinctiveness-scores.json' with { type: 'json' }
 import HABITAT_DIFFICULTY from './reference/habitat-area-difficulty.json' with { type: 'json' }
+import POOR_THRESHOLD_EXEMPT_HABITATS from './reference/habitat-area-poor-threshold-exempt.json' with { type: 'json' }
 import HEDGEROW_CONDITION_SCORES from './reference/hedgerow-condition-scores.json' with { type: 'json' }
 import HEDGEROW_DISTINCTIVENESS_CATEGORIES from './reference/hedgerow-distinctiveness-categories.json' with { type: 'json' }
 import HEDGEROW_DIFFICULTY from './reference/hedgerow-difficulty.json' with { type: 'json' }
@@ -39,6 +40,7 @@ export {
   HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   HEDGEROW_TIME_TO_TARGET_ENHANCEMENT,
   INDIVIDUAL_TREE_AREA_HECTARES,
+  POOR_THRESHOLD_EXEMPT_HABITATS,
   STRATEGIC_SIGNIFICANCE_MULTIPLIER,
   TIME_TO_TARGET_CREATION,
   TIME_TO_TARGET_ENHANCEMENT,

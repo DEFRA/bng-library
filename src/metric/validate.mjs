@@ -16,7 +16,10 @@ export const MAX_YEARS = 30
 /** Legacy string alias for {@link MAX_YEARS} in metric inputs. */
 export const MAX_YEARS_PLUS = '30+'
 
-/** Time-to-target bucket key when computed years exceed {@link MAX_YEARS}. */
+/**
+ * Time-to-target bucket key when computed years exceed {@link MAX_YEARS}, and
+ * (since BMD-1040) the key a "30+" habitat with no advance keeps.
+ */
 export const OVER_MAX_YEARS = '>30'
 
 /** Keys accepted for delay/advance years (integers 0–30 per multiplier table). */

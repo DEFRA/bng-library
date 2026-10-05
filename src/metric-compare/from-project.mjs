@@ -51,9 +51,11 @@ const MEDIUM_AND_LOW_TOTALS = [
 ]
 
 // Hedgerows trade by band alone, through Very Low. The metric's Medium
-// cumulative availability adds what the High bands carry down; the service
-// refuses High and Very High hedgerows, so it carries nothing down, and its
-// Medium net change is its Medium cumulative availability.
+// cumulative availability adds what the High bands carry down. The service
+// has no Medium cumulative figure yet: it refuses High and Very High
+// hedgerows, so nothing is carried down, and its Medium net change stands in.
+// Until the service supplies the figure, a match on medium-cumulative only
+// repeats the medium-net-change check; once it does, its own value is used.
 const HEDGEROW_TOTALS = [
   [
     'medium-net-change',
@@ -63,7 +65,7 @@ const HEDGEROW_TOTALS = [
   [
     'medium-cumulative',
     'Medium cumulative availability',
-    (f) => f.medium?.netUnitChange
+    (f) => f.medium?.cumulativeAvailability ?? f.medium?.netUnitChange
   ],
   ['low-net-change', 'Low net unit change', (f) => f.low?.netUnitChange],
   [

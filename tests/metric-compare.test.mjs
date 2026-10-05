@@ -317,6 +317,21 @@ describe('figuresFromProject', () => {
     })
   })
 
+  it('prefers a Medium hedgerow cumulative availability the service supplies', () => {
+    const response = projectResponse()
+    response.project.postIntervention.tradingRules.hedgerows.medium = {
+      netUnitChange: 0,
+      cumulativeAvailability: 0.75
+    }
+    const figures = figuresFromProject(response)
+    expect(valueOf(figures, 'trading-figures|hedgerow|medium-cumulative')).toBe(
+      0.75
+    )
+    expect(valueOf(figures, 'trading-figures|hedgerow|medium-net-change')).toBe(
+      0
+    )
+  })
+
   it('reports a hedgerow trading figure the service differs on', () => {
     const response = projectResponse()
     response.project.postIntervention.tradingRules.hedgerows.low.cumulativeAvailability = 0.25

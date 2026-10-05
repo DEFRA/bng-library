@@ -88,7 +88,17 @@ function workbookResults(overrides = {}) {
           lowCumulativeSurplus: 2
         }
       },
-      hedgerow: { habitats: [], totals: { mediumNetUnitChange: 0 } },
+      hedgerow: {
+        habitats: [],
+        totals: {
+          mediumNetUnitChange: 0,
+          mediumCumulativeAvailability: 0,
+          lowNetUnitChange: 0,
+          lowCumulativeAvailability: 0,
+          veryLowNetUnitChange: 0,
+          veryLowCumulativeAvailability: 0
+        }
+      },
       watercourse: {
         habitats: [],
         totals: {
@@ -155,6 +165,12 @@ function projectResponse(overrides = {}) {
               deficit: -1
             },
             low: { netUnitChange: 0, cumulativeAvailability: 2 }
+          },
+          hedgerows: {
+            habitatTypes: [],
+            medium: { netUnitChange: 0 },
+            low: { netUnitChange: 0, cumulativeAvailability: 0 },
+            veryLow: { netUnitChange: 0, cumulativeAvailability: 0 }
           },
           watercourses: {
             habitats: [],
@@ -241,6 +257,76 @@ describe('figuresFromProject', () => {
       figuresFromProject(response)
     )
     expect(comparison.discrepancies).toEqual([])
+  })
+
+  it('reads the hedgerow trading figures, keyed as the workbook keys them', () => {
+    const workbook = workbookResults()
+    workbook.tradingFigures.hedgerow = {
+      habitats: [
+        {
+          habitatType: 'Species-rich native hedgerow',
+          distinctiveness: 'Medium',
+          netUnitChange: 1.5
+        },
+        {
+          habitatType: 'Non-native and ornamental hedgerow',
+          distinctiveness: 'Very Low',
+          netUnitChange: -0.5
+        }
+      ],
+      totals: {
+        mediumNetUnitChange: 1.5,
+        mediumCumulativeAvailability: 1.5,
+        lowNetUnitChange: 0,
+        lowCumulativeAvailability: 1.5,
+        veryLowNetUnitChange: -0.5,
+        veryLowCumulativeAvailability: 1
+      }
+    }
+    const response = projectResponse()
+    response.project.postIntervention.tradingRules.hedgerows = {
+      habitatTypes: [
+        {
+          habitatType: 'Species-rich native hedgerow',
+          distinctiveness: 'Medium',
+          netUnitChange: 1.5
+        },
+        {
+          habitatType: 'Non-native and ornamental hedgerow',
+          distinctiveness: 'V.Low',
+          netUnitChange: -0.5
+        }
+      ],
+      medium: { netUnitChange: 1.5 },
+      low: { netUnitChange: 0, cumulativeAvailability: 1.5 },
+      veryLow: { netUnitChange: -0.5, cumulativeAvailability: 1 }
+    }
+
+    const figures = figuresFromProject(response)
+    const comparison = compareFigures(figuresFromWorkbook(workbook), figures)
+    expect(comparison.discrepancies).toEqual([])
+    expect(
+      figures.find(
+        (f) =>
+          f.key ===
+          'trading-figures|hedgerow|habitat|non-native and ornamental hedgerow'
+      )
+    ).toMatchObject({
+      label: 'Non-native and ornamental hedgerow (Very Low) net unit change',
+      distinctiveness: 'Very Low'
+    })
+  })
+
+  it('reports a hedgerow trading figure the service differs on', () => {
+    const response = projectResponse()
+    response.project.postIntervention.tradingRules.hedgerows.low.cumulativeAvailability = 0.25
+    const comparison = compareFigures(
+      figuresFromWorkbook(workbookResults()),
+      figuresFromProject(response)
+    )
+    expect(comparison.discrepancies.map((d) => d.key)).toEqual([
+      'trading-figures|hedgerow|low-cumulative'
+    ])
   })
 
   it('treats a lost area habitat as a creation, as the metric does', () => {
@@ -501,7 +587,7 @@ describe('compareFigures', () => {
     )
     expect(result.discrepancies).toEqual([])
     expect(result.notImplemented.map((n) => n.gap)).toEqual([
-      'hedgerow-trading-rules',
+      'hedgerow-trading-statuses',
       'higher-band-trading-statuses',
       'higher-band-trading-figures'
     ])
@@ -750,7 +836,7 @@ describe('renderComparisonReport', () => {
     expect(report).toContain(
       '| totals\\|area\\|baseline | area | 10 | 9.5 | habitat units | -0.5 | -5% | — | different |'
     )
-    expect(report).toContain('hedgerow-trading-rules')
+    expect(report).toContain('hedgerow-trading-statuses')
     expect(report).toContain('No change from the recorded discrepancies.')
   })
 })
@@ -976,7 +1062,7 @@ describe('renderComparisonXlsx', () => {
       Why: 'ADVANCE_AND_DELAY: Both set'
     })
     expect(rows('Not implemented')[0]).toMatchObject({
-      Gap: 'hedgerow-trading-rules',
+      Gap: 'hedgerow-trading-statuses',
       'Metric value': 'Met',
       Unit: 'Met / Not met'
     })

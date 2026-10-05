@@ -225,8 +225,8 @@ writeFileSync('report.md', renderComparisonReport(results))
 
 Every discrepancy is reported with both values, the difference (service less
 metric) and the difference relative to the metric's value. What the metric
-computes and the service does not yet — hedgerow trading rules, and the Very
-High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
+computes and the service does not yet — hedgerow trading statuses, and the
+Very High and High band trading rules — is listed in `SERVICE_GAPS` and reported as
 _not implemented_ rather than as a failure; once the service produces such a
 figure it is compared like any other. A per-feature difference that a known
 cause accounts for exactly — the service pricing a different size from the

@@ -22,13 +22,11 @@ const HIGHER_BANDS = new Set(['Very High', 'High'])
 /** @type {readonly ServiceGap[]} */
 export const SERVICE_GAPS = Object.freeze([
   Object.freeze({
-    id: 'hedgerow-trading-rules',
+    id: 'hedgerow-trading-statuses',
     description:
-      'Hedgerow trading rules are not implemented in the service: it computes no hedgerow trading figures and derives no hedgerow trading statuses.',
+      'The service computes the hedgerow trading figures but derives no hedgerow trading statuses.',
     covers: (figure) =>
-      figure.module === 'hedgerow' &&
-      (figure.category === CATEGORY.tradingFigures ||
-        figure.category === CATEGORY.tradingStatus)
+      figure.module === 'hedgerow' && figure.category === CATEGORY.tradingStatus
   }),
   Object.freeze({
     id: 'higher-band-trading-statuses',

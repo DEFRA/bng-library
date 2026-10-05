@@ -2557,6 +2557,36 @@
         "stage": "created",
         "references": ["T002", "T001"]
       },
+      "expectUnitsEqual": {
+        "stage": "created",
+        "references": ["T001", "T003"]
+      },
+      "expectTimeToTarget": [
+        {
+          "stage": "created",
+          "references": ["H001", "H003", "HG001", "HG003", "T001", "T003"],
+          "years": "30+",
+          "multiplier": 0.3197967361
+        },
+        {
+          "stage": "created",
+          "references": ["H002", "HG002", "T002"],
+          "years": 25,
+          "multiplier": 0.4103768311
+        },
+        {
+          "stage": "enhanced",
+          "references": ["H004", "H006", "T004"],
+          "years": "30+",
+          "multiplier": 0.3197967361
+        },
+        {
+          "stage": "enhanced",
+          "references": ["H005"],
+          "years": 25,
+          "multiplier": 0.4103768311
+        }
+      ],
       "subject": {
         "layer": "Habitats",
         "ref": "H001",

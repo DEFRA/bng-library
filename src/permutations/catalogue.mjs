@@ -26,6 +26,11 @@ const GAIN_VERDICTS = ['met', 'unmet']
 const TRADING_VERDICTS = ['met', 'breached']
 const UNIT_STAGES = ['baseline', 'retained', 'created', 'enhanced']
 const UNIT_ORDER_FIELDS = ['stage', 'references']
+// Only a created or enhanced feature has a time to target condition.
+const TIME_TO_TARGET_STAGES = ['created', 'enhanced']
+const TIME_TO_TARGET_FIELDS = ['stage', 'references', 'years', 'multiplier']
+// The metric's longest time to target condition, "more than 30 years".
+const THIRTY_PLUS = '30+'
 const TRADING_BANDS = {
   area: ['Very High', 'High', 'Medium', 'Low'],
   hedgerow: ['Very High', 'High', 'Medium', 'Low', 'Very Low'],
@@ -191,13 +196,14 @@ function checkTrading(expectTrading, where) {
   ]
 }
 
-function checkUnitOrder(expectUnitOrder, where) {
-  if (!isObject(expectUnitOrder)) {
+/** A stage and two or more distinct features: `expectUnitOrder`, `expectUnitsEqual`. */
+function checkStageReferences(value, where) {
+  if (!isObject(value)) {
     return [`${where}: must be an object with stage and references`]
   }
-  const { stage, references } = expectUnitOrder
+  const { stage, references } = value
   const problems = [
-    ...unknownKeys(expectUnitOrder, UNIT_ORDER_FIELDS, where),
+    ...unknownKeys(value, UNIT_ORDER_FIELDS, where),
     ...checkOneOf(stage, UNIT_STAGES, `${where}.stage`)
   ]
   if (!Array.isArray(references) || references.length < 2) {
@@ -208,6 +214,46 @@ function checkUnitOrder(expectUnitOrder, where) {
     ...problems,
     ...checkTextList(references, `${where}.references`),
     ...repeated.map((ref) => `${where}.references: "${ref}" is listed twice`)
+  ]
+}
+
+function checkTimeToTargetEntry(entry, where) {
+  if (!isObject(entry)) {
+    return [`${where}: must be an object with ${list(TIME_TO_TARGET_FIELDS)}`]
+  }
+  const { stage, references, years, multiplier } = entry
+  const problems = [
+    ...unknownKeys(entry, TIME_TO_TARGET_FIELDS, where),
+    ...checkOneOf(stage, TIME_TO_TARGET_STAGES, `${where}.stage`),
+    ...checkTextList(references, `${where}.references`)
+  ]
+  if (!isPositiveInteger(years) && years !== THIRTY_PLUS) {
+    problems.push(
+      `${where}.years: must be a whole number above 0 or "${THIRTY_PLUS}"`
+    )
+  }
+  if (typeof multiplier !== 'number' || multiplier <= 0 || multiplier > 1) {
+    problems.push(`${where}.multiplier: must be a number above 0, at most 1`)
+  }
+  return problems
+}
+
+function checkTimeToTarget(value, where) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [`${where}: must be a non-empty list`]
+  }
+  const references = value.flatMap((entry) =>
+    TIME_TO_TARGET_STAGES.includes(entry?.stage) &&
+    Array.isArray(entry.references)
+      ? entry.references.map((ref) => `${entry.stage} ${ref}`)
+      : []
+  )
+  const repeated = references.filter((ref, i) => references.indexOf(ref) !== i)
+  return [
+    ...value.flatMap((entry, i) =>
+      checkTimeToTargetEntry(entry, `${where}[${i}]`)
+    ),
+    ...repeated.map((ref) => `${where}: ${ref} is listed twice`)
   ]
 }
 
@@ -245,7 +291,9 @@ const OPTIONAL_FIELDS = {
   overrides: checkOverrides,
   expectGain: (v, where) => checkOneOf(v, GAIN_VERDICTS, where),
   expectTrading: checkTrading,
-  expectUnitOrder: checkUnitOrder,
+  expectUnitOrder: checkStageReferences,
+  expectUnitsEqual: checkStageReferences,
+  expectTimeToTarget: checkTimeToTarget,
   expectMetricWarnings: (v, where) => checkTextList(v, where),
   expectRejectedInputs: (v, where) => checkTextList(v, where, WORKBOOK_FIELD),
   [COMMENT]: (v, where) =>

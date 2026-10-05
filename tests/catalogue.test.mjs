@@ -201,6 +201,71 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('checks a units equal expectation', () => {
+    const doc = catalogue(
+      scenario({
+        id: 'a',
+        expectUnitsEqual: { stage: 'created', references: ['T001'] }
+      }),
+      scenario({
+        id: 'b',
+        expectUnitsEqual: { stage: 'created', references: ['T001', 'T003'] }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /\(a\)\.expectUnitsEqual\.references: must list at least two features/
+      )
+    ])
+  })
+
+  it('checks a time to target expectation', () => {
+    const entry = {
+      stage: 'created',
+      references: ['H001'],
+      years: '30+',
+      multiplier: 0.3197967361
+    }
+    const doc = catalogue(
+      scenario({ id: 'a', expectTimeToTarget: [] }),
+      scenario({
+        id: 'b',
+        expectTimeToTarget: [
+          { ...entry, stage: 'baseline', years: 30.5, multiplier: 1.2 },
+          { ...entry, references: [], by: 'x' }
+        ]
+      }),
+      scenario({ id: 'c', expectTimeToTarget: [entry, entry] }),
+      scenario({
+        id: 'd',
+        expectTimeToTarget: [entry, { ...entry, years: 25, references: ['H2'] }]
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /\(a\)\.expectTimeToTarget: must be a non-empty list/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectTimeToTarget\[0\]\.stage: "baseline" is not one of "created", "enhanced"/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectTimeToTarget\[0\]\.years: must be a whole number above 0 or "30\+"/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectTimeToTarget\[0\]\.multiplier: must be a number above 0, at most 1/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectTimeToTarget\[1\]: unknown field "by"/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectTimeToTarget\[1\]\.references: must be a non-empty list/
+      ),
+      expect.stringMatching(
+        /\(c\)\.expectTimeToTarget: created H001 is listed twice/
+      )
+    ])
+  })
+
   it('checks the other expectations and settings', () => {
     const doc = catalogue(
       scenario({

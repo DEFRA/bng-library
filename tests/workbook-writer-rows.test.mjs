@@ -375,6 +375,129 @@ describe('checkScenarioExpectations', () => {
     })
   })
 
+  describe('units equal', () => {
+    const equal = { stage: 'created', references: ['T001', 'T003'] }
+    const created = (...units) => ({
+      ...results,
+      features: ['T001', 'T003'].map((reference, i) => ({
+        stage: 'created',
+        reference,
+        units: units[i]
+      }))
+    })
+    const check = (res) =>
+      checkScenarioExpectations(
+        { id: 'invalid-x', subject, expectUnitsEqual: equal },
+        res
+      )
+
+    it('passes units that are the same', () => {
+      expect(check(created(0.29, 0.29))).toEqual([
+        {
+          check: 'created units equal',
+          expected: 'T001 = T003',
+          actual: 'T001 0.29, T003 0.29',
+          passed: true
+        }
+      ])
+    })
+
+    it.each([
+      ['that differ', [0.29, 0.38]],
+      ['not a number', ['Error', 'Error']]
+    ])('fails units %s', (_, units) => {
+      expect(check(created(...units))[0].passed).toBe(false)
+    })
+
+    it('fails a feature the metric has no row for', () => {
+      const [result] = check({
+        ...results,
+        features: created(0.29, 0.29).features.slice(0, 1)
+      })
+      expect(result.passed).toBe(false)
+      expect(result.actual).toBe('T001 0.29, T003 missing')
+    })
+  })
+
+  describe('time to target', () => {
+    const expectTimeToTarget = [
+      {
+        stage: 'created',
+        references: ['H001', 'H003'],
+        years: '30+',
+        multiplier: 0.3197967361
+      },
+      {
+        stage: 'enhanced',
+        references: ['H002'],
+        years: 25,
+        multiplier: 0.4103768311
+      }
+    ]
+    const feature = (
+      stage,
+      reference,
+      timeToTarget,
+      timeToTargetMultiplier
+    ) => ({
+      stage,
+      reference,
+      units: 1,
+      timeToTarget,
+      timeToTargetMultiplier
+    })
+    const check = (...features) =>
+      checkScenarioExpectations(
+        { id: 'invalid-x', subject, expectTimeToTarget },
+        { ...results, features }
+      )
+
+    it('checks every feature listed', () => {
+      expect(
+        check(
+          feature('created', 'H001', '30+', 0.3197967361),
+          feature('created', 'H003', '30+', 0.3197967361),
+          feature('enhanced', 'H002', 25, 0.4103768311)
+        )
+      ).toEqual([
+        {
+          check: 'created time to target on H001',
+          expected: '30+ (×0.3197967361)',
+          actual: '30+ (×0.3197967361)',
+          passed: true
+        },
+        {
+          check: 'created time to target on H003',
+          expected: '30+ (×0.3197967361)',
+          actual: '30+ (×0.3197967361)',
+          passed: true
+        },
+        {
+          check: 'enhanced time to target on H002',
+          expected: '25 (×0.4103768311)',
+          actual: '25 (×0.4103768311)',
+          passed: true
+        }
+      ])
+    })
+
+    it.each([
+      // A metric that reads "30+" as 30.
+      ['30 years', 30, 0.3434151104],
+      // A delay counted up past 30.
+      ['35 years', 35, 0.3197967361],
+      ['the wrong multiplier', '30+', 0.3434151104]
+    ])('fails %s in place of "30+"', (_, years, multiplier) => {
+      const [h001] = check(feature('created', 'H001', years, multiplier))
+      expect(h001.passed).toBe(false)
+    })
+
+    it('fails a feature the metric has no row for at that stage', () => {
+      const [h001] = check(feature('enhanced', 'H001', '30+', 0.3197967361))
+      expect(h001).toMatchObject({ actual: 'missing', passed: false })
+    })
+  })
+
   it('declares nothing for an invalid- scenario with no expectations', () => {
     expect(
       checkScenarioExpectations({ id: 'invalid-x', subject }, results)

@@ -18,6 +18,8 @@ const TRADING_WATERCOURSE = "Trading Summary WaterC's"
  * Where each input sheet holds a feature's units, per stage of its life, with
  * the size those units were priced on (hectares, or kilometres for the
  * linear modules), and the strategic significance multiplier the row applies.
+ * A created or enhanced stage also has its final time to target condition
+ * (years, or "30+") and the multiplier the metric looks that up as.
  * `retained` is only read where the row retains something (its `retained`
  * input is filled), since the column holds 0 on every other row.
  */
@@ -33,12 +35,16 @@ const ROW_UNITS = {
   habitatCreation: {
     module: 'area',
     strategicSignificance: 'N',
-    stages: { created: { units: 'Y', size: 'G' } }
+    stages: {
+      created: { units: 'Y', size: 'G', years: 'S', timeMultiplier: 'T' }
+    }
   },
   habitatEnhancement: {
     module: 'area',
     strategicSignificance: 'AC',
-    stages: { enhanced: { units: 'AN', size: 'V' } }
+    stages: {
+      enhanced: { units: 'AN', size: 'V', years: 'AH', timeMultiplier: 'AI' }
+    }
   },
   hedgerowBaseline: {
     module: 'hedgerow',
@@ -51,12 +57,16 @@ const ROW_UNITS = {
   hedgerowCreation: {
     module: 'hedgerow',
     strategicSignificance: 'L',
-    stages: { created: { units: 'W', size: 'E' } }
+    stages: {
+      created: { units: 'W', size: 'E', years: 'Q', timeMultiplier: 'R' }
+    }
   },
   hedgerowEnhancement: {
     module: 'hedgerow',
     strategicSignificance: 'W',
-    stages: { enhanced: { units: 'AH', size: 'P' } }
+    stages: {
+      enhanced: { units: 'AH', size: 'P', years: 'AB', timeMultiplier: 'AC' }
+    }
   },
   watercourseBaseline: {
     module: 'watercourse',
@@ -69,12 +79,16 @@ const ROW_UNITS = {
   watercourseCreation: {
     module: 'watercourse',
     strategicSignificance: 'K',
-    stages: { created: { units: 'Z', size: 'D' } }
+    stages: {
+      created: { units: 'Z', size: 'D', years: 'P', timeMultiplier: 'Q' }
+    }
   },
   watercourseEnhancement: {
     module: 'watercourse',
     strategicSignificance: 'X',
-    stages: { enhanced: { units: 'AM', size: 'Q' } }
+    stages: {
+      enhanced: { units: 'AM', size: 'Q', years: 'AC', timeMultiplier: 'AD' }
+    }
   }
 }
 
@@ -176,6 +190,12 @@ function rowFeatures(sheet, layout, unitColumns, row) {
       units: value(sheet, `${columns.units}${row}`),
       size: value(sheet, `${columns.size}${row}`),
       strategicSignificanceMultiplier,
+      timeToTarget: columns.years
+        ? value(sheet, `${columns.years}${row}`)
+        : null,
+      timeToTargetMultiplier: columns.timeMultiplier
+        ? value(sheet, `${columns.timeMultiplier}${row}`)
+        : null,
       cell: `${columns.units}${row}`
     }))
 }
@@ -183,13 +203,16 @@ function rowFeatures(sheet, layout, unitColumns, row) {
 /**
  * The units the metric gives every feature, one entry per feature per stage:
  * its baseline units, and whatever of it is retained, enhanced or created,
- * with the size and strategic significance multiplier they were priced on.
+ * with the size and strategic significance multiplier they were priced on,
+ * and, for what is created or enhanced, its final time to target condition
+ * and that time's multiplier.
  *
  * @param {{ Sheets: object }} workbook
  * @returns {Array<{ module: string, stage: string, reference: string,
  *   units: number | string | null, size: number | null,
- *   strategicSignificanceMultiplier: number | null, sheet: string,
- *   cell: string }>}
+ *   strategicSignificanceMultiplier: number | null,
+ *   timeToTarget: number | string | null,
+ *   timeToTargetMultiplier: number | null, sheet: string, cell: string }>}
  */
 export function readFeatureUnits(workbook) {
   const features = []

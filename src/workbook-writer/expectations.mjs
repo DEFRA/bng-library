@@ -3,10 +3,11 @@
  *
  * A scenario can say what the metric should make of it — the 10% net gain met
  * or not, a trading rule breached, a particular warning raised on its subject
- * feature, or its features' units falling in a particular order. Checking
- * those against the recalculated workbook keeps the corpus honest: a scenario
- * that no longer demonstrates what it claims to fails here, before anyone
- * compares a service run against it.
+ * feature, its features' units falling in a particular order or matching, or
+ * a feature's time to target condition. Checking those against the
+ * recalculated workbook keeps the corpus honest: a scenario that no longer
+ * demonstrates what it claims to fails here, before anyone compares a service
+ * run against it.
  */
 
 import {
@@ -111,6 +112,67 @@ function unitOrderCheck({ stage, references }, results) {
   }
 }
 
+// Units and multipliers the metric computes the same way agree far closer.
+const TOLERANCE = 1e-9
+
+const isClose = (a, b) =>
+  typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= TOLERANCE
+
+function featureAt(results, stage, reference) {
+  return results.features.find(
+    (f) => f.stage === stage && f.reference === reference
+  )
+}
+
+/**
+ * The features' units at one stage must all be the same: features that
+ * differ only in something the metric should ignore, such as a delay to a
+ * "30+" time to target condition.
+ */
+function unitsEqualCheck({ stage, references }, results) {
+  const units = references.map(
+    (ref) => featureAt(results, stage, ref)?.units ?? 'missing'
+  )
+  return {
+    check: `${stage} units equal`,
+    expected: references.join(' = '),
+    actual: references.map((ref, i) => `${ref} ${units[i]}`).join(', '),
+    passed: units.every((u) => isClose(u, units[0]))
+  }
+}
+
+const describeTime = (years, multiplier) => `${years} (×${multiplier})`
+
+/**
+ * A created or enhanced feature's final time to target condition, and the
+ * multiplier the metric applies for it. "30+" is text in the metric, so a
+ * workbook that reads it as 30 shows 30 here, and the multiplier for 30.
+ */
+function timeToTargetCheck(stage, reference, years, multiplier, results) {
+  const feature = featureAt(results, stage, reference)
+  const actual = feature
+    ? describeTime(feature.timeToTarget, feature.timeToTargetMultiplier)
+    : 'missing'
+  return {
+    check: `${stage} time to target on ${reference}`,
+    expected: describeTime(years, multiplier),
+    actual,
+    passed:
+      feature !== undefined &&
+      String(feature.timeToTarget) === String(years) &&
+      isClose(feature.timeToTargetMultiplier, multiplier)
+  }
+}
+
+/** One check per feature an `expectTimeToTarget` entry lists. */
+function timeToTargetChecks(entries, results) {
+  return entries.flatMap(({ stage, references, years, multiplier }) =>
+    references.map((ref) =>
+      timeToTargetCheck(stage, ref, years, multiplier, results)
+    )
+  )
+}
+
 /**
  * A scenario not named `invalid-` must be valid throughout: no metric error
  * on any row and no input the workbook rejects, filler features included.
@@ -160,6 +222,10 @@ export function checkScenarioExpectations(scenario, results, issues = []) {
   if (scenario.expectUnitOrder) {
     checks.push(unitOrderCheck(scenario.expectUnitOrder, results))
   }
+  if (scenario.expectUnitsEqual) {
+    checks.push(unitsEqualCheck(scenario.expectUnitsEqual, results))
+  }
+  checks.push(...timeToTargetChecks(scenario.expectTimeToTarget ?? [], results))
   for (const target of scenario.expectRejectedInputs ?? []) {
     checks.push(rejectedInputCheck(target, scenario, issues))
   }

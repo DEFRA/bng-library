@@ -141,7 +141,7 @@ describe('readFeatureUnits', () => {
         Q12: 4,
         U12: 0
       }),
-      [creation.sheet]: sheet({ AB11: 'H2', Y11: 6 })
+      [creation.sheet]: sheet({ AB11: 'H2', Y11: 6, S11: '30+', T11: 0.32 })
     })
   )
 
@@ -169,6 +169,17 @@ describe('readFeatureUnits', () => {
     expect(units[1]).toMatchObject({
       size: 1.5,
       strategicSignificanceMultiplier: 1.15
+    })
+  })
+
+  it('reads the time to target condition of what is created', () => {
+    expect(units[3]).toMatchObject({
+      timeToTarget: '30+',
+      timeToTargetMultiplier: 0.32
+    })
+    expect(units[0]).toMatchObject({
+      timeToTarget: null,
+      timeToTargetMultiplier: null
     })
   })
 

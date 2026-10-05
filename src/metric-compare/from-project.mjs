@@ -36,10 +36,76 @@ const UNIT_FIELDS = {
   watercourse: { totals: ['watercoursesTotal'], net: 'watercourses' }
 }
 
+// Each module's trading rules in the post-intervention document: where its
+// figures sit, where its habitats sit within them, and its band totals as
+// [figure path, label, read from the figures].
+const MEDIUM_AND_LOW_TOTALS = [
+  ['medium-surplus', 'Medium surplus', (f) => f.medium?.surplus],
+  ['medium-deficit', 'Medium deficit', (f) => f.medium?.deficit],
+  ['low-net-change', 'Low net unit change', (f) => f.low?.netUnitChange],
+  [
+    'low-cumulative',
+    'Low cumulative availability',
+    (f) => f.low?.cumulativeAvailability
+  ]
+]
+
+// Hedgerows trade by band alone, through Very Low. The metric's Medium
+// cumulative availability adds what the High bands carry down. The service
+// has no Medium cumulative figure yet: it refuses High and Very High
+// hedgerows, so nothing is carried down, and its Medium net change stands in.
+// Until the service supplies the figure, a match on medium-cumulative only
+// repeats the medium-net-change check; once it does, its own value is used.
+const HEDGEROW_TOTALS = [
+  [
+    'medium-net-change',
+    'Medium net unit change',
+    (f) => f.medium?.netUnitChange
+  ],
+  [
+    'medium-cumulative',
+    'Medium cumulative availability',
+    (f) => f.medium?.cumulativeAvailability ?? f.medium?.netUnitChange
+  ],
+  ['low-net-change', 'Low net unit change', (f) => f.low?.netUnitChange],
+  [
+    'low-cumulative',
+    'Low cumulative availability',
+    (f) => f.low?.cumulativeAvailability
+  ],
+  [
+    'very-low-net-change',
+    'Very Low net unit change',
+    (f) => f.veryLow?.netUnitChange
+  ],
+  [
+    'very-low-cumulative',
+    'Very Low cumulative availability',
+    (f) => f.veryLow?.cumulativeAvailability
+  ]
+]
+
 const TRADING_RULES = {
-  area: { figures: 'areaHabitats', habitats: 'habitatTypes' },
-  watercourse: { figures: 'watercourses', habitats: 'habitats' }
+  area: {
+    figures: 'areaHabitats',
+    habitats: 'habitatTypes',
+    totals: MEDIUM_AND_LOW_TOTALS
+  },
+  hedgerow: {
+    figures: 'hedgerows',
+    habitats: 'habitatTypes',
+    totals: HEDGEROW_TOTALS
+  },
+  watercourse: {
+    figures: 'watercourses',
+    habitats: 'habitats',
+    totals: MEDIUM_AND_LOW_TOTALS
+  }
 }
+
+// The service names the band below Low as the engine does; the metric's
+// trading summary, and so the workbook's figures, spell it out.
+const DISTINCTIVENESS_NAMES = { 'V.Low': 'Very Low' }
 
 const BANDS = { medium: 'Medium', low: 'Low' }
 
@@ -196,11 +262,13 @@ function addTradingFigures(list, tradingRules) {
         ...extra
       })
     for (const h of figures[names.habitats] ?? []) {
+      const distinctiveness =
+        DISTINCTIVENESS_NAMES[h.distinctiveness] ?? h.distinctiveness
       add(
         ['habitat', habitatKeyPart(h.habitatType)],
-        `${h.habitatType} (${h.distinctiveness}) net unit change`,
+        `${h.habitatType} (${distinctiveness}) net unit change`,
         h.netUnitChange,
-        { distinctiveness: h.distinctiveness, zeroWhenAbsent: true }
+        { distinctiveness, zeroWhenAbsent: true }
       )
     }
     for (const b of figures.medium?.broadHabitats ?? []) {
@@ -211,18 +279,9 @@ function addTradingFigures(list, tradingRules) {
         { zeroWhenAbsent: true }
       )
     }
-    add(['medium-surplus'], 'Medium surplus', figures.medium?.surplus ?? null)
-    add(['medium-deficit'], 'Medium deficit', figures.medium?.deficit ?? null)
-    add(
-      ['low-net-change'],
-      'Low net unit change',
-      figures.low?.netUnitChange ?? null
-    )
-    add(
-      ['low-cumulative'],
-      'Low cumulative availability',
-      figures.low?.cumulativeAvailability ?? null
-    )
+    for (const [path, label, read] of names.totals) {
+      add([path], label, read(figures) ?? null)
+    }
   }
 }
 

@@ -107,6 +107,25 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts a whole-number tree count on trees only', () => {
+    const tree = { count: 3 }
+    expect(
+      problems(catalogue(scenario({ overrides: { trees: [tree] } })))
+    ).toEqual([])
+    expect(
+      problems(catalogue(scenario({ overrides: { habitats: [tree] } })))
+    ).toEqual([expect.stringMatching(/habitats\[0\]: unknown field "count"/)])
+    for (const count of ['3', 0, 2.5]) {
+      expect(
+        problems(catalogue(scenario({ overrides: { trees: [{ count }] } })))
+      ).toEqual([
+        expect.stringMatching(
+          /trees\[0\]\.count: must be a whole number above 0/
+        )
+      ])
+    }
+  })
+
   it('checks override values', () => {
     const doc = catalogue(
       scenario({

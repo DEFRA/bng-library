@@ -330,7 +330,7 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 | `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
 | `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`                                                                                                                                                                                                        |
 | `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`                                                                              |
-| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A")                                                                                                                                    |
+| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned)                                           |
 
 Values are the GeoPackage template's own spellings, such as
 `"Grassland - Other neutral grassland"` or `"Moderate"`. `lengthRange` is

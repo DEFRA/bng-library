@@ -434,7 +434,8 @@ describe('attributeOverrides — trees', () => {
             ruralOrUrban: 'Rural',
             baselineCondition: 'Poor',
             proposedCondition: 'Good',
-            baselineStrategicSignificance: SS_LOCAL
+            baselineStrategicSignificance: SS_LOCAL,
+            count: 4
           },
           { retention: 'Retained', incomplete: true }
         ]
@@ -494,6 +495,12 @@ describe('attributeOverrides — trees', () => {
     expect(row['Baseline Condition']).toBe('Poor')
     expect(row['Proposed Condition']).toBe('Good')
     expect(row['Baseline Strategic Significance']).toBe(SS_LOCAL)
+  })
+
+  it('pins the number of trees a point stands for, 1 unless pinned', () => {
+    expect(readTree('T003').Count).toBe(4)
+    expect(readTree('T001').Count).toBe(1)
+    expect(readTree('T004').Count).toBe(1)
   })
 
   it('blanks proposed cells on an incomplete tree', () => {

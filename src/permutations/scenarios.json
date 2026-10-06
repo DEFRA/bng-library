@@ -2594,6 +2594,87 @@
       }
     },
     {
+      "id": "trees-count-above-one",
+      "purpose": "trees",
+      "title": "Individual trees — a point that stands for several trees",
+      "description": "Each tree point carries a \"Count\": the number of trees it stands for. The metric sizes the point as its size band's area times that count, so a Medium point with a count of 3 is three Medium trees (0.0489 ha, not 0.0163 ha). T001 and T002 are identical retained Medium urban trees except that T001 has a count of 3 and T002 a count of 1, so T001's units should be exactly three times T002's. T003 is a created Large urban tree with a count of 2 and T004 an enhanced Small rural tree with a count of 4, so the count is checked on the baseline, created and enhanced pricing paths. A service that prices every point as one tree agrees with the metric only while every count is 1.",
+      "size": 1,
+      "treeCount": 4,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Three Medium urban trees on one point: 3 × 0.0163 ha.",
+            "retention": "Retained",
+            "treeSize": "Medium",
+            "treeType": "Street tree",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "count": 3
+          },
+          {
+            "$comment": "The control: the same tree with a count of 1.",
+            "retention": "Retained",
+            "treeSize": "Medium",
+            "treeType": "Street tree",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "count": 1
+          },
+          {
+            "$comment": "Two newly planted Large urban trees on one point: 2 × 0.0366 ha, on the created path.",
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 2
+          },
+          {
+            "$comment": "Four Small rural trees on one point, enhanced from Poor to Good: 4 × 0.0041 ha, on the enhanced path.",
+            "retention": "Enhanced",
+            "treeSize": "Small",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 4
+          }
+        ]
+      },
+      "expectUnitOrder": {
+        "stage": "baseline",
+        "references": ["T001", "T002"]
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "a count of 3; T002 is the same tree with a count of 1"
+      }
+    },
+    {
       "id": "data-complete",
       "purpose": "data-completeness",
       "title": "Complete post-intervention data",

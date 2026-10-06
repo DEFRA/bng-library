@@ -60,7 +60,7 @@ const OVERRIDE_FIELDS = {
     'proposedRiparianEncroachment',
     'lengthRange'
   ],
-  trees: ['treeSize', 'treeType', 'ruralOrUrban']
+  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count']
 }
 
 /** A catalogue that cannot be read or does not check out; a CLI can report it plainly. */
@@ -127,6 +127,11 @@ function checkOverrideValue(field, value, where) {
   }
   if (field === 'incomplete') {
     return typeof value === 'boolean' ? [] : [`${where}: must be true or false`]
+  }
+  if (field === 'count') {
+    return isPositiveInteger(value)
+      ? []
+      : [`${where}: must be a whole number above 0`]
   }
   return typeof value === 'string' ? [] : [`${where}: must be text`]
 }

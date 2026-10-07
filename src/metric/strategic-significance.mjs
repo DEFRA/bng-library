@@ -38,6 +38,10 @@ function normaliseStrategicSignificanceLabel(value) {
  * Every accepted label → its category and multiplier. The metric's drop-down
  * descriptions ("Formally identified in local strategy") are the canonical form; the
  * category names ("High", "High strategic significance") are accepted as well.
+ *
+ * Only Low (×1) and High (×1.15) are reference data. Medium ("Location ecologically
+ * desirable but not in local strategy", ×1.10) is not supported by the service, so it
+ * is not here and is rejected like any other unrecognised value (BMD-1051).
  */
 const LOOKUP = new Map(
   Object.entries(STRATEGIC_SIGNIFICANCE_MULTIPLIER).flatMap(
@@ -64,7 +68,7 @@ function isBlank(value) {
 
 /**
  * Whether a proposed strategic significance value is absent or maps to a known
- * multiplier. Absent values are recognised (they resolve to Low).
+ * multiplier. Absent values are recognised (the calculators default them to Low).
  *
  * @param {unknown} value
  * @returns {boolean}
@@ -80,10 +84,27 @@ export function isRecognisedStrategicSignificance(value) {
 }
 
 /**
+ * Whether an imported Proposed Strategic Significance is one a created or enhanced
+ * habitat may carry: Low (×1) or High (×1.15), by label or by category name. A
+ * blank, Medium or otherwise unrecognised value is invalid; the import nulls it and
+ * the habitat's units are zero until the user picks a valid value (BMD-1051).
+ *
+ * Unlike `isRecognisedStrategicSignificance`, a blank is not valid: the calculators'
+ * default to Low is a convenience for callers that never read the column, not a
+ * value a user supplied.
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isValidProposedStrategicSignificance(value) {
+  return !isBlank(value) && isRecognisedStrategicSignificance(value)
+}
+
+/**
  * Resolve a feature's Proposed Strategic Significance to its category and multiplier
- * (G-3 Multipliers: High ×1.15, Medium ×1.10, Low ×1). An absent value resolves to Low,
- * which is what the service applied to every feature before strategic significance
- * was read.
+ * (G-3 Multipliers: High ×1.15, Low ×1; Medium is not supported). An absent value
+ * resolves to Low, which is what the service applied to every feature before
+ * strategic significance was read.
  *
  * @param {string | null | undefined} value - e.g. "Formally identified in local strategy"
  * @returns {{ strategicSignificanceCategory: string, strategicSignificanceScore: number }}

@@ -1804,6 +1804,69 @@
       }
     },
     {
+      "id": "trading-lost-trees",
+      "purpose": "trading-rules",
+      "title": "Trading rules — individual trees lost, nothing in their place",
+      "description": "Area: one Low grassland retained. Trees: T001, a large rural tree, and T002, a medium urban tree, are lost; T003, the same tree as T001, is retained. Individual trees are Medium distinctiveness area habitats, so the metric keeps the lost trees' baseline rows and shows a Medium deficit under the Individual trees broad habitat that nothing covers: the Medium area rule is breached and the Low rule met. The service drops a lost tree when it extracts the post-intervention file, so this checks its baseline, post-intervention and trading figures still agree with the metric.",
+      "size": 1,
+      "treeCount": 3,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Lost: the metric keeps the baseline row and nothing post-intervention; the service drops the feature at extract.",
+            "retention": "Lost",
+            "treeSize": "Large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Lost: a second tree, urban and a different size, so the deficit sums two rows.",
+            "retention": "Lost",
+            "treeSize": "Medium",
+            "treeType": "Street tree",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "The control: the same tree as T001, retained.",
+            "retention": "Retained",
+            "treeSize": "Large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "breached",
+          "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "T001 and T002 lost, T003 retained; the Individual trees (Medium) deficit nothing covers"
+      }
+    },
+    {
       "id": "trading-lower-deficit-covered-from-above",
       "purpose": "trading-rules",
       "title": "Trading rules — a Low deficit made good by a Medium surplus",

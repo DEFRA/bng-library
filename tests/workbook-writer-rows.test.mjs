@@ -419,6 +419,59 @@ describe('checkScenarioExpectations', () => {
     })
   })
 
+  describe('unit ratio', () => {
+    const ratio = {
+      stage: 'created',
+      reference: 'T003',
+      control: 'T005',
+      factor: 2
+    }
+    const created = (...units) => ({
+      ...results,
+      features: ['T003', 'T005'].map((reference, i) => ({
+        stage: 'created',
+        reference,
+        units: units[i]
+      }))
+    })
+    const check = (res) =>
+      checkScenarioExpectations(
+        { id: 'invalid-x', subject, expectUnitRatio: [ratio] },
+        res
+      )
+
+    it('passes units in the ratio given', () => {
+      expect(check(created(0.58, 0.29))).toEqual([
+        {
+          check: 'created units of T003 against T005',
+          expected: 'T003 = 2 × T005',
+          actual: 'T003 0.58, T005 0.29',
+          passed: true
+        }
+      ])
+    })
+
+    it.each([
+      // A metric that ignores what scales them prices them the same.
+      ['the same', [0.29, 0.29]],
+      ['in the wrong ratio', [0.87, 0.29]],
+      ['in the ratio the other way round', [0.29, 0.58]],
+      ['not a number', ['Error', 0.29]],
+      ['against a control that is not a number', [0.58, 'Error']]
+    ])('fails units %s', (_, units) => {
+      expect(check(created(...units))[0].passed).toBe(false)
+    })
+
+    it('fails a feature the metric has no row for', () => {
+      const [result] = check({
+        ...results,
+        features: created(0.58, 0.29).features.slice(0, 1)
+      })
+      expect(result.passed).toBe(false)
+      expect(result.actual).toBe('T003 0.58, T005 missing')
+    })
+  })
+
   describe('time to target', () => {
     const expectTimeToTarget = [
       {

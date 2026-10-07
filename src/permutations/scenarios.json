@@ -2594,6 +2594,128 @@
       }
     },
     {
+      "id": "trees-count-above-one",
+      "purpose": "trees",
+      "title": "Individual trees — a point that stands for several trees",
+      "description": "Each tree point carries a \"Count\": the number of trees it stands for. The metric sizes the point as its size band's area times that count, so a Medium point with a count of 3 is three Medium trees (0.0489 ha, not 0.0163 ha). Three pairs of trees are identical but for their count, one pair on each pricing path: T001 and T002 are retained Medium urban trees with counts of 3 and 1, T003 and T005 created Large urban trees with counts of 2 and 1, and T004 and T006 Small rural trees enhanced from Poor to Good with counts of 4 and 1. Each pair's units must stand in exactly the ratio of its counts, so a service that prices every point as one tree, or scales by the wrong amount, fails on every path.",
+      "size": 1,
+      "treeCount": 6,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Three Medium urban trees on one point: 3 × 0.0163 ha.",
+            "retention": "Retained",
+            "treeSize": "Medium",
+            "treeType": "Street tree",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "count": 3
+          },
+          {
+            "$comment": "The control: the same tree with a count of 1.",
+            "retention": "Retained",
+            "treeSize": "Medium",
+            "treeType": "Street tree",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "count": 1
+          },
+          {
+            "$comment": "Two newly planted Large urban trees on one point: 2 × 0.0366 ha, on the created path.",
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 2
+          },
+          {
+            "$comment": "Four Small rural trees on one point, enhanced from Poor to Good: 4 × 0.0041 ha, on the enhanced path.",
+            "retention": "Enhanced",
+            "treeSize": "Small",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 4
+          },
+          {
+            "$comment": "The created control: the same tree as T003 with a count of 1.",
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 1
+          },
+          {
+            "$comment": "The enhanced control: the same tree as T004 with a count of 1.",
+            "retention": "Enhanced",
+            "treeSize": "Small",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "count": 1
+          }
+        ]
+      },
+      "expectUnitRatio": [
+        {
+          "stage": "baseline",
+          "reference": "T001",
+          "control": "T002",
+          "factor": 3
+        },
+        {
+          "stage": "created",
+          "reference": "T003",
+          "control": "T005",
+          "factor": 2
+        },
+        {
+          "stage": "enhanced",
+          "reference": "T004",
+          "control": "T006",
+          "factor": 4
+        }
+      ],
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "a count of 3; T002 is the same tree with a count of 1. T003/T005 (created) and T004/T006 (enhanced) pair up the same way"
+      }
+    },
+    {
       "id": "data-complete",
       "purpose": "data-completeness",
       "title": "Complete post-intervention data",

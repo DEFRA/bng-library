@@ -80,6 +80,19 @@ describe('resolveFlawSelection — happy paths', () => {
     expect(Number(row.delayYears)).toBeGreaterThan(0)
   })
 
+  it('routes the tree-count-not-whole flaw and pins a fractional count on a tree', () => {
+    const sel = resolveFlawSelection({
+      bad: false,
+      flaws: ['tree-count-not-whole']
+    })
+    expect(sel.attributeFlawNames).toEqual(['tree-count-not-whole'])
+    expect(Object.keys(sel.attributeOverrides)).toEqual(['trees'])
+    expect(sel.attributeOverrides.trees).toHaveLength(1)
+    const { count } = sel.attributeOverrides.trees[0]
+    expect(Number.isFinite(count)).toBe(true)
+    expect(Number.isInteger(count)).toBe(false)
+  })
+
   it('allows attribute + empty flaws when they target different layers', () => {
     const sel = resolveFlawSelection({
       bad: false,

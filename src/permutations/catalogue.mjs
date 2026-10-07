@@ -26,6 +26,7 @@ const GAIN_VERDICTS = ['met', 'unmet']
 const TRADING_VERDICTS = ['met', 'breached']
 const UNIT_STAGES = ['baseline', 'retained', 'created', 'enhanced']
 const UNIT_ORDER_FIELDS = ['stage', 'references']
+const UNIT_RATIO_FIELDS = ['stage', 'reference', 'control', 'factor']
 // Only a created or enhanced feature has a time to target condition.
 const TIME_TO_TARGET_STAGES = ['created', 'enhanced']
 const TIME_TO_TARGET_FIELDS = ['stage', 'references', 'years', 'multiplier']
@@ -60,7 +61,7 @@ const OVERRIDE_FIELDS = {
     'proposedRiparianEncroachment',
     'lengthRange'
   ],
-  trees: ['treeSize', 'treeType', 'ruralOrUrban']
+  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count']
 }
 
 /** A catalogue that cannot be read or does not check out; a CLI can report it plainly. */
@@ -127,6 +128,11 @@ function checkOverrideValue(field, value, where) {
   }
   if (field === 'incomplete') {
     return typeof value === 'boolean' ? [] : [`${where}: must be true or false`]
+  }
+  if (field === 'count') {
+    return isPositiveInteger(value)
+      ? []
+      : [`${where}: must be a whole number above 0`]
   }
   return typeof value === 'string' ? [] : [`${where}: must be text`]
 }
@@ -217,6 +223,45 @@ function checkStageReferences(value, where) {
   ]
 }
 
+/**
+ * A feature whose units at one stage are a set multiple of a control's:
+ * one `expectUnitRatio` entry.
+ */
+function checkUnitRatioEntry(entry, where) {
+  if (!isObject(entry)) {
+    return [`${where}: must be an object with ${list(UNIT_RATIO_FIELDS)}`]
+  }
+  const { stage, reference, control, factor } = entry
+  const problems = [
+    ...unknownKeys(entry, UNIT_RATIO_FIELDS, where),
+    ...checkOneOf(stage, UNIT_STAGES, `${where}.stage`),
+    ...['reference', 'control']
+      .filter((field) => !isText(entry[field]))
+      .map((field) => `${where}.${field}: is required text`)
+  ]
+  if (isText(reference) && reference === control) {
+    problems.push(`${where}.control: must differ from reference`)
+  }
+  if (typeof factor !== 'number' || !(factor > 0)) {
+    problems.push(`${where}.factor: must be a number above 0`)
+  }
+  return problems
+}
+
+function checkUnitRatio(value, where) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [`${where}: must be a non-empty list`]
+  }
+  const references = value.map((entry) => `${entry?.stage} ${entry?.reference}`)
+  const repeated = references.filter((ref, i) => references.indexOf(ref) !== i)
+  return [
+    ...value.flatMap((entry, i) =>
+      checkUnitRatioEntry(entry, `${where}[${i}]`)
+    ),
+    ...repeated.map((ref) => `${where}: ${ref} is listed twice`)
+  ]
+}
+
 function checkTimeToTargetEntry(entry, where) {
   if (!isObject(entry)) {
     return [`${where}: must be an object with ${list(TIME_TO_TARGET_FIELDS)}`]
@@ -293,6 +338,7 @@ const OPTIONAL_FIELDS = {
   expectTrading: checkTrading,
   expectUnitOrder: checkStageReferences,
   expectUnitsEqual: checkStageReferences,
+  expectUnitRatio: checkUnitRatio,
   expectTimeToTarget: checkTimeToTarget,
   expectMetricWarnings: (v, where) => checkTextList(v, where),
   expectRejectedInputs: (v, where) => checkTextList(v, where, WORKBOOK_FIELD),

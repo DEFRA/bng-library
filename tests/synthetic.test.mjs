@@ -436,6 +436,41 @@ describe('synthetic generateOne — duplicate Parcel Ref override', () => {
   })
 })
 
+describe('synthetic generateOne — fractional tree count override', () => {
+  let outDir
+  let outPath
+
+  beforeAll(() => {
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-synthetic-tree-count-'))
+    outPath = path.join(outDir, 'tree-count.gpkg')
+    generateOne(outPath, CENTRE, {
+      numParcels: NUM_PARCELS,
+      attributeOverrides: { trees: [{ count: 2.5 }] }
+    })
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  it('stores the fractional count as written, despite the integer column type', () => {
+    // "Count" is declared MEDIUMINT, but SQLite's affinity only converts a
+    // value it can convert losslessly, so 2.5 survives as a REAL — which is
+    // exactly the malformed file the backend's TREE_COUNT_NOT_WHOLE check
+    // exists for.
+    const db = openGeoPackageReadonly(outPath)
+    try {
+      const rows = db
+        .prepare(`SELECT "Count" AS count FROM "Urban Trees" ORDER BY fid`)
+        .all()
+      expect(rows[0].count).toBe(2.5)
+      expect(rows.slice(1).every((r) => Number.isInteger(r.count))).toBe(true)
+    } finally {
+      db.close()
+    }
+  })
+})
+
 describe('synthetic generateOne — advance/delay both set override', () => {
   let outDir
   let outPath

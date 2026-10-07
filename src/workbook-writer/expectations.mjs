@@ -3,11 +3,11 @@
  *
  * A scenario can say what the metric should make of it — the 10% net gain met
  * or not, a trading rule breached, a particular warning raised on its subject
- * feature, its features' units falling in a particular order or matching, or
- * a feature's time to target condition. Checking those against the
- * recalculated workbook keeps the corpus honest: a scenario that no longer
- * demonstrates what it claims to fails here, before anyone compares a service
- * run against it.
+ * feature, its features' units falling in a particular order, matching or
+ * standing in a set ratio, or a feature's time to target condition. Checking
+ * those against the recalculated workbook keeps the corpus honest: a scenario
+ * that no longer demonstrates what it claims to fails here, before anyone
+ * compares a service run against it.
  */
 
 import {
@@ -141,6 +141,28 @@ function unitsEqualCheck({ stage, references }, results) {
   }
 }
 
+const describeUnits = (reference, feature) =>
+  `${reference} ${feature?.units ?? 'missing'}`
+
+/**
+ * One feature's units at one stage must be a set multiple of another's: a
+ * feature that differs from its control only in something the metric should
+ * scale by, such as the number of trees a point stands for. Exactly that
+ * multiple, so a metric that scales by the wrong amount fails too.
+ */
+function unitRatioCheck({ stage, reference, control, factor }, results) {
+  const feature = featureAt(results, stage, reference)
+  const against = featureAt(results, stage, control)
+  const scaled =
+    typeof against?.units === 'number' ? factor * against.units : undefined
+  return {
+    check: `${stage} units of ${reference} against ${control}`,
+    expected: `${reference} = ${factor} × ${control}`,
+    actual: `${describeUnits(reference, feature)}, ${describeUnits(control, against)}`,
+    passed: isClose(feature?.units, scaled)
+  }
+}
+
 const describeTime = (years, multiplier) => `${years} (×${multiplier})`
 
 /**
@@ -224,6 +246,9 @@ export function checkScenarioExpectations(scenario, results, issues = []) {
   }
   if (scenario.expectUnitsEqual) {
     checks.push(unitsEqualCheck(scenario.expectUnitsEqual, results))
+  }
+  for (const entry of scenario.expectUnitRatio ?? []) {
+    checks.push(unitRatioCheck(entry, results))
   }
   checks.push(...timeToTargetChecks(scenario.expectTimeToTarget ?? [], results))
   for (const target of scenario.expectRejectedInputs ?? []) {

@@ -1028,7 +1028,7 @@ function generateUrbanTrees(db, boundaryRing, count, perRowOverrides) {
       MAPPED_BY,
       SURVEY_COMPANY,
       BASE_MAP,
-      TREE_COUNT_DEFAULT,
+      overrideOr(override, 'count', TREE_COUNT_DEFAULT),
       baselineLinearAttribute(retention, ruralOrUrban),
       ruralOrUrban
     )
@@ -1190,7 +1190,9 @@ function runLayerGenerators(db, ring, ctx) {
  *                                      each pins both sides of the row (a
  *                                      Lost tree's proposed size and type
  *                                      stay random; a Created tree's
- *                                      baseline stays "N/A")
+ *                                      baseline stays "N/A"); count — the
+ *                                      "Count" column, the number of trees
+ *                                      the point stands for (default 1)
  *                        `incomplete: true` blanks the row's proposed-side
  *                        condition, strategic-significance and encroachment
  *                        cells to model unfinished post-intervention data;

@@ -107,6 +107,25 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts a whole-number tree count on trees only', () => {
+    const tree = { count: 3 }
+    expect(
+      problems(catalogue(scenario({ overrides: { trees: [tree] } })))
+    ).toEqual([])
+    expect(
+      problems(catalogue(scenario({ overrides: { habitats: [tree] } })))
+    ).toEqual([expect.stringMatching(/habitats\[0\]: unknown field "count"/)])
+    for (const count of ['3', 0, 2.5]) {
+      expect(
+        problems(catalogue(scenario({ overrides: { trees: [{ count }] } })))
+      ).toEqual([
+        expect.stringMatching(
+          /trees\[0\]\.count: must be a whole number above 0/
+        )
+      ])
+    }
+  })
+
   it('checks override values', () => {
     const doc = catalogue(
       scenario({
@@ -215,6 +234,44 @@ describe('parseScenarioCatalogue', () => {
     expect(problems(doc)).toEqual([
       expect.stringMatching(
         /\(a\)\.expectUnitsEqual\.references: must list at least two features/
+      )
+    ])
+  })
+
+  it('checks a unit ratio expectation', () => {
+    const ratio = { stage: 'created', reference: 'T003', control: 'T005' }
+    const doc = catalogue(
+      scenario({ id: 'a', expectUnitRatio: { ...ratio, factor: 2 } }),
+      scenario({
+        id: 'b',
+        expectUnitRatio: [
+          { stage: 'planted', reference: 'T003', control: 'T003', by: 'x' },
+          { ...ratio, factor: 0 },
+          { ...ratio, factor: '2' }
+        ]
+      }),
+      scenario({ id: 'c', expectUnitRatio: [{ ...ratio, factor: 2 }] })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(/\(a\)\.expectUnitRatio: must be a non-empty list/),
+      expect.stringMatching(/\(b\)\.expectUnitRatio\[0\]: unknown field "by"/),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio\[0\]\.stage: "planted" is not one of/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio\[0\]\.control: must differ from reference/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio\[0\]\.factor: must be a number above 0/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio\[1\]\.factor: must be a number above 0/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio\[2\]\.factor: must be a number above 0/
+      ),
+      expect.stringMatching(
+        /\(b\)\.expectUnitRatio: created T003 is listed twice/
       )
     ])
   })

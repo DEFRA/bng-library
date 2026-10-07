@@ -281,6 +281,21 @@ export const FLAWS = {
       perRow: [{ retention: 'Created', advanceYears: '2', delayYears: '3' }]
     }
   },
+  'tree-count-not-whole': {
+    description:
+      'an individual tree point whose "Count" is not a whole number of trees',
+    errorCode: 'TREE_COUNT_NOT_WHOLE',
+    category: CATEGORY_ATTRIBUTE,
+    // The NE template declares "Count" MEDIUMINT, but SQLite's affinity keeps
+    // a 2.5 as a REAL, so a hand-edited file can carry a fractional count.
+    // The backend refuses it rather than guess between two and three trees.
+    // Every other column is randomised as normal; only the count fires the
+    // validator.
+    attributeOverride: {
+      layer: 'trees',
+      perRow: [{ count: 2.5 }]
+    }
+  },
   'no-hedgerows': {
     description: 'Hedgerows layer present with zero rows',
     errorCode: NO_SPECIFIC_ERROR,

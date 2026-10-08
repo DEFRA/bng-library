@@ -266,6 +266,76 @@
       }
     },
     {
+      "id": "intervention-hedgerow-condition-lowered",
+      "purpose": "intervention",
+      "title": "Hedgerow — condition lowered, recorded as lost and recreated",
+      "description": "HG001, a native hedgerow in Good condition, cannot be kept in that condition, so, as the metric user guide says, it is recorded as lost and HG002 is created on the same line, the same length and type, in Moderate condition, with \"created in advance\" set to 30+ years. HG002 does not point to HG001: it is a new hedgerow at post-intervention, not an enhancement, which the metric would reject (invalid-hedgerow-condition-reduced). HG003 is retained as it is.",
+      "size": 2,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "$comment": "The baseline hedgerow, lost: its condition cannot be maintained.",
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "$comment": "Created in its place, in a lower condition, with created in advance set to 30+ years (metric user guide, habitat retention).",
+            "sameLineAs": "HG001",
+            "hedgeType": "Native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "30+",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG002",
+        "note": "the hedgerow recreated in a lower condition in place of HG001"
+      },
+      "expectTimeToTarget": [
+        {
+          "stage": "created",
+          "references": ["HG002"],
+          "years": 0,
+          "multiplier": 1
+        }
+      ],
+      "expectTrading": { "hedgerow": { "Low": "breached" } }
+    },
+    {
       "id": "intervention-watercourse-retained",
       "purpose": "intervention",
       "title": "Watercourse — Retained",

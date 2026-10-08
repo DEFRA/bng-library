@@ -94,6 +94,58 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts sameLineAs naming an earlier feature of the same layer', () => {
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          hedgerows: [{}, { sameLineAs: 'HG001' }],
+          rivers: [{}, {}, { sameLineAs: 'R002' }]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([])
+  })
+
+  it('rejects sameLineAs naming itself, a later row or another layer', () => {
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          hedgerows: [
+            { sameLineAs: 'HG001' },
+            { sameLineAs: 'HG003' },
+            { sameLineAs: 'R001' }
+          ]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /hedgerows\[0\]\.sameLineAs: must be the ref of an earlier hedgerows row/
+      ),
+      expect.stringMatching(
+        /hedgerows\[1\]\.sameLineAs: must be the ref of an earlier hedgerows row/
+      ),
+      expect.stringMatching(
+        /hedgerows\[2\]\.sameLineAs: must be the ref of an earlier hedgerows row/
+      )
+    ])
+  })
+
+  it('rejects sameLineAs with a lengthRange of its own', () => {
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          hedgerows: [{}, { sameLineAs: 'HG001', lengthRange: [300, 400] }]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /hedgerows\[1\]: takes the length of the line it copies/
+      )
+    ])
+  })
+
   it('accepts the tree fields on trees only', () => {
     const tree = { treeSize: 'Medium', treeType: 'Street tree' }
     expect(
@@ -306,7 +358,7 @@ describe('parseScenarioCatalogue', () => {
         /\(b\)\.expectTimeToTarget\[0\]\.stage: "baseline" is not one of "created", "enhanced"/
       ),
       expect.stringMatching(
-        /\(b\)\.expectTimeToTarget\[0\]\.years: must be a whole number above 0 or "30\+"/
+        /\(b\)\.expectTimeToTarget\[0\]\.years: must be a whole number or "30\+"/
       ),
       expect.stringMatching(
         /\(b\)\.expectTimeToTarget\[0\]\.multiplier: must be a number above 0, at most 1/

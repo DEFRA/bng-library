@@ -405,6 +405,60 @@ describe('attributeOverrides — lengthRange', () => {
   })
 })
 
+describe('attributeOverrides — sameLineAs', () => {
+  let outDir
+
+  beforeAll(() => {
+    setMode('silent')
+    outDir = mkdtempSync(path.join(tmpdir(), 'bng-same-line-'))
+  })
+
+  afterAll(() => {
+    rmSync(outDir, { recursive: true, force: true })
+  })
+
+  function lines(gpkgPath, table) {
+    const db = openGeoPackageReadonly(gpkgPath)
+    try {
+      return db
+        .prepare(`SELECT geom FROM "${table}" ORDER BY rowid`)
+        .all()
+        .map((r) => wkbToGeoJSON(r.geom).coordinates)
+    } finally {
+      db.close()
+    }
+  }
+
+  it('gives a row the line of the earlier feature it names', () => {
+    const gpkgPath = path.join(outDir, 'same-line.gpkg')
+    generateOne(gpkgPath, CENTRE, {
+      numParcels: 2,
+      seed: 5,
+      attributeOverrides: {
+        hedgerows: [{}, {}, { sameLineAs: 'HG001' }],
+        rivers: [{}, { sameLineAs: 'R001' }]
+      }
+    })
+    const hedgerows = lines(gpkgPath, 'Hedgerows')
+    expect(hedgerows[2]).toEqual(hedgerows[0])
+    expect(hedgerows[1]).not.toEqual(hedgerows[0])
+    const rivers = lines(gpkgPath, 'Rivers')
+    expect(rivers[1]).toEqual(rivers[0])
+  })
+
+  it('leaves the rows before it drawn as without it', () => {
+    const plain = path.join(outDir, 'plain.gpkg')
+    const copied = path.join(outDir, 'copied.gpkg')
+    generateOne(plain, CENTRE, { numParcels: 2, seed: 9 })
+    generateOne(copied, CENTRE, {
+      numParcels: 2,
+      seed: 9,
+      attributeOverrides: { hedgerows: [{}, { sameLineAs: 'HG001' }] }
+    })
+    expect(lines(copied, 'Hedgerows')[0]).toEqual(lines(plain, 'Hedgerows')[0])
+  })
+})
+
 describe('attributeOverrides — trees', () => {
   let outDir
   let gpkgPath

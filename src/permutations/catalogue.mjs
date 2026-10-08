@@ -51,7 +51,7 @@ const COMMON_OVERRIDE_FIELDS = [
 ]
 const OVERRIDE_FIELDS = {
   habitats: ['habitatFullName', 'proposedHabitatFullName', 'parcelRef'],
-  hedgerows: ['hedgeType', 'proposedHedgeType', 'lengthRange'],
+  hedgerows: ['hedgeType', 'proposedHedgeType', 'lengthRange', 'sameLineAs'],
   rivers: [
     'riverType',
     'proposedRiverType',
@@ -59,7 +59,8 @@ const OVERRIDE_FIELDS = {
     'proposedWaterEncroachment',
     'baselineRiparianEncroachment',
     'proposedRiparianEncroachment',
-    'lengthRange'
+    'lengthRange',
+    'sameLineAs'
   ],
   trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count']
 }
@@ -72,6 +73,7 @@ export class ScenarioCatalogueError extends Error {
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 const isText = (v) => typeof v === 'string' && v.trim() !== ''
 const isPositiveInteger = (v) => Number.isInteger(v) && v > 0
+const isWholeNumber = (v) => Number.isInteger(v) && v >= 0
 const list = (values) => values.map((v) => JSON.stringify(v)).join(', ')
 
 function unknownKeys(value, allowed, where) {
@@ -110,6 +112,34 @@ function checkLengthRange(value, where) {
   return valid
     ? []
     : [`${where}: must be [min, max] metres, with 0 < min ≤ max`]
+}
+
+// The ref prefix of each line layer's features, as the generator writes
+// them: HG001 is the first hedgerow.
+const LINE_REF_PREFIX = { hedgerows: 'HG', rivers: 'R' }
+
+// `sameLineAs` names an earlier feature of the same layer, by its ref, and
+// takes its line, so the row cannot pin a length range of its own.
+function checkSameLineAs(layer, row, index, where) {
+  if (!isObject(row) || !('sameLineAs' in row)) {
+    return []
+  }
+  const match = new RegExp(`^${LINE_REF_PREFIX[layer]}(\\d+)$`).exec(
+    row.sameLineAs
+  )
+  const target = match ? Number(match[1]) : 0
+  const problems =
+    target >= 1 && target <= index
+      ? []
+      : [
+          `${where}.sameLineAs: must be the ref of an earlier ${layer} row, ${LINE_REF_PREFIX[layer]}001 to the row before this one`
+        ]
+  if ('lengthRange' in row) {
+    problems.push(
+      `${where}: takes the length of the line it copies, so cannot pin lengthRange too`
+    )
+  }
+  return problems
 }
 
 // The strategic significance a scenario may pin, per Defra's LNRS guidance:
@@ -167,9 +197,10 @@ function checkOverrides(overrides, where) {
       .filter(([layer]) => layers.includes(layer))
       .flatMap(([layer, rows]) =>
         Array.isArray(rows)
-          ? rows.flatMap((row, i) =>
-              checkOverrideRow(layer, row, `${where}.${layer}[${i}]`)
-            )
+          ? rows.flatMap((row, i) => [
+              ...checkOverrideRow(layer, row, `${where}.${layer}[${i}]`),
+              ...checkSameLineAs(layer, row, i, `${where}.${layer}[${i}]`)
+            ])
           : [`${where}.${layer}: must be a list of rows`]
       )
   ]
@@ -272,10 +303,9 @@ function checkTimeToTargetEntry(entry, where) {
     ...checkOneOf(stage, TIME_TO_TARGET_STAGES, `${where}.stage`),
     ...checkTextList(references, `${where}.references`)
   ]
-  if (!isPositiveInteger(years) && years !== THIRTY_PLUS) {
-    problems.push(
-      `${where}.years: must be a whole number above 0 or "${THIRTY_PLUS}"`
-    )
+  // 0 is a creation advanced to its target condition before the losses.
+  if (!isWholeNumber(years) && years !== THIRTY_PLUS) {
+    problems.push(`${where}.years: must be a whole number or "${THIRTY_PLUS}"`)
   }
   if (typeof multiplier !== 'number' || multiplier <= 0 || multiplier > 1) {
     problems.push(`${where}.multiplier: must be a number above 0, at most 1`)

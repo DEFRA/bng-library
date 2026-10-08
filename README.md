@@ -319,7 +319,7 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `expectUnitOrder`      |          | `{ stage, references }`: features whose units at one stage (`baseline`, `retained`, `created` or `enhanced`) must fall strictly in the order listed, checked against the metric's rows                                                            |
 | `expectUnitsEqual`     |          | `{ stage, references }`: features whose units at one stage must all be the same, checked against the metric's rows                                                                                                                                |
 | `expectUnitRatio`      |          | A list of `{ stage, reference, control, factor }`: a feature whose units at one stage must be exactly `factor` times its control's, checked against the metric's rows                                                                             |
-| `expectTimeToTarget`   |          | A list of `{ stage, references, years, multiplier }`: the final time to target condition (a whole number of years, or `"30+"`) and its multiplier the metric must give each created or enhanced feature listed, checked against the metric's rows |
+| `expectTimeToTarget`   |          | A list of `{ stage, references, years, multiplier }`: the final time to target condition (whole years from 0, or else `"30+"`) and its multiplier the metric must give each created or enhanced feature listed, checked against the metric's rows |
 | `expectMetricWarnings` |          | `invalid-` only. Text of warnings the metric must raise on the subject                                                                                                                                                                            |
 | `expectRejectedInputs` |          | `invalid-` only. `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                                                            |
 
@@ -329,13 +329,17 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | all         | `retention`, `baselineCondition`, `proposedCondition`, `baselineStrategicSignificance`, `proposedStrategicSignificance`, `advanceYears`, `delayYears`, `incomplete` (true blanks the proposed-side condition, strategic significance and encroachment) |
 | `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
-| `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`                                                                                                                                                                                                        |
-| `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`                                                                              |
+| `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                          |
+| `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                |
 | `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned)                                           |
 
 Values are the GeoPackage template's own spellings, such as
 `"Grassland - Other neutral grassland"` or `"Moderate"`. `lengthRange` is
 `[min, max]` metres; the line is redrawn until it fits.
+`sameLineAs` is the ref of an earlier feature in the same layer (`"HG001"`):
+the row takes that feature's line, so the two are the same length. It is how
+a scenario records a feature lost and recreated in place. A row with it cannot
+also pin `lengthRange`.
 
 Things worth knowing when writing a scenario:
 

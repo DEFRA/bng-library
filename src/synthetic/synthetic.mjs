@@ -462,12 +462,23 @@ function suitsRow(coords, override) {
 }
 
 /**
+ * The index of the earlier feature a row's `sameLineAs` names ("HG001" is
+ * the first), or null when the row draws a line of its own. The catalogue
+ * checks the ref names an earlier row of the same layer.
+ */
+function sameLineIndex(override) {
+  const match = /(\d+)$/.exec(override?.sameLineAs ?? '')
+  return match ? Number(match[1]) - 1 : null
+}
+
+/**
  * Shared rejection-sampling driver for the synthetic line-feature layers.
  * Picks linestrings via `generateLinestring`, rejects any whose vertices
  * fall outside the boundary — or whose length falls outside the row's pinned
- * `lengthRange` — and inserts up to `count` accepted features. Without a
- * `lengthRange` the draw sequence is exactly as before, so seeded fixtures
- * are unchanged.
+ * `lengthRange` — and inserts up to `count` accepted features. A row pinned
+ * with `sameLineAs` takes that earlier feature's line instead of drawing
+ * one, as a hedgerow recreated in place of a lost one does. Without either
+ * the draw sequence is exactly as before, so seeded fixtures are unchanged.
  */
 function generateLineFeatures(
   db,
@@ -484,7 +495,15 @@ function generateLineFeatures(
     count *
     LINE_FEATURE_REJECTION_BUDGET_FACTOR *
     (pinsLength ? LENGTH_RANGE_BUDGET_MULTIPLIER : 1)
+  const lines = []
   while (produced < count && attempts < maxAttempts) {
+    const copied = lines[sameLineIndex(perRowOverrides?.[produced])]
+    if (copied) {
+      stmt.run(...buildRow(copied, produced))
+      lines.push(copied)
+      produced += 1
+      continue
+    }
     attempts += 1
     const coords = generateLinestring(boundaryRing)
     if (
@@ -494,6 +513,7 @@ function generateLineFeatures(
     ) {
       expandEnvelope(allEnvelope, envelopeFromCoords(coords))
       stmt.run(...buildRow(coords, produced))
+      lines.push(coords)
       produced += 1
     }
   }
@@ -1181,6 +1201,11 @@ function runLayerGenerators(db, ring, ctx) {
  *                                      scenario comparing units between
  *                                      lines is not at the mercy of lengths
  *                                      that otherwise vary ~40-fold
+ *                          hedgerows,  sameLineAs — the ref of an earlier
+ *                          rivers      feature in the layer ("HG001"),
+ *                                      whose line the row takes as its own:
+ *                                      a feature recreated in place of a
+ *                                      lost one, the same length
  *                          rivers      riverType, proposedRiverType,
  *                                      baselineWaterEncroachment,
  *                                      proposedWaterEncroachment,

@@ -111,7 +111,7 @@ export const COLUMN_GUIDE = Object.freeze([
   ],
   [
     'Strategic significance ×',
-    'For a feature, the strategic significance multiplier the metric applied (1, 1.1 or 1.15). The service applies 1 to every feature.',
+    'For a feature, the strategic significance multiplier the metric applied (1, 1.1 or 1.15). The service applies 1 to baseline and retained features, and to created and enhanced features their Proposed Strategic Significance: 1 (Low) or 1.15 (High). It does not support Medium (1.1): it nulls that, or any other value, and prices the feature at zero.',
     'A multiplier, no unit'
   ],
   [

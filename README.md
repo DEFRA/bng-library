@@ -399,3 +399,18 @@ npm test
 ```
 
 This repo pins Node 24 via `.nvmrc` — run `nvm use` before installing so the `better-sqlite3` native binary is built against the right Node version.
+
+### Metric comparison in CI
+
+The _Metric comparison_ workflow (`.github/workflows/metric-comparison.yml`)
+runs on each pull request and each merge group. It calls
+bng-metric-harness's comparison with the commit to test, which checks out
+bng-metric-backend (the branch of the same name as the pull request if there is
+one, otherwise `main`), swaps its bng-library for this commit, and compares the
+service's figures with the Statutory Biodiversity Metric's for every scenario
+in the harness's corpus. So a change here that would regress the service is
+caught before it merges, not when the backend next repins. Any difference
+nothing known explains fails the check
+`Compare the service with the metric / Compare the service with the metric (library candidate)`;
+whether that gates the merge is set by the ruleset on `main`. See the harness's
+[docs/compare-metric.md](https://github.com/DEFRA/bng-metric-harness/blob/main/docs/compare-metric.md).

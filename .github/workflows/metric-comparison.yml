@@ -17,7 +17,8 @@ name: Metric comparison
 #   backend's main, since a merge group has no head branch to match. That is
 #   what the change meets once it merges. So a change that needs a paired
 #   backend branch passes here only once that branch is merged: merge the
-#   backend change first, pinned to this pull request's head commit. The
+#   backend change first, pinned to this pull request's head commit, and
+#   repin it to the merge commit on main once this pull request merges. The
 #   trigger is what lets the comparison be a required check: without it the
 #   queue would wait for a status that never arrives. Whether it gates the
 #   merge is set by the ruleset on main, not here.

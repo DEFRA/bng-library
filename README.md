@@ -422,5 +422,7 @@ is one, otherwise the backend's `main`. A merge group is always compared against
 the backend's `main`, which is what the change meets once it merges. So a change
 that needs a paired backend branch passes in the merge queue only once that
 branch is merged: merge the backend change first, pinned to the pull request's
-head commit. See the harness's
+head commit. Once the pull request merges, repin the backend to the merge commit
+on `main`; until then it depends on a commit that's only on the pull request.
+See the harness's
 [docs/compare-metric.md](https://github.com/DEFRA/bng-metric-harness/blob/main/docs/compare-metric.md).

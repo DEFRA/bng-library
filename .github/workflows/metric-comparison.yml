@@ -39,7 +39,7 @@ jobs:
     # on this repo's own GITHUB_TOKEN. No PAT or repository_dispatch needed.
     # With library-sha, the harness runs one leg, "library candidate". A
     # newer push to a pull request cancels the run in flight.
-    uses: DEFRA/bng-metric-harness/.github/workflows/metric-comparison.yml@main
+    uses: DEFRA/bng-metric-harness/.github/workflows/metric-comparison.yml@BMD-1036-metric-comparison-merge-queue
     with:
       # Pin to the commit under test, not a branch name, so a push landing
       # while the job queues cannot swap the code under test. For a pull

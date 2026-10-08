@@ -34,7 +34,7 @@ export const CAUSES = Object.freeze({
     id: 'strategic-significance',
     title: 'Strategic significance not applied',
     description:
-      "The service priced the feature at a strategic significance multiplier of 1 where the metric applied 1.1 (location ecologically desirable) or 1.15 (formally identified in a local strategy). The service prices every baseline and retained feature at Low (1), as Defra's LNRS guidance requires, and created and enhanced features at their Proposed Strategic Significance; a workbook with a higher baseline, or a proposed value the service did not read, differs this way.",
+      "The service priced the feature at a strategic significance multiplier of 1 where the metric applied 1.1 (location ecologically desirable) or 1.15 (formally identified in a local strategy). The service prices every baseline and retained feature at Low (1), as Defra's LNRS guidance requires, and created and enhanced features at their Proposed Strategic Significance, which may only be Low or High; a workbook with a higher baseline, or a proposed value the service did not read, differs this way. A proposed Medium is not this cause: the service does not support it, so it nulls the value and prices the feature at zero.",
     notImplemented: true
   })
 })

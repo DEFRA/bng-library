@@ -18,15 +18,17 @@ import {
 } from './watercourse-post-intervention.mjs'
 import {
   isRecognisedStrategicSignificance,
+  isValidProposedStrategicSignificance,
   resolveStrategicSignificance
 } from './strategic-significance.mjs'
 
 const HIGH = 'Formally identified in local strategy'
+// Medium (×1.10) is not supported by the service (BMD-1051): it is not reference
+// data, so it is rejected like any other unrecognised value.
 const MEDIUM = 'Location ecologically desirable but not in local strategy'
 const LOW = 'Area/compensation not in local strategy/ no local strategy'
 
 const HIGH_MULTIPLIER = 1.15
-const MEDIUM_MULTIPLIER = 1.1
 const LOW_MULTIPLIER = 1
 
 const GRASSLAND = 'Grassland - Modified grassland'
@@ -37,7 +39,6 @@ const DITCHES = 'Ditches'
 describe('resolveStrategicSignificance', () => {
   it.each([
     [HIGH, 'High', HIGH_MULTIPLIER],
-    [MEDIUM, 'Medium', MEDIUM_MULTIPLIER],
     [LOW, 'Low', LOW_MULTIPLIER]
   ])('resolves "%s" to %s (×%s)', (label, category, multiplier) => {
     expect(resolveStrategicSignificance(label)).toEqual({
@@ -48,7 +49,7 @@ describe('resolveStrategicSignificance', () => {
 
   it.each([
     ['High', HIGH_MULTIPLIER],
-    ['medium strategic significance ', MEDIUM_MULTIPLIER],
+    ['high strategic significance ', HIGH_MULTIPLIER],
     ['Low Strategic Significance', LOW_MULTIPLIER],
     ['  formally identified in LOCAL strategy ', HIGH_MULTIPLIER],
     [
@@ -74,8 +75,12 @@ describe('resolveStrategicSignificance', () => {
     }
   )
 
-  it('throws BaselineLookupError for an unrecognised label', () => {
-    expect(() => resolveStrategicSignificance('Very important')).toThrow(
+  it.each([
+    ['an unrecognised label', 'Very important'],
+    ['Medium, which the service does not support', MEDIUM],
+    ['the Medium category name', 'Medium']
+  ])('throws BaselineLookupError for %s', (_name, value) => {
+    expect(() => resolveStrategicSignificance(value)).toThrow(
       BaselineLookupError
     )
   })
@@ -86,16 +91,38 @@ describe('resolveStrategicSignificance', () => {
 })
 
 describe('isRecognisedStrategicSignificance', () => {
-  it.each([HIGH, MEDIUM, LOW, 'High', null, undefined, ''])(
+  it.each([HIGH, LOW, 'High', null, undefined, ''])(
     'recognises %j',
     (value) => {
       expect(isRecognisedStrategicSignificance(value)).toBe(true)
     }
   )
 
-  it.each(['Very important', 'N/A', 42, {}])('rejects %j', (value) => {
-    expect(isRecognisedStrategicSignificance(value)).toBe(false)
-  })
+  it.each(['Very important', 'N/A', MEDIUM, 'Medium', 42, {}])(
+    'rejects %j',
+    (value) => {
+      expect(isRecognisedStrategicSignificance(value)).toBe(false)
+    }
+  )
+})
+
+// BMD-1051 — what an imported created or enhanced habitat may carry: Low or
+// High. A blank is not a value the user supplied, so it is invalid here even
+// though the calculators default it to Low.
+describe('isValidProposedStrategicSignificance', () => {
+  it.each([HIGH, LOW, 'High', 'Low', ' low strategic significance '])(
+    'accepts %j',
+    (value) => {
+      expect(isValidProposedStrategicSignificance(value)).toBe(true)
+    }
+  )
+
+  it.each([null, undefined, '', '   ', MEDIUM, 'Medium', 'Very important', 42])(
+    'rejects %j',
+    (value) => {
+      expect(isValidProposedStrategicSignificance(value)).toBe(false)
+    }
+  )
 })
 
 // Created and enhanced units are multiplied by the Proposed Strategic
@@ -170,7 +197,6 @@ describe('post-intervention calculators apply the proposed strategic significanc
 
     it.each([
       [HIGH, 'High', HIGH_MULTIPLIER],
-      [MEDIUM, 'Medium', MEDIUM_MULTIPLIER],
       [LOW, 'Low', LOW_MULTIPLIER]
     ])('prices "%s" at ×%s', (label, category, multiplier) => {
       const result = calculate(label)
@@ -184,8 +210,11 @@ describe('post-intervention calculators apply the proposed strategic significanc
       expect(calculate(null).strategicSignificanceScore).toBe(LOW_MULTIPLIER)
     })
 
-    it('rejects an unrecognised value', () => {
-      expect(() => calculate('Very important')).toThrow(BaselineLookupError)
+    it.each([
+      ['an unrecognised value', 'Very important'],
+      ['Medium', MEDIUM]
+    ])('rejects %s', (_name, value) => {
+      expect(() => calculate(value)).toThrow(BaselineLookupError)
     })
   })
 
@@ -212,16 +241,20 @@ describe('post-intervention calculators apply the proposed strategic significanc
 describe('agrees with the metric workbook', () => {
   const DECIMAL_PLACES = 10
 
-  it('A-2 H001: created, Medium strategic significance', () => {
-    const result = calculateCreatedAreaHabitatPostIntervention(
-      12.4540503463745,
-      'Sparsely vegetated land - Other inland rock and scree',
-      'Fairly Good',
-      0,
-      0,
-      MEDIUM
-    )
-    expect(result.units).toBeCloseTo(53.7882983392763, DECIMAL_PLACES)
+  // A-2 H001 in that workbook is created at Medium (×1.10), which the metric
+  // prices at 53.788 units. The service does not support Medium, so the engine
+  // refuses it rather than agreeing with the metric here (BMD-1051).
+  it('A-2 H001: created, Medium strategic significance, is refused', () => {
+    expect(() =>
+      calculateCreatedAreaHabitatPostIntervention(
+        12.4540503463745,
+        'Sparsely vegetated land - Other inland rock and scree',
+        'Fairly Good',
+        0,
+        0,
+        MEDIUM
+      )
+    ).toThrow(BaselineLookupError)
   })
 
   it('A-2 H005: created, High strategic significance', () => {
@@ -234,23 +267,5 @@ describe('agrees with the metric workbook', () => {
       HIGH
     )
     expect(result.units).toBeCloseTo(42.9111296536616, DECIMAL_PLACES)
-  })
-
-  it('C-3 R002: enhanced watercourse, Medium strategic significance', () => {
-    const lengthKm = 0.152964683190664
-    const result = calculateEnhancedWatercoursePostIntervention(
-      lengthKm,
-      lengthKm,
-      DITCHES,
-      DITCHES,
-      'Moderate',
-      'Good',
-      {
-        watercourseEncroachment: 'Minor',
-        riparianEncroachment: 'Minor/ No Encroachment',
-        strategicSignificance: MEDIUM
-      }
-    )
-    expect(result.units).toBeCloseTo(1.51291618661406, DECIMAL_PLACES)
   })
 })

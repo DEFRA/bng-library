@@ -50,6 +50,7 @@ export {
 export { resolveDistinctiveness } from './multipliers.mjs'
 export {
   isRecognisedStrategicSignificance,
+  isValidProposedStrategicSignificance,
   resolveStrategicSignificance
 } from './strategic-significance.mjs'
 export {

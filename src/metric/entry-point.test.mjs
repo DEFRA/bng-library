@@ -71,6 +71,7 @@ const PUBLIC_EXPORTS = [
   'getIndividualTreeAreaHectares',
   'isRecognisedEncroachmentValue',
   'isRecognisedStrategicSignificance',
+  'isValidProposedStrategicSignificance',
   'normaliseEncroachmentLabel',
   'resolveDistinctiveness',
   'resolveStrategicSignificance',

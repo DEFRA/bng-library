@@ -46,10 +46,19 @@ These tables mirror the reference data embedded in the published Statutory Metri
 | `watercourse-encroachment-multiplier.json`                    | `WATERCOURSE_ENCROACHMENT_MULTIPLIER`                    | Watercourse encroachment band → multiplier                                                                                                                                                                                                        |
 | `watercourse-riparian-encroachment-multiplier.json`           | `WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER`           | Riparian encroachment band → multiplier                                                                                                                                                                                                           |
 
+### Left out on purpose
+
+`strategic-significance-multiplier.json` holds only Low (×1) and High (×1.15).
+The workbook's range, `G-3 Multipliers` L3:N6, also has Medium (×1.10) for
+"Location ecologically desirable but not in local strategy". It is left out
+on purpose (BMD-1051): the service assumes every LPA has published its LNRS,
+so a created or enhanced habitat is Low or High only. Don't add Medium back
+when re-extracting the table.
+
 ## Updating
 
 1. Obtain the latest published Statutory Metric reference tables from Natural England.
-2. Update the relevant JSON file(s) in this directory (preserve key strings exactly — they are join keys for GeoPackage data).
+2. Update the relevant JSON file(s) in this directory (preserve key strings exactly — they are join keys for GeoPackage data). Keep the rows listed under [Left out on purpose](#left-out-on-purpose) out.
 3. Add a static import and export in `../reference-constants.mjs` if adding a new table, and add a row to the table above.
 4. Update the **Metric version** / **Extracted on** rows in this README.
 5. Run `npm test -- src/metric/` here, and any bng-metric-backend tests that depend on the calculations.

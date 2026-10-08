@@ -405,12 +405,18 @@ This repo pins Node 24 via `.nvmrc` — run `nvm use` before installing so the `
 The _Metric comparison_ workflow (`.github/workflows/metric-comparison.yml`)
 runs on each pull request and each merge group. It calls
 bng-metric-harness's comparison with the commit to test, which checks out
-bng-metric-backend (the branch of the same name as the pull request if there is
-one, otherwise `main`), swaps its bng-library for this commit, and compares the
+bng-metric-backend, swaps its bng-library for this commit, and compares the
 service's figures with the Statutory Biodiversity Metric's for every scenario
 in the harness's corpus. So a change here that would regress the service is
 caught before it merges, not when the backend next repins. Any difference
 nothing known explains fails the check
 `Compare the service with the metric / Compare the service with the metric (library candidate)`;
-whether that gates the merge is set by the ruleset on `main`. See the harness's
+whether that gates the merge is set by the ruleset on `main`.
+
+A pull request is compared against the backend branch of the same name if there
+is one, otherwise the backend's `main`. A merge group is always compared against
+the backend's `main`, which is what the change meets once it merges. So a change
+that needs a paired backend branch passes in the merge queue only once that
+branch is merged: merge the backend change first, pinned to the pull request's
+head commit. See the harness's
 [docs/compare-metric.md](https://github.com/DEFRA/bng-metric-harness/blob/main/docs/compare-metric.md).

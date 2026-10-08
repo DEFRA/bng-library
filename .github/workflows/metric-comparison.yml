@@ -11,11 +11,16 @@ name: Metric comparison
 # names the commits compared and leads with any difference nothing explains;
 # the full report (report.html and report.xlsx) is in the run's artifacts.
 #
-# - Pull requests: the branch's head commit.
-# - Merge queue (merge_group): the queue's merge commit. The trigger is what
-#   lets the comparison be a required check: without it the queue would wait
-#   for a status that never arrives. Whether it gates the merge is set by the
-#   ruleset on main, not here.
+# - Pull requests: the branch's head commit, against the backend branch of
+#   the same name if there is one, otherwise the backend's main.
+# - Merge queue (merge_group): the queue's merge commit, always against the
+#   backend's main, since a merge group has no head branch to match. That is
+#   what the change meets once it merges. So a change that needs a paired
+#   backend branch passes here only once that branch is merged: merge the
+#   backend change first, pinned to this pull request's head commit. The
+#   trigger is what lets the comparison be a required check: without it the
+#   queue would wait for a status that never arrives. Whether it gates the
+#   merge is set by the ruleset on main, not here.
 #
 # Pushes to main aren't compared here: the harness compares bng-library's
 # main with the backend on each of its merges, three times each weekday and
@@ -46,4 +51,6 @@ jobs:
       # request that is the branch's head, not GitHub's merge commit; for a
       # merge group, the queue's merge commit.
       library-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Only names the commit in the job summary. The harness finds the
+      # backend branch from github.head_ref, which a merge group leaves empty.
       library-ref: ${{ github.head_ref || github.ref_name }}

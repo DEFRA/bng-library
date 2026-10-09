@@ -942,6 +942,14 @@ describe('renderComparisonHtml', () => {
     const page = renderComparisonHtml([result])
     expect(page).toContain('1 Met / Not met answer differs from the metric')
     expect(page).toContain('1 feature value differs for no known reason')
+    // Each names the value it counts and links to its row in the table.
+    expect(page).toContain(
+      '<a href="#row-site-net-gain-area-verdict">site: Area habitats: net-gain|area|verdict</a>'
+    )
+    expect(page).toContain('<tr id="row-site-net-gain-area-verdict"')
+    expect(page).toContain(
+      '<a href="#row-site-feature-units-area-created-t5">site: Area habitats: feature-units|area|created|T5</a>'
+    )
     expect(page).toContain(
       'Net change: 9.0900% in the metric, 10.0100% in the service'
     )
@@ -992,9 +1000,98 @@ describe('renderComparisonHtml', () => {
     )
   })
 
-  it('lists why a refused scenario was refused', () => {
-    expect(html).toContain('ADVANCE_AND_DELAY')
+  it('lists why a refused scenario was refused, in words rather than code', () => {
+    expect(html).toContain(
+      'The service refused the post-intervention file: Both set'
+    )
     expect(html).toContain('Refused, as expected (invalid data)')
+    expect(html).not.toContain('ADVANCE_AND_DELAY')
+    expect(html).not.toContain('postIntervention')
+  })
+
+  it('shows the verdict the caller gives at the top, with its reasons', () => {
+    const page = renderComparisonHtml(results, {
+      verdict: {
+        passed: false,
+        summary: '1 difference has no known explanation.',
+        reasons: ['site: <H1> baseline units']
+      }
+    })
+    expect(page).toContain('<section class="verdict fail" role="status">')
+    expect(page).toContain(
+      'Failed</span> 1 difference has no known explanation.'
+    )
+    expect(page).toContain('<li>site: &lt;H1&gt; baseline units</li>')
+    expect(page.indexOf('class="verdict')).toBeLessThan(
+      page.indexOf('<ul class="headline">')
+    )
+  })
+
+  it('shows a passing verdict, and none when the caller gives none', () => {
+    const page = renderComparisonHtml(results, {
+      verdict: { passed: true, summary: 'Every difference is explained.' }
+    })
+    expect(page).toContain('<section class="verdict pass" role="status">')
+    expect(page).toContain('Passed</span> Every difference is explained.')
+    expect(html).not.toContain('class="verdict')
+  })
+
+  it('counts the figures not compared, by what the service does not do yet', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [
+        figure('totals|area|baseline', 1),
+        figure('trading-status|hedgerow|Low', 'Met')
+      ],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 1)]
+      }
+    })
+    const page = renderComparisonHtml([result])
+    expect(page).toContain(
+      '1 figure was not compared, because the service does not calculate it yet:'
+    )
+    expect(page).toContain(
+      'The service computes the hedgerow trading figures but derives no hedgerow trading statuses.'
+    )
+    expect(page).toContain('matches the metric in every value compared.')
+    expect(html).not.toContain('not compared, because')
+  })
+
+  it('explains each cause the table uses, and marks those not implemented yet', () => {
+    expect(html).toContain('What the causes in the Why column mean:')
+    expect(html).toContain(
+      '<strong>Strategic significance not applied</strong> <span class="badge muted">not implemented yet</span>:'
+    )
+    expect(html).not.toContain('<strong>Priced on a different size</strong>')
+  })
+
+  it('shows every difference in one table, a row each, with its scenario', () => {
+    expect(html.match(/<table>/g)).toHaveLength(1)
+    expect(html).not.toContain('<details')
+    const rows = html.match(/<tbody>.*<\/tbody>/s)[0].match(/<tr[ >]/g)
+    // site's total and feature, and invalid-x's refusal.
+    expect(rows).toHaveLength(3)
+  })
+
+  it('lists the most serious scenarios first, and counts those that match', () => {
+    const matched = compareScenario({
+      scenario: { id: 'all-match' },
+      expected: [figure('totals|area|baseline', 1)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 1)]
+      }
+    })
+    const page = renderComparisonHtml([matched, ...results])
+    expect(page.indexOf('<td>site</td>')).toBeLessThan(
+      page.indexOf('<td>invalid-x</td>')
+    )
+    expect(page).not.toContain('<td>all-match</td>')
+    expect(page).toContain(
+      '1 other scenario matches the metric in every value compared.'
+    )
   })
 })
 

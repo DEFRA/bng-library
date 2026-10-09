@@ -257,14 +257,43 @@ export const FLAWS = {
     }
   },
   'duplicate-habitat-ref': {
-    description: 'two habitat parcels share the same Parcel Ref',
-    errorCode: 'DUPLICATE_HABITAT_REF',
+    description:
+      'two habitat parcels share the same Parcel Ref — file is accepted',
+    // The backend rejected a shared Parcel Ref with DUPLICATE_HABITAT_REF
+    // until BMD-1058, which allows habitats to share one. Kept, like
+    // tiny-gap, to show a file the service accepts: pin both rows to the
+    // same Parcel Ref, and randomise geometry and every other column.
+    errorCode: NO_SPECIFIC_ERROR,
     category: CATEGORY_ATTRIBUTE,
-    // Pin both rows to the same Parcel Ref. Geometry and every other column
-    // are randomised as normal — only the ref collision triggers the validator.
     attributeOverride: {
       layer: 'habitats',
       perRow: [{ parcelRef: 'DUP-1' }, { parcelRef: 'DUP-1' }]
+    }
+  },
+  'missing-habitat-ref': {
+    description: 'a habitat parcel whose Parcel Ref is only spaces',
+    errorCode: 'HABITAT_REF_MISSING',
+    category: CATEGORY_ATTRIBUTE,
+    // Spaces rather than NULL: the generator writes a NULL override as a
+    // generated ref, and spaces are the harder case, blank only once the
+    // backend trims them.
+    attributeOverride: {
+      layer: 'habitats',
+      perRow: [{ parcelRef: '   ' }]
+    }
+  },
+  'habitat-ref-invalid-characters': {
+    description:
+      'a habitat parcel whose Parcel Ref holds the character a decoder puts in place of invalid UTF-8',
+    errorCode: 'HABITAT_REF_INVALID_CHARACTERS',
+    category: CATEGORY_ATTRIBUTE,
+    // SQLite stores what it is given as text, so the generator cannot write
+    // the invalid bytes themselves. The backend sees invalid UTF-8 as
+    // U+FFFD once decoded, and rejects that character wherever it came from,
+    // so writing it triggers the same rule.
+    attributeOverride: {
+      layer: 'habitats',
+      perRow: [{ parcelRef: 'H\uFFFD01' }]
     }
   },
   'advance-delay-both-set': {

@@ -6,6 +6,7 @@ import {
   resolveFlawSelection
 } from '../index.mjs'
 import { polygonArea } from '../src/geometry.mjs'
+import { NO_SPECIFIC_ERROR } from '../src/synthetic/flaws.mjs'
 import {
   BAD_REDLINE_HALF,
   TINY_GAP_DEPTH_M,
@@ -65,6 +66,27 @@ describe('resolveFlawSelection — happy paths', () => {
     expect(refs[0]).toBeTruthy()
     expect(refs[0]).toBe(refs[1])
   })
+
+  it('marks the duplicate-habitat-ref flaw as accepted, since habitats may share a ref (BMD-1058)', () => {
+    expect(FLAWS['duplicate-habitat-ref'].errorCode).toBe(NO_SPECIFIC_ERROR)
+  })
+
+  it.each([
+    ['missing-habitat-ref', 'HABITAT_REF_MISSING', '   '],
+    [
+      'habitat-ref-invalid-characters',
+      'HABITAT_REF_INVALID_CHARACTERS',
+      'H\uFFFD01'
+    ]
+  ])(
+    'routes the %s flaw to %s by pinning the Parcel Ref on one row',
+    (name, errorCode, parcelRef) => {
+      const sel = resolveFlawSelection({ bad: false, flaws: [name] })
+      expect(sel.attributeFlawNames).toEqual([name])
+      expect(sel.attributeOverrides.habitats).toEqual([{ parcelRef }])
+      expect(FLAWS[name].errorCode).toBe(errorCode)
+    }
+  )
 
   it('routes the advance-delay-both-set flaw and pins both years on a created row', () => {
     const sel = resolveFlawSelection({

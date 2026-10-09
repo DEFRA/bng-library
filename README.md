@@ -235,13 +235,29 @@ metres first), or a strategic significance multiplier the service did not
 apply (`strategic-significance`; it prices every baseline at Low, per the LNRS
 guidance) — carries that cause, but still counts.
 
-`renderComparisonHtml` gives a short, self-contained page (no external assets,
-so it opens straight from a CI artifact). It leads with the Met / Not met answers
-that differ, then the values no known cause explains, the known causes of the
-rest, and what the service does not implement yet, then each scenario's full
-list of differences. Values are shown to four decimal places with their unit,
-and differences as numbers in the same unit; one too small for twelve decimal
-places is shown in scientific notation, so it never reads as zero.
+`renderComparisonHtml` gives a self-contained page (no external assets, so it
+opens straight from a CI artifact):
+
+- A pass or fail box, when the caller passes `verdict` (`passed`, `summary`,
+  `reasons`). What fails a run is the caller's rule, so the report only shows
+  it.
+- Headline lines, including:
+  - the Met / Not met answers that differ, and the values no known cause
+    explains, each named and linked to its row;
+  - how many figures were not compared because the service does not calculate
+    them yet, by gap.
+- One table with a row for every value that differs, across every scenario:
+  the scenario, its status, the value, the metric's and the service's, the
+  difference, and why. Scenarios come most serious first, and the most
+  important differences first within each. A scenario with nothing to compare
+  (refused, failed to import, or its workbook unreadable) has one row saying
+  why.
+- Under the table, what each cause in the Why column means, and how many
+  scenarios match in every value compared.
+
+Values are shown to four decimal places with their unit, and differences as
+numbers in the same unit; one too small for twelve decimal places is shown in
+scientific notation, so it never reads as zero.
 `renderComparisonXlsx` gives a spreadsheet: a summary sheet, then one row per
 scenario, per discrepancy and per figure not implemented, each with a frozen,
 filterable header and real numbers to sort by. It is written with the

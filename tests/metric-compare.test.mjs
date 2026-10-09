@@ -1036,6 +1036,37 @@ describe('renderComparisonHtml', () => {
     expect(html).not.toContain('class="verdict')
   })
 
+  it('counts the figures not compared, by what the service does not do yet', () => {
+    const result = compareScenario({
+      scenario: { id: 'site' },
+      expected: [
+        figure('totals|area|baseline', 1),
+        figure('trading-status|hedgerow|Low', 'Met')
+      ],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 1)]
+      }
+    })
+    const page = renderComparisonHtml([result])
+    expect(page).toContain(
+      '1 figure was not compared, because the service does not calculate it yet:'
+    )
+    expect(page).toContain(
+      'The service computes the hedgerow trading figures but derives no hedgerow trading statuses.'
+    )
+    expect(page).toContain('matches the metric in every value compared.')
+    expect(html).not.toContain('not compared, because')
+  })
+
+  it('explains each cause the table uses, and marks those not implemented yet', () => {
+    expect(html).toContain('What the causes in the Why column mean:')
+    expect(html).toContain(
+      '<strong>Strategic significance not applied</strong> <span class="badge muted">not implemented yet</span>:'
+    )
+    expect(html).not.toContain('<strong>Priced on a different size</strong>')
+  })
+
   it('shows every difference in one table, a row each, with its scenario', () => {
     expect(html.match(/<table>/g)).toHaveLength(1)
     expect(html).not.toContain('<details')
@@ -1059,7 +1090,7 @@ describe('renderComparisonHtml', () => {
     )
     expect(page).not.toContain('<td>all-match</td>')
     expect(page).toContain(
-      '1 other scenario matches the metric in every value.'
+      '1 other scenario matches the metric in every value compared.'
     )
   })
 })

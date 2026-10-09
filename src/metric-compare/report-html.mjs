@@ -13,6 +13,7 @@
 import { CAUSES_BY_ID } from './causes.mjs'
 import { OUTCOME, TOLERANCE } from './compare.mjs'
 import { CATEGORY, UNIT } from './figures.mjs'
+import { SERVICE_GAPS } from './service-gaps.mjs'
 
 const DECIMAL_PLACES = 4
 const SMALLEST_SHOWN = 10 ** -DECIMAL_PLACES
@@ -210,6 +211,35 @@ function namedValues(found) {
   return `<ul>${items.join('')}</ul>`
 }
 
+/**
+ * The figures the metric has and the service does not compute yet, so they
+ * were not compared: a headline line with each gap and its count, or null
+ * when every figure was compared.
+ */
+function notComparedLine(results) {
+  const gaps = SERVICE_GAPS.map((gap) => ({
+    gap,
+    count: results.reduce(
+      (n, r) =>
+        n + (r.notImplemented ?? []).filter((f) => f.gap === gap.id).length,
+      0
+    )
+  })).filter(({ count }) => count > 0)
+  const total = gaps.reduce((n, { count }) => n + count, 0)
+  if (total === 0) {
+    return null
+  }
+  const items = gaps.map(
+    ({ gap, count }) =>
+      `<li>${escape(gap.description)} <span class="muted-text">(${plural(count, 'figure')})</span></li>`
+  )
+  return [
+    'muted',
+    `${plural(total, 'figure')} ${total === 1 ? 'was' : 'were'} not compared, because the service does not calculate ${total === 1 ? 'it' : 'them'} yet:`,
+    `<ul>${items.join('')}</ul>`
+  ]
+}
+
 function headline(results, answers, unexplained, explained) {
   const refused = results.filter((r) => r.outcome === OUTCOME.rejected)
   const acceptedInvalid = results.filter(
@@ -225,14 +255,14 @@ function headline(results, answers, unexplained, explained) {
       answers.length
         ? `${plural(answers.length, 'Met / Not met answer')} ${answers.length === 1 ? 'differs' : 'differ'} from the metric, in ${plural(scenarioCount(answers), 'scenario')}:`
         : 'Every Met / Not met answer agrees with the metric.',
-      answers
+      answers.length ? namedValues(answers) : ''
     ],
     [
       unexplained.length ? 'warn' : 'good',
       unexplained.length
         ? `${plural(unexplained.length, 'feature value')} ${unexplained.length === 1 ? 'differs' : 'differ'} for no known reason, in ${plural(scenarioCount(unexplained), 'scenario')}:`
         : 'No feature value differs for an unknown reason.',
-      unexplained
+      unexplained.length ? namedValues(unexplained) : ''
     ],
     [
       'muted',
@@ -257,6 +287,10 @@ function headline(results, answers, unexplained, explained) {
       `The service accepted ${plural(acceptedInvalid.length, 'scenario')} whose data is invalid.`
     ])
   }
+  const notCompared = notComparedLine(results)
+  if (notCompared) {
+    lines.push(notCompared)
+  }
   if (unreadable.length) {
     lines.push([
       'warn',
@@ -265,8 +299,8 @@ function headline(results, answers, unexplained, explained) {
   }
   return `<ul class="headline">${lines
     .map(
-      ([tone, text, found]) =>
-        `<li class="${tone}">${escape(text)}${found?.length ? namedValues(found) : ''}</li>`
+      ([tone, text, list = '']) =>
+        `<li class="${tone}">${escape(text)}${list}</li>`
     )
     .join('')}</ul>`
 }
@@ -358,7 +392,7 @@ function resultsTable(results) {
     )
   const matched = results.length - listed.length
   const rest = matched
-    ? `<p class="muted-text">${listed.length ? plural(matched, 'other scenario') : `All ${plural(matched, 'scenario')}`} ${matched === 1 ? 'matches' : 'match'} the metric in every value.</p>`
+    ? `<p class="muted-text">${listed.length ? plural(matched, 'other scenario') : `All ${plural(matched, 'scenario')}`} ${matched === 1 ? 'matches' : 'match'} the metric in every value compared.</p>`
     : ''
   if (listed.length === 0) {
     return rest
@@ -366,7 +400,29 @@ function resultsTable(results) {
   return `${table(
     ['Scenario', 'Status', 'Value', 'Metric', 'Service', 'Difference', 'Why'],
     listed.flatMap(({ rows }) => rows)
-  )}${rest}`
+  )}${causeKey(results)}${rest}`
+}
+
+/**
+ * What each cause in the Why column means, for the causes the table uses
+ * only, marking those the service does not implement yet.
+ */
+function causeKey(results) {
+  const used = new Set(
+    results.flatMap((r) =>
+      (r.discrepancies ?? []).flatMap((d) => d.causes ?? [])
+    )
+  )
+  const items = [...used]
+    .map((id) => CAUSES_BY_ID[id])
+    .filter(Boolean)
+    .map(
+      (cause) =>
+        `<li><strong>${escape(cause.title)}</strong>${cause.notImplemented ? ' <span class="badge muted">not implemented yet</span>' : ''}: ${escape(cause.description)}</li>`
+    )
+  return items.length
+    ? `<div class="key"><p class="muted-text">What the causes in the Why column mean:</p><ul>${items.join('')}</ul></div>`
+    : ''
 }
 
 /** The run's pass or fail, and why; nothing when the caller gives none. */
@@ -402,6 +458,7 @@ p,li{max-width:85ch}a{color:var(--accent)}code{font-size:12px;color:var(--muted)
 ul.headline{list-style:none;padding:0;margin:16px 0}
 ul.headline li{border-left:4px solid var(--line);padding:6px 12px;margin:6px 0;background:var(--panel);border-radius:0 6px 6px 0;font-size:16px}
 ul.headline li.bad{border-color:var(--bad)}ul.headline li.warn{border-color:var(--warn)}ul.headline li.good{border-color:var(--good)}
+.key ul{margin:4px 0;padding-left:20px;font-size:14px}.key li{margin:4px 0}
 .scroll{overflow:auto;max-height:80vh;border:1px solid var(--line);border-radius:8px}
 table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}

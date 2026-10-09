@@ -182,6 +182,34 @@ function scenarioCount(found) {
   return new Set(found.map(({ result }) => result.id)).size
 }
 
+/** How many of the values a headline line counts it names. */
+const NAMED_IN_HEADLINE = 5
+
+/** The id of a difference's row in the table, for the headline to link to. */
+function rowId(result, d) {
+  return `row-${`${result.id}-${d.key}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-')}`
+}
+
+/**
+ * The values a headline line counts, the first few by scenario and name,
+ * each linked to its row in the table.
+ */
+function namedValues(found) {
+  const items = found
+    .slice(0, NAMED_IN_HEADLINE)
+    .map(
+      ({ d, result }) =>
+        `<li><a href="#${rowId(result, d)}">${escape(result.id)}: ${escape(figureTitle(d))}</a></li>`
+    )
+  const more = found.length - NAMED_IN_HEADLINE
+  if (more > 0) {
+    items.push(
+      `<li>and ${plural(more, 'more value')}, marked in the table</li>`
+    )
+  }
+  return `<ul>${items.join('')}</ul>`
+}
+
 function headline(results, answers, unexplained, explained) {
   const refused = results.filter((r) => r.outcome === OUTCOME.rejected)
   const acceptedInvalid = results.filter(
@@ -195,14 +223,16 @@ function headline(results, answers, unexplained, explained) {
     [
       answers.length ? 'bad' : 'good',
       answers.length
-        ? `${plural(answers.length, 'Met / Not met answer')} ${answers.length === 1 ? 'differs' : 'differ'} from the metric, in ${plural(scenarioCount(answers), 'scenario')}.`
-        : 'Every Met / Not met answer agrees with the metric.'
+        ? `${plural(answers.length, 'Met / Not met answer')} ${answers.length === 1 ? 'differs' : 'differ'} from the metric, in ${plural(scenarioCount(answers), 'scenario')}:`
+        : 'Every Met / Not met answer agrees with the metric.',
+      answers
     ],
     [
       unexplained.length ? 'warn' : 'good',
       unexplained.length
-        ? `${plural(unexplained.length, 'feature value')} ${unexplained.length === 1 ? 'differs' : 'differ'} for no known reason, in ${plural(scenarioCount(unexplained), 'scenario')}.`
-        : 'No feature value differs for an unknown reason.'
+        ? `${plural(unexplained.length, 'feature value')} ${unexplained.length === 1 ? 'differs' : 'differ'} for no known reason, in ${plural(scenarioCount(unexplained), 'scenario')}:`
+        : 'No feature value differs for an unknown reason.',
+      unexplained
     ],
     [
       'muted',
@@ -234,7 +264,10 @@ function headline(results, answers, unexplained, explained) {
     ])
   }
   return `<ul class="headline">${lines
-    .map(([tone, text]) => `<li class="${tone}">${escape(text)}</li>`)
+    .map(
+      ([tone, text, found]) =>
+        `<li class="${tone}">${escape(text)}${found?.length ? namedValues(found) : ''}</li>`
+    )
     .join('')}</ul>`
 }
 
@@ -306,7 +339,7 @@ function scenarioRows(result, status) {
     .sort((a, b) => rank(a) - rank(b))
     .map(
       (d) =>
-        `<tr${rowClass(d)}>${scenario}<td>${escape(figureTitle(d))}</td><td class="num">${escape(valueText(d.expected, d.unit))}</td><td class="num">${escape(valueText(d.actual, d.unit))}</td><td class="num">${escape(differenceText(d))}</td><td>${escape(causeText(d, result))}</td></tr>`
+        `<tr id="${rowId(result, d)}"${rowClass(d)}>${scenario}<td>${escape(figureTitle(d))}</td><td class="num">${escape(valueText(d.expected, d.unit))}</td><td class="num">${escape(valueText(d.actual, d.unit))}</td><td class="num">${escape(differenceText(d))}</td><td>${escape(causeText(d, result))}</td></tr>`
     )
 }
 
@@ -374,6 +407,8 @@ table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{font-size:12px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--bg)}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+ul.headline ul{margin:4px 0 0;padding-left:20px;font-size:14px}
+tr:target td{background:var(--warn-bg)}
 tr.row-bad td:first-child{border-left:3px solid var(--bad)}tr.row-warn td:first-child{border-left:3px solid var(--warn)}
 .badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;white-space:nowrap}
 .badge.good{background:var(--good-bg);color:var(--good)}.badge.bad{background:var(--bad-bg);color:var(--bad)}

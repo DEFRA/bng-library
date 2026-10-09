@@ -942,6 +942,14 @@ describe('renderComparisonHtml', () => {
     const page = renderComparisonHtml([result])
     expect(page).toContain('1 Met / Not met answer differs from the metric')
     expect(page).toContain('1 feature value differs for no known reason')
+    // Each names the value it counts and links to its row in the table.
+    expect(page).toContain(
+      '<a href="#row-site-net-gain-area-verdict">site: Area habitats: net-gain|area|verdict</a>'
+    )
+    expect(page).toContain('<tr id="row-site-net-gain-area-verdict"')
+    expect(page).toContain(
+      '<a href="#row-site-feature-units-area-created-t5">site: Area habitats: feature-units|area|created|T5</a>'
+    )
     expect(page).toContain(
       'Net change: 9.0900% in the metric, 10.0100% in the service'
     )

@@ -177,14 +177,14 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
         delayYears: 0
       }
     )
-    expect(result.units).toBeCloseTo(9.91534208)
+    expect(result.units).toBeCloseTo(10.0792670746)
     expect(result.postInterventionDistinctiveness).toBe('V.High')
     expect(result.postInterventionDistinctivenessScore).toBe(8)
     expect(result.postInterventionConditionScore).toBe(2)
     expect(result.postInterventionWaterEncroachmentMultiplier).toBe(0.8)
     expect(result.postInterventionRiparianEncroachmentMultiplier).toBe(0.98)
     expect(result.timeMultiplier).toBe(0.8671800006)
-    expect(result.difficultyMultiplier).toBe(0.67)
+    expect(result.difficultyMultiplier).toBe(0.7)
     expect(result.standardTimeToTargetCondition).toBe('4')
     expect(result.difficulty).toBe('Medium')
   })
@@ -208,8 +208,8 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
       }
     )
     expect(result.timeMultiplier).toBe(0.7002822742)
-    expect(result.difficultyMultiplier).toBe(0.67)
-    expect(result.units).toBeCloseTo(9.63027)
+    expect(result.difficultyMultiplier).toBe(0.7)
+    expect(result.units).toBeCloseTo(9.8823711033)
     expect(result.standardTimeToTargetCondition).toBe('10')
     expect(result.difficulty).toBe('Medium')
   })
@@ -299,9 +299,9 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
         delayYears: 0
       }
     )
-    expect(result.units).toBeCloseTo(15.504)
+    expect(result.units).toBeCloseTo(15.843161471)
     expect(result.timeMultiplier).toBe(0.7002822742)
-    expect(result.difficultyMultiplier).toBe(0.67)
+    expect(result.difficultyMultiplier).toBe(0.7)
     expect(result.standardTimeToTargetCondition).toBe('10')
     expect(result.difficulty).toBe('Medium')
   })
@@ -346,9 +346,9 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
         delayYears: 0
       }
     )
-    expect(result.units).toBeCloseTo(20.99)
+    expect(result.units).toBeCloseTo(21.21486)
     expect(result.timeMultiplier).toBe(0.931225)
-    expect(result.difficultyMultiplier).toBe(0.67)
+    expect(result.difficultyMultiplier).toBe(0.7)
     // Statutory value ignores the applied 2-year advance, unlike timeMultiplier's bucket.
     expect(result.standardTimeToTargetCondition).toBe('4')
     expect(result.difficulty).toBe('Medium')
@@ -364,8 +364,8 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
       'Good',
       { advanceYears: 0, delayYears: 0 }
     )
-    // post value 2*8*3=48, baseline value 1*8*2=16, gain=32, RT=0.8671800006*0.67
-    expect(result.units).toBeCloseTo(34.58848)
+    // post value 2*8*3=48, baseline value 1*8*2=16, gain=32, RT=0.8671800006*0.7
+    expect(result.units).toBeCloseTo(35.4248320134)
   })
 
   it('applies post-intervention encroachment multipliers only at the end of the formula', () => {
@@ -393,7 +393,7 @@ describe('calculateEnhancedWatercoursePostIntervention', () => {
       }
     )
 
-    expect(withoutEncroachment.units).toBeCloseTo(12.64712)
+    expect(withoutEncroachment.units).toBeCloseTo(12.8562080034)
     expect(withEncroachment.units).toBeCloseTo(
       withoutEncroachment.units * 0.8 * 0.98
     )

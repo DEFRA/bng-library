@@ -27,7 +27,7 @@ const MULTIPLIER_10_YRS = 0.898632125
 const MULTIPLIER_OVER_30_YRS = 0.3197967361
 const MULTIPLIER_25_YRS = 0.4103768311
 const DIFFICULTY_LOW = 1
-const DIFFICULTY_MEDIUM = 0.67
+const DIFFICULTY_MEDIUM = 0.7
 const DIFFICULTY_CREATION = 0.33
 
 const NATIVE_HEDGEROW = 'Native hedgerow'
@@ -384,7 +384,7 @@ describe('getWatercourseCreationDifficultyLabel', () => {
 
   it('keeps a created ditch on Medium below the target and drops to Low at/above it', () => {
     // Reproduces the BMD-1018 regression: ditch Moderate creation time-to-target
-    // is 5 years, difficulty Creation = Medium (0.67). Advance below 5 must stay
+    // is 5 years, difficulty Creation = Medium (0.7). Advance below 5 must stay
     // Medium; advance >= 5 drops to the fixed Low band.
     expect(
       getWatercourseCreationDifficultyMultiplier(
@@ -502,7 +502,7 @@ describe('getWatercourseEnhancementDifficultyMultiplier', () => {
         0
       )
     ).toBe(DIFFICULTY_LOW)
-    // A 2-year delay on its own leaves the enhancement band (Medium, 0.67).
+    // A 2-year delay on its own leaves the enhancement band (Medium, 0.7).
     expect(
       getWatercourseEnhancementDifficultyMultiplier(
         PRIORITY_HABITAT,

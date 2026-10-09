@@ -264,13 +264,19 @@ function rowClass(d) {
   return isUnexplainedFeature(d) ? ' class="row-warn"' : ''
 }
 
+/** The file the service refused, as a reader would name it. */
+const FILE_NAMES = {
+  baseline: 'baseline',
+  postIntervention: 'post-intervention'
+}
+
 /** Why a scenario has nothing to compare, or null when it has. */
 function nothingCompared(result) {
   switch (result.outcome) {
     case OUTCOME.rejected:
     case OUTCOME.rejectedAsExpected:
-      return `The service refused the ${result.rejectedFile} file: ${result.errors
-        .map((e) => `${e.message} (${e.code})`)
+      return `The service refused the ${FILE_NAMES[result.rejectedFile] ?? result.rejectedFile} file: ${result.errors
+        .map((e) => e.message)
         .join('; ')}`
     case OUTCOME.workbookUnreadable:
       return result.errors[0].message

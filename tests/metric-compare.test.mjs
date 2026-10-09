@@ -992,9 +992,13 @@ describe('renderComparisonHtml', () => {
     )
   })
 
-  it('lists why a refused scenario was refused', () => {
-    expect(html).toContain('ADVANCE_AND_DELAY')
+  it('lists why a refused scenario was refused, in words rather than code', () => {
+    expect(html).toContain(
+      'The service refused the post-intervention file: Both set'
+    )
     expect(html).toContain('Refused, as expected (invalid data)')
+    expect(html).not.toContain('ADVANCE_AND_DELAY')
+    expect(html).not.toContain('postIntervention')
   })
 
   it('shows the verdict the caller gives at the top, with its reasons', () => {

@@ -996,6 +996,33 @@ describe('renderComparisonHtml', () => {
     expect(html).toContain('ADVANCE_AND_DELAY')
     expect(html).toContain('Refused, as expected (invalid data)')
   })
+
+  it('shows every difference in one table, a row each, with its scenario', () => {
+    expect(html.match(/<table>/g)).toHaveLength(1)
+    expect(html).not.toContain('<details')
+    const rows = html.match(/<tbody>.*<\/tbody>/s)[0].match(/<tr[ >]/g)
+    // site's total and feature, and invalid-x's refusal.
+    expect(rows).toHaveLength(3)
+  })
+
+  it('lists the most serious scenarios first, and counts those that match', () => {
+    const matched = compareScenario({
+      scenario: { id: 'all-match' },
+      expected: [figure('totals|area|baseline', 1)],
+      service: {
+        accepted: true,
+        figures: [figure('totals|area|baseline', 1)]
+      }
+    })
+    const page = renderComparisonHtml([matched, ...results])
+    expect(page.indexOf('<td>site</td>')).toBeLessThan(
+      page.indexOf('<td>invalid-x</td>')
+    )
+    expect(page).not.toContain('<td>all-match</td>')
+    expect(page).toContain(
+      '1 other scenario matches the metric in every value.'
+    )
+  })
 })
 
 describe('renderComparisonXlsx', () => {

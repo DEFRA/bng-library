@@ -1,23 +1,22 @@
 /**
- * The comparison as a short, self-contained HTML page, written to answer, in
- * order: does any Met / Not met answer differ from the metric; which values
- * differ for no known reason; what explains the rest; what the service does
- * not do yet. Every scenario's full list of differences is one click away,
- * and every difference, at full precision, is in the spreadsheet report.
+ * The comparison as a self-contained HTML page: a few headline lines, then
+ * one table with a row for every value that differs from the metric, across
+ * every scenario. Scenarios come most serious first, and within a scenario
+ * the most important differences first. A scenario with nothing to compare
+ * (refused, failed to import, or its workbook unreadable) has one row saying
+ * why. Every difference, at full precision, is in the spreadsheet report.
  *
  * Values are shown to four decimal places with their unit; a difference is the
  * service's value less the metric's, in the same unit.
  */
 
-import { CAUSES, CAUSES_BY_ID } from './causes.mjs'
+import { CAUSES_BY_ID } from './causes.mjs'
 import { OUTCOME, TOLERANCE } from './compare.mjs'
 import { CATEGORY, UNIT } from './figures.mjs'
-import { SERVICE_GAPS } from './service-gaps.mjs'
 
 const DECIMAL_PLACES = 4
 const SMALLEST_SHOWN = 10 ** -DECIMAL_PLACES
 const MAX_DECIMAL_PLACES = 12
-const NET_GAIN_TARGET = '10%'
 
 const MODULE_TITLES = {
   area: 'Area habitats',
@@ -61,10 +60,6 @@ function escape(value) {
 
 function plural(n, one, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`
-}
-
-function anchor(id) {
-  return `scenario-${id.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-')}`
 }
 
 /** A number to four decimal places. */
@@ -125,13 +120,6 @@ const isAnswer = (d) => d.unit === UNIT.verdict
 const isUnexplainedFeature = (d) =>
   d.category === CATEGORY.featureUnits && !d.causes?.length
 
-function answerTitle(d) {
-  if (d.category === CATEGORY.netGain) {
-    return `${MODULE_TITLES[d.module]}: net gain (${NET_GAIN_TARGET} target)`
-  }
-  return `${MODULE_TITLES[d.module]}: ${d.label.replace(' band', '')} trading rule`
-}
-
 /** The figure an answer is decided on, where that figure differs too. */
 function decidedBy(d, result) {
   for (const [pattern, keyFor, title] of DECIDED_BY) {
@@ -184,10 +172,6 @@ function table(headers, rows) {
     .join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`
 }
 
-function scenarioLink(id) {
-  return `<a href="#${anchor(id)}">${escape(id)}</a>`
-}
-
 function withScenario(results, pick) {
   return results.flatMap((r) =>
     (r.discrepancies ?? []).filter(pick).map((d) => ({ d, result: r }))
@@ -222,7 +206,7 @@ function headline(results, answers, unexplained, explained) {
     ],
     [
       'muted',
-      `${plural(explained.length, 'other feature value')} ${explained.length === 1 ? 'differs' : 'differ'} for a known reason, explained below.`
+      `${plural(explained.length, 'other feature value')} ${explained.length === 1 ? 'differs' : 'differ'} for a known reason, given in the table.`
     ]
   ]
   if (refused.length) {
@@ -254,84 +238,12 @@ function headline(results, answers, unexplained, explained) {
     .join('')}</ul>`
 }
 
-function answersSection(answers) {
-  if (answers.length === 0) {
-    return '<p>None: the service gives the same Met / Not met answers as the metric.</p>'
-  }
-  return table(
-    ['Scenario', 'Answer', 'Metric', 'Service', 'Why'],
-    answers.map(
-      ({ d, result }) =>
-        `<tr><td>${scenarioLink(result.id)}</td><td>${escape(answerTitle(d))}</td><td>${escape(d.expected)}</td><td>${escape(d.actual)}</td><td>${escape(decidedBy(d, result))}</td></tr>`
-    )
-  )
-}
-
-function unexplainedSection(unexplained) {
-  if (unexplained.length === 0) {
-    return '<p>None.</p>'
-  }
-  return table(
-    ['Scenario', 'Value', 'Metric', 'Service', 'Difference'],
-    unexplained.map(
-      ({ d, result }) =>
-        `<tr><td>${scenarioLink(result.id)}</td><td>${escape(figureTitle(d))}</td><td class="num">${escape(valueText(d.expected, d.unit))}</td><td class="num">${escape(valueText(d.actual, d.unit))}</td><td class="num">${escape(differenceText(d))}</td></tr>`
-    )
-  )
-}
-
-/** The largest difference a cause accounts for, in each unit. */
-function largestByUnit(found) {
-  const largest = new Map()
-  for (const { d } of found) {
-    const size = Math.abs(d.difference ?? 0)
-    if (size > (largest.get(d.differenceUnit) ?? 0)) {
-      largest.set(d.differenceUnit, size)
-    }
-  }
-  return [...largest]
-    .map(([unit, size]) => `${formatDifference(size).slice(1)} ${unit}`)
-    .join(', ')
-}
-
-function causesSection(results) {
-  const items = Object.values(CAUSES).map((cause) => {
-    const found = withScenario(results, (d) => d.causes?.includes(cause.id))
-    const alone = found.filter(({ d }) => d.causes.length === 1)
-    const shared = found.length - alone.length
-    const notImplemented = cause.notImplemented
-      ? ' <span class="badge muted">not implemented yet</span>'
-      : ''
-    const both = shared ? ` (${shared} of them with the other cause too)` : ''
-    const largest = alone.length
-      ? ` Where it is the only cause, the largest difference is ${escape(largestByUnit(alone))}.`
-      : ''
-    return `<li><strong>${escape(cause.title)}</strong>${notImplemented} — ${plural(found.length, 'feature value')} in ${plural(scenarioCount(found), 'scenario')}${both}.${largest}<br><span class="muted-text">${escape(cause.description)}</span></li>`
-  })
-  return `<ul class="causes">${items.join('')}</ul>
-<p class="muted-text">Unit totals, net change and trading figures are built from the feature values, so where those differ they carry the same causes; they are listed under each scenario below.</p>`
-}
-
-function notImplementedSection(results) {
-  const items = SERVICE_GAPS.map((gap) => {
-    const hits = results.flatMap((r) =>
-      (r.notImplemented ?? []).filter((n) => n.gap === gap.id).map(() => r.id)
-    )
-    return hits.length
-      ? `<li>${escape(gap.description)} <span class="muted-text">(${plural(hits.length, 'figure')} not compared, in ${plural(new Set(hits).size, 'scenario')})</span></li>`
-      : ''
-  }).filter(Boolean)
-  return items.length
-    ? `<ul>${items.join('')}</ul>`
-    : '<p>Nothing: the service computes every figure the metric does.</p>'
-}
-
-function causeText(d) {
+function causeText(d, result) {
   if (d.causes?.length) {
     return d.causes.map((id) => CAUSES_BY_ID[id]?.title ?? id).join('; ')
   }
   if (isAnswer(d)) {
-    return 'Answer differs'
+    return `Answer differs. ${decidedBy(d, result)}`
   }
   return d.category === CATEGORY.featureUnits ? 'No known cause' : '—'
 }
@@ -352,64 +264,70 @@ function rowClass(d) {
   return isUnexplainedFeature(d) ? ' class="row-warn"' : ''
 }
 
-function scenarioDifferences(result) {
-  const rows = [...result.discrepancies]
+/** Why a scenario has nothing to compare, or null when it has. */
+function nothingCompared(result) {
+  switch (result.outcome) {
+    case OUTCOME.rejected:
+    case OUTCOME.rejectedAsExpected:
+      return `The service refused the ${result.rejectedFile} file: ${result.errors
+        .map((e) => `${e.message} (${e.code})`)
+        .join('; ')}`
+    case OUTCOME.workbookUnreadable:
+      return result.errors[0].message
+    case OUTCOME.importFailed:
+      return `The service threw an error importing it, so nothing was compared: ${result.errors[0].message}`
+    case OUTCOME.acceptedInvalid:
+      return result.discrepancies.length === 0
+        ? 'The service accepted this scenario, which is built to hold invalid data, so it should have refused it. Every value matches the metric.'
+        : null
+    default:
+      return null
+  }
+}
+
+// Scenarios, most serious first.
+const TONE_ORDER = ['bad', 'warn', 'muted', 'good']
+
+function scenarioRows(result, status) {
+  const scenario = `<td>${escape(result.id)}</td><td>${badge(status)}</td>`
+  const reason = nothingCompared(result)
+  if (reason) {
+    return [
+      `<tr>${scenario}<td>—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>${escape(reason)}</td></tr>`
+    ]
+  }
+  return [...(result.discrepancies ?? [])]
     .sort((a, b) => rank(a) - rank(b))
     .map(
       (d) =>
-        `<tr${rowClass(d)}><td>${escape(figureTitle(d))}</td><td class="num">${escape(valueText(d.expected, d.unit))}</td><td class="num">${escape(valueText(d.actual, d.unit))}</td><td class="num">${escape(differenceText(d))}</td><td>${escape(causeText(d))}</td></tr>`
+        `<tr${rowClass(d)}>${scenario}<td>${escape(figureTitle(d))}</td><td class="num">${escape(valueText(d.expected, d.unit))}</td><td class="num">${escape(valueText(d.actual, d.unit))}</td><td class="num">${escape(differenceText(d))}</td><td>${escape(causeText(d, result))}</td></tr>`
     )
-  return table(['Value', 'Metric', 'Service', 'Difference', 'Why'], rows)
 }
 
-function scenarioSummaryCounts(result) {
-  const differences = result.discrepancies ?? []
-  const answers = differences.filter(isAnswer).length
-  const unexplained = differences.filter(isUnexplainedFeature).length
-  return [
-    answers ? plural(answers, 'answer differs', 'answers differ') : null,
-    unexplained ? `${unexplained} with no known cause` : null,
-    differences.length
-      ? `${plural(differences.length, 'difference')} in all`
-      : null
-  ]
-    .filter(Boolean)
-    .join(' · ')
-}
-
-function scenarioBody(result) {
-  if (
-    result.outcome === OUTCOME.rejected ||
-    result.outcome === OUTCOME.rejectedAsExpected
-  ) {
-    const errors = result.errors
-      .map(
-        (e) => `<li>${escape(e.message)} <code>${escape(e.code)}</code></li>`
-      )
-      .join('')
-    return `<p>The service refused the ${escape(result.rejectedFile)} file:</p><ul>${errors}</ul>`
-  }
-  if (result.outcome === OUTCOME.workbookUnreadable) {
-    return `<p>${escape(result.errors[0].message)}</p>`
-  }
-  if (result.outcome === OUTCOME.importFailed) {
-    return `<p>The service threw an error importing this scenario, so nothing was compared:</p><pre>${escape(result.errors[0].message)}</pre>`
-  }
-  const differences = result.discrepancies.length
-    ? scenarioDifferences(result)
-    : '<p>Every value matches the metric.</p>'
-  return result.outcome === OUTCOME.acceptedInvalid
-    ? `<p>The service accepted this scenario, which is built to hold invalid data, so it should have refused it.</p>${differences}`
-    : differences
-}
-
-function scenariosSection(results) {
-  return results
-    .map((result) => {
-      const counts = scenarioSummaryCounts(result)
-      return `<details class="scenario" id="${anchor(result.id)}"><summary>${badge(statusOf(result))} <strong>${escape(result.id)}</strong>${counts ? ` <span class="muted-text">${escape(counts)}</span>` : ''}</summary>${scenarioBody(result)}</details>`
+/** Every difference, in one table, and how many scenarios match outright. */
+function resultsTable(results) {
+  const listed = results
+    .map((result, order) => {
+      const status = statusOf(result)
+      return { status, order, rows: scenarioRows(result, status) }
     })
-    .join('')
+    .filter(({ rows }) => rows.length > 0)
+    .sort(
+      (a, b) =>
+        TONE_ORDER.indexOf(a.status.tone) - TONE_ORDER.indexOf(b.status.tone) ||
+        a.order - b.order
+    )
+  const matched = results.length - listed.length
+  const rest = matched
+    ? `<p class="muted-text">${listed.length ? plural(matched, 'other scenario') : `All ${plural(matched, 'scenario')}`} ${matched === 1 ? 'matches' : 'match'} the metric in every value.</p>`
+    : ''
+  if (listed.length === 0) {
+    return rest
+  }
+  return `${table(
+    ['Scenario', 'Status', 'Value', 'Metric', 'Service', 'Difference', 'Why'],
+    listed.flatMap(({ rows }) => rows)
+  )}${rest}`
 }
 
 const STYLE = `
@@ -417,26 +335,23 @@ const STYLE = `
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--fg:#e6e9eb;--muted:#9aa5ad;--line:#30363b;--panel:#1d2226;--good:#5cc47a;--good-bg:#173323;--bad:#ff8a7a;--bad-bg:#3a1c19;--warn:#f0b54a;--warn-bg:#3a2c10;--accent:#7aa2ff}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
-h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:32px 0 8px}
+main{max-width:1400px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}
 p,li{max-width:85ch}a{color:var(--accent)}code{font-size:12px;color:var(--muted)}
 .context,.muted-text{color:var(--muted);font-size:13px}
 .how{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px}
 ul.headline{list-style:none;padding:0;margin:16px 0}
 ul.headline li{border-left:4px solid var(--line);padding:6px 12px;margin:6px 0;background:var(--panel);border-radius:0 6px 6px 0;font-size:16px}
 ul.headline li.bad{border-color:var(--bad)}ul.headline li.warn{border-color:var(--warn)}ul.headline li.good{border-color:var(--good)}
-ul.causes li{margin:8px 0}
-.scroll{overflow-x:auto}
+.scroll{overflow:auto;max-height:80vh;border:1px solid var(--line);border-radius:8px}
 table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
-th{font-size:12px;color:var(--muted);font-weight:600}
+th{font-size:12px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--bg)}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.row-bad td:first-child{border-left:3px solid var(--bad)}tr.row-warn td:first-child{border-left:3px solid var(--warn)}
 .badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;white-space:nowrap}
 .badge.good{background:var(--good-bg);color:var(--good)}.badge.bad{background:var(--bad-bg);color:var(--bad)}
 .badge.warn{background:var(--warn-bg);color:var(--warn)}.badge.muted{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
-details.scenario{border:1px solid var(--line);border-radius:8px;margin:6px 0;padding:0 12px}
-details.scenario>summary{cursor:pointer;padding:8px 0}
 @media (max-width:640px){main{padding:16px}th,td{padding:4px 6px}}
 `
 
@@ -461,17 +376,7 @@ export function renderComparisonHtml(results, options = {}) {
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
     headline(results, answers, unexplained, explained),
     `<p class="how">Each value is compared with the metric's, and matches when it differs by less than ${TOLERANCE.relative} of it, relatively: just enough to clear the floating-point noise of adding up in a different order, so any real difference shows, however small. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
-    '<h2>1. Answers that differ</h2>',
-    answersSection(answers),
-    '<h2>2. Values that differ for no known reason</h2>',
-    unexplainedSection(unexplained),
-    '<h2>3. Known causes</h2>',
-    causesSection(results),
-    '<h2>4. Not implemented in the service yet</h2>',
-    notImplementedSection(results),
-    '<h2>5. Scenarios</h2>',
-    '<p class="muted-text">Open a scenario for its full list of differences, most important first.</p>',
-    scenariosSection(results)
+    resultsTable(results)
   ]
   return `<!doctype html>
 <html lang="en">

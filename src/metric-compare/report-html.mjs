@@ -339,7 +339,8 @@ main{max-width:1400px;margin:0 auto;padding:24px 16px 64px}
 h1{font-size:24px;margin:0 0 4px}
 p,li{max-width:85ch}a{color:var(--accent)}code{font-size:12px;color:var(--muted)}
 .context,.muted-text{color:var(--muted);font-size:13px}
-.how{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px}
+.how{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px 10px 32px;font-size:14px}
+.how li{margin:2px 0}
 ul.headline{list-style:none;padding:0;margin:16px 0}
 ul.headline li{border-left:4px solid var(--line);padding:6px 12px;margin:6px 0;background:var(--panel);border-radius:0 6px 6px 0;font-size:16px}
 ul.headline li.bad{border-color:var(--bad)}ul.headline li.warn{border-color:var(--warn)}ul.headline li.good{border-color:var(--good)}
@@ -375,7 +376,13 @@ export function renderComparisonHtml(results, options = {}) {
     `<h1>${escape(title)} — ${plural(results.length, 'scenario')}</h1>`,
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
     headline(results, answers, unexplained, explained),
-    `<p class="how">Each value is compared with the metric's, and matches when it differs by less than ${TOLERANCE.relative} of it, relatively: just enough to clear the floating-point noise of adding up in a different order, so any real difference shows, however small. <strong>Metric</strong> is the value the Statutory Biodiversity Metric workbook calculates; <strong>Service</strong> is what the BNG service calculates from the same GeoPackages; <strong>Difference</strong> is the service's value less the metric's, in the same unit. Values are shown to ${DECIMAL_PLACES} decimal places; <code>report.xlsx</code> has every difference at full precision.</p>`,
+    `<ul class="how">
+<li><strong>Metric</strong> is the value calculated by the Statutory Biodiversity Metric workbook.</li>
+<li><strong>Service</strong> is the value the BNG service calculates from the same GeoPackages.</li>
+<li><strong>Difference</strong> is the service's value minus the metric's, in the same unit.</li>
+<li>Two values match if they differ by less than ${TOLERANCE.relative} of the metric's value. That allows only for tiny rounding differences from adding numbers up in a different order, so any real difference is shown, however small.</li>
+<li>Values are shown to ${DECIMAL_PLACES} decimal places. <code>report.xlsx</code> has every difference in full.</li>
+</ul>`,
     resultsTable(results)
   ]
   return `<!doctype html>

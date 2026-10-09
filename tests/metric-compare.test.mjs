@@ -997,6 +997,33 @@ describe('renderComparisonHtml', () => {
     expect(html).toContain('Refused, as expected (invalid data)')
   })
 
+  it('shows the verdict the caller gives at the top, with its reasons', () => {
+    const page = renderComparisonHtml(results, {
+      verdict: {
+        passed: false,
+        summary: '1 difference has no known explanation.',
+        reasons: ['site: <H1> baseline units']
+      }
+    })
+    expect(page).toContain('<section class="verdict fail" role="status">')
+    expect(page).toContain(
+      'Failed</span> 1 difference has no known explanation.'
+    )
+    expect(page).toContain('<li>site: &lt;H1&gt; baseline units</li>')
+    expect(page.indexOf('class="verdict')).toBeLessThan(
+      page.indexOf('<ul class="headline">')
+    )
+  })
+
+  it('shows a passing verdict, and none when the caller gives none', () => {
+    const page = renderComparisonHtml(results, {
+      verdict: { passed: true, summary: 'Every difference is explained.' }
+    })
+    expect(page).toContain('<section class="verdict pass" role="status">')
+    expect(page).toContain('Passed</span> Every difference is explained.')
+    expect(html).not.toContain('class="verdict')
+  })
+
   it('shows every difference in one table, a row each, with its scenario', () => {
     expect(html.match(/<table>/g)).toHaveLength(1)
     expect(html).not.toContain('<details')

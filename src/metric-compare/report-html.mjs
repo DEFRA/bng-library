@@ -330,6 +330,19 @@ function resultsTable(results) {
   )}${rest}`
 }
 
+/** The run's pass or fail, and why; nothing when the caller gives none. */
+function verdictBox(verdict) {
+  if (!verdict) {
+    return ''
+  }
+  const tone = verdict.passed ? 'pass' : 'fail'
+  const label = verdict.passed ? 'Passed' : 'Failed'
+  const reasons = verdict.reasons?.length
+    ? `<ul>${verdict.reasons.map((r) => `<li>${escape(r)}</li>`).join('')}</ul>`
+    : ''
+  return `<section class="verdict ${tone}" role="status"><p class="verdict-title"><span class="verdict-label">${label}</span> ${escape(verdict.summary)}</p>${reasons}</section>`
+}
+
 const STYLE = `
 :root{--bg:#fff;--fg:#1d2327;--muted:#5f6b73;--line:#d8dee2;--panel:#f5f7f8;--good:#1a7f37;--good-bg:#dff3e4;--bad:#b42318;--bad-bg:#fde7e4;--warn:#8a5a00;--warn-bg:#fdf1d6;--accent:#1d4ed8}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--fg:#e6e9eb;--muted:#9aa5ad;--line:#30363b;--panel:#1d2226;--good:#5cc47a;--good-bg:#173323;--bad:#ff8a7a;--bad-bg:#3a1c19;--warn:#f0b54a;--warn-bg:#3a2c10;--accent:#7aa2ff}}
@@ -341,6 +354,12 @@ p,li{max-width:85ch}a{color:var(--accent)}code{font-size:12px;color:var(--muted)
 .context,.muted-text{color:var(--muted);font-size:13px}
 .how{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px 10px 32px;font-size:14px}
 .how li{margin:2px 0}
+.verdict{border:2px solid var(--line);border-radius:8px;padding:12px 16px;margin:16px 0}
+.verdict.pass{border-color:var(--good);background:var(--good-bg)}.verdict.fail{border-color:var(--bad);background:var(--bad-bg)}
+.verdict-title{margin:0;font-size:18px;font-weight:600}
+.verdict-label{display:inline-block;border-radius:4px;padding:1px 10px;margin-right:6px;color:var(--bg);font-size:16px;letter-spacing:.04em;text-transform:uppercase}
+.verdict.pass .verdict-label{background:var(--good)}.verdict.fail .verdict-label{background:var(--bad)}
+.verdict ul{margin:8px 0 0;padding-left:20px}.verdict li{margin:2px 0}
 ul.headline{list-style:none;padding:0;margin:16px 0}
 ul.headline li{border-left:4px solid var(--line);padding:6px 12px;margin:6px 0;background:var(--panel);border-radius:0 6px 6px 0;font-size:16px}
 ul.headline li.bad{border-color:var(--bad)}ul.headline li.warn{border-color:var(--warn)}ul.headline li.good{border-color:var(--good)}
@@ -362,10 +381,14 @@ tr.row-bad td:first-child{border-left:3px solid var(--bad)}tr.row-warn td:first-
  * @param {string} [options.title]
  * @param {string[]} [options.context] plain-text lines under the title, such
  *   as where the scenarios came from and the commit compared
+ * @param {{ passed: boolean, summary: string, reasons?: string[] }}
+ *   [options.verdict] whether the run passes or fails, and why, shown in a box
+ *   at the top. The caller decides it: what fails a run (which differences
+ *   have a known explanation) is the caller's rule, not the report's
  * @returns {string} a complete HTML document
  */
 export function renderComparisonHtml(results, options = {}) {
-  const { title = 'Metric comparison', context = [] } = options
+  const { title = 'Metric comparison', context = [], verdict } = options
   const answers = withScenario(results, isAnswer)
   const unexplained = withScenario(results, isUnexplainedFeature)
   const explained = withScenario(
@@ -375,6 +398,7 @@ export function renderComparisonHtml(results, options = {}) {
   const body = [
     `<h1>${escape(title)} — ${plural(results.length, 'scenario')}</h1>`,
     ...context.map((line) => `<p class="context">${escape(line)}</p>`),
+    verdictBox(verdict),
     headline(results, answers, unexplained, explained),
     `<ul class="how">
 <li><strong>Metric</strong> is the value calculated by the Statutory Biodiversity Metric workbook.</li>

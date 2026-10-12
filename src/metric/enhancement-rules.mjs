@@ -233,6 +233,12 @@ const AREA_RULES = Object.freeze([
       isBetterThanPoor(proposed)
   },
   {
+    // A Medium proposed habitat is allowed in any condition here, Condition
+    // Assessment N/A included, but must be better than Poor from a Low
+    // baseline whose condition cannot be assessed (the rule above). Both
+    // follow the story as written: a Low baseline with a condition may become
+    // "a Medium distinctiveness area", while one with Condition Assessment N/A
+    // must become a Medium area "with condition better than Poor".
     rule: ENHANCEMENT_RULE.LOW_AREA,
     appliesTo: (baseline) => baseline.distinctiveness === LOW,
     allows: (proposed, baseline) =>

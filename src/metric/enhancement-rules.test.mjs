@@ -46,7 +46,7 @@ function describeRule(kind, baseline, rule, { valid, invalid }) {
 }
 
 describe('checkEnhancement', () => {
-  describe('AC1 medium area with a condition', () => {
+  describe('medium area with a condition', () => {
     describeRule(
       AREA,
       area('Grassland - Other neutral grassland', 'Moderate'),
@@ -84,7 +84,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC2 medium area, Condition Assessment N/A', () => {
+  describe('medium area, Condition Assessment N/A', () => {
     describeRule(
       AREA,
       area('Heathland and shrub - Bramble scrub', CA_NA),
@@ -118,7 +118,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC3 medium intertidal area', () => {
+  describe('medium intertidal area', () => {
     describeRule(
       AREA,
       area('Intertidal sediment - Littoral sand', 'Moderate'),
@@ -158,7 +158,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC4 low area with a condition', () => {
+  describe('low area with a condition', () => {
     describeRule(
       AREA,
       area('Grassland - Modified grassland', 'Moderate'),
@@ -200,7 +200,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC5 low area, Condition Assessment N/A', () => {
+  describe('low area, Condition Assessment N/A', () => {
     describeRule(
       AREA,
       area('Cropland - Cereal crops', CA_NA),
@@ -234,7 +234,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC6 medium hedgerow', () => {
+  describe('medium hedgerow', () => {
     describeRule(
       HEDGEROW,
       linear('Native hedgerow with trees', 'Moderate'),
@@ -257,7 +257,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC7 low hedgerow', () => {
+  describe('low hedgerow', () => {
     describeRule(
       HEDGEROW,
       linear('Native hedgerow', 'Moderate'),
@@ -291,7 +291,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC8 very low hedgerow', () => {
+  describe('very low hedgerow', () => {
     describeRule(
       HEDGEROW,
       linear('Non-native and ornamental hedgerow', 'Moderate'),
@@ -329,7 +329,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC9 medium watercourse', () => {
+  describe('medium watercourse', () => {
     describeRule(
       WATERCOURSE,
       linear('Ditches', 'Moderate'),
@@ -349,7 +349,7 @@ describe('checkEnhancement', () => {
     )
   })
 
-  describe('AC10 low watercourse', () => {
+  describe('low watercourse', () => {
     describeRule(
       WATERCOURSE,
       linear('Culvert', 'Moderate'),

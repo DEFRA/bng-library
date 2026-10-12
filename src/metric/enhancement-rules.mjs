@@ -6,17 +6,17 @@ import {
 import { broadHabitatOf } from './area-trading-rules.mjs'
 
 /**
- * The BNG service's enhancement rules (BMD-820): which proposed habitats an
+ * The BNG service's enhancement rules: which proposed habitats an
  * enhanced habitat may become, given the baseline it enhances.
  *
  * These are the service's rules, not the metric's. The service covers Medium,
  * Low and Very Low distinctiveness habitats only, so Medium is the highest band
  * an enhancement can reach, and those are the only baselines with rules. A
- * Very Low area habitat has none: BMD-820 gives none, and its only condition is
+ * Very Low area habitat has none: none were specified, and its only condition is
  * "N/A - Other". Two rules depart from the metric on purpose: a Medium area
  * baseline whose condition cannot be assessed may enhance into any Medium
- * habitat (AC2), and a culvert may stay a culvert in the same condition (AC10,
- * the "culverts" exception), which the metric's enhancement sheet does not
+ * habitat, and a culvert may stay a culvert in the same condition (the
+ * "culverts" exception), which the metric's enhancement sheet does not
  * offer.
  */
 
@@ -43,7 +43,7 @@ const CONDITION_RANK = Object.freeze({
  */
 const UNRANKED_CONDITIONS = Object.freeze([CONDITION_ASSESSMENT_NA, NA_OTHER])
 
-/** AC3: the two intertidal broad habitats, which may enhance into each other. */
+/** The two intertidal broad habitats, which may enhance into each other. */
 const INTERTIDAL_BROAD_HABITATS = Object.freeze([
   'Intertidal hard structures',
   'Intertidal sediment'
@@ -56,27 +56,27 @@ export const ENHANCEMENT_KIND = Object.freeze({
   watercourse: 'watercourse'
 })
 
-/** The rule an enhancement is checked against: one per acceptance criterion of BMD-820. */
+/** The rule an enhancement is checked against, one per baseline it covers. */
 export const ENHANCEMENT_RULE = Object.freeze({
-  /** AC1: Medium area with a condition, not intertidal */
+  /** Medium area with a condition, not intertidal */
   MEDIUM_AREA: 'medium-area',
-  /** AC2: Medium area, Condition Assessment N/A, not intertidal */
+  /** Medium area, Condition Assessment N/A, not intertidal */
   MEDIUM_AREA_CONDITION_NA: 'medium-area-condition-assessment-na',
-  /** AC3: Medium area, intertidal hard structures or sediment */
+  /** Medium area, intertidal hard structures or sediment */
   MEDIUM_INTERTIDAL_AREA: 'medium-intertidal-area',
-  /** AC4: Low area with a condition */
+  /** Low area with a condition */
   LOW_AREA: 'low-area',
-  /** AC5: Low area, Condition Assessment N/A */
+  /** Low area, Condition Assessment N/A */
   LOW_AREA_CONDITION_NA: 'low-area-condition-assessment-na',
-  /** AC6 */
+  /** Medium hedgerow */
   MEDIUM_HEDGEROW: 'medium-hedgerow',
-  /** AC7 */
+  /** Low hedgerow */
   LOW_HEDGEROW: 'low-hedgerow',
-  /** AC8 */
+  /** Very Low hedgerow */
   VERY_LOW_HEDGEROW: 'very-low-hedgerow',
-  /** AC9 */
+  /** Medium watercourse */
   MEDIUM_WATERCOURSE: 'medium-watercourse',
-  /** AC10 */
+  /** Low watercourse: a culvert */
   LOW_WATERCOURSE: 'low-watercourse'
 })
 
@@ -132,7 +132,8 @@ function resolveSide(categories, side) {
 
 /**
  * The rank a baseline condition is compared against. A baseline whose
- * condition cannot be assessed compares as Poor, as AC2 and AC5 spell out.
+ * condition cannot be assessed compares as Poor: the rules for those
+ * baselines ask for a condition better than Poor.
  *
  * @param {ResolvedSide} baseline
  * @returns {number}
@@ -191,8 +192,9 @@ function isConditionAssessmentNa(side) {
  */
 
 /**
- * Checked in order; the first rule that applies to the baseline decides. AC3
- * comes first because AC1 and AC2 exclude the intertidal broad habitats.
+ * Checked in order; the first rule that applies to the baseline decides. The
+ * intertidal rule comes first because the other Medium area rules exclude the
+ * intertidal broad habitats.
  *
  * @type {readonly EnhancementRule[]}
  */

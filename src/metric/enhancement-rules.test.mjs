@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   ENHANCEMENT_KIND,
+  ENHANCEMENT_NOT_CHECKED_REASON,
   ENHANCEMENT_RULE,
   checkEnhancement,
   enhancementRulesFor
@@ -14,6 +15,12 @@ const {
   hedgerow: HEDGEROW,
   watercourse: WATERCOURSE
 } = ENHANCEMENT_KIND
+const {
+  unrecognisedKind: UNRECOGNISED_KIND,
+  unrecognisedBaseline: UNRECOGNISED_BASELINE,
+  unrecognisedProposed: UNRECOGNISED_PROPOSED,
+  noRule: NO_RULE
+} = ENHANCEMENT_NOT_CHECKED_REASON
 
 function side(habitat, condition) {
   return { habitat, condition }
@@ -373,21 +380,21 @@ describe('checkEnhancement', () => {
           linear('Ditches', 'Moderate'),
           linear('ditches', 'Good')
         )
-      ).toBeNull()
+      ).toEqual({ checked: false, reason: UNRECOGNISED_PROPOSED })
       expect(
         check(
           AREA,
           area('Modified grassland', 'Moderate'),
           area('Grassland - Modified grassland', 'Good')
         )
-      ).toBeNull()
+      ).toEqual({ checked: false, reason: UNRECOGNISED_BASELINE })
       expect(
         check(
           HEDGEROW,
           linear('Native hedgerow', '2. Moderate'),
           linear('Native hedgerow', 'Good')
         )
-      ).toBeNull()
+      ).toEqual({ checked: false, reason: UNRECOGNISED_BASELINE })
     })
 
     it('reports the distinctiveness of both sides', () => {
@@ -398,6 +405,7 @@ describe('checkEnhancement', () => {
           linear('Species-rich native hedgerow', 'Poor')
         )
       ).toEqual({
+        checked: true,
         rule: ENHANCEMENT_RULE.LOW_HEDGEROW,
         valid: false,
         baselineDistinctiveness: 'Low',
@@ -410,48 +418,72 @@ describe('checkEnhancement', () => {
     it.each([
       [
         'a very low area baseline',
+        NO_RULE,
         AREA,
         area('Urban - Developed land; sealed surface', 'N/A - Other'),
         area('Grassland - Modified grassland', 'Good')
       ],
       [
         'a high watercourse baseline',
+        NO_RULE,
         WATERCOURSE,
         linear('Other rivers and streams', 'Moderate'),
         linear('Other rivers and streams', 'Good')
       ],
       [
         'an unrecognised baseline habitat',
+        UNRECOGNISED_BASELINE,
         AREA,
         area('Grassland - Not a habitat', 'Moderate'),
         area('Grassland - Modified grassland', 'Good')
       ],
       [
+        'an unrecognised baseline condition',
+        UNRECOGNISED_BASELINE,
+        HEDGEROW,
+        linear('Native hedgerow', 'Excellent'),
+        linear('Native hedgerow', 'Good')
+      ],
+      [
+        'a missing baseline side',
+        UNRECOGNISED_BASELINE,
+        HEDGEROW,
+        undefined,
+        linear('Native hedgerow', 'Good')
+      ],
+      [
         'an unrecognised proposed habitat',
+        UNRECOGNISED_PROPOSED,
         HEDGEROW,
         linear('Native hedgerow', 'Moderate'),
         linear('Not a hedgerow', 'Good')
       ],
       [
-        'an unrecognised condition',
+        'an unrecognised proposed condition',
+        UNRECOGNISED_PROPOSED,
         AREA,
         area('Grassland - Modified grassland', 'Moderate'),
         area('Grassland - Modified grassland', 'Excellent')
       ],
       [
         'a missing proposed side',
+        UNRECOGNISED_PROPOSED,
         WATERCOURSE,
         linear('Culvert', 'Moderate'),
         undefined
       ],
       [
         'a kind with no rules',
+        UNRECOGNISED_KIND,
         'tree',
         area('Individual trees - Urban tree', 'Moderate'),
         area('Individual trees - Urban tree', 'Poor')
       ]
-    ])('returns null for %s', (_, kind, baseline, proposed) => {
-      expect(check(kind, baseline, proposed)).toBeNull()
+    ])('reports %s', (_, reason, kind, baseline, proposed) => {
+      expect(check(kind, baseline, proposed)).toEqual({
+        checked: false,
+        reason
+      })
     })
   })
 })

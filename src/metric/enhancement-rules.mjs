@@ -326,12 +326,41 @@ export function enhancementRulesFor(kind) {
  */
 
 /**
- * @typedef {object} EnhancementCheck
+ * Why `checkEnhancement` could not check an enhancement. The `unrecognised*`
+ * reasons mean bad input: a kind, habitat or condition that is not the
+ * metric's label (an unnormalised value such as "2. Moderate" included).
+ * `noRule` means the input is fine but the baseline is out of the rules'
+ * scope: High or Very High, or a Very Low area habitat.
+ */
+export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
+  unrecognisedKind: 'unrecognised-kind',
+  unrecognisedBaseline: 'unrecognised-baseline',
+  unrecognisedProposed: 'unrecognised-proposed',
+  noRule: 'no-rule'
+})
+
+/**
+ * @typedef {object} EnhancementChecked
+ * @property {true} checked
  * @property {string} rule the ENHANCEMENT_RULE the baseline is checked against
  * @property {boolean} valid whether the proposed habitat satisfies it
  * @property {string} baselineDistinctiveness
  * @property {string} proposedDistinctiveness
  */
+
+/**
+ * @typedef {object} EnhancementNotChecked
+ * @property {false} checked
+ * @property {string} reason one of ENHANCEMENT_NOT_CHECKED_REASON
+ */
+
+/**
+ * @param {string} reason
+ * @returns {EnhancementNotChecked}
+ */
+function notChecked(reason) {
+  return { checked: false, reason }
+}
 
 /**
  * Check an enhancement against the BNG service's rule for its baseline.
@@ -343,25 +372,28 @@ export function enhancementRulesFor(kind) {
  * @param {string} kind one of ENHANCEMENT_KIND
  * @param {EnhancementSide} baseline
  * @param {EnhancementSide} proposed
- * @returns {EnhancementCheck | null} null when no rule can be checked: the
- *   kind is not one of ENHANCEMENT_KIND, the baseline's distinctiveness has no
- *   rule, or either side's habitat or condition is not recognised
+ * @returns {EnhancementChecked | EnhancementNotChecked} `checked: false`, with
+ *   the reason, when no rule can be checked
  */
 export function checkEnhancement(kind, baseline, proposed) {
   const kindRules = RULES_BY_KIND[kind]
   if (!kindRules) {
-    return null
+    return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.unrecognisedKind)
   }
   const resolvedBaseline = resolveSide(kindRules.categories, baseline)
+  if (!resolvedBaseline) {
+    return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.unrecognisedBaseline)
+  }
   const resolvedProposed = resolveSide(kindRules.categories, proposed)
-  if (!resolvedBaseline || !resolvedProposed) {
-    return null
+  if (!resolvedProposed) {
+    return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.unrecognisedProposed)
   }
   const match = kindRules.rules.find((rule) => rule.appliesTo(resolvedBaseline))
   if (!match) {
-    return null
+    return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.noRule)
   }
   return {
+    checked: true,
     rule: match.rule,
     valid: match.allows(resolvedProposed, resolvedBaseline),
     baselineDistinctiveness: resolvedBaseline.distinctiveness,

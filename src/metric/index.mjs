@@ -77,6 +77,7 @@ export {
   checkEnhancement,
   enhancementRulesFor,
   ENHANCEMENT_KIND,
+  ENHANCEMENT_NOT_CHECKED_REASON,
   ENHANCEMENT_RULE
 } from './enhancement-rules.mjs'
 export { calculateHedgerowTradingRules } from './hedgerow-trading-rules.mjs'

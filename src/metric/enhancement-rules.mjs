@@ -1,0 +1,368 @@
+import {
+  DISTINCTIVENESS_CATEGORIES,
+  HEDGEROW_DISTINCTIVENESS_CATEGORIES,
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES
+} from './reference-constants.mjs'
+import { broadHabitatOf } from './area-trading-rules.mjs'
+
+/**
+ * The BNG service's enhancement rules (BMD-820): which proposed habitats an
+ * enhanced habitat may become, given the baseline it enhances.
+ *
+ * These are the service's rules, not the metric's. The service covers Medium,
+ * Low and Very Low distinctiveness habitats only, so Medium is the highest band
+ * an enhancement can reach, and those are the only baselines with rules. A
+ * Very Low area habitat has none: BMD-820 gives none, and its only condition is
+ * "N/A - Other". Two rules depart from the metric on purpose: a Medium area
+ * baseline whose condition cannot be assessed may enhance into any Medium
+ * habitat (AC2), and a culvert may stay a culvert in the same condition (AC10,
+ * the "culverts" exception), which the metric's enhancement sheet does not
+ * offer.
+ */
+
+const MEDIUM = 'Medium'
+const LOW = 'Low'
+const VERY_LOW = 'V.Low'
+
+const CONDITION_ASSESSMENT_NA = 'Condition Assessment N/A'
+const NA_OTHER = 'N/A - Other'
+
+/** Condition bands in order, by the score the metric gives each. */
+const CONDITION_RANK = Object.freeze({
+  Poor: 1,
+  'Fairly Poor': 1.5,
+  Moderate: 2,
+  'Fairly Good': 2.5,
+  Good: 3
+})
+
+/**
+ * A condition that cannot be assessed has no rank. It is a known value, so an
+ * enhancement to it is checked (and fails "better than"), unlike a value
+ * nothing recognises, which leaves the rule unchecked.
+ */
+const UNRANKED_CONDITIONS = Object.freeze([CONDITION_ASSESSMENT_NA, NA_OTHER])
+
+/** AC3: the two intertidal broad habitats, which may enhance into each other. */
+const INTERTIDAL_BROAD_HABITATS = Object.freeze([
+  'Intertidal hard structures',
+  'Intertidal sediment'
+])
+
+/** The habitat kinds the rules cover, as `checkEnhancement` takes them. */
+export const ENHANCEMENT_KIND = Object.freeze({
+  area: 'area',
+  hedgerow: 'hedgerow',
+  watercourse: 'watercourse'
+})
+
+/** The rule an enhancement is checked against: one per acceptance criterion of BMD-820. */
+export const ENHANCEMENT_RULE = Object.freeze({
+  /** AC1: Medium area with a condition, not intertidal */
+  MEDIUM_AREA: 'medium-area',
+  /** AC2: Medium area, Condition Assessment N/A, not intertidal */
+  MEDIUM_AREA_CONDITION_NA: 'medium-area-condition-assessment-na',
+  /** AC3: Medium area, intertidal hard structures or sediment */
+  MEDIUM_INTERTIDAL_AREA: 'medium-intertidal-area',
+  /** AC4: Low area with a condition */
+  LOW_AREA: 'low-area',
+  /** AC5: Low area, Condition Assessment N/A */
+  LOW_AREA_CONDITION_NA: 'low-area-condition-assessment-na',
+  /** AC6 */
+  MEDIUM_HEDGEROW: 'medium-hedgerow',
+  /** AC7 */
+  LOW_HEDGEROW: 'low-hedgerow',
+  /** AC8 */
+  VERY_LOW_HEDGEROW: 'very-low-hedgerow',
+  /** AC9 */
+  MEDIUM_WATERCOURSE: 'medium-watercourse',
+  /** AC10 */
+  LOW_WATERCOURSE: 'low-watercourse'
+})
+
+/**
+ * @typedef {object} ResolvedSide
+ * @property {string} habitat
+ * @property {string} broadHabitat area habitats only
+ * @property {string} distinctiveness
+ * @property {string} condition
+ * @property {number | null} rank null for a condition that cannot be assessed
+ */
+
+/**
+ * @param {unknown} condition
+ * @returns {{ condition: string, rank: number | null } | null} null when the
+ *   condition is not one the rules know
+ */
+function resolveCondition(condition) {
+  if (typeof condition !== 'string') {
+    return null
+  }
+  if (Object.hasOwn(CONDITION_RANK, condition)) {
+    return { condition, rank: CONDITION_RANK[condition] }
+  }
+  if (UNRANKED_CONDITIONS.includes(condition)) {
+    return { condition, rank: null }
+  }
+  return null
+}
+
+/**
+ * @param {Record<string, string>} categories habitat → distinctiveness band
+ * @param {{ habitat?: unknown, condition?: unknown } | undefined} side
+ * @returns {ResolvedSide | null}
+ */
+function resolveSide(categories, side) {
+  const habitat = side?.habitat
+  const condition = resolveCondition(side?.condition)
+  if (
+    typeof habitat !== 'string' ||
+    !Object.hasOwn(categories, habitat) ||
+    !condition
+  ) {
+    return null
+  }
+  return {
+    habitat,
+    broadHabitat: broadHabitatOf(habitat),
+    distinctiveness: categories[habitat],
+    ...condition
+  }
+}
+
+/**
+ * The rank a baseline condition is compared against. A baseline whose
+ * condition cannot be assessed compares as Poor, as AC2 and AC5 spell out.
+ *
+ * @param {ResolvedSide} baseline
+ * @returns {number}
+ */
+function baselineRank(baseline) {
+  return baseline.rank ?? CONDITION_RANK.Poor
+}
+
+/**
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {boolean}
+ */
+function isBetterCondition(proposed, baseline) {
+  return proposed.rank !== null && proposed.rank > baselineRank(baseline)
+}
+
+/**
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {boolean}
+ */
+function isSameOrBetterCondition(proposed, baseline) {
+  return proposed.rank !== null && proposed.rank >= baselineRank(baseline)
+}
+
+/**
+ * @param {ResolvedSide} proposed
+ * @returns {boolean}
+ */
+function isBetterThanPoor(proposed) {
+  return proposed.rank !== null && proposed.rank > CONDITION_RANK.Poor
+}
+
+/**
+ * @param {ResolvedSide} side
+ * @returns {boolean}
+ */
+function isIntertidal(side) {
+  return INTERTIDAL_BROAD_HABITATS.includes(side.broadHabitat)
+}
+
+/**
+ * @param {ResolvedSide} side
+ * @returns {boolean}
+ */
+function isConditionAssessmentNa(side) {
+  return side.condition === CONDITION_ASSESSMENT_NA
+}
+
+/**
+ * @typedef {object} EnhancementRule
+ * @property {string} rule one of ENHANCEMENT_RULE
+ * @property {(baseline: ResolvedSide) => boolean} appliesTo
+ * @property {(proposed: ResolvedSide, baseline: ResolvedSide) => boolean} allows
+ */
+
+/**
+ * Checked in order; the first rule that applies to the baseline decides. AC3
+ * comes first because AC1 and AC2 exclude the intertidal broad habitats.
+ *
+ * @type {readonly EnhancementRule[]}
+ */
+const AREA_RULES = Object.freeze([
+  {
+    rule: ENHANCEMENT_RULE.MEDIUM_INTERTIDAL_AREA,
+    appliesTo: (baseline) =>
+      baseline.distinctiveness === MEDIUM && isIntertidal(baseline),
+    allows: (proposed, baseline) =>
+      proposed.distinctiveness === MEDIUM &&
+      isIntertidal(proposed) &&
+      isBetterCondition(proposed, baseline)
+  },
+  {
+    rule: ENHANCEMENT_RULE.MEDIUM_AREA_CONDITION_NA,
+    appliesTo: (baseline) =>
+      baseline.distinctiveness === MEDIUM && isConditionAssessmentNa(baseline),
+    allows: (proposed) =>
+      proposed.distinctiveness === MEDIUM && isBetterThanPoor(proposed)
+  },
+  {
+    rule: ENHANCEMENT_RULE.MEDIUM_AREA,
+    appliesTo: (baseline) => baseline.distinctiveness === MEDIUM,
+    allows: (proposed, baseline) =>
+      proposed.distinctiveness === MEDIUM &&
+      proposed.broadHabitat === baseline.broadHabitat &&
+      isBetterCondition(proposed, baseline)
+  },
+  {
+    rule: ENHANCEMENT_RULE.LOW_AREA_CONDITION_NA,
+    appliesTo: (baseline) =>
+      baseline.distinctiveness === LOW && isConditionAssessmentNa(baseline),
+    allows: (proposed) =>
+      (proposed.distinctiveness === LOW ||
+        proposed.distinctiveness === MEDIUM) &&
+      isBetterThanPoor(proposed)
+  },
+  {
+    rule: ENHANCEMENT_RULE.LOW_AREA,
+    appliesTo: (baseline) => baseline.distinctiveness === LOW,
+    allows: (proposed, baseline) =>
+      (proposed.distinctiveness === LOW &&
+        isBetterCondition(proposed, baseline)) ||
+      proposed.distinctiveness === MEDIUM
+  }
+])
+
+/** @type {readonly EnhancementRule[]} */
+const HEDGEROW_RULES = Object.freeze([
+  {
+    rule: ENHANCEMENT_RULE.MEDIUM_HEDGEROW,
+    appliesTo: (baseline) => baseline.distinctiveness === MEDIUM,
+    allows: (proposed, baseline) =>
+      proposed.distinctiveness === MEDIUM &&
+      isBetterCondition(proposed, baseline)
+  },
+  {
+    rule: ENHANCEMENT_RULE.LOW_HEDGEROW,
+    appliesTo: (baseline) => baseline.distinctiveness === LOW,
+    allows: (proposed, baseline) =>
+      (proposed.distinctiveness === LOW &&
+        isBetterCondition(proposed, baseline)) ||
+      (proposed.distinctiveness === MEDIUM &&
+        isSameOrBetterCondition(proposed, baseline))
+  },
+  {
+    rule: ENHANCEMENT_RULE.VERY_LOW_HEDGEROW,
+    appliesTo: (baseline) => baseline.distinctiveness === VERY_LOW,
+    allows: (proposed, baseline) =>
+      (proposed.distinctiveness === VERY_LOW &&
+        isBetterCondition(proposed, baseline)) ||
+      ((proposed.distinctiveness === LOW ||
+        proposed.distinctiveness === MEDIUM) &&
+        isSameOrBetterCondition(proposed, baseline))
+  }
+])
+
+/** @type {readonly EnhancementRule[]} */
+const WATERCOURSE_RULES = Object.freeze([
+  {
+    rule: ENHANCEMENT_RULE.MEDIUM_WATERCOURSE,
+    appliesTo: (baseline) => baseline.distinctiveness === MEDIUM,
+    allows: (proposed, baseline) =>
+      proposed.habitat === baseline.habitat &&
+      isBetterCondition(proposed, baseline)
+  },
+  {
+    // A Low watercourse is a culvert, which may stay a culvert in the same
+    // condition: the "culverts" exception.
+    rule: ENHANCEMENT_RULE.LOW_WATERCOURSE,
+    appliesTo: (baseline) => baseline.distinctiveness === LOW,
+    allows: (proposed, baseline) =>
+      (proposed.distinctiveness === LOW &&
+        isSameOrBetterCondition(proposed, baseline)) ||
+      proposed.distinctiveness === MEDIUM
+  }
+])
+
+const RULES_BY_KIND = Object.freeze({
+  [ENHANCEMENT_KIND.area]: {
+    categories: DISTINCTIVENESS_CATEGORIES,
+    rules: AREA_RULES
+  },
+  [ENHANCEMENT_KIND.hedgerow]: {
+    categories: HEDGEROW_DISTINCTIVENESS_CATEGORIES,
+    rules: HEDGEROW_RULES
+  },
+  [ENHANCEMENT_KIND.watercourse]: {
+    categories: WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+    rules: WATERCOURSE_RULES
+  }
+})
+
+/**
+ * @param {string} kind one of ENHANCEMENT_KIND
+ * @returns {string[]} the ENHANCEMENT_RULE values an enhancement of that kind
+ *   can break, in the order they are checked
+ */
+export function enhancementRulesFor(kind) {
+  return (RULES_BY_KIND[kind]?.rules ?? []).map(({ rule }) => rule)
+}
+
+/**
+ * @typedef {object} EnhancementSide
+ * @property {string} habitat the metric's Habitat Type label, e.g.
+ *   "Grassland - Modified grassland", "Native hedgerow" or "Ditches"
+ * @property {string} condition the metric's condition label, e.g. "Moderate"
+ *   or "Condition Assessment N/A"
+ */
+
+/**
+ * @typedef {object} EnhancementCheck
+ * @property {string} rule the ENHANCEMENT_RULE the baseline is checked against
+ * @property {boolean} valid whether the proposed habitat satisfies it
+ * @property {string} baselineDistinctiveness
+ * @property {string} proposedDistinctiveness
+ */
+
+/**
+ * Check an enhancement against the BNG service's rule for its baseline.
+ *
+ * Labels are matched exactly, as the reference tables key them, so a caller
+ * reading user data normalises it first (trimming, case, a condition's list
+ * index).
+ *
+ * @param {string} kind one of ENHANCEMENT_KIND
+ * @param {EnhancementSide} baseline
+ * @param {EnhancementSide} proposed
+ * @returns {EnhancementCheck | null} null when no rule can be checked: the
+ *   kind is not one of ENHANCEMENT_KIND, the baseline's distinctiveness has no
+ *   rule, or either side's habitat or condition is not recognised
+ */
+export function checkEnhancement(kind, baseline, proposed) {
+  const kindRules = RULES_BY_KIND[kind]
+  if (!kindRules) {
+    return null
+  }
+  const resolvedBaseline = resolveSide(kindRules.categories, baseline)
+  const resolvedProposed = resolveSide(kindRules.categories, proposed)
+  if (!resolvedBaseline || !resolvedProposed) {
+    return null
+  }
+  const match = kindRules.rules.find((rule) => rule.appliesTo(resolvedBaseline))
+  if (!match) {
+    return null
+  }
+  return {
+    rule: match.rule,
+    valid: match.allows(resolvedProposed, resolvedBaseline),
+    baselineDistinctiveness: resolvedBaseline.distinctiveness,
+    proposedDistinctiveness: resolvedProposed.distinctiveness
+  }
+}

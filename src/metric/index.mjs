@@ -73,6 +73,12 @@ export {
   MERGED_INTERTIDAL_BROAD_HABITAT
 } from './area-trading-rules.mjs'
 export { deriveAreaHabitatTradingRuleStatuses } from './area-trading-rules-statuses.mjs'
+export {
+  checkEnhancement,
+  enhancementRulesFor,
+  ENHANCEMENT_KIND,
+  ENHANCEMENT_RULE
+} from './enhancement-rules.mjs'
 export { calculateHedgerowTradingRules } from './hedgerow-trading-rules.mjs'
 export {
   MAX_YEARS,

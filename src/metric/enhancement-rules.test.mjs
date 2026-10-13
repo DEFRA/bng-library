@@ -196,13 +196,17 @@ describe('checkEnhancement', () => {
           ],
           [
             'a medium habitat whose condition cannot be assessed',
-            area('Heathland and shrub - Bramble scrub', CA_NA)
+            area('Cropland - Arable field margins tussocky', CA_NA)
           ]
         ],
         invalid: [
           [
             'the same condition',
             area('Grassland - Modified grassland', 'Moderate')
+          ],
+          [
+            'a medium habitat whose time to target is Not Possible',
+            area('Heathland and shrub - Bramble scrub', CA_NA)
           ],
           [
             'a low habitat in worse condition',
@@ -299,6 +303,10 @@ describe('checkEnhancement', () => {
           [
             'a medium habitat whose condition cannot be assessed',
             area('Cropland - Arable field margins tussocky', CA_NA)
+          ],
+          [
+            'a medium habitat whose time to target is Not Possible',
+            area('Heathland and shrub - Bramble scrub', 'Moderate')
           ]
         ]
       }
@@ -352,6 +360,10 @@ describe('checkEnhancement', () => {
           [
             'a medium hedgerow in worse condition',
             linear('Native hedgerow with trees', 'Poor')
+          ],
+          [
+            'a medium hedgerow whose time to target is Not Possible',
+            linear('Ecologically valuable line of trees', 'Moderate')
           ],
           [
             'a very low hedgerow',

@@ -893,6 +893,110 @@
       }
     },
     {
+      "id": "invalid-area-low-not-possible",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement of a Low habitat that the metric does not allow",
+      "description": "H001, Artificial littoral sand in Moderate condition, is \"enhanced\" to Littoral sand in Good condition. Its enhancement time to target from a lower distinctiveness is Not Possible, so it is not a valid enhancement (BMD-820 AC4, with every enhancement needing a time to target).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Intertidal sediment - Artificial littoral sand",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Intertidal sediment - Littoral sand",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Not Possible"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel with no time to target"
+      }
+    },
+    {
+      "id": "invalid-area-very-low-not-possible",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement of a Very Low habitat that the metric does not allow",
+      "description": "H001, Developed land; sealed surface, is \"enhanced\" to Ruderal/Ephemeral in Good condition. Its enhancement time to target from a lower distinctiveness is Not Possible, so it is not a valid enhancement (BMD-820 AC5a, with every enhancement needing a time to target).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Urban - Developed land; sealed surface",
+            "baselineCondition": "N/A - Other",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Sparsely vegetated land - Ruderal/Ephemeral",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Not Possible"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel with no time to target"
+      }
+    },
+    {
+      "id": "invalid-hedgerow-low-not-possible",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — enhancement of a Low hedgerow that the metric does not allow",
+      "description": "HG001, a Native hedgerow in Moderate condition, is \"enhanced\" to an Ecologically valuable line of trees in the same condition. Its enhancement time to target from a Native hedgerow is Not Possible, so it is not a valid enhancement (BMD-820 AC7, with every enhancement needing a time to target).",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow",
+            "proposedHedgeType": "Ecologically valuable line of trees",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Enhancement not possible"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "enhanced hedgerow with no time to target"
+      }
+    },
+    {
       "id": "conditions-area-spread",
       "purpose": "conditions",
       "title": "Area habitats across every condition band",

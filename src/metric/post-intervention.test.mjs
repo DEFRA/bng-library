@@ -11,6 +11,7 @@ const H = 'Grassland - Modified grassland'
 
 // Statutory multiplier constants — extracted to avoid magic number literals
 const MULTIPLIER_4_YRS = 0.8671800006
+const MULTIPLIER_5_YRS = 0.8368287006
 const MULTIPLIER_ENHANCEMENT = 0.7002822742
 const MULTIPLIER_HIGH_DIST_ENHANCEMENT = 0.343
 const MULTIPLIER_OVER_30_YRS = 0.3197967361
@@ -151,6 +152,20 @@ describe('calculateEnhancedAreaHabitatPostIntervention', () => {
     expect(result.difficultyMultiplier).toBe(DIFFICULTY_CREATION)
     expect(result.standardTimeToTargetCondition).toBe('30')
     expect(result.difficulty).toBe('High')
+  })
+
+  it('uses the CA N/A time-to-target start for a baseline in Condition Assessment N/A', () => {
+    const result = calculateEnhancedAreaHabitatPostIntervention(
+      1,
+      'Heathland and shrub - Bramble scrub',
+      'Heathland and shrub - Hawthorn scrub',
+      'Condition Assessment N/A',
+      'Moderate',
+      0,
+      0
+    )
+    expect(result.standardTimeToTargetCondition).toBe('5')
+    expect(result.timeMultiplier).toBeCloseTo(MULTIPLIER_5_YRS)
   })
 
   it('calculates units for Moderate to Good enhancement', () => {

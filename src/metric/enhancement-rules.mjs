@@ -1,7 +1,15 @@
 import {
   DISTINCTIVENESS_CATEGORIES,
+  DISTINCTIVENESS_SCORES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
-  WATERCOURSE_DISTINCTIVENESS_CATEGORIES
+  HEDGEROW_DISTINCTIVENESS_SCORES,
+  HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
+  HEDGEROW_TIME_TO_TARGET_ENHANCEMENT,
+  TIME_TO_TARGET_ENHANCEMENT,
+  WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
+  WATERCOURSE_DISTINCTIVENESS_SCORES,
+  WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
+  WATERCOURSE_TIME_TO_TARGET_ENHANCEMENT
 } from './reference-constants.mjs'
 import { broadHabitatOf } from './area-trading-rules.mjs'
 
@@ -12,12 +20,12 @@ import { broadHabitatOf } from './area-trading-rules.mjs'
  * These are the service's rules, not the metric's. The service covers Medium,
  * Low and Very Low distinctiveness habitats only, so Medium is the highest band
  * an enhancement can reach, and those are the only baselines with rules. A
- * Very Low area habitat has none: none were specified, and its only condition is
- * "N/A - Other". Two rules depart from the metric on purpose: a Medium area
- * baseline whose condition cannot be assessed may enhance into any Medium
- * habitat, and a culvert may stay a culvert in the same condition (the
- * "culverts" exception), which the metric's enhancement sheet does not
- * offer.
+ * Very Low hedgerow cannot be enhanced at all, and a culvert only by becoming a
+ * Medium watercourse, as the metric's enhancement sheet allows.
+ *
+ * On top of its rule, every enhancement must have a time to target: one the
+ * metric gives as "Not Possible" is not valid, whichever rule allows it. The
+ * metric does not offer it, and the calculator cannot price it.
  */
 
 const MEDIUM = 'Medium'
@@ -26,6 +34,18 @@ const VERY_LOW = 'V.Low'
 
 const CONDITION_ASSESSMENT_NA = 'Condition Assessment N/A'
 const NA_OTHER = 'N/A - Other'
+
+/**
+ * The area enhancement time-to-target table's start bands that are not a
+ * baseline condition: "Lower" for a proposed habitat of a higher
+ * distinctiveness, and "CA N/A" for a baseline whose condition cannot be
+ * assessed.
+ */
+const TIME_TO_TARGET_START = Object.freeze({
+  lowerDistinctiveness: 'Lower',
+  conditionAssessmentNa: 'CA N/A'
+})
+const NOT_POSSIBLE = 'Not Possible'
 
 /** Condition bands in order, by the score the metric gives each. */
 const CONDITION_RANK = Object.freeze({
@@ -68,6 +88,8 @@ export const ENHANCEMENT_RULE = Object.freeze({
   LOW_AREA: 'low-area',
   /** Low area, Condition Assessment N/A */
   LOW_AREA_CONDITION_NA: 'low-area-condition-assessment-na',
+  /** Very Low area */
+  VERY_LOW_AREA: 'very-low-area',
   /** Medium hedgerow */
   MEDIUM_HEDGEROW: 'medium-hedgerow',
   /** Low hedgerow */
@@ -162,10 +184,109 @@ function isSameOrBetterCondition(proposed, baseline) {
 
 /**
  * @param {ResolvedSide} proposed
+ * @returns {boolean} whether the condition is one of the ranked bands, Poor to
+ *   Good
+ */
+function hasRankedCondition(proposed) {
+  return proposed.rank !== null
+}
+
+/**
+ * @param {ResolvedSide} proposed
  * @returns {boolean}
  */
 function isBetterThanPoor(proposed) {
   return proposed.rank !== null && proposed.rank > CONDITION_RANK.Poor
+}
+
+/**
+ * @param {Record<string, { Score: number }>} scores distinctiveness band →
+ *   its score
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {boolean} whether the proposed habitat is of a higher
+ *   distinctiveness, which the time-to-target tables treat apart
+ */
+function isDistinctivenessUplift(scores, proposed, baseline) {
+  return (
+    scores[proposed.distinctiveness].Score >
+    scores[baseline.distinctiveness].Score
+  )
+}
+
+/**
+ * The metric's standard enhancement time to target for an area habitat, as
+ * the calculator looks it up (post-intervention.mjs).
+ *
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {unknown} years, "30+", "Not Possible", or undefined if none
+ */
+function areaTimeToTarget(proposed, baseline) {
+  let startBand = baseline.condition
+  if (isDistinctivenessUplift(DISTINCTIVENESS_SCORES, proposed, baseline)) {
+    startBand = TIME_TO_TARGET_START.lowerDistinctiveness
+  } else if (isConditionAssessmentNa(baseline)) {
+    startBand = TIME_TO_TARGET_START.conditionAssessmentNa
+  }
+  return TIME_TO_TARGET_ENHANCEMENT[proposed.habitat]?.[startBand]?.[
+    proposed.condition
+  ]
+}
+
+/**
+ * The metric's standard enhancement time to target for a hedgerow, as the
+ * calculator looks it up (hedgerow-post-intervention.mjs): type to type for
+ * a higher distinctiveness, else condition to condition.
+ *
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {unknown}
+ */
+function hedgerowTimeToTarget(proposed, baseline) {
+  if (
+    isDistinctivenessUplift(HEDGEROW_DISTINCTIVENESS_SCORES, proposed, baseline)
+  ) {
+    return HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT[
+      baseline.habitat
+    ]?.[proposed.habitat]
+  }
+  return HEDGEROW_TIME_TO_TARGET_ENHANCEMENT[proposed.habitat]?.[
+    baseline.condition
+  ]?.[proposed.condition]
+}
+
+/**
+ * The metric's standard enhancement time to target for a watercourse, as the
+ * calculator looks it up (watercourse-post-intervention.mjs): one figure for
+ * a higher distinctiveness, else condition to condition.
+ *
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {unknown}
+ */
+function watercourseTimeToTarget(proposed, baseline) {
+  if (
+    isDistinctivenessUplift(
+      WATERCOURSE_DISTINCTIVENESS_SCORES,
+      proposed,
+      baseline
+    )
+  ) {
+    return WATERCOURSE_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT
+  }
+  return WATERCOURSE_TIME_TO_TARGET_ENHANCEMENT[proposed.habitat]?.[
+    baseline.condition
+  ]?.[proposed.condition]
+}
+
+/**
+ * @param {unknown} timeToTarget a time-to-target table entry
+ * @returns {boolean} whether the metric gives one: an entry it does not allow
+ *   is "Not Possible", and one with no entry is not possible either
+ */
+function isPossible(timeToTarget) {
+  return timeToTarget !== undefined && timeToTarget !== NOT_POSSIBLE
 }
 
 /**
@@ -227,24 +348,30 @@ const AREA_RULES = Object.freeze([
     rule: ENHANCEMENT_RULE.LOW_AREA_CONDITION_NA,
     appliesTo: (baseline) =>
       baseline.distinctiveness === LOW && isConditionAssessmentNa(baseline),
-    allows: (proposed) =>
-      (proposed.distinctiveness === LOW ||
-        proposed.distinctiveness === MEDIUM) &&
-      isBetterThanPoor(proposed)
+    // No Low area could be enhanced into another Low area from Condition
+    // Assessment N/A anyway: the metric gives none a time to target.
+    allows: (proposed) => proposed.distinctiveness === MEDIUM
   },
   {
     // A Medium proposed habitat is allowed in any condition here, Condition
-    // Assessment N/A included, but must be better than Poor from a Low
-    // baseline whose condition cannot be assessed (the rule above). Both
-    // follow the story as written: a Low baseline with a condition may become
-    // "a Medium distinctiveness area", while one with Condition Assessment N/A
-    // must become a Medium area "with condition better than Poor".
+    // Assessment N/A included, as long as it has a time to target.
     rule: ENHANCEMENT_RULE.LOW_AREA,
     appliesTo: (baseline) => baseline.distinctiveness === LOW,
     allows: (proposed, baseline) =>
       (proposed.distinctiveness === LOW &&
         isBetterCondition(proposed, baseline)) ||
       proposed.distinctiveness === MEDIUM
+  },
+  {
+    // A Very Low area habitat's only condition is "N/A - Other", which cannot
+    // improve, so it is enhanced only by becoming a Low or Medium habitat, in
+    // a condition from Poor to Good.
+    rule: ENHANCEMENT_RULE.VERY_LOW_AREA,
+    appliesTo: (baseline) => baseline.distinctiveness === VERY_LOW,
+    allows: (proposed) =>
+      (proposed.distinctiveness === LOW ||
+        proposed.distinctiveness === MEDIUM) &&
+      hasRankedCondition(proposed)
   }
 ])
 
@@ -267,14 +394,11 @@ const HEDGEROW_RULES = Object.freeze([
         isSameOrBetterCondition(proposed, baseline))
   },
   {
+    // The metric does not allow a Very Low hedgerow to be enhanced: it can
+    // only be lost and another hedgerow created.
     rule: ENHANCEMENT_RULE.VERY_LOW_HEDGEROW,
     appliesTo: (baseline) => baseline.distinctiveness === VERY_LOW,
-    allows: (proposed, baseline) =>
-      (proposed.distinctiveness === VERY_LOW &&
-        isBetterCondition(proposed, baseline)) ||
-      ((proposed.distinctiveness === LOW ||
-        proposed.distinctiveness === MEDIUM) &&
-        isSameOrBetterCondition(proposed, baseline))
+    allows: () => false
   }
 ])
 
@@ -288,29 +412,30 @@ const WATERCOURSE_RULES = Object.freeze([
       isBetterCondition(proposed, baseline)
   },
   {
-    // A Low watercourse is a culvert, which may stay a culvert in the same
-    // condition: the "culverts" exception.
+    // A Low watercourse is a culvert, which is enhanced only by becoming a
+    // Medium watercourse: the metric has no enhancement of a culvert that
+    // stays a culvert.
     rule: ENHANCEMENT_RULE.LOW_WATERCOURSE,
     appliesTo: (baseline) => baseline.distinctiveness === LOW,
-    allows: (proposed, baseline) =>
-      (proposed.distinctiveness === LOW &&
-        isSameOrBetterCondition(proposed, baseline)) ||
-      proposed.distinctiveness === MEDIUM
+    allows: (proposed) => proposed.distinctiveness === MEDIUM
   }
 ])
 
 const RULES_BY_KIND = Object.freeze({
   [ENHANCEMENT_KIND.area]: {
     categories: DISTINCTIVENESS_CATEGORIES,
-    rules: AREA_RULES
+    rules: AREA_RULES,
+    timeToTarget: areaTimeToTarget
   },
   [ENHANCEMENT_KIND.hedgerow]: {
     categories: HEDGEROW_DISTINCTIVENESS_CATEGORIES,
-    rules: HEDGEROW_RULES
+    rules: HEDGEROW_RULES,
+    timeToTarget: hedgerowTimeToTarget
   },
   [ENHANCEMENT_KIND.watercourse]: {
     categories: WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
-    rules: WATERCOURSE_RULES
+    rules: WATERCOURSE_RULES,
+    timeToTarget: watercourseTimeToTarget
   }
 })
 
@@ -336,7 +461,7 @@ export function enhancementRulesFor(kind) {
  * reasons mean bad input: a kind, habitat or condition that is not the
  * metric's label (an unnormalised value such as "2. Moderate" included).
  * `noRule` means the input is fine but the baseline is out of the rules'
- * scope: High or Very High, or a Very Low area habitat.
+ * scope: High or Very High.
  */
 export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
   unrecognisedKind: 'unrecognised-kind',
@@ -349,7 +474,8 @@ export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
  * @typedef {object} EnhancementChecked
  * @property {true} checked
  * @property {string} rule the ENHANCEMENT_RULE the baseline is checked against
- * @property {boolean} valid whether the proposed habitat satisfies it
+ * @property {boolean} valid whether the proposed habitat satisfies it and has
+ *   a time to target
  * @property {string} baselineDistinctiveness
  * @property {string} proposedDistinctiveness
  */
@@ -369,7 +495,8 @@ function notChecked(reason) {
 }
 
 /**
- * Check an enhancement against the BNG service's rule for its baseline.
+ * Check an enhancement against the BNG service's rule for its baseline, and
+ * that the metric gives it a time to target.
  *
  * Labels are matched exactly, as the reference tables key them, so a caller
  * reading user data normalises it first (trimming, case, a condition's list
@@ -401,7 +528,9 @@ export function checkEnhancement(kind, baseline, proposed) {
   return {
     checked: true,
     rule: match.rule,
-    valid: match.allows(resolvedProposed, resolvedBaseline),
+    valid:
+      match.allows(resolvedProposed, resolvedBaseline) &&
+      isPossible(kindRules.timeToTarget(resolvedProposed, resolvedBaseline)),
     baselineDistinctiveness: resolvedBaseline.distinctiveness,
     proposedDistinctiveness: resolvedProposed.distinctiveness
   }

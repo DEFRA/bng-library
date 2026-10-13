@@ -333,7 +333,11 @@
           "multiplier": 1
         }
       ],
-      "expectTrading": { "hedgerow": { "Low": "breached" } }
+      "expectTrading": {
+        "hedgerow": {
+          "Low": "breached"
+        }
+      }
     },
     {
       "id": "intervention-watercourse-retained",
@@ -411,6 +415,88 @@
         "layer": "Rivers",
         "ref": "R001",
         "note": "a created watercourse"
+      }
+    },
+    {
+      "id": "area-enhanced-medium-condition-na",
+      "purpose": "intervention",
+      "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A",
+      "description": "H001, Bramble scrub in Condition Assessment N/A, is enhanced to Hawthorn scrub in Moderate condition: a Medium habitat with an enhancement time to target from \"CA N/A\" (5 years), so a valid enhancement (BMD-820 AC2).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Heathland and shrub - Bramble scrub",
+            "baselineCondition": "Condition Assessment N/A",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Heathland and shrub - Hawthorn scrub",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectTimeToTarget": [
+        {
+          "stage": "enhanced",
+          "references": ["H001"],
+          "years": 5,
+          "multiplier": 0.8368287006
+        }
+      ],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel whose baseline condition cannot be assessed"
+      }
+    },
+    {
+      "id": "area-enhanced-low-condition-na",
+      "purpose": "intervention",
+      "title": "Area habitat — enhancement of a Low habitat in Condition Assessment N/A",
+      "description": "H001, Cereal crops in Condition Assessment N/A, is enhanced to Other neutral grassland in Poor condition: a Medium habitat with an enhancement time to target from a lower distinctiveness (1 year), so a valid enhancement (BMD-820 AC5).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Cropland - Cereal crops",
+            "baselineCondition": "Condition Assessment N/A",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Poor"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectTimeToTarget": [
+        {
+          "stage": "enhanced",
+          "references": ["H001"],
+          "years": 1,
+          "multiplier": 0.965
+        }
+      ],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel whose baseline condition cannot be assessed"
       }
     },
     {
@@ -736,6 +822,74 @@
         "layer": "Rivers",
         "ref": "R001",
         "note": "enhanced ditch with worsened encroachment"
+      }
+    },
+    {
+      "id": "invalid-area-medium-condition-na-not-possible",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A that the metric does not allow",
+      "description": "H001, Bramble scrub in Condition Assessment N/A, is \"enhanced\" to Bramble scrub in Moderate condition. Its enhancement time to target from \"CA N/A\" is Not Possible, so it is not a valid enhancement (BMD-820 AC2).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Heathland and shrub - Bramble scrub",
+            "baselineCondition": "Condition Assessment N/A",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Heathland and shrub - Bramble scrub",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectRejectedInputs": ["habitatEnhancement.condition"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel with no time to target"
+      }
+    },
+    {
+      "id": "invalid-area-low-condition-na-not-possible",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — enhancement of a Low habitat in Condition Assessment N/A that the metric does not allow",
+      "description": "H001, Cereal crops in Condition Assessment N/A, is \"enhanced\" to Bramble scrub in Moderate condition. Its enhancement time to target from a lower distinctiveness is Not Possible, so it is not a valid enhancement (BMD-820 AC5).",
+      "size": 2,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Cropland - Cereal crops",
+            "baselineCondition": "Condition Assessment N/A",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Heathland and shrub - Bramble scrub",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectRejectedInputs": ["habitatEnhancement.condition"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced parcel with no time to target"
       }
     },
     {

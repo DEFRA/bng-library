@@ -38,12 +38,14 @@ const check = checkEnhancement
  * @param {Array<[string, object]>} invalid
  */
 function describeRule(kind, baseline, rule, { valid, invalid }) {
-  it.each(valid)('allows %s', (_, proposed) => {
-    expect(check(kind, baseline, proposed)).toMatchObject({
-      rule,
-      valid: true
+  if (valid.length > 0) {
+    it.each(valid)('allows %s', (_, proposed) => {
+      expect(check(kind, baseline, proposed)).toMatchObject({
+        rule,
+        valid: true
+      })
     })
-  })
+  }
   it.each(invalid)('rejects %s', (_, proposed) => {
     expect(check(kind, baseline, proposed)).toMatchObject({
       rule,
@@ -215,8 +217,8 @@ describe('checkEnhancement', () => {
       {
         valid: [
           [
-            'a low habitat in Fairly Poor condition',
-            area('Grassland - Modified grassland', 'Fairly Poor')
+            'a medium habitat in Fairly Poor condition',
+            area('Grassland - Other neutral grassland', 'Fairly Poor')
           ],
           [
             'a medium habitat in Good condition',
@@ -225,12 +227,58 @@ describe('checkEnhancement', () => {
         ],
         invalid: [
           [
-            'a low habitat in Poor condition',
-            area('Grassland - Modified grassland', 'Poor')
+            'a medium habitat in Poor condition',
+            area('Grassland - Other neutral grassland', 'Poor')
+          ],
+          [
+            'a low habitat in better condition than Poor',
+            area('Grassland - Modified grassland', 'Good')
           ],
           [
             'a low habitat whose condition cannot be assessed',
             area('Cropland - Winter stubble', CA_NA)
+          ],
+          [
+            'a medium habitat whose condition cannot be assessed',
+            area('Cropland - Arable field margins tussocky', CA_NA)
+          ]
+        ]
+      }
+    )
+  })
+
+  describe('very low area', () => {
+    describeRule(
+      AREA,
+      area('Urban - Developed land; sealed surface', 'N/A - Other'),
+      ENHANCEMENT_RULE.VERY_LOW_AREA,
+      {
+        valid: [
+          [
+            'a low habitat in Poor condition',
+            area('Urban - Bare ground', 'Poor')
+          ],
+          [
+            'a low habitat of another broad habitat',
+            area('Grassland - Modified grassland', 'Good')
+          ],
+          [
+            'a medium habitat in Poor condition',
+            area('Grassland - Other neutral grassland', 'Poor')
+          ]
+        ],
+        invalid: [
+          [
+            'the same habitat',
+            area('Urban - Developed land; sealed surface', 'N/A - Other')
+          ],
+          [
+            'another very low habitat',
+            area('Urban - Unvegetated garden', 'N/A - Other')
+          ],
+          [
+            'a low habitat whose condition cannot be assessed',
+            area('Urban - Vegetated garden', CA_NA)
           ],
           [
             'a medium habitat whose condition cannot be assessed',
@@ -304,7 +352,8 @@ describe('checkEnhancement', () => {
       linear('Non-native and ornamental hedgerow', 'Moderate'),
       ENHANCEMENT_RULE.VERY_LOW_HEDGEROW,
       {
-        valid: [
+        valid: [],
+        invalid: [
           [
             'a very low hedgerow in better condition',
             linear('Non-native and ornamental hedgerow', 'Good')
@@ -316,20 +365,6 @@ describe('checkEnhancement', () => {
           [
             'a medium hedgerow in better condition',
             linear('Species-rich native hedgerow', 'Good')
-          ]
-        ],
-        invalid: [
-          [
-            'a very low hedgerow in the same condition',
-            linear('Non-native and ornamental hedgerow', 'Moderate')
-          ],
-          [
-            'a low hedgerow in worse condition',
-            linear('Native hedgerow', 'Poor')
-          ],
-          [
-            'a medium hedgerow in worse condition',
-            linear('Species-rich native hedgerow', 'Poor')
           ]
         ]
       }
@@ -359,15 +394,14 @@ describe('checkEnhancement', () => {
   describe('low watercourse', () => {
     describeRule(
       WATERCOURSE,
-      linear('Culvert', 'Moderate'),
+      linear('Culvert', 'Poor'),
       ENHANCEMENT_RULE.LOW_WATERCOURSE,
       {
         valid: [
-          ['a culvert in the same condition', linear('Culvert', 'Moderate')],
-          ['a culvert in better condition', linear('Culvert', 'Good')],
-          ['a medium watercourse in any condition', linear('Ditches', 'Poor')]
+          ['a medium watercourse in Poor condition', linear('Ditches', 'Poor')],
+          ['another medium watercourse', linear('Canals', 'Good')]
         ],
-        invalid: [['a culvert in worse condition', linear('Culvert', 'Poor')]]
+        invalid: [['a culvert', linear('Culvert', 'Poor')]]
       }
     )
   })
@@ -417,11 +451,11 @@ describe('checkEnhancement', () => {
   describe('when no rule can be checked', () => {
     it.each([
       [
-        'a very low area baseline',
+        'a very high area baseline',
         NO_RULE,
         AREA,
-        area('Urban - Developed land; sealed surface', 'N/A - Other'),
-        area('Grassland - Modified grassland', 'Good')
+        area('Grassland - Lowland meadows', 'Moderate'),
+        area('Grassland - Lowland meadows', 'Good')
       ],
       [
         'a high watercourse baseline',
@@ -494,6 +528,14 @@ describe('enhancementRulesFor', () => {
       ENHANCEMENT_RULE.MEDIUM_HEDGEROW,
       ENHANCEMENT_RULE.LOW_HEDGEROW,
       ENHANCEMENT_RULE.VERY_LOW_HEDGEROW
+    ])
+    expect(enhancementRulesFor(AREA)).toEqual([
+      ENHANCEMENT_RULE.MEDIUM_INTERTIDAL_AREA,
+      ENHANCEMENT_RULE.MEDIUM_AREA_CONDITION_NA,
+      ENHANCEMENT_RULE.MEDIUM_AREA,
+      ENHANCEMENT_RULE.LOW_AREA_CONDITION_NA,
+      ENHANCEMENT_RULE.LOW_AREA,
+      ENHANCEMENT_RULE.VERY_LOW_AREA
     ])
     expect(enhancementRulesFor('tree')).toEqual([])
   })

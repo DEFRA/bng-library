@@ -12,12 +12,10 @@ import { broadHabitatOf } from './area-trading-rules.mjs'
  * These are the service's rules, not the metric's. The service covers Medium,
  * Low and Very Low distinctiveness habitats only, so Medium is the highest band
  * an enhancement can reach, and those are the only baselines with rules. A
- * Very Low area habitat has none: none were specified, and its only condition is
- * "N/A - Other". Two rules depart from the metric on purpose: a Medium area
+ * Very Low hedgerow cannot be enhanced at all, and a culvert only by becoming a
+ * Medium watercourse, as the metric's enhancement sheet allows. A Medium area
  * baseline whose condition cannot be assessed may enhance into any Medium
- * habitat, and a culvert may stay a culvert in the same condition (the
- * "culverts" exception), which the metric's enhancement sheet does not
- * offer.
+ * habitat, a departure from the metric made on purpose.
  */
 
 const MEDIUM = 'Medium'
@@ -68,6 +66,8 @@ export const ENHANCEMENT_RULE = Object.freeze({
   LOW_AREA: 'low-area',
   /** Low area, Condition Assessment N/A */
   LOW_AREA_CONDITION_NA: 'low-area-condition-assessment-na',
+  /** Very Low area */
+  VERY_LOW_AREA: 'very-low-area',
   /** Medium hedgerow */
   MEDIUM_HEDGEROW: 'medium-hedgerow',
   /** Low hedgerow */
@@ -162,6 +162,15 @@ function isSameOrBetterCondition(proposed, baseline) {
 
 /**
  * @param {ResolvedSide} proposed
+ * @returns {boolean} whether the condition is one of the ranked bands, Poor to
+ *   Good
+ */
+function hasRankedCondition(proposed) {
+  return proposed.rank !== null
+}
+
+/**
+ * @param {ResolvedSide} proposed
  * @returns {boolean}
  */
 function isBetterThanPoor(proposed) {
@@ -228,9 +237,7 @@ const AREA_RULES = Object.freeze([
     appliesTo: (baseline) =>
       baseline.distinctiveness === LOW && isConditionAssessmentNa(baseline),
     allows: (proposed) =>
-      (proposed.distinctiveness === LOW ||
-        proposed.distinctiveness === MEDIUM) &&
-      isBetterThanPoor(proposed)
+      proposed.distinctiveness === MEDIUM && isBetterThanPoor(proposed)
   },
   {
     // A Medium proposed habitat is allowed in any condition here, Condition
@@ -245,6 +252,17 @@ const AREA_RULES = Object.freeze([
       (proposed.distinctiveness === LOW &&
         isBetterCondition(proposed, baseline)) ||
       proposed.distinctiveness === MEDIUM
+  },
+  {
+    // A Very Low area habitat's only condition is "N/A - Other", which cannot
+    // improve, so it is enhanced only by becoming a Low or Medium habitat, in
+    // a condition from Poor to Good.
+    rule: ENHANCEMENT_RULE.VERY_LOW_AREA,
+    appliesTo: (baseline) => baseline.distinctiveness === VERY_LOW,
+    allows: (proposed) =>
+      (proposed.distinctiveness === LOW ||
+        proposed.distinctiveness === MEDIUM) &&
+      hasRankedCondition(proposed)
   }
 ])
 
@@ -267,14 +285,11 @@ const HEDGEROW_RULES = Object.freeze([
         isSameOrBetterCondition(proposed, baseline))
   },
   {
+    // The metric does not allow a Very Low hedgerow to be enhanced: it can
+    // only be lost and another hedgerow created.
     rule: ENHANCEMENT_RULE.VERY_LOW_HEDGEROW,
     appliesTo: (baseline) => baseline.distinctiveness === VERY_LOW,
-    allows: (proposed, baseline) =>
-      (proposed.distinctiveness === VERY_LOW &&
-        isBetterCondition(proposed, baseline)) ||
-      ((proposed.distinctiveness === LOW ||
-        proposed.distinctiveness === MEDIUM) &&
-        isSameOrBetterCondition(proposed, baseline))
+    allows: () => false
   }
 ])
 
@@ -288,14 +303,12 @@ const WATERCOURSE_RULES = Object.freeze([
       isBetterCondition(proposed, baseline)
   },
   {
-    // A Low watercourse is a culvert, which may stay a culvert in the same
-    // condition: the "culverts" exception.
+    // A Low watercourse is a culvert, which is enhanced only by becoming a
+    // Medium watercourse: the metric has no enhancement of a culvert that
+    // stays a culvert.
     rule: ENHANCEMENT_RULE.LOW_WATERCOURSE,
     appliesTo: (baseline) => baseline.distinctiveness === LOW,
-    allows: (proposed, baseline) =>
-      (proposed.distinctiveness === LOW &&
-        isSameOrBetterCondition(proposed, baseline)) ||
-      proposed.distinctiveness === MEDIUM
+    allows: (proposed) => proposed.distinctiveness === MEDIUM
   }
 ])
 
@@ -336,7 +349,7 @@ export function enhancementRulesFor(kind) {
  * reasons mean bad input: a kind, habitat or condition that is not the
  * metric's label (an unnormalised value such as "2. Moderate" included).
  * `noRule` means the input is fine but the baseline is out of the rules'
- * scope: High or Very High, or a Very Low area habitat.
+ * scope: High or Very High.
  */
 export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
   unrecognisedKind: 'unrecognised-kind',

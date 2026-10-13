@@ -22,7 +22,9 @@ const STATUTORY_TIME_TO_TARGET_DELAY_YEARS = 0
 /**
  * Enhancement time/difficulty tables use the "Lower" start band when the
  * post-intervention habitat has higher distinctiveness than the baseline habitat
- * (distinctiveness enhancement within the same broad habitat group).
+ * (distinctiveness enhancement within the same broad habitat group), and the
+ * "CA N/A" band for a baseline in Condition Assessment N/A, which is how the
+ * tables key it.
  * @param {number} baselineDistinctivenessScore
  * @param {number} postInterventionDistinctivenessScore
  * @param {string} baselineCondition
@@ -35,6 +37,9 @@ function resolveEnhancementTimeStartCondition(
 ) {
   if (postInterventionDistinctivenessScore > baselineDistinctivenessScore) {
     return 'Lower'
+  }
+  if (baselineCondition === 'Condition Assessment N/A') {
+    return 'CA N/A'
   }
   return baselineCondition
 }

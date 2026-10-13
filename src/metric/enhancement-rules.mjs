@@ -1,6 +1,7 @@
 import {
   DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
+  TIME_TO_TARGET_ENHANCEMENT,
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES
 } from './reference-constants.mjs'
 import { broadHabitatOf } from './area-trading-rules.mjs'
@@ -13,9 +14,9 @@ import { broadHabitatOf } from './area-trading-rules.mjs'
  * Low and Very Low distinctiveness habitats only, so Medium is the highest band
  * an enhancement can reach, and those are the only baselines with rules. A
  * Very Low hedgerow cannot be enhanced at all, and a culvert only by becoming a
- * Medium watercourse, as the metric's enhancement sheet allows. A Medium area
- * baseline whose condition cannot be assessed may enhance into any Medium
- * habitat, a departure from the metric made on purpose.
+ * Medium watercourse, as the metric's enhancement sheet allows. An area
+ * baseline whose condition cannot be assessed enhances only into a Medium
+ * habitat the metric gives an enhancement time to target, not "Not Possible".
  */
 
 const MEDIUM = 'Medium'
@@ -24,6 +25,17 @@ const VERY_LOW = 'V.Low'
 
 const CONDITION_ASSESSMENT_NA = 'Condition Assessment N/A'
 const NA_OTHER = 'N/A - Other'
+
+/**
+ * The enhancement time-to-target table's start bands for an area baseline
+ * whose condition cannot be assessed: "CA N/A" when the proposed habitat is of
+ * the same distinctiveness, "Lower" when it is of a higher one.
+ */
+const TIME_TO_TARGET_START = Object.freeze({
+  conditionAssessmentNa: 'CA N/A',
+  lowerDistinctiveness: 'Lower'
+})
+const NOT_POSSIBLE = 'Not Possible'
 
 /** Condition bands in order, by the score the metric gives each. */
 const CONDITION_RANK = Object.freeze({
@@ -178,6 +190,23 @@ function isBetterThanPoor(proposed) {
 }
 
 /**
+ * Whether the metric gives the enhancement a time to target. The table marks
+ * an enhancement it does not allow "Not Possible"; one it has no entry for (a
+ * condition the start band cannot reach) is not possible either.
+ *
+ * @param {ResolvedSide} proposed
+ * @param {string} startBand one of TIME_TO_TARGET_START
+ * @returns {boolean}
+ */
+function hasEnhancementTimeToTarget(proposed, startBand) {
+  const timeToTarget =
+    TIME_TO_TARGET_ENHANCEMENT[proposed.habitat]?.[startBand]?.[
+      proposed.condition
+    ]
+  return timeToTarget !== undefined && timeToTarget !== NOT_POSSIBLE
+}
+
+/**
  * @param {ResolvedSide} side
  * @returns {boolean}
  */
@@ -222,7 +251,12 @@ const AREA_RULES = Object.freeze([
     appliesTo: (baseline) =>
       baseline.distinctiveness === MEDIUM && isConditionAssessmentNa(baseline),
     allows: (proposed) =>
-      proposed.distinctiveness === MEDIUM && isBetterThanPoor(proposed)
+      proposed.distinctiveness === MEDIUM &&
+      isBetterThanPoor(proposed) &&
+      hasEnhancementTimeToTarget(
+        proposed,
+        TIME_TO_TARGET_START.conditionAssessmentNa
+      )
   },
   {
     rule: ENHANCEMENT_RULE.MEDIUM_AREA,
@@ -236,16 +270,21 @@ const AREA_RULES = Object.freeze([
     rule: ENHANCEMENT_RULE.LOW_AREA_CONDITION_NA,
     appliesTo: (baseline) =>
       baseline.distinctiveness === LOW && isConditionAssessmentNa(baseline),
+    // No Low area can be enhanced into another Low area from Condition
+    // Assessment N/A: the metric gives none a time to target.
     allows: (proposed) =>
-      proposed.distinctiveness === MEDIUM && isBetterThanPoor(proposed)
+      proposed.distinctiveness === MEDIUM &&
+      hasEnhancementTimeToTarget(
+        proposed,
+        TIME_TO_TARGET_START.lowerDistinctiveness
+      )
   },
   {
     // A Medium proposed habitat is allowed in any condition here, Condition
-    // Assessment N/A included, but must be better than Poor from a Low
-    // baseline whose condition cannot be assessed (the rule above). Both
-    // follow the story as written: a Low baseline with a condition may become
-    // "a Medium distinctiveness area", while one with Condition Assessment N/A
-    // must become a Medium area "with condition better than Poor".
+    // Assessment N/A included, while from a Low baseline whose condition
+    // cannot be assessed (the rule above) it must have a time to target. Both
+    // follow the story as written: only the rule for Condition Assessment N/A
+    // refers to the time to target.
     rule: ENHANCEMENT_RULE.LOW_AREA,
     appliesTo: (baseline) => baseline.distinctiveness === LOW,
     allows: (proposed, baseline) =>

@@ -105,14 +105,22 @@ describe('checkEnhancement', () => {
             area('Heathland and shrub - Mixed scrub', 'Fairly Poor')
           ],
           [
-            'a medium habitat of another broad habitat',
-            area('Woodland and forest - Other woodland; mixed', 'Good')
+            'a medium habitat in Good condition',
+            area('Heathland and shrub - Hazel scrub', 'Good')
           ]
         ],
         invalid: [
           [
             'a medium habitat in Poor condition',
             area('Heathland and shrub - Mixed scrub', 'Poor')
+          ],
+          [
+            'a medium habitat whose time to target is Not Possible',
+            area('Woodland and forest - Other woodland; mixed', 'Good')
+          ],
+          [
+            'the same habitat, whose time to target is Not Possible',
+            area('Heathland and shrub - Bramble scrub', 'Moderate')
           ],
           [
             'a medium habitat whose condition cannot be assessed',
@@ -223,12 +231,24 @@ describe('checkEnhancement', () => {
           [
             'a medium habitat in Good condition',
             area('Grassland - Other neutral grassland', 'Good')
+          ],
+          [
+            'a medium habitat in Poor condition',
+            area('Grassland - Other neutral grassland', 'Poor')
+          ],
+          [
+            'a medium habitat whose condition cannot be assessed, with a time to target',
+            area('Cropland - Arable field margins tussocky', CA_NA)
           ]
         ],
         invalid: [
           [
-            'a medium habitat in Poor condition',
-            area('Grassland - Other neutral grassland', 'Poor')
+            'a medium habitat whose time to target is Not Possible',
+            area('Heathland and shrub - Bramble scrub', 'Moderate')
+          ],
+          [
+            'a medium habitat whose condition cannot be assessed, without a time to target',
+            area('Grassland - Other neutral grassland', CA_NA)
           ],
           [
             'a low habitat in better condition than Poor',
@@ -237,10 +257,6 @@ describe('checkEnhancement', () => {
           [
             'a low habitat whose condition cannot be assessed',
             area('Cropland - Winter stubble', CA_NA)
-          ],
-          [
-            'a medium habitat whose condition cannot be assessed',
-            area('Cropland - Arable field margins tussocky', CA_NA)
           ]
         ]
       }

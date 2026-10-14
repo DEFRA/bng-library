@@ -1,0 +1,732 @@
+{
+  "tables": [
+    {
+      "name": "Red Line Boundary",
+      "geometryColumn": "geom",
+      "geometryType": "POLYGON",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Site Name",
+          "type": "TEXT"
+        },
+        {
+          "name": "Location",
+          "type": "TEXT"
+        },
+        {
+          "name": "Survey Date",
+          "type": "DATE"
+        },
+        {
+          "name": "Survey Details",
+          "type": "TEXT"
+        },
+        {
+          "name": "Mapped by",
+          "type": "TEXT"
+        },
+        {
+          "name": "Company",
+          "type": "TEXT"
+        },
+        {
+          "name": "Base Map",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Area Habitats Baseline",
+      "geometryColumn": "geom",
+      "geometryType": "POLYGON",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Area",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "feature_uuid",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Area Habitats Post-Intervention",
+      "geometryColumn": "geom",
+      "geometryType": "POLYGON",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Parent Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Retention Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Habitat created in advance/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Delay in starting habitat creation/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Spatial risk category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Area",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_uuid",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_geom",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Vertical Area Habitats Baseline",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Area",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "feature_uuid",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Vertical Area Habitats Post-Intervention",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Parent Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Retention Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Broad Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Habitat Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Habitat created in advance/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Delay in starting habitat creation/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Spatial risk category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Area",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_uuid",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_geom",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Hedgerows Baseline",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Hedge Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "feature_uuid",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Hedgerows Post-Intervention",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Parent Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Hedge Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Retention Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Hedge Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Habitat created in advance/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Delay in starting habitat creation/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Spatial risk category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_uuid",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_geom",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Watercourses Baseline",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline River Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Encroachment into Watercourse",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Encroachment into riparian zone",
+          "type": "TEXT"
+        },
+        {
+          "name": "Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "feature_uuid",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Watercourses Post-Intervention",
+      "geometryColumn": "geom",
+      "geometryType": "LINESTRING",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Parent Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline River Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Encroachment into Watercourse",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Encroachment into riparian zone",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Retention Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed River Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Distinctiveness",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Encroachment into Watercourse",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Encroachment into riparian zone",
+          "type": "TEXT"
+        },
+        {
+          "name": "Enhancement Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Habitat created in advance/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Delay in starting habitat creation/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Spatial risk category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Length",
+          "type": "REAL"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_uuid",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_geom",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Individual Trees Baseline",
+      "geometryColumn": "geom",
+      "geometryType": "POINT",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Tree Size",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Tree Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Rural or Urban Tree",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "feature_uuid",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "name": "Individual Trees Post-Intervention",
+      "geometryColumn": "geom",
+      "geometryType": "POINT",
+      "srsId": 27700,
+      "columns": [
+        {
+          "name": "Habitat Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Parent Ref",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Tree Size",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Tree Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Rural or Urban Tree",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Baseline Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Irreplaceable Habitat",
+          "type": "TEXT"
+        },
+        {
+          "name": "Retention Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Tree Size",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Tree Type",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Rural or Urban Tree",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Condition",
+          "type": "TEXT"
+        },
+        {
+          "name": "Proposed Strategic Significance",
+          "type": "TEXT"
+        },
+        {
+          "name": "Category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Habitat Created/Enhanced in advance/years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Delay in starting habitat creation/enhancement in years",
+          "type": "TEXT"
+        },
+        {
+          "name": "Spatial risk category",
+          "type": "TEXT"
+        },
+        {
+          "name": "Comment",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_uuid",
+          "type": "TEXT"
+        },
+        {
+          "name": "parent_geom",
+          "type": "TEXT"
+        }
+      ]
+    }
+  ]
+}

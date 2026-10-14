@@ -281,12 +281,17 @@ function watercourseTimeToTarget(proposed, baseline) {
 }
 
 /**
- * @param {unknown} timeToTarget a time-to-target table entry, or null for none
+ * @param {unknown} timeToTarget a time-to-target table entry, or null or
+ *   undefined for none
  * @returns {boolean} whether the metric gives one: an entry it does not allow
  *   is "Not Possible", and one with no entry is not possible either
  */
 function isPossible(timeToTarget) {
-  return timeToTarget !== null && timeToTarget !== NOT_POSSIBLE
+  return (
+    timeToTarget !== undefined &&
+    timeToTarget !== null &&
+    timeToTarget !== NOT_POSSIBLE
+  )
 }
 
 /**

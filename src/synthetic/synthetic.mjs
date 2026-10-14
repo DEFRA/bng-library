@@ -161,16 +161,47 @@ const CREATABLE_HABITATS_BY_BROAD = Object.fromEntries(
 )
 const CREATABLE_BROAD_TYPES = Object.keys(CREATABLE_HABITATS_BY_BROAD)
 
+const DEFAULT_HABITAT_POOLS = Object.freeze({
+  baseline: IN_SCOPE_HABITATS,
+  creatableByBroad: CREATABLE_HABITATS_BY_BROAD,
+  creatableBroadTypes: CREATABLE_BROAD_TYPES
+})
+
+/**
+ * The area habitats a random draw picks from. A `habitatFilter` narrows
+ * them, as the BNG Service template's Area Habitats layers do, which offer no
+ * vertical area habitat. Without one the pools are the module's own, so every
+ * draw is exactly as before.
+ */
+function habitatPools(habitatFilter) {
+  if (!habitatFilter) {
+    return DEFAULT_HABITAT_POOLS
+  }
+  const creatableByBroad = Object.fromEntries(
+    Object.entries(CREATABLE_HABITATS_BY_BROAD)
+      .map(([broad, pool]) => [
+        broad,
+        pool.filter((h) => habitatFilter(h.fullName))
+      ])
+      .filter(([, pool]) => pool.length > 0)
+  )
+  return {
+    baseline: IN_SCOPE_HABITATS.filter((h) => habitatFilter(h.fullName)),
+    creatableByBroad,
+    creatableBroadTypes: Object.keys(creatableByBroad)
+  }
+}
+
 // A retained or enhanced parcel keeps its habitat: an enhancement that
 // changes habitat is a distinctiveness uplift, which a scenario pins. A
 // created parcel (persisted as Lost) takes a habitat the metric can create.
-function pickProposedHabitat(baseline, retention) {
+function pickProposedHabitat(baseline, retention, pools) {
   if (retention === RETENTION_RETAINED || retention === RETENTION_ENHANCED) {
     return baseline
   }
   const proposedBroad =
-    retention === 'Lost' ? pick(CREATABLE_BROAD_TYPES) : baseline.broad
-  const pool = CREATABLE_HABITATS_BY_BROAD[proposedBroad]
+    retention === 'Lost' ? pick(pools.creatableBroadTypes) : baseline.broad
+  const pool = pools.creatableByBroad[proposedBroad]
   // A pinned habitat can sit in a broad type the random pools exclude (e.g.
   // "Intertidal hard structures"). Enhancing or creating within that broad
   // type has nothing to draw from, so the baseline habitat carries through —
@@ -191,11 +222,11 @@ function findHabitatByFullName(fullName) {
 // The proposed area habitat: a pinned `proposedHabitatFullName` wins (this is
 // how a scenario forces, say, a Low→Medium distinctiveness uplift), otherwise
 // it is derived from the baseline and retention as before.
-function resolveProposedHabitat(override, baseline, retention) {
+function resolveProposedHabitat(override, baseline, retention, pools) {
   if (override?.proposedHabitatFullName) {
     return findHabitatByFullName(override.proposedHabitatFullName)
   }
-  return pickProposedHabitat(baseline, retention)
+  return pickProposedHabitat(baseline, retention, pools)
 }
 
 /**
@@ -345,7 +376,13 @@ function resolveRetention(override, pool, proposedTypeDiffers) {
  * normal. See `generateOne`'s `attributeOverrides` contract for the recognised
  * fields. Used by attribute-override flaws and the permutations runner.
  */
-function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
+function generateHabitats(
+  db,
+  boundaryRing,
+  numParcels,
+  perRowOverrides,
+  pools = DEFAULT_HABITAT_POOLS
+) {
   const parcels = partitionPolygon(boundaryRing, numParcels)
   const stmt = db.prepare(`
     INSERT INTO "Habitats" (
@@ -367,7 +404,7 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
     const override = perRowOverrides?.[i]
     const baseline = override?.habitatFullName
       ? findHabitatByFullName(override.habitatFullName)
-      : pick(IN_SCOPE_HABITATS)
+      : pick(pools.baseline)
     const proposedDiffers =
       override?.proposedHabitatFullName !== undefined &&
       override.proposedHabitatFullName !== baseline.fullName
@@ -375,11 +412,16 @@ function generateHabitats(db, boundaryRing, numParcels, perRowOverrides) {
       override,
       validRetentionPool(RETENTION_CATEGORIES, {
         enhance: canEnhance(AREA, baseline.fullName),
-        create: Boolean(CREATABLE_HABITATS_BY_BROAD[baseline.broad])
+        create: Boolean(pools.creatableByBroad[baseline.broad])
       }),
       proposedDiffers
     )
-    const proposed = resolveProposedHabitat(override, baseline, retention)
+    const proposed = resolveProposedHabitat(
+      override,
+      baseline,
+      retention,
+      pools
+    )
     const conditions = drawConditions(
       AREA,
       baseline.fullName,
@@ -950,7 +992,7 @@ const TREE_RETENTION_WITH_BASELINE = ['Retained', 'Enhanced', 'Lost']
 // retention draw — the individual-tree mirror of the seeded Created river. It
 // sits just past the size-band seeds (indices 0..TREE_SIZES.length-1), which
 // keep a real baseline so every size band is still covered.
-const CREATED_TREE_INDEX = TREE_SIZES.length
+export const CREATED_TREE_INDEX = TREE_SIZES.length
 
 function pickTreeRetention(index) {
   if (index === CREATED_TREE_INDEX) {
@@ -1094,7 +1136,13 @@ function resolveTreeCount(numParcels, numTrees) {
   )
 }
 
-function computeLayerCounts(numParcels, emptyLayers, numTrees) {
+/**
+ * The feature counts `generateOne` draws for a plan: habitats, hedgerows,
+ * rivers and trees, each 0 for an emptied layer. Exported so a caller pinning
+ * rows by position (the BNG Service format pins its last tree) knows how many
+ * rows there will be.
+ */
+export function computeLayerCounts(numParcels, emptyLayers, numTrees) {
   const ifEmpty = (key, value) => (emptyLayers.has(key) ? 0 : value)
   return {
     numHabitats: ifEmpty('habitats', numParcels),
@@ -1146,14 +1194,15 @@ function registerEmptyLayers(db, emptyLayers) {
 }
 
 function runLayerGenerators(db, ring, ctx) {
-  const { counts, emptyLayers, attributeOverrides } = ctx
+  const { counts, emptyLayers, attributeOverrides, habitatFilter } = ctx
   const generators = {
     habitats: () =>
       generateHabitats(
         db,
         ring,
         counts.numHabitats,
-        attributeOverrides.habitats
+        attributeOverrides.habitats,
+        habitatPools(habitatFilter)
       ),
     hedgerows: () =>
       generateHedgerows(
@@ -1230,6 +1279,10 @@ function runLayerGenerators(db, ring, ctx) {
  *                        an encroachment override steers the river-type draw
  *                        away from Culvert (and an explicit Culvert pinned
  *                        with a non-sentinel encroachment throws).
+ *   habitatFilter        optional (fullName) => boolean, narrowing the area
+ *                        habitats a random draw picks from (a pinned habitat
+ *                        is never filtered). The BNG Service template format
+ *                        passes the habitats its Area Habitats layers offer.
  *   seed                 optional 32-bit integer. When set, every random draw
  *                        (geometry and attributes) is drawn from a deterministic
  *                        sequence, so the same seed + plan yields a
@@ -1242,6 +1295,7 @@ export function generateOne(outPath, centre, plan) {
     geometricFlawNames = [],
     emptyLayers = new Set(),
     attributeOverrides = {},
+    habitatFilter,
     seed
   } = plan
 
@@ -1258,7 +1312,8 @@ export function generateOne(outPath, centre, plan) {
       numTrees,
       geometricFlawNames,
       emptyLayers,
-      attributeOverrides
+      attributeOverrides,
+      habitatFilter
     })
   } finally {
     if (seeded) {
@@ -1274,7 +1329,8 @@ function generateOneInner(outPath, centre, plan) {
     numTrees,
     geometricFlawNames,
     emptyLayers,
-    attributeOverrides
+    attributeOverrides,
+    habitatFilter
   } = plan
 
   if (geometricFlawNames.length > 0) {
@@ -1283,7 +1339,7 @@ function generateOneInner(outPath, centre, plan) {
   }
 
   const counts = computeLayerCounts(numParcels, emptyLayers, numTrees)
-  const ctx = { counts, emptyLayers, attributeOverrides }
+  const ctx = { counts, emptyLayers, attributeOverrides, habitatFilter }
 
   logSyntheticBanner(outPath, centre, ctx)
 

@@ -29,7 +29,23 @@ import {
   VALID_MODES,
   generateFromWorkbook
 } from './orchestration.mjs'
-import { captureMessages } from './log.mjs'
+import { captureMessages, error } from './log.mjs'
+import {
+  generateBngServiceFromWorkbook,
+  generateBngServiceSynthetic
+} from './bng-service/generate.mjs'
+import {
+  LEGACY_ONLY_FLAWS,
+  listBngServiceFlaws,
+  partitionFlaws
+} from './bng-service/flaws.mjs'
+import {
+  FORMAT_BNG_SERVICE,
+  FORMAT_LEGACY,
+  STAGE_BASELINE,
+  STAGE_POST_INTERVENTION,
+  VALID_FORMATS
+} from './bng-service/schema.mjs'
 
 const TMP_PREFIX = 'bng-lib-'
 const DEFAULT_CENTRE_E = 530000
@@ -57,6 +73,14 @@ function defaultCentre(centre) {
   return [DEFAULT_CENTRE_E, DEFAULT_CENTRE_N]
 }
 
+function assertFormat(format) {
+  if (!VALID_FORMATS.has(format)) {
+    error(
+      `format must be one of: ${[...VALID_FORMATS].join(', ')} (got: ${format})`
+    )
+  }
+}
+
 /**
  * Generate one synthetic GeoPackage. Returns the file as a Buffer plus a
  * filenameHint the caller can use as the download filename, and any
@@ -68,7 +92,20 @@ function defaultCentre(centre) {
  *                omitted → derived from numParcels
  *   centre       [easting, northing] in BNG (default Maidenhead)
  *   bad          shorthand for --bad (apply every composable geometric flaw)
- *   flaws        array of flaw names to apply (geometric | empty | attribute)
+ *   flaws        array of flaw names to apply (geometric | empty | attribute;
+ *                and, in the BNG Service format, lineage | template-version)
+ *   seed         32-bit integer: the same seed gives the same file
+ *   format       'legacy' (the default): the Natural England template, one
+ *                file per stage; 'bng-service': the BNG Service template,
+ *                one file holding both stages
+ *   stage        BNG Service format only. 'post-intervention' (the default)
+ *                writes both stages; 'baseline' leaves the post-intervention
+ *                tables empty
+ *   templateVersion  BNG Service format only: the version the file's
+ *                record names (default: the current template version)
+ *   templateFeatures BNG Service format only: false leaves out what only the
+ *                new template records (vertical area habitats, comments, an
+ *                irreplaceable parcel and tree, an Enhanced tree)
  */
 export function generateSyntheticGpkg(options = {}) {
   const {
@@ -76,10 +113,16 @@ export function generateSyntheticGpkg(options = {}) {
     numTrees,
     centre,
     bad = false,
-    flaws = []
+    flaws = [],
+    seed,
+    format = FORMAT_LEGACY
   } = options
 
+  assertFormat(format)
   const resolvedCentre = defaultCentre(centre)
+  if (format === FORMAT_BNG_SERVICE) {
+    return generateSyntheticBngServiceGpkg(options, resolvedCentre)
+  }
   const selection = resolveFlawSelection({ bad, flaws, numParcels })
 
   return withTempDir((dir) => {
@@ -89,13 +132,65 @@ export function generateSyntheticGpkg(options = {}) {
       generateOne(outPath, resolvedCentre, {
         numParcels,
         numTrees,
-        ...selection
+        ...selection,
+        seed
       })
     })
     return {
       buffer: readFileSync(outPath),
       filenameHint,
       messages
+    }
+  })
+}
+
+function generateSyntheticBngServiceGpkg(options, centre) {
+  const {
+    numParcels = DEFAULT_SYNTHETIC_PARCELS,
+    numTrees,
+    bad = false,
+    flaws = [],
+    seed,
+    stage = STAGE_POST_INTERVENTION,
+    templateVersion,
+    templateFeatures
+  } = options
+  const { result, messages } = captureMessages(() => {
+    const { legacy, lineage, version } = partitionFlaws(flaws)
+    const selection = resolveFlawSelection({ bad, flaws: legacy, numParcels })
+    return {
+      selection,
+      lineage,
+      version,
+      filenameHint: bngServiceFilenameHint({
+        selection,
+        bad,
+        extra: [...lineage, ...version],
+        stage
+      })
+    }
+  })
+  return withTempDir((dir) => {
+    const outPath = path.join(dir, result.filenameHint)
+    const generated = captureMessages(() =>
+      generateBngServiceSynthetic(
+        outPath,
+        centre,
+        {
+          numParcels,
+          numTrees,
+          ...result.selection,
+          lineageFlawNames: result.lineage,
+          versionFlawNames: result.version,
+          seed
+        },
+        { stage, templateVersion, templateFeatures }
+      )
+    )
+    return {
+      buffer: readFileSync(outPath),
+      filenameHint: result.filenameHint,
+      messages: [...messages, ...generated.messages]
     }
   })
 }
@@ -109,12 +204,20 @@ export function generateSyntheticGpkg(options = {}) {
  *   mode              'baseline' | 'post-intervention' | 'both' (default 'both')
  *   strict            propagate to buildBaselineRows / buildPostInterventionRows
  *   centre            [easting, northing] in BNG (default Maidenhead)
+ *   format            'legacy' (the default) or 'bng-service'
+ *   templateVersion   BNG Service format only: the version its record names
  *
- * Returns:
+ * Returns, in the legacy format:
  *   baseline           { buffer, filenameHint } | undefined
  *   postIntervention   { buffer, filenameHint } | undefined
  *   messages           captured banner + warnings
  *   success            false if the workbook produced no usable area
+ *
+ * In the BNG Service format the site is one file, so it returns
+ * `{ success, messages, buffer, filenameHint }`. `mode: 'baseline'` writes
+ * the baseline-stage file (post-intervention tables empty); 'both' and
+ * 'post-intervention' write both stages, since a BNG Service file always
+ * holds its baseline.
  */
 export function generateFromWorkbookBuffer(options) {
   const {
@@ -122,8 +225,11 @@ export function generateFromWorkbookBuffer(options) {
     workbookFilename = 'workbook.xlsx',
     mode = MODE_BOTH,
     strict = false,
-    centre
+    centre,
+    format = FORMAT_LEGACY,
+    templateVersion
   } = options
+  assertFormat(format)
 
   if (!VALID_MODES.has(mode)) {
     throw new Error(
@@ -137,6 +243,17 @@ export function generateFromWorkbookBuffer(options) {
     workbookFilename
   )
   const names = workbookOutputNames(workbookFilename)
+
+  if (format === FORMAT_BNG_SERVICE) {
+    return bngServiceFromWorkbook({
+      workbook,
+      workbookFilename,
+      stage: mode === MODE_BASELINE ? STAGE_BASELINE : STAGE_POST_INTERVENTION,
+      strict,
+      centre: resolvedCentre,
+      templateVersion
+    })
+  }
 
   return withTempDir((dir) => {
     const outPaths = {
@@ -173,21 +290,65 @@ export function generateFromWorkbookBuffer(options) {
   })
 }
 
+function bngServiceFromWorkbook({
+  workbook,
+  workbookFilename,
+  stage,
+  strict,
+  centre,
+  templateVersion
+}) {
+  const filenameHint = bngServiceWorkbookName(workbookFilename, stage)
+  return withTempDir((dir) => {
+    const outPath = path.join(dir, filenameHint)
+    const { result, messages } = captureMessages(() =>
+      generateBngServiceFromWorkbook(outPath, workbook, workbookFilename, {
+        strict,
+        centre,
+        stage,
+        templateVersion
+      })
+    )
+    if (!result.success) {
+      return { success: false, messages }
+    }
+    return {
+      success: true,
+      messages,
+      buffer: readFileSync(outPath),
+      filenameHint
+    }
+  })
+}
+
 function timestampSuffix(d = new Date()) {
   const pad = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}-${pad(d.getSeconds())}`
 }
 
 function workbookOutputNames(source) {
-  const cleaned = source.replace(/[?#].*$/, '')
-  const base =
-    path.basename(cleaned).replace(/\.(xlsx|xlsm|xls)$/i, '') ||
-    'bng-from-workbook'
+  const base = workbookBaseName(source)
   const ts = timestampSuffix()
   return {
     baseline: `${base}-baseline-${ts}.gpkg`,
     postIntervention: `${base}-post-intervention-${ts}.gpkg`
   }
+}
+
+function workbookBaseName(source) {
+  const cleaned = source.replace(/[?#].*$/, '')
+  return (
+    path.basename(cleaned).replace(/\.(xlsx|xlsm|xls)$/i, '') ||
+    'bng-from-workbook'
+  )
+}
+
+function stageSuffix(stage) {
+  return stage === STAGE_BASELINE ? '-baseline' : ''
+}
+
+function bngServiceWorkbookName(source, stage) {
+  return `${workbookBaseName(source)}-bng-service${stageSuffix(stage)}-${timestampSuffix()}.gpkg`
 }
 
 function sortFlawNames(names) {
@@ -211,6 +372,16 @@ function syntheticFilenameHint({ selection, bad }) {
   return `bng-test-data${flawSuffix}-${timestampSuffix()}.gpkg`
 }
 
+// As the legacy hint, with the BNG Service flaws and the stage named too.
+function bngServiceFilenameHint({ selection, bad, extra, stage }) {
+  const legacy = syntheticFilenameHint({ selection, bad })
+  const flawSuffix = legacy
+    .replace(/^bng-test-data/, '')
+    .replace(/-\d{8}-\d{4}-\d{2}\.gpkg$/, '')
+  const extraSuffix = extra.length ? `-${sortFlawNames(extra).join('-')}` : ''
+  return `bng-service-test-data${flawSuffix}${extraSuffix}${stageSuffix(stage)}-${timestampSuffix()}.gpkg`
+}
+
 const CATEGORY_LABELS = {
   [CATEGORY_GEOMETRIC]: 'geometric',
   [CATEGORY_EMPTY]: 'empty-layer',
@@ -222,8 +393,24 @@ const CATEGORY_LABELS = {
  *   [{ name, description, errorCode, category, categoryLabel, standalone }]
  * Grouped logically by category but flat so the caller can group however it
  * likes.
+ *
+ * `{ format: 'bng-service' }` lists the flaws the BNG Service format takes:
+ * the legacy flaws it can express, remapped to its tables, and its own
+ * lineage and template-version flaws. With no format, the legacy flaws.
  */
-export function listFlaws() {
+export function listFlaws({ format = FORMAT_LEGACY } = {}) {
+  assertFormat(format)
+  const legacy = listLegacyFlaws()
+  if (format !== FORMAT_BNG_SERVICE) {
+    return legacy
+  }
+  return [
+    ...legacy.filter((f) => !LEGACY_ONLY_FLAWS.has(f.name)),
+    ...listBngServiceFlaws()
+  ]
+}
+
+function listLegacyFlaws() {
   return ALL_FLAW_NAMES.map((name) => {
     const f = FLAWS[name]
     const category = f.category ?? CATEGORY_GEOMETRIC

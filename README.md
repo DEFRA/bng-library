@@ -2,7 +2,7 @@
 
 Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 
-- **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI.
+- **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI, in the legacy Natural England layout (the default) or the [BNG Service template format](#bng-service-template-format).
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
@@ -59,6 +59,114 @@ const workbookBuffer = readFileSync('./metric.xlsx')
 const { baseline, postIntervention, messages } =
   await generateFromWorkbookBuffer({ workbookBuffer })
 ```
+
+### BNG Service template format
+
+Every generator can also write the BNG Service QGIS template's format: the
+file users upload to the service. Ask for it with `format: 'bng-service'`;
+without it, every generator writes the legacy Natural England layout as
+before, so a library upgrade changes nothing for a caller that does not ask.
+
+```js
+import { generateSyntheticGpkg } from 'bng-library'
+
+const { buffer, filenameHint } = generateSyntheticGpkg({
+  format: 'bng-service',
+  numParcels: 20,
+  seed: 7
+})
+```
+
+A BNG Service file is **one GeoPackage holding both stages**: a Baseline and
+a Post-Intervention table for each of Area Habitats, Vertical Area Habitats,
+Hedgerows, Watercourses and Individual Trees, and the Red Line Boundary. It
+has exactly the template's tables and columns, and differs from the legacy
+layout as the template does:
+
+- One reference column, `Habitat Ref`. A post-intervention feature names its
+  baseline parent by `Parent Ref` and by the hidden `parent_uuid` (the
+  parent's `feature_uuid`) and `parent_geom` (the parent's shape as WKT, to
+  the millimetre).
+- A removed hedgerow, watercourse or tree is absent from the
+  post-intervention table. An area habitat cannot be removed: the legacy
+  "Lost" area row is a creation in the parcel's place, `Created` with the
+  parcel as its parent. A created hedgerow, watercourse or tree has no parent.
+- Areas are hectares and lengths metres, measured from the shape (a vertical
+  area habitat's area is typed in, as in the template).
+- Values carry no list numbers, strategic significance is `Low` or `High`
+  (`Low` at baseline and on a `Retained` row), spatial risk is `N/A`, and
+  distinctiveness and Irreplaceable Habitat are filled in as the template
+  fills them.
+- One `gpkg_metadata` row records the format and its version
+  (`{"format": "bng-service", "version": "1.0"}`), as the template's
+  MAINTAINERS.md describes. `templateVersion: '1.1'` writes another version.
+
+A default synthetic site also holds what only the new template records:
+vertical area habitats (walls drawn as a line along their base), comments on
+both stages, an irreplaceable woodland parcel and veteran tree, and Enhanced
+trees that move to a better condition and are never irreplaceable.
+`templateFeatures: false` leaves them out.
+
+`stage: 'baseline'` writes the **baseline-stage file**: the same tables, with
+the Post-Intervention tables empty. It is the file an ecologist has before
+mapping post-intervention habitats.
+
+| Route              | In the BNG Service format                                                                                                                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Synthetic (buffer) | `generateSyntheticGpkg({ format: 'bng-service', … })` returns one `buffer`                                                                                                                               |
+| Synthetic (path)   | `generateBngServiceSynthetic(outPath, centre, plan, { stage, templateVersion, templateFeatures })`, where `plan` is `generateOne`'s                                                                      |
+| Workbook (buffer)  | `generateFromWorkbookBuffer({ format: 'bng-service', … })` returns one `buffer`; `mode: 'baseline'` writes the baseline-stage file                                                                       |
+| Workbook (path)    | `generateBngServiceFromWorkbook(outPath, workbook, sourceLabel, { stage, … })`                                                                                                                           |
+| Scenario catalogue | `generatePermutations({ format: 'bng-service' })`: each scenario carries one `geoPackage: { path, buffer }`, and its workbook when asked for. The scenarios hold exactly what they pin: nothing is added |
+| Any legacy output  | `writeBngServiceFromLegacy({ legacyPath } \| { baselinePath, postInterventionPath }, outPath, options)`                                                                                                  |
+
+Each route runs the legacy generator unchanged and converts its output, so
+seeds, row overrides, flaws and scenarios behave exactly as they do for the
+legacy format, and the same seed gives the same file to the byte. The habitat
+draws are narrowed to those the template's Area Habitats layers offer, and a
+green wall or other vertical area habitat a workbook lists among its area
+habitats moves to the vertical layers, with the ground under it mapped as
+Developed land; sealed surface.
+
+Row overrides take three more fields in this format: `irreplaceable` (`"Yes"`
+or `"No"`, on `habitats` and `trees`), `comment` and
+`postInterventionComment`. A `verticalHabitats` layer takes rows of
+`habitatFullName`, `retention` (`Retained`, `Enhanced`, `Created`, or `Lost`:
+absent post-intervention), `baselineCondition`, `proposedCondition`,
+`proposedHabitatFullName`, `area` (hectares) and the two comments.
+
+**Flaws.** `listFlaws({ format: 'bng-service' })` lists the flaws the format
+takes: every legacy flaw remapped to its tables (the IGGI polygon becomes a
+vertical area habitat) bar `tree-count-not-whole`, as the template has no
+Count column, and its own:
+
+| Flaw                           | What it writes                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `lineage-parent-missing`       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom           |
+| `lineage-parent-unknown`       | a Retained area habitat whose parent is not in the baseline                      |
+| `lineage-parent-wrong`         | a Retained area habitat naming another baseline parcel, which it lies outside    |
+| `lineage-parent-geom-mismatch` | the right parent, with a parent_geom 5 m from the parent's shape                 |
+| `version-record-missing`       | no template version record                                                       |
+| `version-record-duplicated`    | two records                                                                      |
+| `version-unsupported`          | one record naming the next major version, which the service does not support yet |
+
+**Checking a file.** `checkTemplateValues(path)` checks every value in a BNG
+Service file against the template's own drop-downs, applying each list's
+filter as QGIS does, and the rules for the columns the template fills in. It
+returns `[]` when every value is one the template offers. It is a port of the
+template repository's `scale-test-nsip/generator/dropdown_check.py`, and
+every generated file is checked as it is written, with a warning for anything
+the template would not offer.
+
+**The template's schema and lists** are copied into
+`src/bng-service/template/` from a checkout of
+[bng-metric-template](https://github.com/DEFRA/bng-metric-template): the
+GeoPackage's tables and columns, each column's drop-down from the QGIS
+project, and the CSV reference lists, byte for byte. `source.json` names the
+template commit. When the template changes, run
+`npm run sync:template -- ../bng-metric-template` and review the diff. With
+`BNG_METRIC_TEMPLATE` pointing at a checkout, the tests also compare the copy
+with the template's own GeoPackage.
 
 ### Statutory metric
 

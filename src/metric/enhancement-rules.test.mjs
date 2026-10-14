@@ -434,6 +434,70 @@ describe('checkEnhancement', () => {
     )
   })
 
+  describe('an enhancement with no time to target (AC11)', () => {
+    // AC11: an enhancement the metric's time-to-target table has no entry
+    // for is rejected, as one it gives as "Not Possible" is. A baseline
+    // condition that cannot be assessed is compared as Poor, so each rule
+    // allows these from Poor and from "N/A - Other" alike, but the table has
+    // a time only from Poor. Valid data cannot reach this: the metric does
+    // not score these habitats in "N/A - Other", so the service nulls that
+    // condition before the rules run. allowedByRule and timeToTarget pin the
+    // rejection on the missing entry, not on the rule.
+    it.each([
+      [
+        AREA,
+        ENHANCEMENT_RULE.MEDIUM_AREA,
+        'Grassland - Other neutral grassland',
+        area('Grassland - Other lowland acid grassland', 'Good')
+      ],
+      [
+        HEDGEROW,
+        ENHANCEMENT_RULE.LOW_HEDGEROW,
+        'Native hedgerow',
+        linear('Native hedgerow', 'Good')
+      ],
+      [
+        WATERCOURSE,
+        ENHANCEMENT_RULE.MEDIUM_WATERCOURSE,
+        'Ditches',
+        linear('Ditches', 'Good')
+      ]
+    ])(
+      '%s: rejects what the %s rule allows, with no entry',
+      (kind, rule, habitat, proposed) => {
+        expect(check(kind, side(habitat, 'Poor'), proposed)).toMatchObject({
+          rule,
+          valid: true,
+          allowedByRule: true,
+          timeToTarget: expect.any(Number)
+        })
+        expect(
+          check(kind, side(habitat, 'N/A - Other'), proposed)
+        ).toMatchObject({
+          rule,
+          valid: false,
+          allowedByRule: true,
+          timeToTarget: null
+        })
+      }
+    )
+
+    it('rejects what a rule allows when the time to target is Not Possible', () => {
+      expect(
+        check(
+          AREA,
+          area('Heathland and shrub - Bramble scrub', CA_NA),
+          area('Heathland and shrub - Bramble scrub', 'Moderate')
+        )
+      ).toMatchObject({
+        rule: ENHANCEMENT_RULE.MEDIUM_AREA_CONDITION_NA,
+        valid: false,
+        allowedByRule: true,
+        timeToTarget: 'Not Possible'
+      })
+    })
+  })
+
   describe('reading the attributes', () => {
     it('matches labels exactly, as the reference tables key them', () => {
       expect(
@@ -470,6 +534,8 @@ describe('checkEnhancement', () => {
         checked: true,
         rule: ENHANCEMENT_RULE.LOW_HEDGEROW,
         valid: false,
+        allowedByRule: false,
+        timeToTarget: 5,
         baselineDistinctiveness: 'Low',
         proposedDistinctiveness: 'Medium'
       })

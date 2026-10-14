@@ -281,12 +281,17 @@ function watercourseTimeToTarget(proposed, baseline) {
 }
 
 /**
- * @param {unknown} timeToTarget a time-to-target table entry
+ * @param {unknown} timeToTarget a time-to-target table entry, or null or
+ *   undefined for none
  * @returns {boolean} whether the metric gives one: an entry it does not allow
  *   is "Not Possible", and one with no entry is not possible either
  */
 function isPossible(timeToTarget) {
-  return timeToTarget !== undefined && timeToTarget !== NOT_POSSIBLE
+  return (
+    timeToTarget !== undefined &&
+    timeToTarget !== null &&
+    timeToTarget !== NOT_POSSIBLE
+  )
 }
 
 /**
@@ -476,6 +481,10 @@ export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
  * @property {string} rule the ENHANCEMENT_RULE the baseline is checked against
  * @property {boolean} valid whether the proposed habitat satisfies it and has
  *   a time to target
+ * @property {boolean} allowedByRule whether the proposed habitat satisfies the
+ *   rule, whatever its time to target
+ * @property {unknown} timeToTarget the metric's enhancement time-to-target
+ *   entry: years, "30+", "Not Possible", or null when the table has none
  * @property {string} baselineDistinctiveness
  * @property {string} proposedDistinctiveness
  */
@@ -525,12 +534,15 @@ export function checkEnhancement(kind, baseline, proposed) {
   if (!match) {
     return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.noRule)
   }
+  const allowedByRule = match.allows(resolvedProposed, resolvedBaseline)
+  const timeToTarget =
+    kindRules.timeToTarget(resolvedProposed, resolvedBaseline) ?? null
   return {
     checked: true,
     rule: match.rule,
-    valid:
-      match.allows(resolvedProposed, resolvedBaseline) &&
-      isPossible(kindRules.timeToTarget(resolvedProposed, resolvedBaseline)),
+    valid: allowedByRule && isPossible(timeToTarget),
+    allowedByRule,
+    timeToTarget,
     baselineDistinctiveness: resolvedBaseline.distinctiveness,
     proposedDistinctiveness: resolvedProposed.distinctiveness
   }

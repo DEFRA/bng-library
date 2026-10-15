@@ -1,0 +1,431 @@
+/**
+ * What the BNG Service template records that the legacy template cannot:
+ * comments on either stage, irreplaceable area habitats and trees, and
+ * vertical area habitats. Applied to the two-stage site model before it is
+ * written.
+ *
+ * Row overrides name these per feature, as the generator's other overrides
+ * do: `irreplaceable` ("Yes" or "No") and `comment` on a habitat or tree row
+ * pin the baseline feature from that legacy row, and `postInterventionComment`
+ * its post-intervention feature. The `verticalHabitats` layer takes rows of
+ * its own (see `addVerticalHabitats`).
+ *
+ * Every value is one the template's lists offer, and the Metric's rules hold:
+ * an irreplaceable tree is never Enhanced, and an Enhanced tree or vertical
+ * habitat moves to a better condition only.
+ */
+
+import { pointInRing } from '../geometry.mjs'
+import { envelopeFromCoords } from '../gpkg-io/index.mjs'
+import {
+  AREA,
+  baselineConditions,
+  creationConditions,
+  enhancementPairs
+} from '../synthetic/valid-draws.mjs'
+import { listIndex } from './reference.mjs'
+import { COMMENT, HABITAT_REF } from './site.mjs'
+import {
+  HIGH,
+  LOW,
+  NO,
+  NOT_APPLICABLE,
+  YES,
+  distinctiveness,
+  irreplaceableAnswers,
+  verticalHabitatNames
+} from './vocabulary.mjs'
+
+const RETAINED = 'Retained'
+const ENHANCED = 'Enhanced'
+const CREATED = 'Created'
+const LOST = 'Lost'
+const IRREPLACEABLE = 'Irreplaceable Habitat'
+const RETENTION = 'Retention Category'
+const ZERO_YEARS = '0'
+
+const BASELINE_COMMENT_SHARE = 0.3
+const PI_COMMENT_SHARE = 0.2
+const HIGH_SIGNIFICANCE_SHARE = 0.2
+const TIMING_SHARE = 0.3
+const MAX_TIMING_YEARS = 5
+const VERTICAL_PER_PARCELS = 25
+const MIN_VERTICAL_HABITATS = 2
+const MIN_WALL_LENGTH_M = 8
+const MAX_WALL_LENGTH_M = 30
+const MIN_WALL_HEIGHT_M = 2.5
+const MAX_WALL_HEIGHT_M = 8
+const SQ_M_PER_HECTARE = 10_000
+const AREA_DECIMALS = 6
+const PLACEMENT_ATTEMPTS = 200
+const FULL_TURN = 2 * Math.PI
+// A vertical habitat's retention, by position, when a row does not pin it:
+// a default site shows each change the template records.
+const VERTICAL_RETENTION_CYCLE = [RETAINED, ENHANCED, CREATED, LOST]
+const VERTICAL_REF_PREFIX = 'V'
+const REF_PAD = 3
+
+export const VETERAN_TREE_COMMENT = 'Veteran features: rot holes and deadwood'
+export const ANCIENT_WOODLAND_COMMENT = 'Ancient woodland on the inventory'
+export const ENHANCED_TREE_COMMENT =
+  'Crown works and mulching to raise the condition'
+
+const BASELINE_COMMENTS = {
+  habitats: [
+    'Surveyed in June',
+    'Boundary follows the field edge',
+    'Grazed by sheep'
+  ],
+  verticalHabitats: ['South-facing wall', 'Brick, in fair repair'],
+  hedgerows: ['Gappy at the eastern end', 'Cut annually'],
+  rivers: ['Seasonal flow', 'Banks poached by livestock'],
+  trees: ['Ivy on the trunk', 'Crown lifted']
+}
+const PI_COMMENTS = {
+  habitats: ['Managed under the landscape plan', 'Seeded with a local mix'],
+  verticalHabitats: ['Irrigated planting'],
+  hedgerows: ['Gaps planted up'],
+  rivers: ['Bank reprofiled'],
+  trees: ['Guarded and staked']
+}
+
+// ------------------------------------------------------------ row overrides
+
+function assertIrreplaceableAllowed(layerKey, feature, value) {
+  if (value !== YES && value !== NO) {
+    throw new Error(
+      `${layerKey} ${feature.values[HABITAT_REF]}: irreplaceable must be "Yes" or "No" (got ${value})`
+    )
+  }
+  if (layerKey === 'habitats') {
+    const type = feature.values['Baseline Habitat Type']
+    if (!irreplaceableAnswers(type).has(value)) {
+      throw new Error(
+        `habitats ${feature.values[HABITAT_REF]}: the template does not allow Irreplaceable Habitat "${value}" for ${type}`
+      )
+    }
+  }
+}
+
+function childrenOf(layer, parent) {
+  return layer.postIntervention.filter((f) => f.parent === parent)
+}
+
+function assertTreeNotEnhanced(layer, feature) {
+  if (
+    childrenOf(layer, feature).some(
+      (child) => child.values[RETENTION] === ENHANCED
+    )
+  ) {
+    throw new Error(
+      `trees ${feature.values[HABITAT_REF]}: an irreplaceable tree cannot be Enhanced; the Metric refuses it`
+    )
+  }
+}
+
+function applyBaselineOverride(layerKey, layer, feature, override) {
+  if (override.irreplaceable !== undefined) {
+    assertIrreplaceableAllowed(layerKey, feature, override.irreplaceable)
+    if (layerKey === 'trees' && override.irreplaceable === YES) {
+      assertTreeNotEnhanced(layer, feature)
+    }
+    feature.values[IRREPLACEABLE] = override.irreplaceable
+  }
+  if (override.comment !== undefined) {
+    feature.values[COMMENT] = override.comment
+  }
+}
+
+/**
+ * Apply the template-only fields of the generator's row overrides: row `i`
+ * of `overrides.habitats` / `overrides.trees` pins the features from legacy
+ * row `i`.
+ */
+export function applyTemplateOverrides(site, overrides = {}) {
+  for (const layerKey of ['habitats', 'hedgerows', 'rivers', 'trees']) {
+    const rows = overrides[layerKey] ?? []
+    const layer = site.layers[layerKey]
+    for (const feature of layer.baseline) {
+      const override = rows[feature.source.index]
+      if (override) {
+        applyBaselineOverride(layerKey, layer, feature, override)
+      }
+    }
+    for (const feature of layer.postIntervention) {
+      const comment = rows[feature.source.index]?.postInterventionComment
+      if (comment !== undefined) {
+        feature.values[COMMENT] = comment
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------- comments
+
+/**
+ * Comments on a share of the features, as a surveyor leaves them: a veteran
+ * tree says why it is irreplaceable, an Enhanced tree says how, and an
+ * irreplaceable parcel names its inventory. Never replaces a pinned comment.
+ */
+export function addComments(site, chooser) {
+  for (const [layerKey, layer] of Object.entries(site.layers)) {
+    for (const feature of layer.baseline) {
+      if (
+        feature.values[COMMENT] !== null &&
+        feature.values[COMMENT] !== undefined
+      ) {
+        continue
+      }
+      if (feature.values[IRREPLACEABLE] === YES) {
+        feature.values[COMMENT] =
+          layerKey === 'trees' ? VETERAN_TREE_COMMENT : ANCIENT_WOODLAND_COMMENT
+      } else if (chooser.chance(BASELINE_COMMENT_SHARE)) {
+        feature.values[COMMENT] = chooser.pick(BASELINE_COMMENTS[layerKey])
+      }
+    }
+    for (const feature of layer.postIntervention) {
+      if (
+        feature.values[COMMENT] !== null &&
+        feature.values[COMMENT] !== undefined
+      ) {
+        continue
+      }
+      if (layerKey === 'trees' && feature.values[RETENTION] === ENHANCED) {
+        feature.values[COMMENT] = ENHANCED_TREE_COMMENT
+      } else if (chooser.chance(PI_COMMENT_SHARE)) {
+        feature.values[COMMENT] = chooser.pick(PI_COMMENTS[layerKey])
+      }
+    }
+  }
+}
+
+// --------------------------------------------------- vertical area habitats
+
+const VERTICAL_BROAD_TYPES = new Set(['Urban', 'Intertidal hard structures'])
+
+let proposedBroadOptions = null
+
+/** The broad types a vertical habitat of `broad` can become by `retention`. */
+function proposedBroadTypes(broad, retention) {
+  proposedBroadOptions ??= listIndex(
+    'Habitats/Habitat Proposed Broad Options.csv',
+    'ID',
+    'New'
+  )
+  return [...(proposedBroadOptions.get(`${broad}${retention}`) ?? [])].filter(
+    (b) => VERTICAL_BROAD_TYPES.has(b)
+  )
+}
+
+const split = (fullName) => {
+  const at = fullName.indexOf(' - ')
+  return {
+    broad: fullName.slice(0, at),
+    type: fullName.slice(at + ' - '.length)
+  }
+}
+
+function verticalRef(index) {
+  return `${VERTICAL_REF_PREFIX}${String(index + 1).padStart(REF_PAD, '0')}`
+}
+
+/** A wall's base: a short straight line wholly inside the red line. */
+function wallLine(ring, chooser, lengthM) {
+  const [minX, maxX, minY, maxY] = envelopeFromCoords(ring)
+  for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt += 1) {
+    const start = [chooser.between(minX, maxX), chooser.between(minY, maxY)]
+    const angle = chooser.next() * FULL_TURN
+    const end = [
+      start[0] + lengthM * Math.cos(angle),
+      start[1] + lengthM * Math.sin(angle)
+    ]
+    const middle = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2]
+    if ([start, middle, end].every((p) => pointInRing(p, ring))) {
+      return [start, end]
+    }
+  }
+  return null
+}
+
+const roundArea = (value) => Number(value.toFixed(AREA_DECIMALS))
+
+function timingPair(retention, chooser) {
+  if (retention === RETAINED || !chooser.chance(TIMING_SHARE)) {
+    return [ZERO_YEARS, ZERO_YEARS]
+  }
+  // The other value is blank: the template greys it out while one is above 0.
+  const years = String(1 + Math.floor(chooser.next() * MAX_TIMING_YEARS))
+  return chooser.chance(1 / 2) ? [years, null] : [null, years]
+}
+
+function proposedSide(baselineName, retention, override, chooser) {
+  if (retention === RETAINED) {
+    return { name: baselineName, condition: null }
+  }
+  if (retention === ENHANCED) {
+    const pairs = enhancementPairs(AREA, baselineName).filter(
+      ([from, to]) =>
+        (override.baselineCondition === undefined ||
+          from === override.baselineCondition) &&
+        (override.proposedCondition === undefined ||
+          to === override.proposedCondition)
+    )
+    const [from, to] = chooser.pick(pairs)
+    return { name: baselineName, baselineCondition: from, condition: to }
+  }
+  const { broad } = split(baselineName)
+  const name =
+    override.proposedHabitatFullName ??
+    chooser.pick(
+      verticalHabitatNames().filter(
+        (n) =>
+          n !== baselineName &&
+          proposedBroadTypes(broad, CREATED).includes(split(n).broad)
+      )
+    )
+  return {
+    name,
+    condition:
+      override.proposedCondition ?? chooser.pick(creationConditions(AREA, name))
+  }
+}
+
+function verticalBaseline(index, line, name, condition, areaHa, chooser) {
+  const { broad, type } = split(name)
+  const answers = irreplaceableAnswers(type)
+  return {
+    geometry: { type: 'LineString', coordinates: line },
+    uuid: chooser.uuid(`verticalHabitats/${index}`),
+    source: { index },
+    values: {
+      [HABITAT_REF]: verticalRef(index),
+      'Baseline Broad Habitat Type': broad,
+      'Baseline Habitat Type': type,
+      'Baseline Distinctiveness': distinctiveness('verticalHabitats', type),
+      'Baseline Condition': condition,
+      'Baseline Strategic Significance': LOW,
+      [IRREPLACEABLE]: answers.size === 1 ? [...answers][0] : NO,
+      Area: areaHa,
+      [COMMENT]: null
+    }
+  }
+}
+
+function verticalPostIntervention(parent, retention, proposed, chooser) {
+  const { broad, type } = split(proposed.name)
+  const [advance, delay] = timingPair(retention, chooser)
+  return {
+    geometry: parent.geometry,
+    parent,
+    source: { index: parent.source.index, retention },
+    values: {
+      [HABITAT_REF]: parent.values[HABITAT_REF],
+      [RETENTION]: retention,
+      'Proposed Broad Habitat Type': broad,
+      'Proposed Habitat Type': type,
+      'Proposed Distinctiveness': distinctiveness(
+        'verticalHabitats',
+        type,
+        true
+      ),
+      'Proposed Condition':
+        proposed.condition ?? parent.values['Baseline Condition'],
+      'Proposed Strategic Significance':
+        retention === RETAINED || !chooser.chance(HIGH_SIGNIFICANCE_SHARE)
+          ? LOW
+          : HIGH,
+      'Habitat created in advance/years': advance,
+      'Delay in starting habitat creation/years': delay,
+      'Spatial risk category': NOT_APPLICABLE,
+      Area: parent.values.Area,
+      [COMMENT]: null
+    }
+  }
+}
+
+function assertVerticalName(name, where) {
+  if (!verticalHabitatNames().includes(name)) {
+    throw new Error(
+      `${where}: "${name}" is not a vertical area habitat; the template offers ${verticalHabitatNames().join(', ')}`
+    )
+  }
+}
+
+function verticalFeature(ring, index, override, chooser) {
+  const name = override.habitatFullName ?? chooser.pick(verticalHabitatNames())
+  assertVerticalName(name, `verticalHabitats row ${index}`)
+  const retention =
+    override.retention ??
+    VERTICAL_RETENTION_CYCLE[index % VERTICAL_RETENTION_CYCLE.length]
+  const lengthM = chooser.between(MIN_WALL_LENGTH_M, MAX_WALL_LENGTH_M)
+  const line = wallLine(ring, chooser, lengthM)
+  if (!line) {
+    return null
+  }
+  const heightM = chooser.between(MIN_WALL_HEIGHT_M, MAX_WALL_HEIGHT_M)
+  const areaHa =
+    override.area ?? roundArea((lengthM * heightM) / SQ_M_PER_HECTARE)
+  const proposed = proposedSide(name, retention, override, chooser)
+  if (proposed.name !== name) {
+    assertVerticalName(proposed.name, `verticalHabitats row ${index}`)
+  }
+  const condition =
+    proposed.baselineCondition ??
+    override.baselineCondition ??
+    chooser.pick(baselineConditions(AREA, name))
+  const baseline = verticalBaseline(
+    index,
+    line,
+    name,
+    condition,
+    areaHa,
+    chooser
+  )
+  if (override.comment !== undefined) {
+    baseline.values[COMMENT] = override.comment
+  }
+  const postIntervention =
+    retention === LOST
+      ? null
+      : verticalPostIntervention(baseline, retention, proposed, chooser)
+  if (postIntervention && override.postInterventionComment !== undefined) {
+    postIntervention.values[COMMENT] = override.postInterventionComment
+  }
+  return { baseline, postIntervention }
+}
+
+/** How many vertical habitats a site of `numParcels` parcels draws. */
+export function defaultVerticalCount(numParcels) {
+  return MIN_VERTICAL_HABITATS + Math.floor(numParcels / VERTICAL_PER_PARCELS)
+}
+
+/**
+ * Add vertical area habitats: walls and structures, each drawn as a line
+ * along its base inside the red line, with its face area typed in hectares.
+ * Row `i` of `rows` pins vertical habitat `i`: `habitatFullName` (one of the
+ * five the template offers), `retention` (Retained, Enhanced, Created, or
+ * Lost: absent from the post-intervention table), `baselineCondition`,
+ * `proposedCondition`, `proposedHabitatFullName` (for Created), `area`
+ * (hectares), `comment` and `postInterventionComment`. Unpinned values are
+ * drawn as the Metric allows.
+ *
+ * @param {object} site
+ * @param {{ count: number, rows?: object[] }} plan
+ * @param {ReturnType<import('./random.mjs').createChooser>} chooser
+ */
+export function addVerticalHabitats(site, { count, rows = [] }, chooser) {
+  const ring = site.redline.geometry.coordinates[0]
+  const layer = site.layers.verticalHabitats
+  const offset = layer.baseline.length
+  const total = Math.max(count, rows.length)
+  for (let i = 0; i < total; i += 1) {
+    const feature = verticalFeature(ring, offset + i, rows[i] ?? {}, chooser)
+    if (!feature) {
+      continue
+    }
+    layer.baseline.push(feature.baseline)
+    if (feature.postIntervention) {
+      layer.postIntervention.push(feature.postIntervention)
+    }
+  }
+}

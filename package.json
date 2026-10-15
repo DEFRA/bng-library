@@ -50,6 +50,7 @@
     "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\"",
     "postinstall": "node scripts/postinstall.mjs",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
-    "install:gitleaks": "node scripts/install-gitleaks.mjs"
+    "install:gitleaks": "node scripts/install-gitleaks.mjs",
+    "sync:template": "node scripts/sync-bng-service-template.mjs"
   }
 }

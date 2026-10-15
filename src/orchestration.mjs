@@ -12,8 +12,13 @@ import {
   openGeoPackage,
   registerLayer
 } from './bng-schema.mjs'
-import { envelopeFromCoords, gpkgPolygon } from './gpkg-io/index.mjs'
-import { polygonArea } from './geometry.mjs'
+import {
+  clearFixedTimestamp,
+  envelopeFromCoords,
+  gpkgPolygon,
+  setFixedTimestamp
+} from './gpkg-io/index.mjs'
+import { clearSeed, polygonArea, setSeed } from './geometry.mjs'
 import { color, header, info, warn } from './log.mjs'
 import {
   buildBaselineRows,
@@ -50,6 +55,8 @@ export const VALID_MODES = new Set([
 ])
 
 const IN_MEMORY_DB = ':memory:'
+// Fixed metadata timestamp for seeded generation, as the synthetic route uses.
+const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
 
 /**
  * Generate the baseline GeoPackage. Lays out the RLB, partitions habitats,
@@ -284,12 +291,42 @@ function bannerOutPath(outPaths, mode) {
  * — its geometry is the input to post-intervention derivation — but it
  * writes to an in-memory throwaway db, so only outPaths.postIntervention
  * is produced.
+ *
+ * `seed` (a 32-bit integer) makes the output reproducible: the same workbook
+ * and seed give the same files to the byte. Omit it for fresh draws.
  */
 export function generateFromWorkbook(
   outPaths,
   workbook,
   sourceLabel,
-  { strict = false, centre, mode = MODE_BOTH } = {}
+  { strict = false, centre, mode = MODE_BOTH, seed } = {}
+) {
+  const seeded = Number.isInteger(seed)
+  if (seeded) {
+    // Pin both randomness (tree positions and line midpoints) and the
+    // metadata clock, so the same workbook and seed give the same bytes.
+    setSeed(seed)
+    setFixedTimestamp(DETERMINISTIC_TIMESTAMP)
+  }
+  try {
+    return generateFromWorkbookInner(outPaths, workbook, sourceLabel, {
+      strict,
+      centre,
+      mode
+    })
+  } finally {
+    if (seeded) {
+      clearSeed()
+      clearFixedTimestamp()
+    }
+  }
+}
+
+function generateFromWorkbookInner(
+  outPaths,
+  workbook,
+  sourceLabel,
+  { strict, centre, mode }
 ) {
   const baselineRows = buildBaselineRows(workbook, { strict })
   const postRows =

@@ -1,0 +1,892 @@
+{
+  "Area Habitats Baseline": {
+    "Baseline Broad Habitat Type": {
+      "kind": "list",
+      "values": [
+        "Coastal lagoons",
+        "Coastal saltmarsh",
+        "Cropland",
+        "Grassland",
+        "Heathland and shrub",
+        "Intertidal sediment",
+        "Lakes",
+        "Rocky shore",
+        "Sparsely vegetated land",
+        "Urban",
+        "Watercourse footprint",
+        "Wetland",
+        "Woodland and forest"
+      ]
+    },
+    "Baseline Habitat Type": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Options- pre.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Baseline Broad Habitat Type')"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Irreplaceable.csv",
+      "key": "Irreplaceable",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    }
+  },
+  "Area Habitats Post-Intervention": {
+    "Baseline Broad Habitat Type": {
+      "kind": "list",
+      "values": [
+        "Coastal lagoons",
+        "Coastal saltmarsh",
+        "Cropland",
+        "Grassland",
+        "Heathland and shrub",
+        "Intertidal sediment",
+        "Lakes",
+        "Rocky shore",
+        "Sparsely vegetated land",
+        "Urban",
+        "Watercourse footprint",
+        "Wetland",
+        "Woodland and forest"
+      ]
+    },
+    "Baseline Habitat Type": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Options- pre.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Baseline Broad Habitat Type')"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Irreplaceable.csv",
+      "key": "Irreplaceable",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Retention Category": {
+      "kind": "list",
+      "values": [
+        "Created",
+        "Retained",
+        "Enhanced"
+      ]
+    },
+    "Proposed Broad Habitat Type": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Proposed Broad Options.csv",
+      "key": "New",
+      "filter": "\"ID\"=concat(current_value('Baseline Broad Habitat Type'),current_value('Retention Category')) AND NOT (\"New\" IN ('Intertidal hard structures'))"
+    },
+    "Proposed Habitat Type": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Options- post.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Proposed Broad Habitat Type')"
+    },
+    "Proposed Condition": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Proposed Habitat Type')"
+    },
+    "Proposed Strategic Significance": {
+      "kind": "list",
+      "values": [
+        "Low",
+        "High"
+      ]
+    },
+    "Habitat created in advance/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Delay in starting habitat creation/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Spatial risk category": {
+      "kind": "reference",
+      "list": "Habitats/Habitats Spatial Risk.csv",
+      "key": "Description",
+      "filter": "\"Base\" = 'On-site'"
+    }
+  },
+  "Hedgerows Baseline": {
+    "Baseline Hedge Type": {
+      "kind": "list",
+      "values": [
+        "Non-native and ornamental hedgerow",
+        "Line of trees",
+        "Line of trees - associated with bank or ditch",
+        "Ecologically valuable line of trees",
+        "Ecologically valuable line of trees - associated with bank or ditch",
+        "Native hedgerow",
+        "Native hedgerow - associated with bank or ditch",
+        "Native hedgerow with trees",
+        "Native hedgerow with trees - associated with bank or ditch",
+        "Species-rich native hedgerow",
+        "Species-rich native hedgerow - associated with bank or ditch",
+        "Species-rich native hedgerow with trees",
+        "Species-rich native hedgerow with trees - associated with bank or ditch",
+        "To be created"
+      ]
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Condition.csv",
+      "key": "Condition",
+      "filter": "\"Habitat\"=current_value('Baseline Hedge Type')"
+    }
+  },
+  "Hedgerows Post-Intervention": {
+    "Baseline Hedge Type": {
+      "kind": "list",
+      "values": [
+        "Non-native and ornamental hedgerow",
+        "Line of trees",
+        "Line of trees - associated with bank or ditch",
+        "Ecologically valuable line of trees",
+        "Ecologically valuable line of trees - associated with bank or ditch",
+        "Native hedgerow",
+        "Native hedgerow - associated with bank or ditch",
+        "Native hedgerow with trees",
+        "Native hedgerow with trees - associated with bank or ditch",
+        "Species-rich native hedgerow",
+        "Species-rich native hedgerow - associated with bank or ditch",
+        "Species-rich native hedgerow with trees",
+        "Species-rich native hedgerow with trees - associated with bank or ditch",
+        "To be created"
+      ]
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Condition.csv",
+      "key": "Condition",
+      "filter": "\"Habitat\"=current_value('Baseline Hedge Type')"
+    },
+    "Retention Category": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Retention Options.csv",
+      "key": "Options",
+      "filter": "\"Value\"=coalesce(current_value('Baseline Hedge Type'),'To be created')"
+    },
+    "Proposed Hedge Type": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Habitat Options - post.csv",
+      "key": "Description",
+      "filter": "\"Value\"=concat(coalesce(current_value('Baseline Hedge Type'),'To be created'),current_value('Retention Category'))"
+    },
+    "Proposed Condition": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Condition.csv",
+      "key": "Condition",
+      "filter": "\"Habitat\"=current_value('Proposed Hedge Type')"
+    },
+    "Proposed Strategic Significance": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Strategic Significance.csv",
+      "key": "Value"
+    },
+    "Habitat created in advance/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+",
+        "Habitat already in target condition",
+        "N/A"
+      ]
+    },
+    "Delay in starting habitat creation/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+",
+        "N/A"
+      ]
+    },
+    "Spatial risk category": {
+      "kind": "reference",
+      "list": "Hedgerows/Hedgerow Spatial Risk.csv",
+      "key": "Description",
+      "filter": "\"Base\" = 'On-site'"
+    }
+  },
+  "Red Line Boundary": {},
+  "Individual Trees Baseline": {
+    "Baseline Tree Size": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Size - pre.csv",
+      "key": "Retention",
+      "filter": "\"Category\" = 'Existing'"
+    },
+    "Baseline Tree Type": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Type - pre.csv",
+      "key": "Type",
+      "filter": "\"Category\" = 'Existing'"
+    },
+    "Baseline Rural or Urban Tree": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Rural or Urban - pre.csv",
+      "key": "Retention",
+      "filter": "\"Category\" = 'Existing'"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Condition - pre.csv",
+      "key": "Label",
+      "filter": "\"Category\" = 'Existing'"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "list",
+      "values": [
+        "Yes",
+        "No"
+      ]
+    }
+  },
+  "Individual Trees Post-Intervention": {
+    "Baseline Tree Size": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Size - pre.csv",
+      "key": "Retention",
+      "filter": "\"Category\"=current_value('Category')"
+    },
+    "Baseline Tree Type": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Type - pre.csv",
+      "key": "Type",
+      "filter": "\"Category\"=current_value('Category')"
+    },
+    "Baseline Rural or Urban Tree": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Rural or Urban - pre.csv",
+      "key": "Retention",
+      "filter": "\"Category\"=current_value('Category')"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Condition - pre.csv",
+      "key": "Label",
+      "filter": "\"Category\"=current_value('Category')"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "list",
+      "values": [
+        "Yes",
+        "No"
+      ]
+    },
+    "Retention Category": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Retention.csv",
+      "key": "Retention",
+      "filter": "\"Category\"=current_value('Category') AND NOT (\"Retention\"='Enhanced' AND (coalesce(current_value('Baseline Condition'),'')='Good' OR coalesce(current_value('Irreplaceable Habitat'),'')='Yes'))"
+    },
+    "Proposed Tree Size": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Size - options.csv",
+      "key": "New",
+      "filter": "\"ID\"=concat(coalesce(current_value('Baseline Tree Size'),'N/A'),current_value('Retention Category'))"
+    },
+    "Proposed Tree Type": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Type - options.csv",
+      "key": "New",
+      "filter": "\"ID\"=concat(coalesce(current_value('Baseline Tree Type'),'N/A'),current_value('Retention Category'))"
+    },
+    "Proposed Rural or Urban Tree": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Rural or Urban - options.csv",
+      "key": "New",
+      "filter": "\"ID\"=concat(coalesce(current_value('Baseline Rural or Urban Tree'),'N/A'),current_value('Retention Category'))"
+    },
+    "Proposed Condition": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Condition - options.csv",
+      "key": "Label",
+      "filter": "\"ID\"=concat(coalesce(current_value('Baseline Condition'),'N/A'),current_value('Retention Category'))"
+    },
+    "Proposed Strategic Significance": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Strategic Significance - post.csv",
+      "key": "Value"
+    },
+    "Category": {
+      "kind": "list",
+      "values": [
+        "Newly Planted",
+        "Existing"
+      ]
+    },
+    "Habitat Created/Enhanced in advance/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Delay in starting habitat creation/enhancement in years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Spatial risk category": {
+      "kind": "reference",
+      "list": "Individual trees/Individual tree Spatial Risk.csv",
+      "key": "Description",
+      "filter": "\"Base\" = 'On-site'"
+    }
+  },
+  "Vertical Area Habitats Baseline": {
+    "Baseline Broad Habitat Type": {
+      "kind": "list",
+      "values": [
+        "Intertidal hard structures",
+        "Urban"
+      ]
+    },
+    "Baseline Habitat Type": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Options- pre.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Baseline Broad Habitat Type')"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Irreplaceable.csv",
+      "key": "Irreplaceable",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    }
+  },
+  "Vertical Area Habitats Post-Intervention": {
+    "Baseline Broad Habitat Type": {
+      "kind": "list",
+      "values": [
+        "Intertidal hard structures",
+        "Urban"
+      ]
+    },
+    "Baseline Habitat Type": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Options- pre.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Baseline Broad Habitat Type')"
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Irreplaceable Habitat": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Irreplaceable.csv",
+      "key": "Irreplaceable",
+      "filter": "\"UKHAB\"=current_value('Baseline Habitat Type')"
+    },
+    "Retention Category": {
+      "kind": "list",
+      "values": [
+        "Created",
+        "Retained",
+        "Enhanced"
+      ]
+    },
+    "Proposed Broad Habitat Type": {
+      "kind": "reference",
+      "list": "Habitats/Habitat Proposed Broad Options.csv",
+      "key": "New",
+      "filter": "\"ID\"=concat(current_value('Baseline Broad Habitat Type'),current_value('Retention Category')) AND \"New\" IN ('Intertidal hard structures','Urban')"
+    },
+    "Proposed Habitat Type": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Options- post.csv",
+      "key": "UKHAB",
+      "filter": "\"ID\"=current_value('Proposed Broad Habitat Type')"
+    },
+    "Proposed Condition": {
+      "kind": "reference",
+      "list": "Vertical Area Habitats/Vertical Area Habitat Condition.csv",
+      "key": "Label",
+      "filter": "\"UKHAB\"=current_value('Proposed Habitat Type')"
+    },
+    "Proposed Strategic Significance": {
+      "kind": "list",
+      "values": [
+        "Low",
+        "High"
+      ]
+    },
+    "Habitat created in advance/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Delay in starting habitat creation/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+"
+      ]
+    },
+    "Spatial risk category": {
+      "kind": "reference",
+      "list": "Habitats/Habitats Spatial Risk.csv",
+      "key": "Description",
+      "filter": "\"Base\" = 'On-site'"
+    }
+  },
+  "Watercourses Baseline": {
+    "Baseline River Type": {
+      "kind": "list",
+      "values": [
+        "Priority habitat",
+        "Other rivers and streams",
+        "Ditches",
+        "Canals",
+        "Culvert",
+        "To be created"
+      ]
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Condition.csv",
+      "key": "Label",
+      "filter": "\"Habitat\"=current_value('Baseline River Type')"
+    },
+    "Baseline Encroachment into Watercourse": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Encroachment.csv",
+      "key": "Description",
+      "filter": "\"Value\"=current_value('Baseline River Type')"
+    },
+    "Baseline Encroachment into riparian zone": {
+      "kind": "reference",
+      "list": "Watercourses/Riparian Encroachment.csv",
+      "key": "Label",
+      "filter": "\"Value\"=current_value('Baseline River Type')"
+    }
+  },
+  "Watercourses Post-Intervention": {
+    "Baseline River Type": {
+      "kind": "list",
+      "values": [
+        "Priority habitat",
+        "Other rivers and streams",
+        "Ditches",
+        "Canals",
+        "Culvert",
+        "To be created"
+      ]
+    },
+    "Baseline Condition": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Condition.csv",
+      "key": "Label",
+      "filter": "\"Habitat\"=current_value('Baseline River Type')"
+    },
+    "Baseline Encroachment into Watercourse": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Encroachment.csv",
+      "key": "Description",
+      "filter": "\"Value\"=current_value('Baseline River Type')"
+    },
+    "Baseline Encroachment into riparian zone": {
+      "kind": "reference",
+      "list": "Watercourses/Riparian Encroachment.csv",
+      "key": "Label",
+      "filter": "\"Value\"=current_value('Baseline River Type')"
+    },
+    "Retention Category": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Retention Options.csv",
+      "key": "Label",
+      "filter": "\"Value\"=coalesce(current_value('Baseline River Type'),'To be created')"
+    },
+    "Proposed River Type": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Habitat Options - post.csv",
+      "key": "Description",
+      "filter": "\"Value\"=concat(coalesce(current_value('Baseline River Type'),'To be created'),current_value('Retention Category'))"
+    },
+    "Proposed Condition": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Condition.csv",
+      "key": "Label",
+      "filter": "\"Habitat\"=current_value('Proposed River Type')"
+    },
+    "Proposed Strategic Significance": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Proposed Strategic Significance.csv",
+      "key": "Value"
+    },
+    "Proposed Encroachment into Watercourse": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Encroachment.csv",
+      "key": "Description",
+      "filter": "\"Value\"=current_value('Proposed River Type')"
+    },
+    "Proposed Encroachment into riparian zone": {
+      "kind": "reference",
+      "list": "Watercourses/Riparian Encroachment.csv",
+      "key": "Label",
+      "filter": "\"Value\"=current_value('Proposed River Type')"
+    },
+    "Enhancement Type": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Enhancement Options.csv",
+      "key": "Options",
+      "filter": "\"Value\"=current_value('Retention Category')"
+    },
+    "Habitat created in advance/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+",
+        "N/A"
+      ]
+    },
+    "Delay in starting habitat creation/years": {
+      "kind": "list",
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "30+",
+        "N/A"
+      ]
+    },
+    "Spatial risk category": {
+      "kind": "reference",
+      "list": "Watercourses/Watercourse Spatial Risk.csv",
+      "key": "Description",
+      "filter": "\"Base\" = 'On-site'"
+    }
+  }
+}

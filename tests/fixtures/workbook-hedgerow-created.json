@@ -1,0 +1,383 @@
+{
+  "siteInfo": {
+    "totalSiteAreaHa": 30.7522134298853
+  },
+  "version": "4.0",
+  "habitats": {
+    "baseline": [
+      {
+        "ref": "1",
+        "broad": "Urban",
+        "type": "Ground based green wall",
+        "fullName": "Urban - Ground based green wall",
+        "area": 10.8638494780527,
+        "distinctiveness": "Low",
+        "condition": "Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 0,
+        "areaEnhanced": 10.8638494780527,
+        "areaLost": 0
+      },
+      {
+        "ref": "2",
+        "broad": "Urban",
+        "type": "Artificial unvegetated, unsealed surface",
+        "fullName": "Urban - Artificial unvegetated, unsealed surface",
+        "area": 9.37275119787717,
+        "distinctiveness": "V.Low",
+        "condition": "N/A - Other",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 0,
+        "areaEnhanced": 0,
+        "areaLost": 9.37275119787717
+      },
+      {
+        "ref": "3",
+        "broad": "Urban",
+        "type": "Facade-bound green wall",
+        "fullName": "Urban - Facade-bound green wall",
+        "area": 9.21049088759447,
+        "distinctiveness": "Low",
+        "condition": "Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 0,
+        "areaEnhanced": 0,
+        "areaLost": 9.21049088759447
+      },
+      {
+        "ref": "4",
+        "broad": "Urban",
+        "type": "Introduced shrub",
+        "fullName": "Urban - Introduced shrub",
+        "area": 7.87304107019817,
+        "distinctiveness": "Low",
+        "condition": "Condition Assessment N/A",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 0,
+        "areaEnhanced": 0,
+        "areaLost": 7.87304107019817
+      },
+      {
+        "ref": "5",
+        "broad": "Urban",
+        "type": "Vegetated garden",
+        "fullName": "Urban - Vegetated garden",
+        "area": 5.41915678307419,
+        "distinctiveness": "Low",
+        "condition": "Condition Assessment N/A",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 5.41915678307419,
+        "areaEnhanced": 0,
+        "areaLost": 0
+      },
+      {
+        "ref": "6",
+        "broad": "Heathland and shrub",
+        "type": "Hawthorn scrub",
+        "fullName": "Heathland and shrub - Hawthorn scrub",
+        "area": 8.08726437873572,
+        "distinctiveness": "Medium",
+        "condition": "Fairly Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": false,
+        "areaRetained": 0,
+        "areaEnhanced": 0,
+        "areaLost": 8.08726437873572
+      }
+    ],
+    "created": [
+      {
+        "ref": "1",
+        "broad": "Urban",
+        "type": "Sustainable drainage system",
+        "fullName": "Urban - Sustainable drainage system",
+        "area": 9.37275119787717,
+        "distinctiveness": "Low",
+        "condition": "Moderate",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 0,
+        "delayYears": 0,
+        "isIndividualTree": false
+      },
+      {
+        "ref": "2",
+        "broad": "Urban",
+        "type": "Bare ground",
+        "fullName": "Urban - Bare ground",
+        "area": 9.21049088759447,
+        "distinctiveness": "Low",
+        "condition": "Moderate",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 1,
+        "delayYears": 0,
+        "isIndividualTree": false
+      },
+      {
+        "ref": "3",
+        "broad": "Woodland and forest",
+        "type": "Other woodland; broadleaved",
+        "fullName": "Woodland and forest - Other woodland; broadleaved",
+        "area": 7.87304107019817,
+        "distinctiveness": "Medium",
+        "condition": "Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 0,
+        "delayYears": 0,
+        "isIndividualTree": false
+      },
+      {
+        "ref": "4",
+        "broad": "Heathland and shrub",
+        "type": "Hazel scrub",
+        "fullName": "Heathland and shrub - Hazel scrub",
+        "area": 8.08726437873572,
+        "distinctiveness": "Medium",
+        "condition": "Poor",
+        "strategicSignificance": "Formally identified in local strategy",
+        "advanceYears": 1,
+        "delayYears": 0,
+        "isIndividualTree": false
+      }
+    ],
+    "enhancements": [
+      {
+        "baselineRef": "1",
+        "proposedBroad": "Urban",
+        "proposedType": "Ground based green wall",
+        "proposedFullName": "Urban - Ground based green wall",
+        "proposedArea": 10.8638494780527,
+        "proposedDistinctiveness": "Low",
+        "proposedCondition": "Fairly Poor",
+        "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 0,
+        "delayYears": 0
+      },
+      {
+        "baselineRef": "7",
+        "proposedBroad": "Individual trees",
+        "proposedType": "Urban tree",
+        "proposedFullName": "Individual trees - Urban tree",
+        "proposedArea": 0.0041,
+        "proposedDistinctiveness": "Medium",
+        "proposedCondition": "Good",
+        "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 0,
+        "delayYears": 0
+      },
+      {
+        "baselineRef": "9",
+        "proposedBroad": "Individual trees",
+        "proposedType": "Urban tree",
+        "proposedFullName": "Individual trees - Urban tree",
+        "proposedArea": 0.0366,
+        "proposedDistinctiveness": "Medium",
+        "proposedCondition": "Moderate",
+        "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "advanceYears": 0,
+        "delayYears": 0
+      },
+      {
+        "baselineRef": "10",
+        "proposedBroad": "Individual trees",
+        "proposedType": "Rural tree",
+        "proposedFullName": "Individual trees - Rural tree",
+        "proposedArea": 0.0765,
+        "proposedDistinctiveness": "Medium",
+        "proposedCondition": "Good",
+        "proposedStrategicSignificance": "Formally identified in local strategy",
+        "advanceYears": 0,
+        "delayYears": 0
+      }
+    ]
+  },
+  "hedgerows": {
+    "baseline": [
+      {
+        "ref": "1",
+        "type": "Native hedgerow with trees",
+        "lengthKm": 0.309884486046579,
+        "lengthM": 310,
+        "distinctiveness": "Medium",
+        "condition": "Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "waterEncroachment": null,
+        "riparianEncroachment": null,
+        "advanceYears": 0,
+        "delayYears": 0,
+        "lengthRetainedKm": 0,
+        "lengthEnhancedKm": 0,
+        "lengthLostKm": 0.309884486046579,
+        "lengthRetainedM": 0,
+        "lengthEnhancedM": 0,
+        "lengthLostM": 310
+      }
+    ],
+    "created": [
+      {
+        "ref": "1",
+        "type": "Species-rich native hedgerow",
+        "lengthKm": 0.252544159166867,
+        "lengthM": 253,
+        "distinctiveness": "Medium",
+        "condition": "Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "waterEncroachment": null,
+        "riparianEncroachment": null,
+        "advanceYears": 2,
+        "delayYears": 0
+      },
+      {
+        "ref": "2",
+        "type": "Non-native and ornamental hedgerow",
+        "lengthKm": 0.674437040900916,
+        "lengthM": 674,
+        "distinctiveness": "V.Low",
+        "condition": "Poor",
+        "strategicSignificance": "Formally identified in local strategy",
+        "waterEncroachment": null,
+        "riparianEncroachment": null,
+        "advanceYears": 2,
+        "delayYears": 0
+      }
+    ],
+    "enhancements": []
+  },
+  "watercourses": {
+    "baseline": [
+      {
+        "ref": "1",
+        "type": "Culvert",
+        "lengthKm": 0.543032025992071,
+        "lengthM": 543,
+        "distinctiveness": "Low",
+        "condition": "Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "waterEncroachment": "N/A - Culvert",
+        "riparianEncroachment": "N/A - Culvert",
+        "advanceYears": 0,
+        "delayYears": 0,
+        "lengthRetainedKm": 0.543032025992071,
+        "lengthEnhancedKm": 0,
+        "lengthLostKm": 0,
+        "lengthRetainedM": 543,
+        "lengthEnhancedM": 0,
+        "lengthLostM": 0
+      },
+      {
+        "ref": "2",
+        "type": "Ditches",
+        "lengthKm": 0.56465722092407,
+        "lengthM": 565,
+        "distinctiveness": "Medium",
+        "condition": "Fairly Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "waterEncroachment": "Major",
+        "riparianEncroachment": "Major/Moderate",
+        "advanceYears": 0,
+        "delayYears": 0,
+        "lengthRetainedKm": 0,
+        "lengthEnhancedKm": 0,
+        "lengthLostKm": 0.56465722092407,
+        "lengthRetainedM": 0,
+        "lengthEnhancedM": 0,
+        "lengthLostM": 565
+      }
+    ],
+    "created": [],
+    "enhancements": []
+  },
+  "trees": {
+    "baseline": [
+      {
+        "ref": "7",
+        "broad": "Individual trees",
+        "type": "Urban tree",
+        "fullName": "Individual trees - Urban tree",
+        "area": 0.0041,
+        "distinctiveness": "Medium",
+        "condition": "Fairly Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": true,
+        "areaRetained": 0,
+        "areaEnhanced": 0.0041,
+        "areaLost": 0
+      },
+      {
+        "ref": "8",
+        "broad": "Individual trees",
+        "type": "Rural tree",
+        "fullName": "Individual trees - Rural tree",
+        "area": 0.0163,
+        "distinctiveness": "Medium",
+        "condition": "Fairly Good",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": true,
+        "areaRetained": 0.0163,
+        "areaEnhanced": 0,
+        "areaLost": 0
+      },
+      {
+        "ref": "9",
+        "broad": "Individual trees",
+        "type": "Urban tree",
+        "fullName": "Individual trees - Urban tree",
+        "area": 0.0366,
+        "distinctiveness": "Medium",
+        "condition": "Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": true,
+        "areaRetained": 0,
+        "areaEnhanced": 0.0366,
+        "areaLost": 0
+      },
+      {
+        "ref": "10",
+        "broad": "Individual trees",
+        "type": "Rural tree",
+        "fullName": "Individual trees - Rural tree",
+        "area": 0.0765,
+        "distinctiveness": "Medium",
+        "condition": "Poor",
+        "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+        "irreplaceable": false,
+        "isIndividualTree": true,
+        "areaRetained": 0,
+        "areaEnhanced": 0.0765,
+        "areaLost": 0
+      }
+    ],
+    "created": [
+      {
+        "ref": "5",
+        "broad": "Individual trees",
+        "type": "Urban tree",
+        "fullName": "Individual trees - Urban tree",
+        "area": 0.0041,
+        "distinctiveness": "Medium",
+        "condition": "Moderate",
+        "strategicSignificance": "Formally identified in local strategy",
+        "advanceYears": 2,
+        "delayYears": 0,
+        "isIndividualTree": true
+      }
+    ]
+  },
+  "summary": {
+    "warnings": [],
+    "skipped": []
+  }
+}

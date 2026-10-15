@@ -88,3 +88,17 @@ export function captureMessages(fn) {
     setMode(previous)
   }
 }
+
+// Run `fn` with the logger in `next` mode, restoring the previous mode after.
+// The BNG Service format runs the legacy generator as an intermediate step
+// this way, silenced, so its banner does not name a file the caller never
+// sees.
+export function withMode(next, fn) {
+  const previous = mode
+  setMode(next)
+  try {
+    return fn()
+  } finally {
+    setMode(previous)
+  }
+}

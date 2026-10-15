@@ -1,3 +1,5 @@
 package-lock.json
 node_modules
 coverage
+# Copied from the bng-metric-template repo by `npm run sync:template`; never edited by hand
+src/bng-service/template

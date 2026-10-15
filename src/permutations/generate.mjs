@@ -25,18 +25,40 @@ import {
 } from '../workbook-writer/index.mjs'
 import { DEFAULT_SIZE, PURPOSES, SCENARIOS } from './catalogue.mjs'
 import { derivePermutationSeed } from './seed.mjs'
+import { writeBngServiceFromLegacy } from '../bng-service/generate.mjs'
+import {
+  FORMAT_BNG_SERVICE,
+  FORMAT_LEGACY,
+  STAGE_POST_INTERVENTION,
+  VALID_FORMATS
+} from '../bng-service/schema.mjs'
+import { areaLayerOffers } from '../bng-service/vocabulary.mjs'
 
 const TMP_PREFIX = 'bng-perms-'
 // Geometry layout is irrelevant to these attribute-driven scenarios, so every
 // fixture shares one centre (Maidenhead, BNG/EPSG:27700).
 const DEFAULT_CENTRE = [530000, 180000]
 
-// Metadata carried through to the manifest, without the (large) buffers.
-function manifestEntry(scenario, size, withWorkbook = false) {
-  const files = {
+// The files a scenario produces: a baseline / post-intervention pair in the
+// legacy format, one GeoPackage holding both stages in the BNG Service format.
+function scenarioFiles(scenario, format) {
+  if (format === FORMAT_BNG_SERVICE) {
+    return { geoPackage: `${scenario.purpose}/${scenario.id}.gpkg` }
+  }
+  return {
     baseline: `${scenario.purpose}/${scenario.id}-baseline.gpkg`,
     postIntervention: `${scenario.purpose}/${scenario.id}-post-intervention.gpkg`
   }
+}
+
+// Metadata carried through to the manifest, without the (large) buffers.
+function manifestEntry(
+  scenario,
+  size,
+  withWorkbook = false,
+  format = FORMAT_LEGACY
+) {
+  const files = scenarioFiles(scenario, format)
   if (withWorkbook) {
     files.workbook = `${scenario.purpose}/${scenario.id}.xlsx`
   }
@@ -84,6 +106,56 @@ export function scenarioPlan(scenario, size = scenario.size ?? DEFAULT_SIZE) {
   }
 }
 
+/**
+ * A scenario in the BNG Service format: the legacy generator's
+ * post-intervention half (every row carrying both stages), drawn from the
+ * habitats the template's Area Habitats layers offer, then written as one
+ * file. The workbook is derived from the same legacy half, so the two still
+ * cannot drift. The scenario holds exactly what it pins: no vertical
+ * habitats or comments are added.
+ */
+function generateBngServiceScenario(
+  scenario,
+  dir,
+  centre,
+  seed,
+  workbook,
+  stage
+) {
+  const size = scenario.size ?? DEFAULT_SIZE
+  const piPath = path.join(dir, `${scenario.id}-post-intervention.gpkg`)
+  const outPath = path.join(dir, `${scenario.id}.gpkg`)
+  const plan = {
+    ...scenarioPlan(scenario, size),
+    habitatFilter: areaLayerOffers
+  }
+  if (Number.isInteger(seed)) {
+    plan.seed = derivePermutationSeed(seed, scenario.id)
+  }
+  captureMessages(() => {
+    generateOne(piPath, centre, plan)
+    writeBngServiceFromLegacy({ legacyPath: piPath }, outPath, {
+      seed: plan.seed,
+      stage,
+      overrides: plan.attributeOverrides
+    })
+  })
+  const entry = manifestEntry(
+    scenario,
+    size,
+    Boolean(workbook),
+    FORMAT_BNG_SERVICE
+  )
+  const result = {
+    ...entry,
+    geoPackage: { path: entry.files.geoPackage, buffer: readFileSync(outPath) }
+  }
+  if (workbook) {
+    result.workbook = scenarioWorkbook(piPath, entry, workbook)
+  }
+  return result
+}
+
 function generateScenarioBuffers(scenario, dir, centre, seed, workbook) {
   const size = scenario.size ?? DEFAULT_SIZE
   const piPath = path.join(dir, `${scenario.id}-post-intervention.gpkg`)
@@ -124,25 +196,36 @@ function generateScenarioBuffers(scenario, dir, centre, seed, workbook) {
  * @param {boolean} [options.manifestOnly]  enumerate the selected catalogue as
  *   metadata only, skipping the (expensive) GeoPackage generation — for callers
  *   that want to preview which scenarios a run would produce.
+ * @param {string} [options.format]  'legacy' (the default) or 'bng-service'
+ * @param {string} [options.stage]  BNG Service format only: 'baseline' writes
+ *   each scenario's baseline-stage file
  * @returns {{ scenarios: object[], manifest: object }}  each scenario carries
- *   `baseline` / `postIntervention` `{ path, buffer }` (metadata only when
- *   `manifestOnly`); `manifest` is the same metadata without buffers, ready to
- *   serialise into the download.
+ *   `baseline` / `postIntervention` `{ path, buffer }` in the legacy format,
+ *   or one `geoPackage: { path, buffer }` in the BNG Service format (metadata
+ *   only when `manifestOnly`); `manifest` is the same metadata without
+ *   buffers, ready to serialise into the download.
  */
 export function generatePermutations({
   seed,
   only,
   centre,
   manifestOnly,
-  workbookTemplate
+  workbookTemplate,
+  format = FORMAT_LEGACY,
+  stage = STAGE_POST_INTERVENTION
 } = {}) {
+  if (!VALID_FORMATS.has(format)) {
+    throw new Error(
+      `format must be one of: ${[...VALID_FORMATS].join(', ')} (got: ${format})`
+    )
+  }
   const selected = only
     ? SCENARIOS.filter((s) => s.purpose === only)
     : SCENARIOS
   const withWorkbook = Boolean(workbookTemplate)
   if (manifestOnly) {
     const scenarios = selected.map((s) =>
-      manifestEntry(s, s.size ?? DEFAULT_SIZE, withWorkbook)
+      manifestEntry(s, s.size ?? DEFAULT_SIZE, withWorkbook, format)
     )
     return { scenarios, manifest: { scenarios } }
   }
@@ -156,10 +239,21 @@ export function generatePermutations({
   const dir = mkdtempSync(path.join(tmpdir(), TMP_PREFIX))
   try {
     const scenarios = selected.map((scenario) =>
-      generateScenarioBuffers(scenario, dir, resolvedCentre, seed, workbook)
+      format === FORMAT_BNG_SERVICE
+        ? generateBngServiceScenario(
+            scenario,
+            dir,
+            resolvedCentre,
+            seed,
+            workbook,
+            stage
+          )
+        : generateScenarioBuffers(scenario, dir, resolvedCentre, seed, workbook)
     )
     const manifest = {
-      scenarios: scenarios.map((s) => manifestEntry(s, s.size, withWorkbook))
+      scenarios: scenarios.map((s) =>
+        manifestEntry(s, s.size, withWorkbook, format)
+      )
     }
     return { scenarios, manifest }
   } finally {

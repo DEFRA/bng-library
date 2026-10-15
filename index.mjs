@@ -92,3 +92,40 @@ export {
   scenarioPlan as permutationScenarioPlan
 } from './src/permutations/generate.mjs'
 export { derivePermutationSeed } from './src/permutations/seed.mjs'
+
+// The BNG Service template format (BMD-1080): one GeoPackage holding both
+// stages, in the template the service's users upload. Opt-in: every
+// generator writes the legacy format unless asked for `format: 'bng-service'`.
+// The template's schema and reference lists are copied in by
+// scripts/sync-bng-service-template.mjs; `checkTemplateValues` checks a file
+// against the template's own drop-downs.
+export {
+  CURRENT_TEMPLATE_VERSION,
+  FORMAT_BNG_SERVICE,
+  FORMAT_LEGACY,
+  LAYERS as BNG_SERVICE_LAYERS,
+  STAGE_BASELINE,
+  STAGE_POST_INTERVENTION,
+  VALID_FORMATS,
+  VALID_STAGES,
+  readVersionRecords,
+  versionRecordText
+} from './src/bng-service/schema.mjs'
+export {
+  TEMPLATE_DROP_DOWNS,
+  TEMPLATE_SCHEMA,
+  TEMPLATE_SOURCE
+} from './src/bng-service/reference.mjs'
+export { checkTemplateValues } from './src/bng-service/check-values.mjs'
+export {
+  generateBngServiceFromWorkbook,
+  generateBngServiceSynthetic,
+  writeBngServiceFromLegacy
+} from './src/bng-service/generate.mjs'
+export {
+  BNG_SERVICE_FLAWS,
+  BNG_SERVICE_FLAW_NAMES,
+  CATEGORY_LINEAGE,
+  CATEGORY_VERSION,
+  LEGACY_ONLY_FLAWS
+} from './src/bng-service/flaws.mjs'

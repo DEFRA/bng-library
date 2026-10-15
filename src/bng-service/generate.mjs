@@ -38,7 +38,11 @@ import {
   applyTemplateOverrides,
   defaultVerticalCount
 } from './template-features.mjs'
-import { applyLineageFlaws, versionRecordsFor } from './flaws.mjs'
+import {
+  applyLineageFlaws,
+  assertLineageFlawsFitStage,
+  versionRecordsFor
+} from './flaws.mjs'
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
 import { createChooser } from './random.mjs'
 import {
@@ -149,6 +153,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     versionFlaws = []
   } = options
   assertOptions({ stage, templateVersion })
+  assertLineageFlawsFitStage(lineageFlaws, stage)
   const chooser = createChooser(seed)
   const readOptions = {
     uuidFor: (layerKey, index) => chooser.uuid(`${layerKey}/${index}`),
@@ -275,6 +280,8 @@ export function generateBngServiceSynthetic(
     lineageFlawNames = [],
     versionFlawNames = []
   } = plan
+  // Before the legacy run, so a refused selection writes nothing.
+  assertLineageFlawsFitStage(lineageFlawNames, stage)
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
   const enrich = templateFeatures && geometricFlawNames.length === 0
   const counts = computeLayerCounts(plan.numParcels, emptyLayers, plan.numTrees)

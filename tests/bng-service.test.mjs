@@ -651,6 +651,25 @@ describe('AC6: flaws in the new format', () => {
     }
   )
 
+  it('refuses a lineage flaw in the baseline-stage file', () => {
+    expect(() =>
+      generateSyntheticGpkg({
+        format: 'bng-service',
+        stage: 'baseline',
+        flaws: ['lineage-parent-unknown']
+      })
+    ).toThrow(/baseline-stage file leaves empty/)
+  })
+
+  it('takes a version flaw in the baseline-stage file', () => {
+    const { buffer } = generateSyntheticGpkg({
+      format: 'bng-service',
+      stage: 'baseline',
+      flaws: ['version-record-missing']
+    })
+    expect(buffer.length).toBeGreaterThan(0)
+  })
+
   it('refuses a flaw the template cannot carry', () => {
     expect(() =>
       generateSyntheticGpkg({

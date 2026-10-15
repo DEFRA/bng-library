@@ -17,7 +17,11 @@
 
 import { error } from '../log.mjs'
 import { geometryWkt, HABITAT_REF } from './site.mjs'
-import { CURRENT_TEMPLATE_VERSION, versionRecordText } from './schema.mjs'
+import {
+  CURRENT_TEMPLATE_VERSION,
+  STAGE_BASELINE,
+  versionRecordText
+} from './schema.mjs'
 
 export const CATEGORY_LINEAGE = 'lineage'
 export const CATEGORY_VERSION = 'version'
@@ -208,6 +212,19 @@ export function partitionFlaws(names = []) {
     )
   }
   return { legacy, lineage, version }
+}
+
+/**
+ * Refuse lineage flaws in the baseline-stage file. Each changes a
+ * post-intervention feature, and that file leaves those tables empty, so the
+ * file would be named for a flaw it does not hold.
+ */
+export function assertLineageFlawsFitStage(names, stage) {
+  if (stage === STAGE_BASELINE && names.length > 0) {
+    error(
+      `Lineage flaws change post-intervention features, which the baseline-stage file leaves empty; got ${names.join(', ')}`
+    )
+  }
 }
 
 /** Apply lineage flaws to the site. */

@@ -122,7 +122,10 @@ mapping post-intervention habitats.
 
 Each route runs the legacy generator unchanged and converts its output, so
 seeds, row overrides, flaws and scenarios behave exactly as they do for the
-legacy format, and the same seed gives the same file to the byte. The habitat
+legacy format, and the same seed gives the same file to the byte. The workbook
+routes take a `seed` too (`generateFromWorkbookBuffer({ seed, … })`, in
+either format); without one, tree positions, line shapes and feature
+identities are drawn afresh on each run. The habitat
 draws are narrowed to those the template's Area Habitats layers offer, and a
 green wall or other vertical area habitat a workbook lists among its area
 habitats moves to the vertical layers, with the ground under it mapped as

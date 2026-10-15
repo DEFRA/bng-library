@@ -204,6 +204,8 @@ function generateSyntheticBngServiceGpkg(options, centre) {
  *   mode              'baseline' | 'post-intervention' | 'both' (default 'both')
  *   strict            propagate to buildBaselineRows / buildPostInterventionRows
  *   centre            [easting, northing] in BNG (default Maidenhead)
+ *   seed              32-bit integer: the same workbook and seed give the
+ *                     same file(s)
  *   format            'legacy' (the default) or 'bng-service'
  *   templateVersion   BNG Service format only: the version its record names
  *
@@ -226,6 +228,7 @@ export function generateFromWorkbookBuffer(options) {
     mode = MODE_BOTH,
     strict = false,
     centre,
+    seed,
     format = FORMAT_LEGACY,
     templateVersion
   } = options
@@ -251,6 +254,7 @@ export function generateFromWorkbookBuffer(options) {
       stage: mode === MODE_BASELINE ? STAGE_BASELINE : STAGE_POST_INTERVENTION,
       strict,
       centre: resolvedCentre,
+      seed,
       templateVersion
     })
   }
@@ -265,7 +269,8 @@ export function generateFromWorkbookBuffer(options) {
       generateFromWorkbook(outPaths, workbook, workbookFilename, {
         strict,
         centre: resolvedCentre,
-        mode
+        mode,
+        seed
       })
     )
 
@@ -296,6 +301,7 @@ function bngServiceFromWorkbook({
   stage,
   strict,
   centre,
+  seed,
   templateVersion
 }) {
   const filenameHint = bngServiceWorkbookName(workbookFilename, stage)
@@ -305,6 +311,7 @@ function bngServiceFromWorkbook({
       generateBngServiceFromWorkbook(outPath, workbook, workbookFilename, {
         strict,
         centre,
+        seed,
         stage,
         templateVersion
       })

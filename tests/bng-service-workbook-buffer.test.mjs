@@ -100,4 +100,40 @@ describe('generateFromWorkbookBuffer in the BNG Service format', () => {
     expect(result.postIntervention.buffer.length).toBeGreaterThan(0)
     expect(result.buffer).toBeUndefined()
   })
+
+  describe('with a seed', () => {
+    const generate = (options) =>
+      generateFromWorkbookBuffer({
+        workbookBuffer: Buffer.from('parsed by the mock'),
+        workbookFilename: 'hedgerow-created.xlsx',
+        ...options
+      })
+
+    it('gives the same BNG Service file to the byte for the same seed', () => {
+      const first = generate({ format: 'bng-service', seed: 42 })
+      const second = generate({ format: 'bng-service', seed: 42 })
+      expect(first.buffer.equals(second.buffer)).toBe(true)
+    })
+
+    it('gives a different BNG Service file for a different seed', () => {
+      const first = generate({ format: 'bng-service', seed: 42 })
+      const second = generate({ format: 'bng-service', seed: 43 })
+      expect(first.buffer.equals(second.buffer)).toBe(false)
+    })
+
+    it('draws afresh without one', () => {
+      const first = generate({ format: 'bng-service' })
+      const second = generate({ format: 'bng-service' })
+      expect(first.buffer.equals(second.buffer)).toBe(false)
+    })
+
+    it('gives the same legacy pair to the byte for the same seed', () => {
+      const first = generate({ seed: 42 })
+      const second = generate({ seed: 42 })
+      expect(first.baseline.buffer.equals(second.baseline.buffer)).toBe(true)
+      expect(
+        first.postIntervention.buffer.equals(second.postIntervention.buffer)
+      ).toBe(true)
+    })
+  })
 })

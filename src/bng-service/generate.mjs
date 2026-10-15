@@ -332,6 +332,8 @@ function reemit(messages, outPaths, outPath) {
  * Generate the site a metric workbook describes, in the BNG Service template
  * format: the legacy workbook route's baseline and post-intervention pair,
  * joined into one file. `stage: 'baseline'` writes the baseline-stage file.
+ * `seed` makes it reproducible: the same workbook and seed give the same file
+ * to the byte.
  *
  * @returns {{ success: boolean, plan: object }}
  */
@@ -342,6 +344,7 @@ export function generateBngServiceFromWorkbook(
   {
     strict = false,
     centre,
+    seed,
     stage = STAGE_POST_INTERVENTION,
     templateVersion = CURRENT_TEMPLATE_VERSION
   } = {}
@@ -357,7 +360,8 @@ export function generateBngServiceFromWorkbook(
       generateFromWorkbook(outPaths, workbook, sourceLabel, {
         strict,
         centre,
-        mode
+        mode,
+        seed
       })
     )
     reemit(
@@ -377,7 +381,7 @@ export function generateBngServiceFromWorkbook(
             : outPaths.postIntervention
       },
       outPath,
-      { stage, templateVersion }
+      { seed, stage, templateVersion }
     )
     reportSite(site, outPath, stage)
     return result

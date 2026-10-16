@@ -149,6 +149,7 @@ Count column, and its own:
 | `lineage-parent-unknown`       | a Retained area habitat whose parent is not in the baseline                      |
 | `lineage-parent-wrong`         | a Retained area habitat naming another baseline parcel, which it lies outside    |
 | `lineage-parent-geom-mismatch` | the right parent, with a parent_geom 5 m from the parent's shape                 |
+| `lineage-parent-geom-missing`  | the right parent, with no parent_geom; accepted, as the service skips the check  |
 | `version-record-missing`       | no template version record                                                       |
 | `version-record-duplicated`    | two records                                                                      |
 | `version-unsupported`          | one record naming the next major version, which the service does not support yet |

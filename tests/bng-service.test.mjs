@@ -723,6 +723,16 @@ describe('AC6: flaws in the new format', () => {
     expect(row.parent_geom).not.toBe(geometryWkt(geometryOf(parent)))
   })
 
+  it('lineage-parent-geom-missing: the right parent, with no parent_geom', () => {
+    const out = flawed('lineage-parent-geom-missing')
+    const row = firstContinuing(out)
+    const parent = rows(out, BASELINE('Area Habitats')).find(
+      (b) => b.feature_uuid === row.parent_uuid
+    )
+    expect(row['Parent Ref']).toBe(parent['Habitat Ref'])
+    expect(row.parent_geom).toBeNull()
+  })
+
   it.each([
     ['version-record-missing', []],
     [

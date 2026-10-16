@@ -9,7 +9,10 @@
  * no Count column, so the flaw cannot be expressed.
  *
  * The lineage flaws name the backend's lineage codes (the
- * spike/baseline-pi-lineage branch). The service does not check the version
+ * spike/baseline-pi-lineage branch), bar `lineage-parent-geom-missing`: the
+ * backend skips the shape check on a linked row with no parent_geom, as a
+ * file made before the column, so it accepts that file without a warning.
+ * The service does not check the version
  * record yet, so the version flaws name the outcome the template's design
  * asks for ("It refuses a file with no record, or with a version that it does
  * not support") rather than an error code that does not exist.
@@ -29,6 +32,8 @@ const CATEGORY_LABELS = {
 
 const NO_BACKEND_CODE_YET =
   '(refused; the service does not check the version yet)'
+const ACCEPTED_WITHOUT_SHAPE_CHECK =
+  '(accepted; the service skips the shape check without parent_geom)'
 const UNKNOWN_REF = 'NOT-IN-BASELINE'
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
 // The mismatched parent shape is the parent moved this far east: well over
@@ -132,6 +137,20 @@ export const BNG_SERVICE_FLAWS = {
         ref: feature.parent.values[HABITAT_REF],
         uuid: feature.parent.uuid,
         geom: geometryWkt(shifted(feature.parent.geometry))
+      }
+    }
+  },
+  'lineage-parent-geom-missing': {
+    description:
+      "a Retained area habitat names its parent by Parent Ref and parent_uuid, but has no parent_geom, so the parent's shape cannot be compared",
+    errorCode: ACCEPTED_WITHOUT_SHAPE_CHECK,
+    category: CATEGORY_LINEAGE,
+    applyToSite(site) {
+      const feature = lineageSubject(site)
+      feature.lineage = {
+        ref: feature.parent.values[HABITAT_REF],
+        uuid: feature.parent.uuid,
+        geom: null
       }
     }
   },

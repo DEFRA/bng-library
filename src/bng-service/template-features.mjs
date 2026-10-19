@@ -13,15 +13,23 @@
  * Every value is one the template's lists offer, and the Metric's rules hold:
  * an irreplaceable tree is never Enhanced, and an Enhanced tree or vertical
  * habitat moves to a better condition only.
+ *
+ * It also records habitats that get worse (see `addWorseHabitats`), which
+ * the legacy generator writes only as a loss and a separate creation.
  */
 
 import { pointInRing } from '../geometry.mjs'
 import { envelopeFromCoords } from '../gpkg-io/index.mjs'
+import { lengthMetres } from '../measure/index.mjs'
 import {
   AREA,
+  HEDGEROW,
+  WATERCOURSE,
   baselineConditions,
   creationConditions,
-  enhancementPairs
+  encroachmentWorseThan,
+  enhancementPairs,
+  worseCreationConditions
 } from '../synthetic/valid-draws.mjs'
 import { listIndex } from './reference.mjs'
 import { COMMENT, HABITAT_REF } from './site.mjs'
@@ -30,6 +38,7 @@ import {
   LOW,
   NO,
   NOT_APPLICABLE,
+  TO_BE_CREATED,
   YES,
   distinctiveness,
   irreplaceableAnswers,
@@ -428,4 +437,350 @@ export function addVerticalHabitats(site, { count, rows = [] }, chooser) {
       layer.postIntervention.push(feature.postIntervention)
     }
   }
+}
+
+// ------------------------------------------------- habitats that get worse
+
+const ADVANCE = 'Habitat created in advance/years'
+const DELAY = 'Delay in starting habitat creation/years'
+// The Metric User Guide, section 5, "Habitat retention": a habitat whose
+// condition cannot be kept is recorded as lost, and created again in the
+// same type in a lower condition, 30 plus years in advance. The template
+// fills this in (bng-metric-template #7); a generated file does not pass
+// through QGIS, so the generator writes it.
+const DEGRADED_ADVANCE = '30+'
+// The Metric User Guide, section 7, "Watercourse creation": "Creation in
+// advance may be set to 10+ years if there are increases in encroachment
+// with no other impacts."
+const ENCROACHED_ADVANCE = '10'
+const CULVERT = 'Culvert'
+const MIN_HEDGE_LENGTH_M = 40
+const MAX_HEDGE_LENGTH_M = 120
+const MIN_RIVER_LENGTH_M = 60
+const MAX_RIVER_LENGTH_M = 150
+const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
+export const WORSE_HABITAT_COMMENT =
+  'Condition cannot be kept: recorded as lost and created again in a lower condition'
+export const ENCROACHED_WATERCOURSE_COMMENT =
+  'Encroachment increases, with no other impact'
+
+/** The baseline conditions of a type from which it can get worse. */
+function worseningFrom(kind, type) {
+  return baselineConditions(kind, type).filter(
+    (from) => worseCreationConditions(kind, type, from).length > 0
+  )
+}
+
+/** A Created copy of `parent`, in its own type, worse, 30+ years in advance. */
+function worseCopy(parent, proposed, chooser) {
+  return {
+    geometry: parent.geometry,
+    parent,
+    source: { index: parent.source.index, retention: CREATED },
+    values: {
+      [HABITAT_REF]: parent.values[HABITAT_REF],
+      [RETENTION]: CREATED,
+      ...proposed,
+      'Proposed Strategic Significance': LOW,
+      [ADVANCE]: DEGRADED_ADVANCE,
+      [DELAY]: null,
+      'Spatial risk category': NOT_APPLICABLE,
+      [COMMENT]: WORSE_HABITAT_COMMENT
+    }
+  }
+}
+
+/**
+ * The next ref in the style of a layer's refs: HG003 after HG002. Counts
+ * both stages, as a created feature has a ref but no baseline row.
+ */
+function nextRef(layer, prefix) {
+  let last = 0
+  for (const feature of [...layer.baseline, ...layer.postIntervention]) {
+    const match = NUMBERED_REF.exec(feature.values[HABITAT_REF] ?? '')
+    if (match) {
+      prefix = match[1]
+      last = Math.max(last, Number(match[2]))
+    }
+  }
+  return `${prefix}${String(last + 1).padStart(REF_PAD, '0')}`
+}
+
+/**
+ * An area parcel: the last Retained parcel that can get worse, set to
+ * Created in place, as the surveyor keeps the copied row. Area ground tiles
+ * the site, so a parcel cannot be added. Only when another Retained parcel
+ * stays, so the site still shows one.
+ */
+function worseParcel(site, chooser) {
+  const retained = site.layers.habitats.postIntervention.filter(
+    (f) =>
+      f.parent &&
+      f.values[RETENTION] === RETAINED &&
+      f.parent.values[IRREPLACEABLE] !== YES
+  )
+  if (retained.length < 2) {
+    return
+  }
+  const conditionsOf = (f) =>
+    worseCreationConditions(
+      AREA,
+      `${f.parent.values['Baseline Broad Habitat Type']} - ${f.parent.values['Baseline Habitat Type']}`,
+      f.parent.values['Baseline Condition']
+    )
+  const feature = retained.findLast((f) => conditionsOf(f).length > 0)
+  if (!feature) {
+    return
+  }
+  const base = feature.parent.values
+  const type = base['Baseline Habitat Type']
+  Object.assign(feature.values, {
+    [RETENTION]: CREATED,
+    'Proposed Broad Habitat Type': base['Baseline Broad Habitat Type'],
+    'Proposed Habitat Type': type,
+    'Proposed Distinctiveness': distinctiveness('habitats', type, true),
+    'Proposed Condition': chooser.pick(conditionsOf(feature)),
+    'Proposed Strategic Significance': LOW,
+    [ADVANCE]: DEGRADED_ADVANCE,
+    [DELAY]: null
+  })
+  feature.values[COMMENT] ??= WORSE_HABITAT_COMMENT
+}
+
+/** A vertical area habitat drawn for the purpose, and its worse copy. */
+function worseVertical(site, chooser) {
+  const names = verticalHabitatNames().filter(
+    (n) => worseningFrom(AREA, n).length > 0
+  )
+  const name = chooser.pick(names)
+  const layer = site.layers.verticalHabitats
+  const feature = verticalFeature(
+    site.redline.geometry.coordinates[0],
+    layer.baseline.length,
+    {
+      habitatFullName: name,
+      retention: RETAINED,
+      baselineCondition: chooser.pick(worseningFrom(AREA, name))
+    },
+    chooser
+  )
+  if (!feature) {
+    return
+  }
+  const { baseline } = feature
+  const type = baseline.values['Baseline Habitat Type']
+  layer.baseline.push(baseline)
+  layer.postIntervention.push(
+    worseCopy(
+      baseline,
+      {
+        'Proposed Broad Habitat Type':
+          baseline.values['Baseline Broad Habitat Type'],
+        'Proposed Habitat Type': type,
+        'Proposed Distinctiveness': distinctiveness(
+          'verticalHabitats',
+          type,
+          true
+        ),
+        'Proposed Condition': chooser.pick(
+          worseCreationConditions(
+            AREA,
+            name,
+            baseline.values['Baseline Condition']
+          )
+        ),
+        Area: baseline.values.Area
+      },
+      chooser
+    )
+  )
+}
+
+let hedgeTypes = null
+
+/** A hedgerow drawn for the purpose, and its worse copy. */
+function worseHedgerow(site, chooser) {
+  hedgeTypes ??= [
+    ...listIndex(
+      'Hedgerows/Hedgerow Condition.csv',
+      'Habitat',
+      'Condition'
+    ).keys()
+  ].filter((type) => worseningFrom(HEDGEROW, type).length > 0)
+  const layer = site.layers.hedgerows
+  const line = wallLine(
+    site.redline.geometry.coordinates[0],
+    chooser,
+    chooser.between(MIN_HEDGE_LENGTH_M, MAX_HEDGE_LENGTH_M)
+  )
+  if (!line || hedgeTypes.length === 0) {
+    return
+  }
+  const type = chooser.pick(hedgeTypes)
+  const condition = chooser.pick(worseningFrom(HEDGEROW, type))
+  const geometry = { type: 'LineString', coordinates: line }
+  const length = lengthMetres(geometry)
+  const baseline = {
+    geometry,
+    uuid: chooser.uuid('hedgerows/worse'),
+    source: { index: layer.baseline.length },
+    values: {
+      [HABITAT_REF]: nextRef(layer, 'HG'),
+      'Baseline Hedge Type': type,
+      'Baseline Distinctiveness': distinctiveness('hedgerows', type),
+      'Baseline Condition': condition,
+      'Baseline Strategic Significance': LOW,
+      Length: length,
+      [COMMENT]: null
+    }
+  }
+  layer.baseline.push(baseline)
+  layer.postIntervention.push(
+    worseCopy(
+      baseline,
+      {
+        'Proposed Hedge Type': type,
+        'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
+        'Proposed Condition': chooser.pick(
+          worseCreationConditions(HEDGEROW, type, condition)
+        ),
+        Length: length
+      },
+      chooser
+    )
+  )
+}
+
+let encroachmentOptions = null
+
+function encroachmentLists() {
+  encroachmentOptions ??= {
+    water: listIndex(
+      'Watercourses/Watercourse Encroachment.csv',
+      'Value',
+      'Description'
+    ),
+    riparian: listIndex(
+      'Watercourses/Riparian Encroachment.csv',
+      'Value',
+      'Label'
+    )
+  }
+  return encroachmentOptions
+}
+
+/** The baseline encroachments of a type that can get worse on both sides. */
+function worseningEncroachment(type) {
+  const lists = encroachmentLists()
+  const water = [...(lists.water.get(type) ?? [])]
+  const riparian = [...(lists.riparian.get(type) ?? [])]
+  return {
+    water: water.filter(
+      (b) => encroachmentWorseThan('water', water, b).length > 0
+    ),
+    riparian: riparian.filter(
+      (b) => encroachmentWorseThan('riparian', riparian, b).length > 0
+    ),
+    worse: (side, baseline) =>
+      encroachmentWorseThan(side, side === 'water' ? water : riparian, baseline)
+  }
+}
+
+/** The conditions a watercourse can be recorded in, and created in. */
+function keptConditions(type) {
+  const creatable = new Set(creationConditions(WATERCOURSE, type))
+  return baselineConditions(WATERCOURSE, type).filter((c) => creatable.has(c))
+}
+
+/**
+ * A watercourse drawn for the purpose, and a Created copy in its own type
+ * and condition whose encroachment gets worse, 10 years in advance. Not a
+ * culvert, which has no encroachment to worsen.
+ */
+function encroachedWatercourse(site, chooser) {
+  const types = [...encroachmentLists().water.keys()].filter(
+    (type) =>
+      type !== CULVERT &&
+      type !== TO_BE_CREATED &&
+      type !== NOT_APPLICABLE &&
+      keptConditions(type).length > 0 &&
+      worseningEncroachment(type).water.length > 0 &&
+      worseningEncroachment(type).riparian.length > 0
+  )
+  const layer = site.layers.rivers
+  const line = wallLine(
+    site.redline.geometry.coordinates[0],
+    chooser,
+    chooser.between(MIN_RIVER_LENGTH_M, MAX_RIVER_LENGTH_M)
+  )
+  if (!line || types.length === 0) {
+    return
+  }
+  const type = chooser.pick(types)
+  const options = worseningEncroachment(type)
+  const water = chooser.pick(options.water)
+  const riparian = chooser.pick(options.riparian)
+  const condition = chooser.pick(keptConditions(type))
+  const geometry = { type: 'LineString', coordinates: line }
+  const length = lengthMetres(geometry)
+  const baseline = {
+    geometry,
+    uuid: chooser.uuid('rivers/worse'),
+    source: { index: layer.baseline.length },
+    values: {
+      [HABITAT_REF]: nextRef(layer, 'R'),
+      'Baseline River Type': type,
+      'Baseline Distinctiveness': distinctiveness('rivers', type),
+      'Baseline Condition': condition,
+      'Baseline Strategic Significance': LOW,
+      'Baseline Encroachment into Watercourse': water,
+      'Baseline Encroachment into riparian zone': riparian,
+      Length: length,
+      [COMMENT]: null
+    }
+  }
+  const copy = worseCopy(
+    baseline,
+    {
+      'Proposed River Type': type,
+      'Proposed Distinctiveness': distinctiveness('rivers', type, true),
+      'Proposed Condition': condition,
+      'Proposed Encroachment into Watercourse': chooser.pick(
+        options.worse('water', water)
+      ),
+      'Proposed Encroachment into riparian zone': chooser.pick(
+        options.worse('riparian', riparian)
+      ),
+      Length: length
+    },
+    chooser
+  )
+  copy.values[ADVANCE] = ENCROACHED_ADVANCE
+  copy.values[COMMENT] = ENCROACHED_WATERCOURSE_COMMENT
+  layer.baseline.push(baseline)
+  layer.postIntervention.push(copy)
+}
+
+/**
+ * Record a habitat that gets worse on each layer, as a surveyor does with
+ * the template: the copied row is kept, so it keeps its parent, and set to
+ * Created in its own type.
+ *
+ * - An area habitat, vertical area habitat or hedgerow takes a condition the
+ *   Metric scores lower and can create it in, 30+ years in advance (Metric
+ *   User Guide, section 5).
+ * - A watercourse keeps its condition, and its encroachment gets worse on
+ *   both sides, 10 years in advance (Metric User Guide, section 7).
+ *
+ * The area habitat is the last Retained parcel that can get worse, clear of
+ * the lineage flaws, which take the first, and only when another Retained
+ * parcel stays. Area ground tiles the site, so it cannot be added. The
+ * others are drawn for the purpose inside the red line, so the site keeps
+ * every feature it had. An irreplaceable habitat is never chosen.
+ */
+export function addWorseHabitats(site, chooser) {
+  worseParcel(site, chooser)
+  worseVertical(site, chooser)
+  worseHedgerow(site, chooser)
+  encroachedWatercourse(site, chooser)
 }

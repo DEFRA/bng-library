@@ -35,6 +35,7 @@ import {
 import {
   addComments,
   addVerticalHabitats,
+  addWorseHabitats,
   applyTemplateOverrides,
   defaultVerticalCount
 } from './template-features.mjs'
@@ -133,6 +134,9 @@ function reportSite(site, outPath, stage) {
  *   `postInterventionComment`)
  * @param {boolean} [options.comments]  add surveyor comments
  * @param {{ count: number, rows?: object[] }} [options.verticalHabitats]
+ * @param {boolean} [options.worseHabitats]  record a habitat that gets worse
+ *   on each layer that can: Created in its own type, in a worse condition
+ *   (or, for a watercourse, worse encroachment), with years in advance
  * @param {string[]} [options.lineageFlaws]
  * @param {string[]} [options.versionFlaws]
  * @returns {object} the site written
@@ -145,6 +149,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     overrides,
     comments = false,
     verticalHabitats,
+    worseHabitats = false,
     lineageFlaws = [],
     versionFlaws = []
   } = options
@@ -164,6 +169,9 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
   applyTemplateOverrides(site, overrides)
   if (verticalHabitats) {
     addVerticalHabitats(site, verticalHabitats, chooser)
+  }
+  if (worseHabitats) {
+    addWorseHabitats(site, chooser)
   }
   if (comments) {
     addComments(site, chooser)
@@ -253,7 +261,8 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  * @param {string} [options.templateVersion]
  * @param {boolean} [options.templateFeatures]  true (the default) adds what
  *   only the new template records: vertical area habitats, comments, an
- *   irreplaceable parcel and tree, and an Enhanced tree. The scenario
+ *   irreplaceable parcel and tree, an Enhanced tree, and a habitat that gets
+ *   worse on each layer that can. The scenario
  *   catalogue turns it off, so each scenario holds exactly what it pins.
  */
 export function generateBngServiceSynthetic(
@@ -298,6 +307,7 @@ export function generateBngServiceSynthetic(
       templateVersion,
       overrides,
       comments: enrich,
+      worseHabitats: enrich,
       verticalHabitats:
         enrich && !emptyLayers.has('verticalHabitats')
           ? { count: defaultVerticalCount(plan.numParcels), rows: verticalRows }

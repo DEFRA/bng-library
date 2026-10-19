@@ -24,6 +24,10 @@ import {
 import { wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
 import { areaSquareMetres } from '../src/measure/index.mjs'
 import { geometryWkt } from '../src/bng-service/site.mjs'
+import {
+  ENCROACHED_WATERCOURSE_COMMENT,
+  WORSE_HABITAT_COMMENT
+} from '../src/bng-service/template-features.mjs'
 import { listIndex } from '../src/bng-service/reference.mjs'
 import { uuidV5 } from '../src/bng-service/random.mjs'
 
@@ -617,6 +621,130 @@ describe('AC5: what only the new template records', () => {
         }
       })
     ).toThrow(/irreplaceable tree cannot be Enhanced/)
+  })
+})
+
+describe('AC5: habitats that get worse', () => {
+  // The Metric User Guide, section 5: a habitat whose condition cannot be
+  // kept is lost and created again, in the same type, in a lower condition,
+  // 30 plus years in advance. Section 7: a watercourse whose encroachment
+  // increases, with no other impact, 10 years or more in advance.
+  const CONDITIONS = ['Good', 'Fairly Good', 'Moderate', 'Fairly Poor', 'Poor']
+  const WATER = ['No Encroachment', 'Minor', 'Major']
+  const RIPARIAN = JSON.parse(
+    readFileSync(
+      new URL(
+        '../src/metric/reference/watercourse-riparian-encroachment-multiplier.json',
+        import.meta.url
+      )
+    )
+  )
+  const riparianMultiplier = (label) =>
+    RIPARIAN[
+      Object.keys(RIPARIAN).find(
+        (k) => k.replaceAll(/\s+/g, '') === label.replaceAll(/\s+/g, '')
+      )
+    ]
+  const TYPE = {
+    'Area Habitats': 'Habitat Type',
+    'Vertical Area Habitats': 'Habitat Type',
+    Hedgerows: 'Hedge Type',
+    Watercourses: 'River Type'
+  }
+
+  let out
+  beforeAll(() => {
+    out = synthetic({ seed: 4, numParcels: 30 })
+  })
+
+  const worseRows = (file, type, comment) =>
+    rows(file, PI(type)).filter((r) => r.Comment === comment)
+
+  it('records an area, vertical area and hedgerow habitat that gets worse, in its own type, 30+ years in advance', () => {
+    for (const type of [
+      'Area Habitats',
+      'Vertical Area Habitats',
+      'Hedgerows'
+    ]) {
+      const worse = worseRows(out, type, WORSE_HABITAT_COMMENT)
+      expect(worse, type).toHaveLength(1)
+      const [row] = worse
+      const parent = rows(out, BASELINE(type)).find(
+        (b) => b.feature_uuid === row.parent_uuid
+      )
+      expect(parent, type).toBeDefined()
+      expect(row['Parent Ref']).toBe(parent['Habitat Ref'])
+      expect(row['Retention Category']).toBe('Created')
+      expect(row[`Proposed ${TYPE[type]}`]).toBe(
+        parent[`Baseline ${TYPE[type]}`]
+      )
+      expect(row['Baseline Condition']).toBe(parent['Baseline Condition'])
+      expect(CONDITIONS.indexOf(row['Proposed Condition'])).toBeGreaterThan(
+        CONDITIONS.indexOf(row['Baseline Condition'])
+      )
+      expect(
+        CONDITIONS.indexOf(row['Baseline Condition'])
+      ).toBeGreaterThanOrEqual(0)
+      expect(row['Habitat created in advance/years']).toBe('30+')
+      expect(row['Delay in starting habitat creation/years']).toBeNull()
+      expect(parent['Irreplaceable Habitat'] ?? 'No').not.toBe('Yes')
+    }
+  })
+
+  it('records a watercourse whose encroachment gets worse, in its own type and condition, 10 years in advance', () => {
+    const worse = worseRows(out, 'Watercourses', ENCROACHED_WATERCOURSE_COMMENT)
+    expect(worse).toHaveLength(1)
+    const [row] = worse
+    expect(row['Retention Category']).toBe('Created')
+    expect(row['Parent Ref']).not.toBeNull()
+    expect(row['Proposed River Type']).toBe(row['Baseline River Type'])
+    expect(row['Proposed River Type']).not.toBe('Culvert')
+    expect(row['Proposed Condition']).toBe(row['Baseline Condition'])
+    expect(
+      WATER.indexOf(row['Proposed Encroachment into Watercourse'])
+    ).toBeGreaterThan(
+      WATER.indexOf(row['Baseline Encroachment into Watercourse'])
+    )
+    expect(
+      riparianMultiplier(row['Proposed Encroachment into riparian zone'])
+    ).toBeLessThan(
+      riparianMultiplier(row['Baseline Encroachment into riparian zone'])
+    )
+    expect(row['Habitat created in advance/years']).toBe('10')
+  })
+
+  it('writes only values the template offers, and keeps a Retained area parcel', () => {
+    expect(checkTemplateValues(out)).toEqual([])
+    expect(
+      rows(out, PI('Area Habitats')).some(
+        (r) => r['Retention Category'] === 'Retained'
+      )
+    ).toBe(true)
+  })
+
+  it('leaves the only Retained area parcel as it is', () => {
+    const small = synthetic({ seed: 3, numParcels: 6 })
+    const retained = rows(small, PI('Area Habitats')).filter(
+      (r) => r['Retention Category'] === 'Retained'
+    )
+    expect(retained).toHaveLength(1)
+    expect(worseRows(small, 'Area Habitats', WORSE_HABITAT_COMMENT)).toEqual([])
+    expect(worseRows(small, 'Hedgerows', WORSE_HABITAT_COMMENT)).toHaveLength(1)
+  })
+
+  it('leaves them out with templateFeatures: false', () => {
+    const plain = synthetic(
+      { seed: 4, numParcels: 30 },
+      { templateFeatures: false }
+    )
+    for (const type of ['Area Habitats', 'Hedgerows', 'Watercourses']) {
+      expect(
+        rows(plain, PI(type)).filter((r) =>
+          ['30+', '10'].includes(r['Habitat created in advance/years'])
+        ),
+        type
+      ).toEqual([])
+    }
   })
 })
 

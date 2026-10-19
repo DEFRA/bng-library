@@ -105,7 +105,22 @@ A default synthetic site also holds what only the new template records:
 vertical area habitats (walls drawn as a line along their base), comments on
 both stages, an irreplaceable woodland parcel and veteran tree, and Enhanced
 trees that move to a better condition and are never irreplaceable.
-`templateFeatures: false` leaves them out.
+
+It also holds a **habitat that gets worse** on each layer, recorded as the
+template's guide asks: the copied row is kept, so it keeps its parent, and
+set to `Created` in its own type.
+
+- An area habitat, vertical area habitat and hedgerow each take a condition
+  the Metric scores lower, with `30+` years created in advance (Metric User
+  Guide, section 5, _Habitat retention_). The area habitat is the last
+  Retained parcel, and only when another Retained parcel stays. The vertical
+  habitat and hedgerow are drawn for the purpose, so the site keeps every
+  feature it had.
+- A watercourse, also drawn for the purpose, keeps its condition, and its
+  encroachment gets worse on both sides, `10` years in advance (section 7,
+  _Watercourse creation_). It is never a culvert.
+
+`templateFeatures: false` leaves them all out.
 
 `stage: 'baseline'` writes the **baseline-stage file**: the same tables, with
 the Post-Intervention tables empty. It is the file an ecologist has before

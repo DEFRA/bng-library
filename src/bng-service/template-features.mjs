@@ -45,13 +45,13 @@ import {
   verticalHabitatNames
 } from './vocabulary.mjs'
 
-const RETAINED = 'Retained'
+export const RETAINED = 'Retained'
 const ENHANCED = 'Enhanced'
 const CREATED = 'Created'
 const LOST = 'Lost'
 const IRREPLACEABLE = 'Irreplaceable Habitat'
-const RETENTION = 'Retention Category'
-const ZERO_YEARS = '0'
+export const RETENTION = 'Retention Category'
+export const ZERO_YEARS = '0'
 
 const BASELINE_COMMENT_SHARE = 0.3
 const PI_COMMENT_SHARE = 0.2
@@ -441,7 +441,7 @@ export function addVerticalHabitats(site, { count, rows = [] }, chooser) {
 
 // ------------------------------------------------- habitats that get worse
 
-const ADVANCE = 'Habitat created in advance/years'
+export const ADVANCE = 'Habitat created in advance/years'
 const DELAY = 'Delay in starting habitat creation/years'
 // The Metric User Guide, section 5, "Habitat retention": a habitat whose
 // condition cannot be kept is recorded as lost, and created again in the
@@ -724,6 +724,29 @@ function worseHedgerow(site, chooser) {
 }
 
 /**
+ * A Retained part of a split `parent`, in its baseline values: the part
+ * that does not change. `proposed` holds the layer's own Proposed columns.
+ */
+export function retainedPart(parent, geometry, ref, proposed) {
+  return {
+    geometry,
+    parent,
+    source: { index: parent.source.index, retention: RETAINED },
+    values: {
+      [HABITAT_REF]: ref,
+      [RETENTION]: RETAINED,
+      ...proposed,
+      'Proposed Strategic Significance': LOW,
+      [ADVANCE]: ZERO_YEARS,
+      [DELAY]: ZERO_YEARS,
+      'Spatial risk category': NOT_APPLICABLE,
+      Length: lengthMetres(geometry),
+      [COMMENT]: null
+    }
+  }
+}
+
+/**
  * A hedgerow drawn for the purpose, of which part gets worse: the surveyor
  * splits the copied line, keeps one part Retained and sets the other to
  * Created in a worse condition. Both parts keep the parent, and take the
@@ -742,28 +765,13 @@ function partlyWorseHedgerow(site, chooser) {
   const type = baseline.values['Baseline Hedge Type']
   const worsePart = worseHedgePart(baseline, worse, `${ref}b`, chooser)
   worsePart.worse = WORSE.partlyWorseHedge
-  site.layers.hedgerows.postIntervention.push(
-    {
-      worse: WORSE.partlyKeptHedge,
-      geometry: kept,
-      parent: baseline,
-      source: { index: baseline.source.index, retention: RETAINED },
-      values: {
-        [HABITAT_REF]: `${ref}a`,
-        [RETENTION]: RETAINED,
-        'Proposed Hedge Type': type,
-        'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
-        'Proposed Condition': baseline.values['Baseline Condition'],
-        'Proposed Strategic Significance': LOW,
-        [ADVANCE]: ZERO_YEARS,
-        [DELAY]: ZERO_YEARS,
-        'Spatial risk category': NOT_APPLICABLE,
-        Length: lengthMetres(kept),
-        [COMMENT]: null
-      }
-    },
-    worsePart
-  )
+  const keptPart = retainedPart(baseline, kept, `${ref}a`, {
+    'Proposed Hedge Type': type,
+    'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
+    'Proposed Condition': baseline.values['Baseline Condition']
+  })
+  keptPart.worse = WORSE.partlyKeptHedge
+  site.layers.hedgerows.postIntervention.push(keptPart, worsePart)
 }
 
 let encroachmentOptions = null

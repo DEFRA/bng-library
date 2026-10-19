@@ -29,8 +29,13 @@ import { error } from '../log.mjs'
 import { lengthMetres } from '../measure/index.mjs'
 import { geometryWkt, HABITAT_REF } from './site.mjs'
 import { CURRENT_TEMPLATE_VERSION, versionRecordText } from './schema.mjs'
-import { WORSE, splitLine } from './template-features.mjs'
-import { distinctiveness, LOW, NOT_APPLICABLE } from './vocabulary.mjs'
+import {
+  ADVANCE,
+  WORSE,
+  retainedPart,
+  splitLine
+} from './template-features.mjs'
+import { distinctiveness, NOT_APPLICABLE } from './vocabulary.mjs'
 
 export const CATEGORY_LINEAGE = 'lineage'
 export const CATEGORY_VERSION = 'version'
@@ -48,8 +53,6 @@ const ACCEPTED_WITHOUT_SHAPE_CHECK =
   '(accepted; the service skips the shape check without parent_geom)'
 const NOT_CHECKED_YET =
   '(accepted; the service does not check habitats that get worse yet)'
-const ADVANCE = 'Habitat created in advance/years'
-const ZERO_YEARS = '0'
 const WATERCOURSE_ADVANCE = '10'
 const UNKNOWN_REF = 'NOT-IN-BASELINE'
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
@@ -82,7 +85,7 @@ function worseSubject(site, layerKey, kind, flaw) {
   )
   if (!feature) {
     throw new Error(
-      `${flaw} needs a ${kind.replaceAll('-', ' ')} that gets worse; this site has none (is the layer empty?)`
+      `${flaw} needs a ${kind.replaceAll('-', ' ')} that gets worse; this site has none: the layer is empty, or no line fits inside the red line`
     )
   }
   return feature
@@ -97,29 +100,16 @@ function splitWatercourse(site, feature) {
   const type = base['Baseline River Type']
   const ref = feature.values[HABITAT_REF]
   const [kept, rest] = splitLine(feature.geometry, 1 / 2)
-  const retained = {
-    geometry: kept,
-    parent: feature.parent,
-    source: { ...feature.source, retention: 'Retained' },
-    values: {
-      [HABITAT_REF]: `${ref}a`,
-      'Retention Category': 'Retained',
-      'Proposed River Type': type,
-      'Proposed Distinctiveness': distinctiveness('rivers', type, true),
-      'Proposed Condition': base['Baseline Condition'],
-      'Proposed Strategic Significance': LOW,
-      'Proposed Encroachment into Watercourse':
-        base['Baseline Encroachment into Watercourse'],
-      'Proposed Encroachment into riparian zone':
-        base['Baseline Encroachment into riparian zone'],
-      'Enhancement Type': NOT_APPLICABLE,
-      [ADVANCE]: ZERO_YEARS,
-      'Delay in starting habitat creation/years': ZERO_YEARS,
-      'Spatial risk category': NOT_APPLICABLE,
-      Length: lengthMetres(kept),
-      Comment: null
-    }
-  }
+  const retained = retainedPart(feature.parent, kept, `${ref}a`, {
+    'Proposed River Type': type,
+    'Proposed Distinctiveness': distinctiveness('rivers', type, true),
+    'Proposed Condition': base['Baseline Condition'],
+    'Proposed Encroachment into Watercourse':
+      base['Baseline Encroachment into Watercourse'],
+    'Proposed Encroachment into riparian zone':
+      base['Baseline Encroachment into riparian zone'],
+    'Enhancement Type': NOT_APPLICABLE
+  })
   feature.geometry = rest
   feature.values[HABITAT_REF] = `${ref}b`
   feature.values.Length = lengthMetres(rest)

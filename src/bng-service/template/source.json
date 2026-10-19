@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/DEFRA/bng-metric-template",
-  "commit": "c89f95d9270912ab7ec1467f0c52fa26299d5da4",
+  "commit": "073550c7833d836937939a9d70980f0598201300",
   "format": "bng-service",
   "version": "1.0",
   "metadataUri": "tag:defra.gov.uk,2026:bng-metric/gpkg-format",

@@ -9,7 +9,9 @@ import {
   canEnhance,
   creationConditions,
   encroachmentNoWorseThan,
-  enhancementPairs
+  encroachmentWorseThan,
+  enhancementPairs,
+  worseCreationConditions
 } from '../src/synthetic/valid-draws.mjs'
 import {
   IN_SCOPE_HEDGE_TYPES,
@@ -65,6 +67,36 @@ describe('valid draws', () => {
         'Minor/Minor'
       )
     ).toEqual(['Minor/Minor', 'No Encroachment/No Encroachment'])
+  })
+
+  it('offers only lower-scoring conditions to a habitat that gets worse', () => {
+    expect(
+      worseCreationConditions(HEDGEROW, 'Native hedgerow', 'Good')
+    ).toEqual(['Moderate', 'Poor'])
+    expect(
+      worseCreationConditions(HEDGEROW, 'Native hedgerow', 'Poor')
+    ).toEqual([])
+    // A condition with no score, such as N/A - Other, cannot get worse.
+    expect(worseCreationConditions(AREA, SEALED, 'N/A - Other')).toEqual([])
+  })
+
+  it('offers only worse encroachment, in either spelling', () => {
+    expect(
+      encroachmentWorseThan(
+        'water',
+        ['No Encroachment', 'Minor', 'Major'],
+        'Minor'
+      )
+    ).toEqual(['Major'])
+    expect(
+      encroachmentWorseThan(
+        'riparian',
+        ['Major/Major', 'Moderate/ Minor', 'Minor/ No Encroachment'],
+        'Moderate/ No Encroachment'
+      )
+    ).toEqual(['Major/Major', 'Moderate/ Minor'])
+    // A baseline the Metric gives no multiplier has nothing worse.
+    expect(encroachmentWorseThan('water', ['Major'], 'Unknown')).toEqual([])
   })
 })
 

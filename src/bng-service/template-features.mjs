@@ -462,6 +462,20 @@ const MAX_RIVER_LENGTH_M = 150
 const MIN_SPLIT_SHARE = 0.3
 const MAX_SPLIT_SHARE = 0.7
 const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
+/**
+ * What each habitat that gets worse is, held on the feature as `worse` and
+ * never written, so the degrade flaws can find the row they break.
+ */
+export const WORSE = Object.freeze({
+  parcel: 'parcel',
+  vertical: 'vertical',
+  hedge: 'hedge',
+  partlyKeptHedge: 'partly-kept-hedge',
+  partlyWorseHedge: 'partly-worse-hedge',
+  encroachedWatercourse: 'encroached-watercourse',
+  worseWatercourse: 'worse-watercourse'
+})
+
 export const WORSE_HABITAT_COMMENT =
   'Condition cannot be kept: recorded as lost and created again in a lower condition'
 export const ENCROACHED_WATERCOURSE_COMMENT =
@@ -550,6 +564,7 @@ function worseParcel(site, chooser) {
     [DELAY]: null
   })
   feature.values[COMMENT] ??= WORSE_HABITAT_COMMENT
+  feature.worse = WORSE.parcel
 }
 
 /** A vertical area habitat drawn for the purpose, and its worse copy. */
@@ -575,30 +590,30 @@ function worseVertical(site, chooser) {
   const { baseline } = feature
   const type = baseline.values['Baseline Habitat Type']
   layer.baseline.push(baseline)
-  layer.postIntervention.push(
-    worseCopy(
-      baseline,
-      {
-        'Proposed Broad Habitat Type':
-          baseline.values['Baseline Broad Habitat Type'],
-        'Proposed Habitat Type': type,
-        'Proposed Distinctiveness': distinctiveness(
-          'verticalHabitats',
-          type,
-          true
-        ),
-        'Proposed Condition': chooser.pick(
-          worseCreationConditions(
-            AREA,
-            name,
-            baseline.values['Baseline Condition']
-          )
-        ),
-        Area: baseline.values.Area
-      },
-      chooser
-    )
+  const copy = worseCopy(
+    baseline,
+    {
+      'Proposed Broad Habitat Type':
+        baseline.values['Baseline Broad Habitat Type'],
+      'Proposed Habitat Type': type,
+      'Proposed Distinctiveness': distinctiveness(
+        'verticalHabitats',
+        type,
+        true
+      ),
+      'Proposed Condition': chooser.pick(
+        worseCreationConditions(
+          AREA,
+          name,
+          baseline.values['Baseline Condition']
+        )
+      ),
+      Area: baseline.values.Area
+    },
+    chooser
   )
+  copy.worse = WORSE.vertical
+  layer.postIntervention.push(copy)
 }
 
 /** A straight line inside the red line, `min` to `max` metres long. */
@@ -612,7 +627,7 @@ function drawnLine(site, chooser, min, max) {
 }
 
 /** A line split at `share` of its length: [first part, second part]. */
-function splitLine(geometry, share) {
+export function splitLine(geometry, share) {
   const [start, end] = geometry.coordinates
   const at = [
     start[0] + (end[0] - start[0]) * share,
@@ -697,14 +712,14 @@ function worseHedgePart(parent, geometry, ref, chooser) {
 function worseHedgerow(site, chooser) {
   const baseline = drawnHedgerow(site, chooser, 'worse')
   if (baseline) {
-    site.layers.hedgerows.postIntervention.push(
-      worseHedgePart(
-        baseline,
-        baseline.geometry,
-        baseline.values[HABITAT_REF],
-        chooser
-      )
+    const part = worseHedgePart(
+      baseline,
+      baseline.geometry,
+      baseline.values[HABITAT_REF],
+      chooser
     )
+    part.worse = WORSE.hedge
+    site.layers.hedgerows.postIntervention.push(part)
   }
 }
 
@@ -725,8 +740,11 @@ function partlyWorseHedgerow(site, chooser) {
     chooser.between(MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
   )
   const type = baseline.values['Baseline Hedge Type']
+  const worsePart = worseHedgePart(baseline, worse, `${ref}b`, chooser)
+  worsePart.worse = WORSE.partlyWorseHedge
   site.layers.hedgerows.postIntervention.push(
     {
+      worse: WORSE.partlyKeptHedge,
       geometry: kept,
       parent: baseline,
       source: { index: baseline.source.index, retention: RETAINED },
@@ -744,7 +762,7 @@ function partlyWorseHedgerow(site, chooser) {
         [COMMENT]: null
       }
     },
-    worseHedgePart(baseline, worse, `${ref}b`, chooser)
+    worsePart
   )
 }
 
@@ -890,6 +908,7 @@ function encroachedWatercourse(site, chooser) {
   if (copy) {
     copy.values[ADVANCE] = ENCROACHED_ADVANCE
     copy.values[COMMENT] = ENCROACHED_WATERCOURSE_COMMENT
+    copy.worse = WORSE.encroachedWatercourse
   }
 }
 
@@ -936,6 +955,7 @@ function worseConditionWatercourse(site, chooser) {
   if (copy) {
     copy.values[ADVANCE] = null
     copy.values[COMMENT] = WORSE_WATERCOURSE_COMMENT
+    copy.worse = WORSE.worseWatercourse
   }
 }
 

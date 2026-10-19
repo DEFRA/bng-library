@@ -658,6 +658,17 @@ describe('AC5: habitats that get worse', () => {
     out = synthetic({ seed: 4, numParcels: 30 })
   })
 
+  /** The row names its baseline parent by Parent Ref and a matching
+   * parent_geom. */
+  function expectLinked(type, row) {
+    const parent = rows(out, BASELINE(type)).find(
+      (b) => b.feature_uuid === row.parent_uuid
+    )
+    expect(parent, row['Habitat Ref']).toBeDefined()
+    expect(row['Parent Ref']).toBe(parent['Habitat Ref'])
+    expect(row.parent_geom).toBe(geometryWkt(geometryOf(parent)))
+  }
+
   const worseRows = (file, type, comment) =>
     rows(file, PI(type)).filter((r) => r.Comment === comment)
 
@@ -678,6 +689,7 @@ describe('AC5: habitats that get worse', () => {
       )
       expect(parent, type).toBeDefined()
       expect(row['Parent Ref']).toBe(parent['Habitat Ref'])
+      expect(row.parent_geom).toBe(geometryWkt(geometryOf(parent)))
       expect(row['Retention Category']).toBe('Created')
       expect(row[`Proposed ${TYPE[type]}`]).toBe(
         parent[`Baseline ${TYPE[type]}`]
@@ -699,6 +711,7 @@ describe('AC5: habitats that get worse', () => {
     const worse = worseRows(out, 'Watercourses', ENCROACHED_WATERCOURSE_COMMENT)
     expect(worse).toHaveLength(1)
     const [row] = worse
+    expectLinked('Watercourses', row)
     expect(row['Retention Category']).toBe('Created')
     expect(row['Parent Ref']).not.toBeNull()
     expect(row['Proposed River Type']).toBe(row['Baseline River Type'])
@@ -734,6 +747,8 @@ describe('AC5: habitats that get worse', () => {
     expect(worse['Habitat Ref']).toBe(`${parent['Habitat Ref']}b`)
     for (const part of [kept, worse]) {
       expect(part['Parent Ref']).toBe(parent['Habitat Ref'])
+      // The parent's whole shape, though each part covers only some of it.
+      expect(part.parent_geom).toBe(geometryWkt(geometryOf(parent)))
       expect(part['Proposed Hedge Type']).toBe(parent['Baseline Hedge Type'])
     }
     expect(kept['Proposed Condition']).toBe(parent['Baseline Condition'])
@@ -749,6 +764,7 @@ describe('AC5: habitats that get worse', () => {
     const worse = worseRows(out, 'Watercourses', WORSE_WATERCOURSE_COMMENT)
     expect(worse).toHaveLength(1)
     const [row] = worse
+    expectLinked('Watercourses', row)
     expect(row['Retention Category']).toBe('Created')
     expect(row['Parent Ref']).not.toBeNull()
     expect(row['Proposed River Type']).toBe(row['Baseline River Type'])
@@ -882,10 +898,129 @@ describe('AC6: flaws in the new format', () => {
       seed: 3,
       ...selection,
       lineageFlawNames: name.startsWith('lineage') ? [name] : [],
+      degradeFlawNames: name.startsWith('degrade') ? [name] : [],
       versionFlawNames: name.startsWith('version') ? [name] : []
     })
     return out
   }
+
+  const wholeWorseHedge = (out) =>
+    rows(out, PI('Hedgerows')).find(
+      (r) =>
+        r.Comment === WORSE_HABITAT_COMMENT &&
+        r['Habitat Ref'] === r['Parent Ref']
+    )
+  const watercourseWith = (out, comment) =>
+    rows(out, PI('Watercourses')).find((r) => r.Comment === comment)
+  const CONDITION_ORDER = [
+    'Good',
+    'Fairly Good',
+    'Moderate',
+    'Fairly Poor',
+    'Poor'
+  ]
+
+  it('degrade-advance-missing: a hedge that gets worse with no years in advance', () => {
+    const row = wholeWorseHedge(flawed('degrade-advance-missing'))
+    expect(row['Retention Category']).toBe('Created')
+    expect(row['Habitat created in advance/years']).toBeNull()
+    expect(CONDITION_ORDER.indexOf(row['Proposed Condition'])).toBeGreaterThan(
+      CONDITION_ORDER.indexOf(row['Baseline Condition'])
+    )
+  })
+
+  it('degrade-not-worse: a hedge recorded as getting worse, in its baseline condition', () => {
+    const row = wholeWorseHedge(flawed('degrade-not-worse'))
+    expect(row['Retention Category']).toBe('Created')
+    expect(row['Proposed Hedge Type']).toBe(row['Baseline Hedge Type'])
+    expect(row['Proposed Condition']).toBe(row['Baseline Condition'])
+    expect(row['Habitat created in advance/years']).toBe('30+')
+  })
+
+  it('degrade-watercourse-advance-not-encroachment: a watercourse worse in condition only, 10 years in advance', () => {
+    const row = watercourseWith(
+      flawed('degrade-watercourse-advance-not-encroachment'),
+      WORSE_WATERCOURSE_COMMENT
+    )
+    expect(row['Habitat created in advance/years']).toBe('10')
+    expect(row['Proposed Encroachment into Watercourse']).toBe(
+      row['Baseline Encroachment into Watercourse']
+    )
+    expect(row['Proposed Encroachment into riparian zone']).toBe(
+      row['Baseline Encroachment into riparian zone']
+    )
+    expect(row['Proposed Condition']).not.toBe(row['Baseline Condition'])
+  })
+
+  it('degrade-watercourse-encroachment-no-advance: a watercourse with only more encroachment, and no years in advance', () => {
+    const row = watercourseWith(
+      flawed('degrade-watercourse-encroachment-no-advance'),
+      ENCROACHED_WATERCOURSE_COMMENT
+    )
+    expect(row['Habitat created in advance/years']).toBeNull()
+    expect(row['Proposed Condition']).toBe(row['Baseline Condition'])
+    expect(row['Proposed Encroachment into Watercourse']).not.toBe(
+      row['Baseline Encroachment into Watercourse']
+    )
+  })
+
+  it('degrade-watercourse-retained-and-created: one baseline watercourse with a Retained and a Created part', () => {
+    const out = flawed('degrade-watercourse-retained-and-created')
+    const created = watercourseWith(out, ENCROACHED_WATERCOURSE_COMMENT)
+    const parts = rows(out, PI('Watercourses')).filter(
+      (r) => r.parent_uuid === created.parent_uuid
+    )
+    expect(parts.map((r) => r['Retention Category']).sort()).toEqual([
+      'Created',
+      'Retained'
+    ])
+    const kept = parts.find((r) => r['Retention Category'] === 'Retained')
+    const parent = rows(out, BASELINE('Watercourses')).find(
+      (b) => b.feature_uuid === created.parent_uuid
+    )
+    expect(kept['Habitat Ref']).toBe(`${parent['Habitat Ref']}a`)
+    expect(created['Habitat Ref']).toBe(`${parent['Habitat Ref']}b`)
+    for (const part of parts) {
+      expect(part['Parent Ref']).toBe(parent['Habitat Ref'])
+      expect(part.parent_geom).toBe(geometryWkt(geometryOf(parent)))
+    }
+    expect(kept['Proposed Encroachment into Watercourse']).toBe(
+      parent['Baseline Encroachment into Watercourse']
+    )
+    expect(kept.Length + created.Length).toBeCloseTo(parent.Length, 6)
+    expect(checkTemplateValues(out)).toEqual([])
+  })
+
+  it('adds the habitats that get worse for a degrade flaw, even with templateFeatures: false', () => {
+    const out = nextPath('degrade-plain')
+    generateBngServiceSynthetic(
+      out,
+      CENTRE,
+      {
+        numParcels: 6,
+        seed: 3,
+        ...resolveFlawSelection({ bad: false, flaws: [], numParcels: 6 }),
+        degradeFlawNames: ['degrade-advance-missing']
+      },
+      { templateFeatures: false }
+    )
+    expect(wholeWorseHedge(out)['Habitat created in advance/years']).toBeNull()
+  })
+
+  it('refuses two degrade flaws, and one whose layer is empty', () => {
+    expect(() =>
+      generateSyntheticGpkg({
+        format: 'bng-service',
+        flaws: ['degrade-advance-missing', 'degrade-not-worse']
+      })
+    ).toThrow(/Only one degraded-habitat flaw/)
+    expect(() =>
+      generateSyntheticGpkg({
+        format: 'bng-service',
+        flaws: ['no-hedgerows', 'degrade-advance-missing']
+      })
+    ).toThrow(/needs a hedge that gets worse/)
+  })
 
   const firstContinuing = (out) =>
     rows(out, PI('Area Habitats')).find((r) =>

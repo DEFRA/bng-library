@@ -156,16 +156,17 @@ function generateSyntheticBngServiceGpkg(options, centre) {
     templateFeatures
   } = options
   const { result, messages } = captureMessages(() => {
-    const { legacy, lineage, version } = partitionFlaws(flaws)
+    const { legacy, lineage, version, degrade } = partitionFlaws(flaws)
     const selection = resolveFlawSelection({ bad, flaws: legacy, numParcels })
     return {
       selection,
       lineage,
       version,
+      degrade,
       filenameHint: bngServiceFilenameHint({
         selection,
         bad,
-        extra: [...lineage, ...version],
+        extra: [...lineage, ...degrade, ...version],
         stage
       })
     }
@@ -181,6 +182,7 @@ function generateSyntheticBngServiceGpkg(options, centre) {
           numTrees,
           ...result.selection,
           lineageFlawNames: result.lineage,
+          degradeFlawNames: result.degrade,
           versionFlawNames: result.version,
           seed
         },

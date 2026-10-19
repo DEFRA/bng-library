@@ -16,24 +16,41 @@
  * record yet, so the version flaws name the outcome the template's design
  * asks for ("It refuses a file with no record, or with a version that it does
  * not support") rather than an error code that does not exist.
+ *
+ * The degrade flaws break one rule of a habitat that gets worse (see
+ * addWorseHabitats in template-features.mjs), as the Metric User Guide records
+ * it: section 5 for an area habitat or hedgerow (Created in its own type, in a
+ * lower condition, 30 plus years in advance), section 7 for a watercourse.
+ * Asking for one adds the habitats that get worse, if the site has none. The
+ * service does not check these rules yet, so the flaws name that outcome.
  */
 
 import { error } from '../log.mjs'
+import { lengthMetres } from '../measure/index.mjs'
 import { geometryWkt, HABITAT_REF } from './site.mjs'
 import { CURRENT_TEMPLATE_VERSION, versionRecordText } from './schema.mjs'
+import { WORSE, splitLine } from './template-features.mjs'
+import { distinctiveness, LOW, NOT_APPLICABLE } from './vocabulary.mjs'
 
 export const CATEGORY_LINEAGE = 'lineage'
 export const CATEGORY_VERSION = 'version'
+export const CATEGORY_DEGRADE = 'degrade'
 
 const CATEGORY_LABELS = {
   [CATEGORY_LINEAGE]: 'lineage',
-  [CATEGORY_VERSION]: 'template-version'
+  [CATEGORY_VERSION]: 'template-version',
+  [CATEGORY_DEGRADE]: 'degraded-habitat'
 }
 
 const NO_BACKEND_CODE_YET =
   '(refused; the service does not check the version yet)'
 const ACCEPTED_WITHOUT_SHAPE_CHECK =
   '(accepted; the service skips the shape check without parent_geom)'
+const NOT_CHECKED_YET =
+  '(accepted; the service does not check habitats that get worse yet)'
+const ADVANCE = 'Habitat created in advance/years'
+const ZERO_YEARS = '0'
+const WATERCOURSE_ADVANCE = '10'
 const UNKNOWN_REF = 'NOT-IN-BASELINE'
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
 // The mismatched parent shape is the parent moved this far east: well over
@@ -56,6 +73,58 @@ function lineageSubject(site) {
     )
   }
   return feature
+}
+
+/** The habitat that gets worse of this kind: the row a degrade flaw breaks. */
+function worseSubject(site, layerKey, kind, flaw) {
+  const feature = site.layers[layerKey].postIntervention.find(
+    (f) => f.worse === kind
+  )
+  if (!feature) {
+    throw new Error(
+      `${flaw} needs a ${kind.replaceAll('-', ' ')} that gets worse; this site has none (is the layer empty?)`
+    )
+  }
+  return feature
+}
+
+/**
+ * Split a Created watercourse's row in two: a Retained first part, in its
+ * baseline values, and the Created rest. Both keep the parent.
+ */
+function splitWatercourse(site, feature) {
+  const base = feature.parent.values
+  const type = base['Baseline River Type']
+  const ref = feature.values[HABITAT_REF]
+  const [kept, rest] = splitLine(feature.geometry, 1 / 2)
+  const retained = {
+    geometry: kept,
+    parent: feature.parent,
+    source: { ...feature.source, retention: 'Retained' },
+    values: {
+      [HABITAT_REF]: `${ref}a`,
+      'Retention Category': 'Retained',
+      'Proposed River Type': type,
+      'Proposed Distinctiveness': distinctiveness('rivers', type, true),
+      'Proposed Condition': base['Baseline Condition'],
+      'Proposed Strategic Significance': LOW,
+      'Proposed Encroachment into Watercourse':
+        base['Baseline Encroachment into Watercourse'],
+      'Proposed Encroachment into riparian zone':
+        base['Baseline Encroachment into riparian zone'],
+      'Enhancement Type': NOT_APPLICABLE,
+      [ADVANCE]: ZERO_YEARS,
+      'Delay in starting habitat creation/years': ZERO_YEARS,
+      'Spatial risk category': NOT_APPLICABLE,
+      Length: lengthMetres(kept),
+      Comment: null
+    }
+  }
+  feature.geometry = rest
+  feature.values[HABITAT_REF] = `${ref}b`
+  feature.values.Length = lengthMetres(rest)
+  const rows = site.layers.rivers.postIntervention
+  rows.splice(rows.indexOf(feature), 0, retained)
 }
 
 function shifted(geometry) {
@@ -154,6 +223,84 @@ export const BNG_SERVICE_FLAWS = {
       }
     }
   },
+  'degrade-advance-missing': {
+    description:
+      'a hedgerow that gets worse (Created in its own type, linked to its parent, in a lower condition) has no years created in advance, where the Metric asks for 30 plus',
+    errorCode: NOT_CHECKED_YET,
+    category: CATEGORY_DEGRADE,
+    applyToSite(site) {
+      const feature = worseSubject(
+        site,
+        'hedgerows',
+        WORSE.hedge,
+        'degrade-advance-missing'
+      )
+      feature.values[ADVANCE] = null
+    }
+  },
+  'degrade-not-worse': {
+    description:
+      'a hedgerow recorded as getting worse (Created in its own type, linked to its parent, 30+ years in advance) is in its baseline condition, so it is not worse',
+    errorCode: NOT_CHECKED_YET,
+    category: CATEGORY_DEGRADE,
+    applyToSite(site) {
+      const feature = worseSubject(
+        site,
+        'hedgerows',
+        WORSE.hedge,
+        'degrade-not-worse'
+      )
+      feature.values['Proposed Condition'] =
+        feature.parent.values['Baseline Condition']
+    }
+  },
+  'degrade-watercourse-advance-not-encroachment': {
+    description:
+      'a watercourse whose condition gets worse, with no change of encroachment, is created 10 years in advance, which the Metric allows only where encroachment increases with no other impact',
+    errorCode: NOT_CHECKED_YET,
+    category: CATEGORY_DEGRADE,
+    applyToSite(site) {
+      const feature = worseSubject(
+        site,
+        'rivers',
+        WORSE.worseWatercourse,
+        'degrade-watercourse-advance-not-encroachment'
+      )
+      feature.values[ADVANCE] = WATERCOURSE_ADVANCE
+    }
+  },
+  'degrade-watercourse-encroachment-no-advance': {
+    description:
+      'a watercourse whose only change is more encroachment has no years created in advance, though the Metric allows 10 or more for it',
+    errorCode: NOT_CHECKED_YET,
+    category: CATEGORY_DEGRADE,
+    applyToSite(site) {
+      const feature = worseSubject(
+        site,
+        'rivers',
+        WORSE.encroachedWatercourse,
+        'degrade-watercourse-encroachment-no-advance'
+      )
+      feature.values[ADVANCE] = null
+    }
+  },
+  'degrade-watercourse-retained-and-created': {
+    description:
+      'a baseline watercourse has both a Retained and a Created post-intervention part. The template records part of a stretch changing by splitting it at the baseline survey, as the service cannot measure part of a watercourse',
+    errorCode: NOT_CHECKED_YET,
+    category: CATEGORY_DEGRADE,
+    applyToSite(site) {
+      splitWatercourse(
+        site,
+        worseSubject(
+          site,
+          'rivers',
+          WORSE.encroachedWatercourse,
+          'degrade-watercourse-retained-and-created'
+        )
+      )
+    }
+  },
   'version-record-missing': {
     description: 'the GeoPackage has no template version record',
     errorCode: NO_BACKEND_CODE_YET,
@@ -197,12 +344,14 @@ export function listBngServiceFlaws() {
 /**
  * Split a flaw selection into the legacy flaws, for the legacy generator to
  * draw, and the BNG Service template flaws, applied to the converted site.
- * At most one version flaw: each says what the whole record is.
+ * At most one version flaw: each says what the whole record is. At most one
+ * lineage flaw and one degrade flaw: two of either would break the same row.
  */
 export function partitionFlaws(names = []) {
   const legacy = []
   const lineage = []
   const version = []
+  const degrade = []
   for (const name of names) {
     if (LEGACY_ONLY_FLAWS.has(name)) {
       error(
@@ -214,6 +363,8 @@ export function partitionFlaws(names = []) {
       legacy.push(name)
     } else if (flaw.category === CATEGORY_LINEAGE) {
       lineage.push(name)
+    } else if (flaw.category === CATEGORY_DEGRADE) {
+      degrade.push(name)
     } else {
       version.push(name)
     }
@@ -226,7 +377,19 @@ export function partitionFlaws(names = []) {
       `Only one lineage flaw at a time, as each restamps the same feature; got ${lineage.join(', ')}`
     )
   }
-  return { legacy, lineage, version }
+  if (degrade.length > 1) {
+    error(
+      `Only one degraded-habitat flaw at a time, as some break the same row; got ${degrade.join(', ')}`
+    )
+  }
+  return { legacy, lineage, version, degrade }
+}
+
+/** Apply degrade flaws to the site, after its habitats that get worse. */
+export function applyDegradeFlaws(site, names) {
+  for (const name of names) {
+    BNG_SERVICE_FLAWS[name].applyToSite(site)
+  }
 }
 
 /** Apply lineage flaws to the site. */

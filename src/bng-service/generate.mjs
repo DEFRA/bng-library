@@ -39,7 +39,11 @@ import {
   applyTemplateOverrides,
   defaultVerticalCount
 } from './template-features.mjs'
-import { applyLineageFlaws, versionRecordsFor } from './flaws.mjs'
+import {
+  applyDegradeFlaws,
+  applyLineageFlaws,
+  versionRecordsFor
+} from './flaws.mjs'
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
 import { createChooser } from './random.mjs'
 import {
@@ -139,6 +143,8 @@ function reportSite(site, outPath, stage) {
  * @param {Set<string>} [options.emptyLayers]  layers an empty-layer flaw
  *   leaves with no rows, which gain no habitat that gets worse
  * @param {string[]} [options.lineageFlaws]
+ * @param {string[]} [options.degradeFlaws]  each breaks one habitat that
+ *   gets worse, so the site needs `worseHabitats`
  * @param {string[]} [options.versionFlaws]
  * @returns {object} the site written
  */
@@ -153,6 +159,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     worseHabitats = false,
     emptyLayers = new Set(),
     lineageFlaws = [],
+    degradeFlaws = [],
     versionFlaws = []
   } = options
   assertOptions({ stage, templateVersion })
@@ -175,6 +182,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
   if (worseHabitats) {
     addWorseHabitats(site, chooser, emptyLayers)
   }
+  applyDegradeFlaws(site, degradeFlaws)
   if (comments) {
     addComments(site, chooser)
   }
@@ -241,6 +249,7 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
   }
   for (const name of [
     ...(plan.lineageFlawNames ?? []),
+    ...(plan.degradeFlawNames ?? []),
     ...(plan.versionFlawNames ?? [])
   ]) {
     info(`  flaw: ${name}`)
@@ -255,8 +264,8 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *
  * @param {string} outPath
  * @param {[number, number]} centre
- * @param {object} plan  as for `generateOne`, plus `lineageFlawNames` and
- *   `versionFlawNames`; `attributeOverrides` may also hold a
+ * @param {object} plan  as for `generateOne`, plus `lineageFlawNames`,
+ *   `degradeFlawNames` and `versionFlawNames`; `attributeOverrides` may also hold a
  *   `verticalHabitats` layer and the template-only row fields
  * @param {object} [options]
  * @param {string} [options.stage]
@@ -284,6 +293,7 @@ export function generateBngServiceSynthetic(
     emptyLayers = new Set(),
     geometricFlawNames = [],
     lineageFlawNames = [],
+    degradeFlawNames = [],
     versionFlawNames = []
   } = plan
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
@@ -309,13 +319,15 @@ export function generateBngServiceSynthetic(
       templateVersion,
       overrides,
       comments: enrich,
-      worseHabitats: enrich,
+      // A degrade flaw breaks a habitat that gets worse, so it adds them.
+      worseHabitats: enrich || degradeFlawNames.length > 0,
       emptyLayers,
       verticalHabitats:
         enrich && !emptyLayers.has('verticalHabitats')
           ? { count: defaultVerticalCount(plan.numParcels), rows: verticalRows }
           : { count: 0, rows: verticalRows },
       lineageFlaws: lineageFlawNames,
+      degradeFlaws: degradeFlawNames,
       versionFlaws: versionFlawNames
     })
     reportSite(site, outPath, stage)

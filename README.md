@@ -161,16 +161,25 @@ takes: every legacy flaw remapped to its tables (the IGGI polygon becomes a
 vertical area habitat) bar `tree-count-not-whole`, as the template has no
 Count column, and its own:
 
-| Flaw                           | What it writes                                                                   |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `lineage-parent-missing`       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom           |
-| `lineage-parent-unknown`       | a Retained area habitat whose parent is not in the baseline                      |
-| `lineage-parent-wrong`         | a Retained area habitat naming another baseline parcel, which it lies outside    |
-| `lineage-parent-geom-mismatch` | the right parent, with a parent_geom 5 m from the parent's shape                 |
-| `lineage-parent-geom-missing`  | the right parent, with no parent_geom; accepted, as the service skips the check  |
-| `version-record-missing`       | no template version record                                                       |
-| `version-record-duplicated`    | two records                                                                      |
-| `version-unsupported`          | one record naming the next major version, which the service does not support yet |
+| Flaw                                           | What it writes                                                                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `lineage-parent-missing`                       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom                                         |
+| `lineage-parent-unknown`                       | a Retained area habitat whose parent is not in the baseline                                                    |
+| `lineage-parent-wrong`                         | a Retained area habitat naming another baseline parcel, which it lies outside                                  |
+| `lineage-parent-geom-mismatch`                 | the right parent, with a parent_geom 5 m from the parent's shape                                               |
+| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom; accepted, as the service skips the check                                |
+| `version-record-missing`                       | no template version record                                                                                     |
+| `version-record-duplicated`                    | two records                                                                                                    |
+| `version-unsupported`                          | one record naming the next major version, which the service does not support yet                               |
+| `degrade-advance-missing`                      | a hedgerow that gets worse with no years created in advance, where the Metric asks for 30+                     |
+| `degrade-not-worse`                            | a hedgerow recorded as getting worse (Created, own type, linked, 30+) in its baseline condition                |
+| `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment |
+| `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                 |
+| `degrade-watercourse-retained-and-created`     | one baseline watercourse with a Retained part and a Created part                                               |
+
+At most one lineage flaw and one degrade flaw at a time. A degrade flaw adds
+the habitats that get worse, if the site has none, and breaks one of them.
+The service does not check these yet, so a file with one is accepted.
 
 **Checking a file.** `checkTemplateValues(path)` checks every value in a BNG
 Service file against the template's own drop-downs, applying each list's

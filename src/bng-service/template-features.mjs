@@ -458,11 +458,16 @@ const MIN_HEDGE_LENGTH_M = 40
 const MAX_HEDGE_LENGTH_M = 120
 const MIN_RIVER_LENGTH_M = 60
 const MAX_RIVER_LENGTH_M = 150
+// Where a hedge that gets worse in part is split, as a share of its length.
+const MIN_SPLIT_SHARE = 0.3
+const MAX_SPLIT_SHARE = 0.7
 const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
 export const WORSE_HABITAT_COMMENT =
   'Condition cannot be kept: recorded as lost and created again in a lower condition'
 export const ENCROACHED_WATERCOURSE_COMMENT =
   'Encroachment increases, with no other impact'
+export const WORSE_WATERCOURSE_COMMENT =
+  'Condition gets worse: recorded as lost and created again in a lower condition'
 
 /** The baseline conditions of a type from which it can get worse. */
 function worseningFrom(kind, type) {
@@ -596,10 +601,32 @@ function worseVertical(site, chooser) {
   )
 }
 
+/** A straight line inside the red line, `min` to `max` metres long. */
+function drawnLine(site, chooser, min, max) {
+  const line = wallLine(
+    site.redline.geometry.coordinates[0],
+    chooser,
+    chooser.between(min, max)
+  )
+  return line ? { type: 'LineString', coordinates: line } : null
+}
+
+/** A line split at `share` of its length: [first part, second part]. */
+function splitLine(geometry, share) {
+  const [start, end] = geometry.coordinates
+  const at = [
+    start[0] + (end[0] - start[0]) * share,
+    start[1] + (end[1] - start[1]) * share
+  ]
+  return [
+    { type: 'LineString', coordinates: [start, at] },
+    { type: 'LineString', coordinates: [at, end] }
+  ]
+}
+
 let hedgeTypes = null
 
-/** A hedgerow drawn for the purpose, and its worse copy. */
-function worseHedgerow(site, chooser) {
+function worseningHedgeTypes() {
   hedgeTypes ??= [
     ...listIndex(
       'Hedgerows/Hedgerow Condition.csv',
@@ -607,47 +634,117 @@ function worseHedgerow(site, chooser) {
       'Condition'
     ).keys()
   ].filter((type) => worseningFrom(HEDGEROW, type).length > 0)
+  return hedgeTypes
+}
+
+/** A baseline hedgerow drawn for the purpose, that can get worse. */
+function drawnHedgerow(site, chooser, key) {
   const layer = site.layers.hedgerows
-  const line = wallLine(
-    site.redline.geometry.coordinates[0],
+  const geometry = drawnLine(
+    site,
     chooser,
-    chooser.between(MIN_HEDGE_LENGTH_M, MAX_HEDGE_LENGTH_M)
+    MIN_HEDGE_LENGTH_M,
+    MAX_HEDGE_LENGTH_M
   )
-  if (!line || hedgeTypes.length === 0) {
-    return
+  if (!geometry || worseningHedgeTypes().length === 0) {
+    return null
   }
-  const type = chooser.pick(hedgeTypes)
-  const condition = chooser.pick(worseningFrom(HEDGEROW, type))
-  const geometry = { type: 'LineString', coordinates: line }
-  const length = lengthMetres(geometry)
+  const type = chooser.pick(worseningHedgeTypes())
   const baseline = {
     geometry,
-    uuid: chooser.uuid('hedgerows/worse'),
+    uuid: chooser.uuid(`hedgerows/${key}`),
     source: { index: layer.baseline.length },
     values: {
       [HABITAT_REF]: nextRef(layer, 'HG'),
       'Baseline Hedge Type': type,
       'Baseline Distinctiveness': distinctiveness('hedgerows', type),
-      'Baseline Condition': condition,
+      'Baseline Condition': chooser.pick(worseningFrom(HEDGEROW, type)),
       'Baseline Strategic Significance': LOW,
-      Length: length,
+      Length: lengthMetres(geometry),
       [COMMENT]: null
     }
   }
   layer.baseline.push(baseline)
-  layer.postIntervention.push(
-    worseCopy(
-      baseline,
-      {
+  return baseline
+}
+
+/** A Created part of `parent` in its own hedge type, worse, 30+ years in
+ * advance. */
+function worseHedgePart(parent, geometry, ref, chooser) {
+  const type = parent.values['Baseline Hedge Type']
+  const part = worseCopy(
+    parent,
+    {
+      'Proposed Hedge Type': type,
+      'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
+      'Proposed Condition': chooser.pick(
+        worseCreationConditions(
+          HEDGEROW,
+          type,
+          parent.values['Baseline Condition']
+        )
+      ),
+      Length: lengthMetres(geometry)
+    },
+    chooser
+  )
+  part.geometry = geometry
+  part.values[HABITAT_REF] = ref
+  return part
+}
+
+/** A hedgerow drawn for the purpose, which gets worse as a whole. */
+function worseHedgerow(site, chooser) {
+  const baseline = drawnHedgerow(site, chooser, 'worse')
+  if (baseline) {
+    site.layers.hedgerows.postIntervention.push(
+      worseHedgePart(
+        baseline,
+        baseline.geometry,
+        baseline.values[HABITAT_REF],
+        chooser
+      )
+    )
+  }
+}
+
+/**
+ * A hedgerow drawn for the purpose, of which part gets worse: the surveyor
+ * splits the copied line, keeps one part Retained and sets the other to
+ * Created in a worse condition. Both parts keep the parent, and take the
+ * template's tidied refs, "HG006a" and "HG006b".
+ */
+function partlyWorseHedgerow(site, chooser) {
+  const baseline = drawnHedgerow(site, chooser, 'partly-worse')
+  if (!baseline) {
+    return
+  }
+  const ref = baseline.values[HABITAT_REF]
+  const [kept, worse] = splitLine(
+    baseline.geometry,
+    chooser.between(MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
+  )
+  const type = baseline.values['Baseline Hedge Type']
+  site.layers.hedgerows.postIntervention.push(
+    {
+      geometry: kept,
+      parent: baseline,
+      source: { index: baseline.source.index, retention: RETAINED },
+      values: {
+        [HABITAT_REF]: `${ref}a`,
+        [RETENTION]: RETAINED,
         'Proposed Hedge Type': type,
         'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
-        'Proposed Condition': chooser.pick(
-          worseCreationConditions(HEDGEROW, type, condition)
-        ),
-        Length: length
-      },
-      chooser
-    )
+        'Proposed Condition': baseline.values['Baseline Condition'],
+        'Proposed Strategic Significance': LOW,
+        [ADVANCE]: ZERO_YEARS,
+        [DELAY]: ZERO_YEARS,
+        'Spatial risk category': NOT_APPLICABLE,
+        Length: lengthMetres(kept),
+        [COMMENT]: null
+      }
+    },
+    worseHedgePart(baseline, worse, `${ref}b`, chooser)
   )
 }
 
@@ -669,20 +766,19 @@ function encroachmentLists() {
   return encroachmentOptions
 }
 
-/** The baseline encroachments of a type that can get worse on both sides. */
-function worseningEncroachment(type) {
+/** The encroachment options of a type, and those that can get worse. */
+function encroachmentOf(type) {
   const lists = encroachmentLists()
   const water = [...(lists.water.get(type) ?? [])]
   const riparian = [...(lists.riparian.get(type) ?? [])]
+  const worse = (side, baseline) =>
+    encroachmentWorseThan(side, side === 'water' ? water : riparian, baseline)
   return {
-    water: water.filter(
-      (b) => encroachmentWorseThan('water', water, b).length > 0
-    ),
-    riparian: riparian.filter(
-      (b) => encroachmentWorseThan('riparian', riparian, b).length > 0
-    ),
-    worse: (side, baseline) =>
-      encroachmentWorseThan(side, side === 'water' ? water : riparian, baseline)
+    water,
+    riparian,
+    worseningWater: water.filter((b) => worse('water', b).length > 0),
+    worseningRiparian: riparian.filter((b) => worse('riparian', b).length > 0),
+    worse
   }
 }
 
@@ -692,49 +788,43 @@ function keptConditions(type) {
   return baselineConditions(WATERCOURSE, type).filter((c) => creatable.has(c))
 }
 
-/**
- * A watercourse drawn for the purpose, and a Created copy in its own type
- * and condition whose encroachment gets worse, 10 years in advance. Not a
- * culvert, which has no encroachment to worsen.
- */
-function encroachedWatercourse(site, chooser) {
-  const types = [...encroachmentLists().water.keys()].filter(
+/** The watercourse types, not a culvert, that pass `test`. */
+function riverTypes(test) {
+  return [...encroachmentLists().water.keys()].filter(
     (type) =>
       type !== CULVERT &&
       type !== TO_BE_CREATED &&
       type !== NOT_APPLICABLE &&
-      keptConditions(type).length > 0 &&
-      worseningEncroachment(type).water.length > 0 &&
-      worseningEncroachment(type).riparian.length > 0
+      test(type)
   )
+}
+
+/**
+ * A watercourse drawn for the purpose, with the baseline values given, and
+ * its Created copy in its own type with the proposed values given.
+ */
+function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
   const layer = site.layers.rivers
-  const line = wallLine(
-    site.redline.geometry.coordinates[0],
+  const geometry = drawnLine(
+    site,
     chooser,
-    chooser.between(MIN_RIVER_LENGTH_M, MAX_RIVER_LENGTH_M)
+    MIN_RIVER_LENGTH_M,
+    MAX_RIVER_LENGTH_M
   )
-  if (!line || types.length === 0) {
-    return
+  if (!geometry) {
+    return null
   }
-  const type = chooser.pick(types)
-  const options = worseningEncroachment(type)
-  const water = chooser.pick(options.water)
-  const riparian = chooser.pick(options.riparian)
-  const condition = chooser.pick(keptConditions(type))
-  const geometry = { type: 'LineString', coordinates: line }
+  const type = baselineValues['Baseline River Type']
   const length = lengthMetres(geometry)
   const baseline = {
     geometry,
-    uuid: chooser.uuid('rivers/worse'),
+    uuid: chooser.uuid(`rivers/${key}`),
     source: { index: layer.baseline.length },
     values: {
       [HABITAT_REF]: nextRef(layer, 'R'),
-      'Baseline River Type': type,
+      ...baselineValues,
       'Baseline Distinctiveness': distinctiveness('rivers', type),
-      'Baseline Condition': condition,
       'Baseline Strategic Significance': LOW,
-      'Baseline Encroachment into Watercourse': water,
-      'Baseline Encroachment into riparian zone': riparian,
       Length: length,
       [COMMENT]: null
     }
@@ -744,43 +834,147 @@ function encroachedWatercourse(site, chooser) {
     {
       'Proposed River Type': type,
       'Proposed Distinctiveness': distinctiveness('rivers', type, true),
+      ...proposed,
+      // The template offers only N/A for a Created watercourse.
+      'Enhancement Type': NOT_APPLICABLE,
+      Length: length
+    },
+    chooser
+  )
+  layer.baseline.push(baseline)
+  layer.postIntervention.push(copy)
+  return copy
+}
+
+/**
+ * A watercourse whose encroachment gets worse on both sides, with no other
+ * impact: Created in its own type and condition, 10 years in advance.
+ */
+function encroachedWatercourse(site, chooser) {
+  const types = riverTypes((type) => {
+    const options = encroachmentOf(type)
+    return (
+      keptConditions(type).length > 0 &&
+      options.worseningWater.length > 0 &&
+      options.worseningRiparian.length > 0
+    )
+  })
+  if (types.length === 0) {
+    return
+  }
+  const type = chooser.pick(types)
+  const options = encroachmentOf(type)
+  const water = chooser.pick(options.worseningWater)
+  const riparian = chooser.pick(options.worseningRiparian)
+  const condition = chooser.pick(keptConditions(type))
+  const copy = drawnWatercourse(
+    site,
+    chooser,
+    'encroached',
+    {
+      'Baseline River Type': type,
+      'Baseline Condition': condition,
+      'Baseline Encroachment into Watercourse': water,
+      'Baseline Encroachment into riparian zone': riparian
+    },
+    {
       'Proposed Condition': condition,
       'Proposed Encroachment into Watercourse': chooser.pick(
         options.worse('water', water)
       ),
       'Proposed Encroachment into riparian zone': chooser.pick(
         options.worse('riparian', riparian)
-      ),
-      Length: length
-    },
-    chooser
+      )
+    }
   )
-  copy.values[ADVANCE] = ENCROACHED_ADVANCE
-  copy.values[COMMENT] = ENCROACHED_WATERCOURSE_COMMENT
-  layer.baseline.push(baseline)
-  layer.postIntervention.push(copy)
+  if (copy) {
+    copy.values[ADVANCE] = ENCROACHED_ADVANCE
+    copy.values[COMMENT] = ENCROACHED_WATERCOURSE_COMMENT
+  }
 }
 
 /**
- * Record a habitat that gets worse on each layer, as a surveyor does with
- * the template: the copied row is kept, so it keeps its parent, and set to
- * Created in its own type.
+ * A watercourse whose condition gets worse, with no change of encroachment:
+ * Created in its own type, in a condition the Metric scores lower. The
+ * Metric gives no years in advance for it (User Guide, section 7: record
+ * the loss, and the post-intervention length in the creation tab), so the
+ * surveyor's choice is left blank.
+ */
+function worseConditionWatercourse(site, chooser) {
+  const types = riverTypes(
+    (type) =>
+      worseningFrom(WATERCOURSE, type).length > 0 &&
+      encroachmentOf(type).water.length > 0 &&
+      encroachmentOf(type).riparian.length > 0
+  )
+  if (types.length === 0) {
+    return
+  }
+  const type = chooser.pick(types)
+  const options = encroachmentOf(type)
+  const condition = chooser.pick(worseningFrom(WATERCOURSE, type))
+  const water = chooser.pick(options.water)
+  const riparian = chooser.pick(options.riparian)
+  const copy = drawnWatercourse(
+    site,
+    chooser,
+    'worse',
+    {
+      'Baseline River Type': type,
+      'Baseline Condition': condition,
+      'Baseline Encroachment into Watercourse': water,
+      'Baseline Encroachment into riparian zone': riparian
+    },
+    {
+      'Proposed Condition': chooser.pick(
+        worseCreationConditions(WATERCOURSE, type, condition)
+      ),
+      'Proposed Encroachment into Watercourse': water,
+      'Proposed Encroachment into riparian zone': riparian
+    }
+  )
+  if (copy) {
+    copy.values[ADVANCE] = null
+    copy.values[COMMENT] = WORSE_WATERCOURSE_COMMENT
+  }
+}
+
+/**
+ * Record habitats that get worse, as a surveyor does with the template: the
+ * copied row is kept, so it keeps its parent, and set to Created in its own
+ * type.
  *
- * - An area habitat, vertical area habitat or hedgerow takes a condition the
- *   Metric scores lower and can create it in, 30+ years in advance (Metric
- *   User Guide, section 5).
- * - A watercourse keeps its condition, and its encroachment gets worse on
- *   both sides, 10 years in advance (Metric User Guide, section 7).
+ * - An area habitat, a vertical area habitat and a hedgerow take a
+ *   condition the Metric scores lower and can create them in, 30+ years in
+ *   advance (Metric User Guide, section 5). A second hedgerow gets worse in
+ *   part only: it is split into a Retained part and a worse Created part.
+ * - One watercourse keeps its condition, and its encroachment gets worse on
+ *   both sides, 10 years in advance (Metric User Guide, section 7). Another
+ *   keeps its encroachment, and its condition gets worse, with no years in
+ *   advance. Neither is a culvert.
  *
  * The area habitat is the last Retained parcel that can get worse, clear of
  * the lineage flaws, which take the first, and only when another Retained
  * parcel stays. Area ground tiles the site, so it cannot be added. The
  * others are drawn for the purpose inside the red line, so the site keeps
- * every feature it had. An irreplaceable habitat is never chosen.
+ * every feature it had. An irreplaceable habitat is never chosen. A layer
+ * in `emptyLayers`, which an empty-layer flaw leaves with no rows, is left
+ * empty.
+ *
+ * @param {object} site
+ * @param {ReturnType<import('./random.mjs').createChooser>} chooser
+ * @param {Set<string>} [emptyLayers]
  */
-export function addWorseHabitats(site, chooser) {
-  worseParcel(site, chooser)
-  worseVertical(site, chooser)
-  worseHedgerow(site, chooser)
-  encroachedWatercourse(site, chooser)
+export function addWorseHabitats(site, chooser, emptyLayers = new Set()) {
+  const add = (layerKey, ...draws) => {
+    if (!emptyLayers.has(layerKey)) {
+      for (const draw of draws) {
+        draw(site, chooser)
+      }
+    }
+  }
+  add('habitats', worseParcel)
+  add('verticalHabitats', worseVertical)
+  add('hedgerows', worseHedgerow, partlyWorseHedgerow)
+  add('rivers', encroachedWatercourse, worseConditionWatercourse)
 }

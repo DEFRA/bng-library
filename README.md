@@ -106,21 +106,24 @@ vertical area habitats (walls drawn as a line along their base), comments on
 both stages, an irreplaceable woodland parcel and veteran tree, and Enhanced
 trees that move to a better condition and are never irreplaceable.
 
-It also holds a **habitat that gets worse** on each layer, recorded as the
-template's guide asks: the copied row is kept, so it keeps its parent, and
-set to `Created` in its own type.
+It also holds **habitats that get worse**, recorded as the template's guide
+asks: the copied row is kept, so it keeps its parent, and set to `Created` in
+its own type.
 
 - An area habitat, vertical area habitat and hedgerow each take a condition
   the Metric scores lower, with `30+` years created in advance (Metric User
   Guide, section 5, _Habitat retention_). The area habitat is the last
-  Retained parcel, and only when another Retained parcel stays. The vertical
-  habitat and hedgerow are drawn for the purpose, so the site keeps every
-  feature it had.
-- A watercourse, also drawn for the purpose, keeps its condition, and its
-  encroachment gets worse on both sides, `10` years in advance (section 7,
-  _Watercourse creation_). It is never a culvert.
+  Retained parcel, and only when another Retained parcel stays. The others
+  are drawn for the purpose, so the site keeps every feature it had.
+- A second hedgerow gets worse in part only. It is split into a Retained
+  part (`HG006a`) and a worse `Created` part (`HG006b`), both linked to it.
+- One watercourse keeps its condition, and its encroachment gets worse on
+  both sides, `10` years in advance (section 7, _Watercourse creation_).
+  Another keeps its encroachment, and its condition gets worse, with no
+  years in advance. Neither is a culvert.
 
-`templateFeatures: false` leaves them all out.
+A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
+empty. `templateFeatures: false` leaves them all out.
 
 `stage: 'baseline'` writes the **baseline-stage file**: the same tables, with
 the Post-Intervention tables empty. It is the file an ecologist has before

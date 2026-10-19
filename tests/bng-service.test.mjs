@@ -26,7 +26,8 @@ import { areaSquareMetres } from '../src/measure/index.mjs'
 import { geometryWkt } from '../src/bng-service/site.mjs'
 import {
   ENCROACHED_WATERCOURSE_COMMENT,
-  WORSE_HABITAT_COMMENT
+  WORSE_HABITAT_COMMENT,
+  WORSE_WATERCOURSE_COMMENT
 } from '../src/bng-service/template-features.mjs'
 import { listIndex } from '../src/bng-service/reference.mjs'
 import { uuidV5 } from '../src/bng-service/random.mjs'
@@ -666,7 +667,10 @@ describe('AC5: habitats that get worse', () => {
       'Vertical Area Habitats',
       'Hedgerows'
     ]) {
-      const worse = worseRows(out, type, WORSE_HABITAT_COMMENT)
+      // A hedge that gets worse in part only has its own test, below.
+      const worse = worseRows(out, type, WORSE_HABITAT_COMMENT).filter(
+        (r) => r['Habitat Ref'] === r['Parent Ref']
+      )
       expect(worse, type).toHaveLength(1)
       const [row] = worse
       const parent = rows(out, BASELINE(type)).find(
@@ -713,6 +717,82 @@ describe('AC5: habitats that get worse', () => {
     expect(row['Habitat created in advance/years']).toBe('10')
   })
 
+  it('records a hedge that gets worse in part: split into a Retained part and a worse Created part, both linked to it', () => {
+    const parts = rows(out, PI('Hedgerows')).filter((r) =>
+      /[ab]$/.test(r['Habitat Ref'] ?? '')
+    )
+    const byParent = Object.groupBy(parts, (r) => r.parent_uuid)
+    const pairs = Object.values(byParent).filter((p) => p.length === 2)
+    expect(pairs).toHaveLength(1)
+    const [pair] = pairs
+    const kept = pair.find((r) => r['Retention Category'] === 'Retained')
+    const worse = pair.find((r) => r['Retention Category'] === 'Created')
+    const parent = rows(out, BASELINE('Hedgerows')).find(
+      (b) => b.feature_uuid === kept.parent_uuid
+    )
+    expect(kept['Habitat Ref']).toBe(`${parent['Habitat Ref']}a`)
+    expect(worse['Habitat Ref']).toBe(`${parent['Habitat Ref']}b`)
+    for (const part of [kept, worse]) {
+      expect(part['Parent Ref']).toBe(parent['Habitat Ref'])
+      expect(part['Proposed Hedge Type']).toBe(parent['Baseline Hedge Type'])
+    }
+    expect(kept['Proposed Condition']).toBe(parent['Baseline Condition'])
+    expect(CONDITIONS.indexOf(worse['Proposed Condition'])).toBeGreaterThan(
+      CONDITIONS.indexOf(parent['Baseline Condition'])
+    )
+    expect(worse['Habitat created in advance/years']).toBe('30+')
+    // The two parts make up the whole hedge.
+    expect(kept.Length + worse.Length).toBeCloseTo(parent.Length, 6)
+  })
+
+  it('records a watercourse whose condition gets worse, in its own type and encroachment, with no years in advance', () => {
+    const worse = worseRows(out, 'Watercourses', WORSE_WATERCOURSE_COMMENT)
+    expect(worse).toHaveLength(1)
+    const [row] = worse
+    expect(row['Retention Category']).toBe('Created')
+    expect(row['Parent Ref']).not.toBeNull()
+    expect(row['Proposed River Type']).toBe(row['Baseline River Type'])
+    expect(row['Proposed River Type']).not.toBe('Culvert')
+    expect(CONDITIONS.indexOf(row['Proposed Condition'])).toBeGreaterThan(
+      CONDITIONS.indexOf(row['Baseline Condition'])
+    )
+    expect(row['Proposed Encroachment into Watercourse']).toBe(
+      row['Baseline Encroachment into Watercourse']
+    )
+    expect(row['Proposed Encroachment into riparian zone']).toBe(
+      row['Baseline Encroachment into riparian zone']
+    )
+    expect(row['Habitat created in advance/years']).toBeNull()
+  })
+
+  it('gives each Created watercourse the Enhancement Type the template offers, N/A', () => {
+    for (const comment of [
+      ENCROACHED_WATERCOURSE_COMMENT,
+      WORSE_WATERCOURSE_COMMENT
+    ]) {
+      const [row] = worseRows(out, 'Watercourses', comment)
+      expect(row['Enhancement Type'], comment).toBe('N/A')
+    }
+  })
+
+  it('leaves the layer an empty-layer flaw empties', () => {
+    for (const [flaw, type] of [
+      ['no-hedgerows', 'Hedgerows'],
+      ['no-rivers', 'Watercourses']
+    ]) {
+      const file = nextPath(flaw)
+      const { buffer } = generateSyntheticGpkg({
+        format: 'bng-service',
+        flaws: [flaw],
+        numParcels: 30,
+        seed: 4
+      })
+      writeFileSync(file, buffer)
+      expect(rows(file, BASELINE(type)), flaw).toEqual([])
+      expect(rows(file, PI(type)), flaw).toEqual([])
+    }
+  })
+
   it('writes only values the template offers, and keeps a Retained area parcel', () => {
     expect(checkTemplateValues(out)).toEqual([])
     expect(
@@ -729,7 +809,9 @@ describe('AC5: habitats that get worse', () => {
     )
     expect(retained).toHaveLength(1)
     expect(worseRows(small, 'Area Habitats', WORSE_HABITAT_COMMENT)).toEqual([])
-    expect(worseRows(small, 'Hedgerows', WORSE_HABITAT_COMMENT)).toHaveLength(1)
+    expect(
+      worseRows(small, 'Hedgerows', WORSE_HABITAT_COMMENT).length
+    ).toBeGreaterThan(0)
   })
 
   it('leaves them out with templateFeatures: false', () => {

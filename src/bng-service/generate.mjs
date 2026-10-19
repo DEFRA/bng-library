@@ -134,9 +134,10 @@ function reportSite(site, outPath, stage) {
  *   `postInterventionComment`)
  * @param {boolean} [options.comments]  add surveyor comments
  * @param {{ count: number, rows?: object[] }} [options.verticalHabitats]
- * @param {boolean} [options.worseHabitats]  record a habitat that gets worse
- *   on each layer that can: Created in its own type, in a worse condition
- *   (or, for a watercourse, worse encroachment), with years in advance
+ * @param {boolean} [options.worseHabitats]  record habitats that get worse
+ *   (see `addWorseHabitats`)
+ * @param {Set<string>} [options.emptyLayers]  layers an empty-layer flaw
+ *   leaves with no rows, which gain no habitat that gets worse
  * @param {string[]} [options.lineageFlaws]
  * @param {string[]} [options.versionFlaws]
  * @returns {object} the site written
@@ -150,6 +151,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     comments = false,
     verticalHabitats,
     worseHabitats = false,
+    emptyLayers = new Set(),
     lineageFlaws = [],
     versionFlaws = []
   } = options
@@ -171,7 +173,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     addVerticalHabitats(site, verticalHabitats, chooser)
   }
   if (worseHabitats) {
-    addWorseHabitats(site, chooser)
+    addWorseHabitats(site, chooser, emptyLayers)
   }
   if (comments) {
     addComments(site, chooser)
@@ -308,6 +310,7 @@ export function generateBngServiceSynthetic(
       overrides,
       comments: enrich,
       worseHabitats: enrich,
+      emptyLayers,
       verticalHabitats:
         enrich && !emptyLayers.has('verticalHabitats')
           ? { count: defaultVerticalCount(plan.numParcels), rows: verticalRows }

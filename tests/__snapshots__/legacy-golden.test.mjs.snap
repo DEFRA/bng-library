@@ -1,0 +1,438 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BNG Service output is pinned > a baseline-stage site 1`] = `"4884b0151f08702357b42cc49fbfc1fddf837fd586dd793d0135a1f39678bdc3"`;
+
+exports[`BNG Service output is pinned > a default site, seed 3 1`] = `"dd90a9a21e31eb6fab4193d25a609871716187ecae29c65f3d2e5045f9ca51ec"`;
+
+exports[`BNG Service output is pinned > a default site, seed 7 1`] = `"113786742c1ccc8b8f18b8b60d4646694b1f2a1f72e8c339fed7ad9aee9b5010"`;
+
+exports[`BNG Service output is pinned > a default site, seed 21 1`] = `"7c652ecd158d23646af0696d16ac09d124d0dc72c698236ce6fe468164f4fc68"`;
+
+exports[`BNG Service output is pinned > flaw advance-delay-both-set 1`] = `"646c44554976009fdf392bb9ffb7c25693d8fedc88bf6829364ac1ae9dc802e4"`;
+
+exports[`BNG Service output is pinned > flaw area-sum-mismatch 1`] = `"88c58757c68247a4d6e916b6b3876593b888e4f44c83d0e2ce7793b47aff2d6c"`;
+
+exports[`BNG Service output is pinned > flaw bowtie-parcel 1`] = `"6a690817b2e926e12b16097842ca5065fd1f3023bf6894a18329b89fcfb3a7d2"`;
+
+exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"ebebb6710aff13bca64b74ff9e83622ee5df72e49779e6a2fbd12b41e53b5c56"`;
+
+exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"f795221f02c6c1fe94d01eff46f18958844a63cd33d9f7dd3c2efd07cc1e8359"`;
+
+exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"cd3a756e906230bfc7d081f30e29a53b4056d77ee561e7e9019b1b896abec511"`;
+
+exports[`BNG Service output is pinned > flaw degrade-watercourse-encroachment-no-advance 1`] = `"ae6b12a2ef167d7c495ea92c7b83bcedd8448c609bc1bb71b2512c49844f980c"`;
+
+exports[`BNG Service output is pinned > flaw degrade-watercourse-retained-and-created 1`] = `"892335965dbf94bc3ae7915c4d52a6af58925f4bfe79b50e6f529f1ed5f754f9"`;
+
+exports[`BNG Service output is pinned > flaw distinctiveness-out-of-scope 1`] = `"b2f38bad6489c051c21e005392e42020b69b2052b260b12a9a1c3f87bfc47617"`;
+
+exports[`BNG Service output is pinned > flaw duplicate-habitat-ref 1`] = `"83d702aa00d2c5509dd8411420ce1bef6023f4063fc0d884298d872d8ffbc1f2"`;
+
+exports[`BNG Service output is pinned > flaw habitat-ref-invalid-characters 1`] = `"a85a8f5ce379ab4c66e807be1777ab1488b6e3c67603fd12625dbb5a92ad411b"`;
+
+exports[`BNG Service output is pinned > flaw hedgerow-outside 1`] = `"b74367649457803204110e98c42148a3576554dd1dda4b9cbbac704885f7f1d9"`;
+
+exports[`BNG Service output is pinned > flaw iggi-outside 1`] = `"816cb2e30835dea878774564aee4f1e8629019c039dd701375beaec6842cbbec"`;
+
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-mismatch 1`] = `"8d9897d684a2d6c3adb2494b47ed9f4f871c22410ac1f413a236e17e372e60bb"`;
+
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-missing 1`] = `"bef6b8188fb401ba7fb4a3da1e455f2f53d211d241e282b2bc3980aed9ee74b4"`;
+
+exports[`BNG Service output is pinned > flaw lineage-parent-missing 1`] = `"02c26f1b6073dca250f38a71a258014178d90c0215873f73d3ec890423039834"`;
+
+exports[`BNG Service output is pinned > flaw lineage-parent-unknown 1`] = `"3433e77a572c648cc84515ed6c24b5f0b10bd0453a0135f3d869a954e07e147c"`;
+
+exports[`BNG Service output is pinned > flaw lineage-parent-wrong 1`] = `"6f5db75872b453a7da371fbe30ec17a231bb7014101afad907d835d1f7bf20cf"`;
+
+exports[`BNG Service output is pinned > flaw missing-habitat-ref 1`] = `"d3935e1e9ad3fe19958700f5fe4b9fe474d29c7d71d51bd26a0e4c98b8a4400e"`;
+
+exports[`BNG Service output is pinned > flaw no-habitats 1`] = `"40ba0758305470e860a3a587847c5851d92bc332c8b2453452dad56ff595110f"`;
+
+exports[`BNG Service output is pinned > flaw no-hedgerows 1`] = `"e6800ef628c7c1cdcb3edb5fbc6b71b24807f6641d5d1a26105df5c6edc283e1"`;
+
+exports[`BNG Service output is pinned > flaw no-rivers 1`] = `"b14eea81e2413f9f797528bc03f078b827c88450815b13292d75102ce88f6d51"`;
+
+exports[`BNG Service output is pinned > flaw no-trees 1`] = `"c4b00208e6408b6cb1f4d60248aa1b856a2c670e7b65f183e7562daa9107b939"`;
+
+exports[`BNG Service output is pinned > flaw overlapping-parcels 1`] = `"815bb8f4c3b760464d7fc112d8f540ee9e929c34ae5e88bce9d654fee146bdbc"`;
+
+exports[`BNG Service output is pinned > flaw parcel-outside-redline 1`] = `"fa8bb6b3400c29942c9beb4b5234683aef13d277ffe6ef6995b15e1720843f36"`;
+
+exports[`BNG Service output is pinned > flaw parcel-too-small 1`] = `"4a6bcbb74ca3e2a14d07c93529ae1880897c76da10a209b89ea3f311be6a5c91"`;
+
+exports[`BNG Service output is pinned > flaw redline-not-in-england 1`] = `"874cf2dc5de3cd85a60a14a2efc764fa78dd76a16f492ed7c93aa414213dbef6"`;
+
+exports[`BNG Service output is pinned > flaw redline-too-large 1`] = `"2a57c9364f1e00014dd0ab63d3ffa037c3a935b1959c2eb863915aea9a9f8f44"`;
+
+exports[`BNG Service output is pinned > flaw self-intersecting-redline 1`] = `"739a2f18b12cb0c74d98f49c7d90d40b13c2b57e7d86610f20defaf384a5eeaa"`;
+
+exports[`BNG Service output is pinned > flaw tiny-gap 1`] = `"4a055b98ff6f07908136794bd396d57a6372c1063d4c3a996344fd1e76353e02"`;
+
+exports[`BNG Service output is pinned > flaw tree-outside 1`] = `"043b2f4c51f8bc4a0bf3509dc4e978555b8337f0b9f43606758de20ebd378e97"`;
+
+exports[`BNG Service output is pinned > flaw version-record-duplicated 1`] = `"2b123b617757fcc79f7dfddd42ee0f70750fa061609b5954dc214b8f270cef43"`;
+
+exports[`BNG Service output is pinned > flaw version-record-missing 1`] = `"1862914a129830c3f1110a740cadc5a4b5a5384e320ba2eef90aa42d5e616c6a"`;
+
+exports[`BNG Service output is pinned > flaw version-unsupported 1`] = `"1040ef192f0a967a35e3ef09a7bf3bc5de643637b46cfee3d75c4b15e2c87fe2"`;
+
+exports[`BNG Service output is pinned > flaw watercourse-outside 1`] = `"f613b1c438b21c31239ea05e8b90364c61689c92562811d6a27478930a62f1e7"`;
+
+exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
+{
+  "advance-delay-created-advance": "fe8f7b031740fe2a1116076f16bfe916b09c084a133926d1b6179f10a3a2ede7",
+  "advance-delay-created-advance-difficulty": "a0a814f2c93719255bdb49fceed35e31acf57b06e66de6af9a5b5c32af04dbd8",
+  "advance-delay-created-delay": "3bb4e2836ba799cc44ad53819fd6416a745d873b7d740a7cb564ffa6d6e839d5",
+  "advance-delay-created-trees": "9a58bfd7ae24dfd6646c37fb56dbe7d96b47e684dc8f29c316a71b68159d4068",
+  "advance-delay-thirty-plus": "fdf4a1c898f6d4b8e272eeb8918ceab6542b8ba6ffdb929ed1bc639492eaed76",
+  "area-enhanced-intertidal": "7c95563ed0333df15f52b7e0849d83be77d03a95f0bc31e0239030b881146761",
+  "area-enhanced-low-condition-na": "ad85914df5fb6b0f6e4b80dde2f8f923c2fdfcd62c8aac0d6096a87d8cf520de",
+  "area-enhanced-medium-condition-na": "eccc1f93ba9258679f628cfaca9ced42056e410cc95a1aeece42abddb6b4f2c6",
+  "area-enhanced-very-low": "989900e6dafc49d79db76a0c6d89f7d32c24d289f64eb231d653189252c22430",
+  "conditions-area-spread": "9268f37c78d518be2f66b9ec082ff6f8bf0e7b6292abe01d29f58fd4321d8571",
+  "data-complete": "41be7aaba3db65b1656d08536c545f40ff7f21578fe7fd9fd54d293b3a488159",
+  "intervention-area-created": "14053740cb8cdc79a3a5c8caf8ec2fe8888975cc8d4697ec9607e951343ea48d",
+  "intervention-area-enhanced": "671373a2649d60cbaabe94bc7602aeb5aaa68e0b15f0e6afa3c6b9e631373611",
+  "intervention-area-retained": "af7ae35f8105eee07f688142b4d3899b8c535c7fb9252475a6b4b1003617f389",
+  "intervention-hedgerow-condition-lowered": "195ebabe5c283c30ae586c0c3c9fb5ca6b992ed61243993a972a77c69cfb22fe",
+  "intervention-hedgerow-created": "39e7ee9a2ab91439a7bd204786f9749efe2ca8c00d8e9f17fae4e123d1cfda71",
+  "intervention-hedgerow-enhanced": "0c777a30fce727406573a14a2d9427aa0534030bbf1fd7f2cddc04d8872abd78",
+  "intervention-hedgerow-retained": "4027a57834126c03db4b518060f430c83ff521a5bf9d5939477135455956e5df",
+  "intervention-watercourse-created": "0065fe04e380159f62d24036d1ce4a31f1a970158c749c2ed2b3c3ab0b06c2dd",
+  "intervention-watercourse-enhanced": "0ce3474538e473c6d4df89631aa59d7da0de30ff082b0f2e688f1903d4db34a6",
+  "intervention-watercourse-retained": "fed6ef917b12ac7a5dff14406e86523b76428c325eaa31f95e5dfa4618f5eff7",
+  "invalid-area-advance-and-delay": "0ce6352c13d331437f03893a8f85106628f49af965d759571428c5eaab438f0a",
+  "invalid-area-condition-reduced": "56e8d63406f0769c5ec38171f1a7b7220826fa0ba260fc2fc6a89f0de1cfd4c9",
+  "invalid-area-intertidal-no-enhancement": "936ae804d70b4bb4cfc6413cb338c315e0f2d629acbc069719c5b68eaf9328e1",
+  "invalid-area-low-condition-na-not-possible": "38c20ad72fa171876b19e72fa4e7991ddace2acb909f0c1d10a3a2e7abaf8243",
+  "invalid-area-low-no-enhancement": "cda35d14a3bf780396f302e540220faaeae48d5b2a8c77b094a34b01399fc2b7",
+  "invalid-area-low-not-possible": "9a242f4d7057f9bc8e62cdce84bce79db0a057477bb6af19309d5c6d60b7c556",
+  "invalid-area-medium-condition-na-not-possible": "56719d2f99994c94358846fa03455bc36fcc04193dd730d245ca1f9e2d20dcf8",
+  "invalid-area-no-enhancement": "1a334b5de6c8bafd0fd6c0354d503ef9b53609094952aac273226358ba7bd841",
+  "invalid-area-trading-down": "fa297479efbf53cf3dea38936e9bdba2f6d8846c1441590a81d8ff1c93db9370",
+  "invalid-area-very-low-not-possible": "159d6ff108534d22e82a00777255ab9c1e360698a101b483897d170e5debddee",
+  "invalid-data-incomplete": "5cd8bc1948fe9ed5e7ed9b079267b4bd54e12ce178293eff3a49a3e98ba69d64",
+  "invalid-hedgerow-condition-reduced": "70629436969d7fa9a33e8ff47f60344fd3f2ee37eab0cd665cb31dd57a2c5624",
+  "invalid-hedgerow-low-not-possible": "55a5471492453d4dc920870231a617c360751fbaf17ad0a0ead0a04fec0a1647",
+  "invalid-hedgerow-medium-trading-down": "54b7b37a189bcc1d60168fab2a5c9504364f521588843a69b22f6a1652c781d8",
+  "invalid-hedgerow-very-low-enhanced": "b566735d859aced95be5da05135fbd58a531b688e6d341413622aaa0fe7e4792",
+  "invalid-tree-advance-and-delay": "a2032640316725bc4155acb6a4c43e372bb1e8edb52af3f7495eaf0489180f36",
+  "invalid-watercourse-culvert-enhanced": "0d6baa99d19a507cd8ff6e3fb261ce2a7275fd5224e69e816250f917328d64d1",
+  "invalid-watercourse-encroachment-worsened": "0073c509a1ba7acc84bddfee94d2865ba5c1fee6ab78d219a41dc127276482ef",
+  "invalid-watercourse-medium-condition-reduced": "a9f354a959cb01fce24ae7e4c4a97de0479dc56744624666c6facac2ec06e8fb",
+  "net-gain-met": "0ab479d317eca9c61806c96cb65b156149492d55acce719013a7fee240e78a96",
+  "net-gain-unmet": "e656e90bb16f0fcee51dfdb887a45100ed9bae6c6ca5adff1b76d87cc416caf0",
+  "strategic-significance-spread": "e92038d9580c46536e7638b90f3f7427bbaf9bb5b4e835e6fa0bf4f2df0d11a6",
+  "trading-all-met": "0487144392b5cbaddd65250f19e9dd608e75f635ac8a6fc92deebc850b0fc085",
+  "trading-higher-deficit-not-covered-from-below": "4f0a94b9bb24c5528a24836691818c81c71aa80bc197df998972dcdde1cc423c",
+  "trading-like-for-like": "042d77a31781273c83d8caea3a19707a689b58ee4f791287c13e670a88b33d3c",
+  "trading-lost-to-development": "26a97aee04c2bed55c9d611dec872b5f21ed7e1c1ea7b169a86742162c391f89",
+  "trading-lost-trees": "7c2e11031e70e8b9af03a1435e8019f841afa80eff40563990abfbed573ef069",
+  "trading-low-deficit-covered-beside-medium-deficit": "079d3b06b60a32494f349494805831e88c88b7c27afb9be2745bb489255a1502",
+  "trading-low-for-low": "934b64c14488819213771ddcf4c0cde31a3c0f8a4cd64fdcf0d0af1be74c4655",
+  "trading-low-to-medium": "f7ce25a8fd2b7fc0b792161d0f2619cf0592d66e00a6f612274449c3208a767f",
+  "trading-lower-deficit-covered-from-above": "8e586ee4548973470d576b29d9533784e5d5751e9159874b7e8212701da2261f",
+  "trading-surplus-in-another-broad-habitat": "71264d0dc45cdd0f5178697917b750f40cbf55182036e77fad2666df8672173d",
+  "trading-too-few-units": "b9fcdb07c84a2b90b30e7993dd3389cc96f2430ce29dc685b7f0c827654cb120",
+  "trading-trade-down": "fe13d2d004389989bc45062f542ac3a6b742d56c8388cdffcf66d2bce7c51388",
+  "trading-trade-up": "2a231a666eacb6a1a1f9800829cb92a524ab9d12eaba99505bccda122d40bf32",
+  "trading-wrong-habitat": "309df6b2221fed0e4f12b0fd8085f0e8952937913353c559c204748a0037fa48",
+  "trees-count-above-one": "747792ff288ab3b12309ed672f746ba558bd4b35591b8ac62799379d23b70bc4",
+  "watercourse-enhanced-culvert": "aaae319413d795b4d706c0763f867b338c72789b307f032b8d6bbfe5730e41eb",
+}
+`;
+
+exports[`legacy output is pinned > --bad 1`] = `"0a54ecdc877f358160ba5f6a1e6af19361261b82772b0c7da45c1025d49920d7"`;
+
+exports[`legacy output is pinned > default size 1`] = `"98ac64bb77d4238bb05ca6602b7b8c55c5b515cccf877941ccfa2ba28cb8b75d"`;
+
+exports[`legacy output is pinned > explicit trees 1`] = `"0a73330d2856a9bf465b22c74a2f8b996882f1c9769178640e28214d5eb92e52"`;
+
+exports[`legacy output is pinned > flaw advance-delay-both-set 1`] = `"9ed1da6ed7731edebf5823ce89938792aa49b31d85bc51252cecb59462446b06"`;
+
+exports[`legacy output is pinned > flaw area-sum-mismatch 1`] = `"7a5044a0971bb0bef1be04d942fe33037c4fe885617b49cd266b6739660993f1"`;
+
+exports[`legacy output is pinned > flaw bowtie-parcel 1`] = `"9446cf946c35ea1100105f58f5e65132e7ffe4e67aeb0cd6863e7cd32728fd69"`;
+
+exports[`legacy output is pinned > flaw distinctiveness-out-of-scope 1`] = `"2eb6690293635c1095b20a4d4a2e46b1b42d0d2306f4a9a4ae453b2181be4949"`;
+
+exports[`legacy output is pinned > flaw duplicate-habitat-ref 1`] = `"6cbb12c7c4828b7d02009a14cf1502b723584b4e4d94a91172447fa7e23f39a4"`;
+
+exports[`legacy output is pinned > flaw habitat-ref-invalid-characters 1`] = `"3a450c8b7063dfc433cc0d03bb06067e08b785da5fe0fd493a0abd437e7a9ff9"`;
+
+exports[`legacy output is pinned > flaw hedgerow-outside 1`] = `"79eba2524960f329cd1e7db86f24f2df834ec068b1046ba365b06aeec509c62f"`;
+
+exports[`legacy output is pinned > flaw iggi-outside 1`] = `"ea204fa71367c8a4096822c1e189ff12834bfec8d8db9cc8ff2d16986cb1e5e8"`;
+
+exports[`legacy output is pinned > flaw missing-habitat-ref 1`] = `"26137d5ebea01c3a0610427dbf1854ff22608295d2c01de10757bcdff6bb6b67"`;
+
+exports[`legacy output is pinned > flaw no-habitats 1`] = `"c23a9097692e8f73e1e44a60d360638fc8281b357cbd61ce6fc4ed911ced058f"`;
+
+exports[`legacy output is pinned > flaw no-hedgerows 1`] = `"4478161016c8d5b28a69ffd44ab6c8d4d3c19914312292d01dc6800be36a418e"`;
+
+exports[`legacy output is pinned > flaw no-rivers 1`] = `"2a223acdd98398374a5bd970eabceea7b047ca0ccf70eca450a996d602047e9f"`;
+
+exports[`legacy output is pinned > flaw no-trees 1`] = `"39aa4c08c4268ff077bb765fbd42295d0c571ba6a706dc5dd8236d16fa4b188a"`;
+
+exports[`legacy output is pinned > flaw overlapping-parcels 1`] = `"0f6fc6aa721e3709ac1c11952b8b153ec0b489f8542116ac609cd7975a9674b9"`;
+
+exports[`legacy output is pinned > flaw parcel-outside-redline 1`] = `"cf26d82c2d66c3490fa611ac58dd4e103952bc440d3a9503c752e8eecac7bf3d"`;
+
+exports[`legacy output is pinned > flaw parcel-too-small 1`] = `"3e3eaa4a4593e6dd547bdb0032e5df9d1297647af46a6bc5933938231fbc8943"`;
+
+exports[`legacy output is pinned > flaw redline-not-in-england 1`] = `"1bfdd3e7b1bf8cfe20dcaeacd76606f7ba29749b915c1e1266b4c9408f812119"`;
+
+exports[`legacy output is pinned > flaw redline-too-large 1`] = `"c7ccba108a5f010b5de50baafa6edb9f3fea84d770c35ec41c915126b223e17a"`;
+
+exports[`legacy output is pinned > flaw self-intersecting-redline 1`] = `"860dc206b765a78a4c6cf4c06bc78e15fb4b1985043c455542968e485965ef0a"`;
+
+exports[`legacy output is pinned > flaw tiny-gap 1`] = `"fbf30fb74811f5e98a1073c066691e289a15bd374b47635ea0b37f2c1154ea05"`;
+
+exports[`legacy output is pinned > flaw tree-count-not-whole 1`] = `"b730c509160a25356baeb2bf2ea91ada190b9bb7261dc63adfe38bb4f51fafec"`;
+
+exports[`legacy output is pinned > flaw tree-outside 1`] = `"9902bb55e2ac81b5f1b335c4dcadd2daf6156fe01417d864908da2060ae77281"`;
+
+exports[`legacy output is pinned > flaw watercourse-outside 1`] = `"fd85ae5f496fba06c6388a92f0553f2c95423ed2e55335cb0dba96ab84f647c2"`;
+
+exports[`legacy output is pinned > small 1`] = `"d02bc229c3334581b91e80ba5f361145ed1cda6f8dbaa757d3be0e2e2d71694c"`;
+
+exports[`legacy output is pinned > the scenario catalogue 1`] = `
+{
+  "advance-delay-created-advance": [
+    "f74da483eb8bf59191fccea66dfaaf730c24839433a6cfc3cc0392a60dac024c",
+    "edfa43fbbe1afa5ddbc95df646e8eaa9eae524c451c3db51b54e047f1646ee81",
+  ],
+  "advance-delay-created-advance-difficulty": [
+    "bf5f5aad914c5243cd1b1cdad45041d7a9ae8093d874296beba266126819d752",
+    "0f7d9dcef9ce227104ef0c2eb023e6e2d81e9f862e5338e592ff531b7c1a1aa1",
+  ],
+  "advance-delay-created-delay": [
+    "e15f0f592c53a254ad0cf4c2635186ccce921fb5ce8dc29b1be8abcdcf9bfc0f",
+    "df9973f7894144888352e968a5ade9d25483f81701a395e81c1d4218c089e013",
+  ],
+  "advance-delay-created-trees": [
+    "da732d82b505fa9959b0780fdb6ac7b72d26f19cec097d592c0a0de3ed60200b",
+    "1a153183eb78e317aa16eb4cf747fd7b740f5f182041f9f210cb22d99346d7a8",
+  ],
+  "advance-delay-thirty-plus": [
+    "a8f93f2f945e785a3b106c2473de2fcbbbf9e535889ec21b1e766f71564acd70",
+    "cc18ed2e846ea4116d4bbdcb8c42277c01c8b3a45de00da8e81d57ec495cedca",
+  ],
+  "area-enhanced-intertidal": [
+    "f7489f926f0438d6a0f77e4c35efb15f6020b0138466e39f1a376c82e04d3d8f",
+    "8ca4271bff2f836b1b6c9fcecfdc34ef83bb368c8d0a8ed5f6ba16c43aaa19d5",
+  ],
+  "area-enhanced-low-condition-na": [
+    "a5febd22d8e60eb6c28a87a7f589345c41a0acd73cfdde040631c36a66910a4e",
+    "cdd1da538437d53eb74953760958e70322294fce48807fd073509eab8f206c75",
+  ],
+  "area-enhanced-medium-condition-na": [
+    "df8a119a8d904c29a1bdd62ed575d99be66b4e1c1da142f781051a4f93e8c9ad",
+    "a4b48633a15562f206c595ea6f8ea7a013dd30d4693d06cd697323fa552d3467",
+  ],
+  "area-enhanced-very-low": [
+    "4993718a7d49a2bd4ad22ebaf34909f9dba7bc156ff05ed3608aa2c167077cba",
+    "d6d1a6e865f4af638c0b63616cc09bcda1f1cd52b59ad7b8e786a58772f1ca53",
+  ],
+  "conditions-area-spread": [
+    "2e0f0a4fe09681c6a423351f36fdfadbe1055b77d4033b2a718d7b4c72cc2025",
+    "6a91d15a7305c79ee3dd533ef53c950ad001c204d2cb5302e50fa5d1293103ff",
+  ],
+  "data-complete": [
+    "9ce025a64314907c1c647b69d1a39c2f711da9a89581947dd845cfb3e6aa1893",
+    "768b85c6b53619a37f6bcd41bc574c2a3bfe7f7d62cb51d70e2e8e45b7a5e176",
+  ],
+  "intervention-area-created": [
+    "7df260a3f1475ef1d1629bb215560622ada3042007e20ba3be4d397a00615509",
+    "906ed978d99e61e830ab69c9c0e2d32e6b7ebb9c2476834f5e7367503c7c1521",
+  ],
+  "intervention-area-enhanced": [
+    "b985441fc7d979e486e48124c257fb11715af9cd984193ca471a8402bf427ef3",
+    "5245cd437c95c1ca21e0c1fee2b057e9864a47200beae083cb59bec6bdfc0d25",
+  ],
+  "intervention-area-retained": [
+    "b0abce10bf4018cbcad53c4415d3ab0f028ecf4db018d788f72b38b2abec695d",
+    "6f1a54785eb70604cbdcdd281257b0452cae93b48bc592312020a7d117349b1e",
+  ],
+  "intervention-hedgerow-condition-lowered": [
+    "77b46d774db801208e64f7f03f0d66868da12c271ca5bc9a5e19ed3433d4874b",
+    "9f74455a2da45f95536126e189669c4061b482839a294875a2707d7116c2f083",
+  ],
+  "intervention-hedgerow-created": [
+    "e996168c81fce90a086c3ce2e34123b541958dd5ae6a648dff24c01389eb9fd9",
+    "8259b683ec7766d57e6f9c743365c2b4f0c8ab78536a91d96efefd5e8ce194e8",
+  ],
+  "intervention-hedgerow-enhanced": [
+    "1bb490ab8ad8826548ae26d83ed7a5625a1235b73cfc133201e34f6bbf68ea1d",
+    "38d51aa7d5fa29a116fb8b91b4c31acacf18b79b5b3495b7c305cca103875e53",
+  ],
+  "intervention-hedgerow-retained": [
+    "cf4e721a016e20b4b90fa2c695ffc9bfaae3423ecc9fed710901c11ff08ec2e0",
+    "6be5dadafb241ba353e340d14d339cffeaa4e43ade173e718f3f55890c5bf543",
+  ],
+  "intervention-watercourse-created": [
+    "223b2e6a7fffea6490a7c5a0b1ef92916219e75298deacfbca968f3a544cf00d",
+    "11bf6ece13b04774e7c874cf2d33dfa50a98b73fd1dab9002be05a7691d6a9ca",
+  ],
+  "intervention-watercourse-enhanced": [
+    "33aa6b537162127079e24ae6803f71e94efe13c67ce14519ff77854f3bc60ab3",
+    "09eae999c2e56a0e2d4c1abce1d9da980e08d17d785153a3dca4e5c779d4776c",
+  ],
+  "intervention-watercourse-retained": [
+    "d273df0622c34e88f9ce681295692e93f20474a204ae59d324c46ce7cff7cd05",
+    "b7fe9a3d7486c6b46a5272489bfe91609e9653360440e41a640401a04f37c5a6",
+  ],
+  "invalid-area-advance-and-delay": [
+    "d22852022f44ec77b4673918b2f73c0479d9d2c505dc3855bc268c14238ad52a",
+    "34e0747ac65a29bae077a63d0277496beb14d6089fe50a84155175dbdcce03e4",
+  ],
+  "invalid-area-condition-reduced": [
+    "d9e6a4a205fbdf6fc96c12ecd9d3f836e7ebc60a71426914caff01e74e27f806",
+    "a204e814db30baea86197d4fa455ca9b2b286704aa8cb77e7e5b6b511ed720ad",
+  ],
+  "invalid-area-intertidal-no-enhancement": [
+    "332db0f57c12c9c187f2b66d9567fcdcec85b88476814613ee021029a58150a2",
+    "1ca0dc896649d2ec41d769d3022fadbcff151b316cedb30fc63c163bc60d2eb8",
+  ],
+  "invalid-area-low-condition-na-not-possible": [
+    "457eb4abe16aae1e70174af183cf182eba491100be2e29c86d8faa34ce7b3e2a",
+    "15c3aea69e6e01e8c478c35ddcd59de82336474f5a357ceb7f1df224338d4aa3",
+  ],
+  "invalid-area-low-no-enhancement": [
+    "fa04e3545944828cde3608fdeb3b2cbc1f251a8285823aad844f17c1aed54e32",
+    "53240fbb1a55fabc80e95b774d751ae422bb8d36b80d0cfa498b9da9c9dd9f95",
+  ],
+  "invalid-area-low-not-possible": [
+    "48db679a3a96ed05d4fe7e594afb8ebd521d7ee414a38dac46aa2a2af4787082",
+    "4886af0490be534e5d168adfaa0ae865dfe952114ca4ba9148597d8d1b128545",
+  ],
+  "invalid-area-medium-condition-na-not-possible": [
+    "013f2a2e9b1c2c9a7ccff99d4c2b4027acc18c85b3b305b5dc035f52a16ea0bb",
+    "178214d2ab13c66e588f8a0f97de3454925ddbc3e960f91e5cd39cd784fe3fef",
+  ],
+  "invalid-area-no-enhancement": [
+    "b785fd517053ce5e13c3f0a7390d71ae5cb13f58e70420cf2916cc79e36c4d8c",
+    "2b92ca38b59f0e7c9ae418b58f5626e95b2eb43517766b6b206a08ad2dc5160b",
+  ],
+  "invalid-area-trading-down": [
+    "b1debc1a2cd762c1552bc6a686649696881355c73aec69f0be96319559f1c058",
+    "d965f7b0facd2e30b7e6878e5e2a6bc097480a82e1c4f908df54c4d0413cffd5",
+  ],
+  "invalid-area-very-low-not-possible": [
+    "c1994d4870e043549a2566913b0fb83e1c1a56f9742f17811d0bf53e39c830af",
+    "a600f02f0f90da0b7c2e7eb000d90a16e77f80ee8d13880534185d5747a58393",
+  ],
+  "invalid-data-incomplete": [
+    "5294280b0d61a14648486c116f5e878c2c3e43e7d90bc0b176691cbe4ce97e52",
+    "a2796d81db089e67c44b3dc8245073039bb1e844c5e1f804e0a2feb45c22e130",
+  ],
+  "invalid-hedgerow-condition-reduced": [
+    "d19f2854e2db0232bdcf3d3b1d5ed1fe29c1a11f75f6ea7fe346bd0127892b67",
+    "089f5405bad444f835d76571dd03c035a19312fffbd0b7952a71301bbb1cdfc6",
+  ],
+  "invalid-hedgerow-low-not-possible": [
+    "d85ba1a0362fbe2b60adfadc0767ebd6d87ea1e01d158e5a5771e8fe551f86fc",
+    "faa041b98e5e200ab4f57012d57f157d7b7fffb760a0c7f0a6f7c1adf12f5b2c",
+  ],
+  "invalid-hedgerow-medium-trading-down": [
+    "e9437797ead3c6d3f58170b1dc655b5fb04969b6804da7bbc7994a12813bb172",
+    "c91b911c718c0e4e11329ee0ddceec1e63ebe83cc6f74a7010c4cc0247432270",
+  ],
+  "invalid-hedgerow-very-low-enhanced": [
+    "b64fea18458c6f24a2107b50fe57a53b9cc948ab912b3b8b86d1cc673a3bb56a",
+    "03b689b71e614285f7fc99d8eebafb3c19c7e1debd4bd9328df2b15625827e79",
+  ],
+  "invalid-tree-advance-and-delay": [
+    "73d7e266a0bfaa1cd720b6df5ca4d021cdca3f0a6206a5da1f001cd967180e69",
+    "cfd72c5fc1ea9fe0227f5e6e42e309d32e6829484d0cbaf646cb5106c37300e5",
+  ],
+  "invalid-watercourse-culvert-enhanced": [
+    "11af413d70bf0c42b5506ae759f054c48a58789566b5ea8e8818a9d593f9070f",
+    "2ef0d064ba5f9be88f0d90ee4d37db3dfdbbd755b82adb39b985e0272d086b0c",
+  ],
+  "invalid-watercourse-encroachment-worsened": [
+    "456aaa940654fe5417a0e35fdca6e43881bc81b83e9737faaf2777abb1578413",
+    "e0353f10793f0ebc769969cc016e092d7a9597ea97a24ad1461989262c8f3860",
+  ],
+  "invalid-watercourse-medium-condition-reduced": [
+    "457ee95702edcdb33126b1bde7ac9833a9206ac29cd75206b99bc99414da4f5f",
+    "443f3cecfe76b5f9eaa814fbe6746d2c21ed53d7e3fd3b45a022e261b904ebbf",
+  ],
+  "net-gain-met": [
+    "66dfead2c735460b039f09fee9bd5fb3c08bb427cb447a8b1293987fea7d150c",
+    "b156eded98b83cf5439b211a6e9d8e4e831a41abbd9b834eeb8e4a226a2137d5",
+  ],
+  "net-gain-unmet": [
+    "053246a14ce2fd26dd0a10ad8e5e2d93e4d35d323926e16146b78a53deb1b660",
+    "19b2897a6fab85ce3acb3cee6207890e9d5eba9f044e9cefbf02bb8a54307c42",
+  ],
+  "strategic-significance-spread": [
+    "fe5e7e66bdbe092b1e09af84541ded22bd61149b43d277323cb09b53e57a20cd",
+    "3891ccce47e773f860a2c213e256bdd6b736423f68fe5d7e778a485fafe2a410",
+  ],
+  "trading-all-met": [
+    "61284edcbd745974a7a688c0cc0f72e04c25e5ef8736f17b100ec076dd597bcb",
+    "dddb94fbb9e5cfb7cbbba35c25ce9ed089fe4e1b384ae2b322df634042fecced",
+  ],
+  "trading-higher-deficit-not-covered-from-below": [
+    "2bb4f6ecda0297acaae205292a3f614f6d471b359deafa9fabf48f02c6367afb",
+    "3457319d2613e5811a5860ceb94eac9fb4eb62164b32593825431f7b1c503754",
+  ],
+  "trading-like-for-like": [
+    "d2645fa6b29cebe0e97bf2cd140be93e6f7536f6f65f3f5c5f1dd26c50b9c818",
+    "babb70868e840eae50b6a87ddd76464c378c40833e640165c9f4d1f7f3b6b1e0",
+  ],
+  "trading-lost-to-development": [
+    "308bf170ca6c8180e0fa766de0e185afd4dfcc7f06b915f24f4313a8083cdc06",
+    "7d4f72c4f7980a6d5ff609e5eb647b52a455d2b8aa5f66ddceb11096e13f47c2",
+  ],
+  "trading-lost-trees": [
+    "669562f09004db7609aa56e8e8562aade23872068f412b6318cb7f044cbbffbd",
+    "4867c8482209ade5fee703ec9f9c4bdaffb0065f80d4cec7cee7c90bdedacb58",
+  ],
+  "trading-low-deficit-covered-beside-medium-deficit": [
+    "63e3de118959b7c6b868adf946ca8930d49aaa2b912049d7bdf7f7fd58f74e73",
+    "d99bf3e0c86d7aa2e78978be2f5900027e8590eb0133f3b40ec7d0782e5b3e7a",
+  ],
+  "trading-low-for-low": [
+    "ce0c8e75bd830503a8a0ece67d822f20ca0e9a395552c3dcc553766783df66d0",
+    "39f848e55345854a62a13226c751073e1e33bc2413446b4ef074d2f6e513d4e6",
+  ],
+  "trading-low-to-medium": [
+    "93581119cc4a88b31751d42e93133d7eff4d7502bfafb71f7b68adfe21876f82",
+    "7e57d894962ff739c37052c3b9cbe7ab418164e0942470361cf4d3185928db55",
+  ],
+  "trading-lower-deficit-covered-from-above": [
+    "f9ecaf1a65742604f7cbe281456a848cf279cb641d6d23b28e50c687a32fa2a9",
+    "688644d4b3ca368c3281244748e93b95bd66652a233cd1f29e6fbf949e72bda3",
+  ],
+  "trading-surplus-in-another-broad-habitat": [
+    "010a2aaa2e38c729ff9da6a8d2608aa1005c8b2869503b56915dd65bf01ae4b7",
+    "f62a4cd35598703f930f1f069bc722650a89ffd468c503ade2c987865800cabf",
+  ],
+  "trading-too-few-units": [
+    "3a72461d558f9a73fc3563614d4c933490c45444efce04708669273022317d80",
+    "b47863c5d59aeb2ac35fef521a4a3b899919face2497a740acdecbcce0af29f8",
+  ],
+  "trading-trade-down": [
+    "abd209f6fbbdf0507dd8401ae09c144dafadcffb6ab9c3012e98de74eea31295",
+    "bbbf5e2e3131124deb1353c18e8ab546e427b59b4c8ad3ab1c40aaa22700629a",
+  ],
+  "trading-trade-up": [
+    "efd4a8ac4de5d2ce515c5477454b289070a8f26f38be31ffa5b0b3a1d9960117",
+    "a19491eb15023f06503e85e271a41397dc4d0fa7ddc81d42cdc413ad9a7df55e",
+  ],
+  "trading-wrong-habitat": [
+    "06a54076b171b0a260ab60c80825e6cc0c0cebee43992d33e588c2e83d45f134",
+    "d176d947c0442bcd2a717e74fdec8698a0d1beee9c3d314c2218d5f7ab515278",
+  ],
+  "trees-count-above-one": [
+    "eeeb66eaa07a8ef680d356f2d94aa5b579b000f037a71b4a815b6651be9ebcd9",
+    "8f57dbf1d3a45b027fb6fc0950d5818262153788a94f68e7237547ea7c8a76df",
+  ],
+  "watercourse-enhanced-culvert": [
+    "0c5b896fd0aa34d5e4c46c8e1bff975f6ab8b82519881f2b894a1ba0ac9bf4b9",
+    "475c844adee39d3f1f51b3ca3724451fb84a688ac60babf2110caefbeca5b2ba",
+  ],
+}
+`;

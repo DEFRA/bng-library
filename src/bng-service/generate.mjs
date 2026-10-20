@@ -40,6 +40,7 @@ import {
 } from './flaws.mjs'
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
 import { normaliseOverrides } from './native/overrides.mjs'
+import { addSiteChanges } from './site-changes.mjs'
 import { drawSyntheticSite } from './native/synthetic-site.mjs'
 import { siteFromWorkbookDraw } from './native/site-from-workbook.mjs'
 import { moveVerticalHabitats } from './vertical-from-area.mjs'
@@ -123,6 +124,7 @@ function finishSite(site, outPath, chooser, options) {
     comments = false,
     verticalHabitats,
     worseHabitats = false,
+    siteChanges = false,
     emptyLayers = new Set(),
     lineageFlaws = [],
     degradeFlaws = [],
@@ -134,6 +136,9 @@ function finishSite(site, outPath, chooser, options) {
   }
   if (worseHabitats) {
     addWorseHabitats(site, chooser, emptyLayers)
+  }
+  if (siteChanges) {
+    addSiteChanges(site, chooser, emptyLayers)
   }
   applyDegradeFlaws(site, degradeFlaws)
   if (comments) {
@@ -372,6 +377,7 @@ export function generateBngServiceSynthetic(
     comments: enrich,
     // A degrade flaw breaks a habitat that gets worse, so it adds them.
     worseHabitats: enrich || degradeFlawNames.length > 0,
+    siteChanges: enrich,
     emptyLayers,
     verticalHabitats:
       enrich && !emptyLayers.has('verticalHabitats')

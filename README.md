@@ -105,7 +105,25 @@ A default synthetic site also holds what only the new template records:
 vertical area habitats (walls drawn as a line along their base), comments on
 both stages, an irreplaceable woodland parcel and veteran tree, and Enhanced
 trees that move to a better condition and are never irreplaceable.
-`templateFeatures: false` leaves them out.
+
+It also holds **habitats that get worse**, recorded as the template's guide
+asks: the copied row is kept, so it keeps its parent, and set to `Created` in
+its own type.
+
+- An area habitat, vertical area habitat and hedgerow each take a condition
+  the Metric scores lower, with `30+` years created in advance (Metric User
+  Guide, section 5, _Habitat retention_). The area habitat is the last
+  Retained parcel, and only when another Retained parcel stays. The others
+  are drawn for the purpose, so the site keeps every feature it had.
+- A second hedgerow gets worse in part only. It is split into a Retained
+  part (`HG006a`) and a worse `Created` part (`HG006b`), both linked to it.
+- One watercourse keeps its condition, and its encroachment gets worse on
+  both sides, `10` years in advance (section 7, _Watercourse creation_).
+  Another keeps its encroachment, and its condition gets worse, with no
+  years in advance. Neither is a culvert.
+
+A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
+empty. `templateFeatures: false` leaves them all out.
 
 `stage: 'baseline'` writes the **baseline-stage file**: the same tables, with
 the Post-Intervention tables empty. It is the file an ecologist has before
@@ -143,16 +161,25 @@ takes: every legacy flaw remapped to its tables (the IGGI polygon becomes a
 vertical area habitat) bar `tree-count-not-whole`, as the template has no
 Count column, and its own:
 
-| Flaw                           | What it writes                                                                   |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `lineage-parent-missing`       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom           |
-| `lineage-parent-unknown`       | a Retained area habitat whose parent is not in the baseline                      |
-| `lineage-parent-wrong`         | a Retained area habitat naming another baseline parcel, which it lies outside    |
-| `lineage-parent-geom-mismatch` | the right parent, with a parent_geom 5 m from the parent's shape                 |
-| `lineage-parent-geom-missing`  | the right parent, with no parent_geom; accepted, as the service skips the check  |
-| `version-record-missing`       | no template version record                                                       |
-| `version-record-duplicated`    | two records                                                                      |
-| `version-unsupported`          | one record naming the next major version, which the service does not support yet |
+| Flaw                                           | What it writes                                                                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `lineage-parent-missing`                       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom                                         |
+| `lineage-parent-unknown`                       | a Retained area habitat whose parent is not in the baseline                                                    |
+| `lineage-parent-wrong`                         | a Retained area habitat naming another baseline parcel, which it lies outside                                  |
+| `lineage-parent-geom-mismatch`                 | the right parent, with a parent_geom 5 m from the parent's shape                                               |
+| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom; accepted, as the service skips the check                                |
+| `version-record-missing`                       | no template version record                                                                                     |
+| `version-record-duplicated`                    | two records                                                                                                    |
+| `version-unsupported`                          | one record naming the next major version, which the service does not support yet                               |
+| `degrade-advance-missing`                      | a hedgerow that gets worse with no years created in advance, where the Metric asks for 30+                     |
+| `degrade-not-worse`                            | a hedgerow recorded as getting worse (Created, own type, linked, 30+) in its baseline condition                |
+| `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment |
+| `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                 |
+| `degrade-watercourse-retained-and-created`     | one baseline watercourse with a Retained part and a Created part                                               |
+
+At most one lineage flaw and one degrade flaw at a time. A degrade flaw adds
+the habitats that get worse, if the site has none, and breaks one of them.
+The service does not check these yet, so a file with one is accepted.
 
 **Checking a file.** `checkTemplateValues(path)` checks every value in a BNG
 Service file against the template's own drop-downs, applying each list's

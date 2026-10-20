@@ -132,3 +132,47 @@ export function encroachmentNoWorseThan(side, options, baseline) {
   }
   return options.filter((option) => (table[option] ?? -Infinity) >= floor)
 }
+
+/**
+ * The conditions a feature of this type can be created in that score lower
+ * than `from`: a habitat whose condition gets worse is recorded as lost and
+ * created again, in the same type, in one of these.
+ */
+export function worseCreationConditions(kind, type, from) {
+  const floor = score(kind, type, from)
+  if (floor === null) {
+    return []
+  }
+  return creationConditions(kind, type).filter(
+    (condition) => score(kind, type, condition) < floor
+  )
+}
+
+const squashed = (value) => String(value).replaceAll(/\s+/g, '')
+
+function multiplier(side, value) {
+  const table =
+    side === 'water'
+      ? WATERCOURSE_ENCROACHMENT_MULTIPLIER
+      : WATERCOURSE_RIPARIAN_ENCROACHMENT_MULTIPLIER
+  const key = Object.keys(table).find((k) => squashed(k) === squashed(value))
+  return key === undefined ? undefined : table[key]
+}
+
+/**
+ * The encroachment options worse than the baseline's: a lower multiplier is
+ * more encroachment. Compares the template's spelling ("Moderate/ Minor")
+ * and the metric's ("Moderate/Minor") alike.
+ *
+ * @param {'water' | 'riparian'} side
+ */
+export function encroachmentWorseThan(side, options, baseline) {
+  const ceiling = multiplier(side, baseline)
+  if (ceiling === undefined) {
+    return []
+  }
+  return options.filter((option) => {
+    const value = multiplier(side, option)
+    return value !== undefined && value < ceiling
+  })
+}

@@ -67,6 +67,20 @@ const ZERO_YEARS = '0'
 // the geometry errors and masking them.
 const BAD_HEDGE_TYPE = IN_SCOPE_HEDGE_TYPES[0]
 const BAD_RIVER_TYPE = IN_SCOPE_RIVER_TYPES[0]
+
+/** The fixed values every bad feature takes, whichever format writes it. */
+export const BAD_VALUES = Object.freeze({
+  habitat: IN_SCOPE_HABITATS[0],
+  hedgeType: BAD_HEDGE_TYPE,
+  hedgeCondition: HEDGE_CONDITIONS[0],
+  riverType: BAD_RIVER_TYPE,
+  condition: CONDITIONS[0],
+  waterEncroachment: ENCROACHMENT_WATERCOURSE[0],
+  riparianEncroachment: ENCROACHMENT_RIPARIAN[0],
+  treeSize: TREE_SIZE_DEFAULT,
+  treeType: TREE_TYPE_STREET,
+  siteName: `${SITE_NAME} (BAD)`
+})
 const BAD_HEDGE_DISTINCTIVENESS = HEDGEROW_DISTINCTIVENESS[BAD_HEDGE_TYPE]
 const BAD_RIVER_DISTINCTIVENESS = WATERCOURSE_DISTINCTIVENESS[BAD_RIVER_TYPE]
 const TREE_COUNT_DEFAULT = 1
@@ -421,7 +435,12 @@ function writeBadLayers(db, state) {
   createLayerStyles(db)
 }
 
-export function generateOneBad(outPath, centre, flawNames) {
+/**
+ * The bad fixture's state for a list of geometric flaws: the redline and the
+ * parcels, lines, trees and IGGIs, as plain coordinates. Every attribute is
+ * fixed (see `BAD_VALUES`), so the state is all a writer needs.
+ */
+export function buildBadState(centre, flawNames) {
   const state = createBadFixtureState(centre)
 
   // Apply redline-mutating flaws first so cx/cy and the redline shape are
@@ -441,6 +460,11 @@ export function generateOneBad(outPath, centre, flawNames) {
       FLAWS[name].apply(state)
     }
   }
+  return state
+}
+
+export function generateOneBad(outPath, centre, flawNames) {
+  const state = buildBadState(centre, flawNames)
 
   logBadFixtureBanner(state, outPath, flawNames)
 

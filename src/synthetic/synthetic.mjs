@@ -1,8 +1,9 @@
 /**
- * Synthetic-mode GeoPackage generator. Produces a single file with all 5
- * feature layers, geometry sampled randomly inside a generated RLB. The
- * --bad fixture lives in `synthetic-bad.mjs`; pick-list constants and the
- * precomputed HABITATS table live in `synthetic-constants.mjs`.
+ * Synthetic-mode GeoPackage generator, legacy layout. The site is drawn by
+ * `draw/site.mjs` (geometry and values, as plain data) and written here as
+ * Natural England rows: one file with all 5 feature layers. The --bad fixture
+ * lives in `synthetic-bad.mjs`; pick-list constants and the precomputed
+ * HABITATS table live in `synthetic-constants.mjs`.
  */
 
 import { color, header, info } from '../log.mjs'
@@ -30,536 +31,109 @@ import {
 } from '../bng-schema.mjs'
 import {
   clearSeed,
-  generateIrregularPolygon,
-  generateLinestring,
-  lineInsideRing,
   linestringLength,
-  partitionPolygon,
-  pick,
-  pickInteriorPoint,
   polygonArea,
-  randInt,
   setSeed
 } from '../geometry.mjs'
-import {
-  FEATURE_REF_PAD,
-  FEATURE_REF_PAD_CHAR
-} from '../workbook/workbook-rows.mjs'
 import { generateOneBad } from './synthetic-bad.mjs'
 import { EMPTYABLE_LAYERS } from './flaws.mjs'
 import {
   baselineLinearAttribute,
   baselineLinearType,
   gpkgAreaRetention,
-  RETENTION_CREATED,
-  RETENTION_LOST,
   treeCategory
 } from '../retention.mjs'
 import {
-  ALL_HABITATS,
   BASE_MAP,
-  CULVERT_ENCROACHMENT,
-  CULVERT_TYPE,
-  ENCROACHMENT_RIPARIAN,
-  ENCROACHMENT_WATERCOURSE,
   HEDGEROW_DISTINCTIVENESS,
-  IN_SCOPE_BROAD_HABITAT_TYPES,
-  IN_SCOPE_HABITATS,
-  IN_SCOPE_HABITATS_BY_BROAD,
-  IN_SCOPE_HEDGE_TYPES,
-  IN_SCOPE_RIVER_TYPES,
-  HEDGEROW_PER_PARCEL_RATIO,
-  LINE_FEATURE_REJECTION_BUDGET_FACTOR,
-  LOCATIONS,
   MAPPED_BY,
-  MIN_HEDGEROW_COUNT,
-  MIN_RIVER_COUNT,
-  DEFAULT_TREE_COUNT,
-  RETENTION_CATEGORIES,
-  RIVER_PER_PARCEL_RATIO,
   SITE_NAME,
-  SPATIAL_RISK_HABITAT,
-  SPATIAL_RISK_RIVER,
-  BASELINE_STRATEGIC_SIGNIFICANCE,
-  PROPOSED_STRATEGIC_SIGNIFICANCE,
   SURVEY_COMPANY,
   SURVEY_DATE,
-  SYNTHETIC_RLB_RADIUS_M,
-  TREE_PER_PARCEL_RATIO,
-  TREE_TYPE_STREET,
   WATERCOURSE_DISTINCTIVENESS
 } from './synthetic-constants.mjs'
-import {
-  AREA,
-  HEDGEROW,
-  WATERCOURSE,
-  baselineConditions,
-  canCreate,
-  canEnhance,
-  creationConditions,
-  encroachmentNoWorseThan,
-  enhancementPairs
-} from './valid-draws.mjs'
+import { computeLayerCounts, drawSite } from './draw/site.mjs'
 
-// ---------------------------------------------------------------------------
-// Tunables specific to synthetic-mode emission.
-// ---------------------------------------------------------------------------
+export { computeLayerCounts } from './draw/site.mjs'
+export { CREATED_TREE_INDEX } from './draw/trees.mjs'
 
-const MAX_CREATED_ADVANCE_YEARS = 5
-const MAX_CREATED_DELAY_YEARS = 3
-const MAX_HEDGE_ADVANCE_YEARS = 3
-const MAX_HEDGE_DELAY_YEARS = 2
-const MAX_RIVER_ADVANCE_YEARS = 3
-const MAX_RIVER_DELAY_YEARS = 2
-const MAX_TREE_ADVANCE_YEARS = 3
-const MAX_TREE_DELAY_YEARS = 2
-const TREE_COUNT_DEFAULT = 1
-const ZERO_YEARS = '0'
-const RETENTION_RETAINED = 'Retained'
-const RETENTION_ENHANCED = 'Enhanced'
 // Fixed metadata timestamp used for seeded (reproducible) generation, so the
 // gpkg_contents / layer_styles times don't reintroduce per-run byte differences.
 const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
 
-// The first two rivers are deterministically seeded (culvert + non-culvert) to
-// exercise both baseline watercourse branches; see `pickRiverType`.
-const SEEDED_RIVER_COUNT = 2
-// The next river (index 2, present once a fixture has three or more) is seeded
-// Created, so any fixture large enough to reach it exercises the created
-// watercourse branch without relying on the retention draw; see
-// `riverRetentionPool`.
-const CREATED_RIVER_INDEX = 2
-
 // ---------------------------------------------------------------------------
-// Synthetic generators
+// The legacy writer: a drawn site (`draw/site.mjs`) as Natural England rows.
 // ---------------------------------------------------------------------------
 
-function generateRedLineBoundary(db, cx, cy, radius) {
-  const ring = generateIrregularPolygon(cx, cy, radius)
-  const geom = gpkgPolygon(SRS_ID, ring)
-  const area = polygonArea(ring)
-
+function writeRedLineBoundary(db, ring) {
   db.prepare(
     `INSERT INTO "Red Line Boundary" (geometry, "Area", "Site Name") VALUES (?, ?, ?)`
-  ).run(geom, Math.round(area), SITE_NAME)
-
+  ).run(gpkgPolygon(SRS_ID, ring), Math.round(polygonArea(ring)), SITE_NAME)
   registerLayer(db, 'Red Line Boundary', 'POLYGON', envelopeFromCoords(ring))
-  return ring
 }
 
-function syntheticRef(prefix, i) {
-  return `${prefix}${String(i + 1).padStart(FEATURE_REF_PAD, FEATURE_REF_PAD_CHAR)}`
+function envelopeOf(coordsList) {
+  const envelope = [Infinity, -Infinity, Infinity, -Infinity]
+  for (const coords of coordsList) {
+    expandEnvelope(envelope, envelopeFromCoords(coords))
+  }
+  return coordsList.length > 0 ? envelope : null
 }
 
-// The habitats a random creation can pick: those the metric can create in at
-// least one condition, by broad type.
-const CREATABLE_HABITATS_BY_BROAD = Object.fromEntries(
-  IN_SCOPE_BROAD_HABITAT_TYPES.map((broad) => [
-    broad,
-    IN_SCOPE_HABITATS_BY_BROAD[broad].filter((h) => canCreate(AREA, h.fullName))
-  ]).filter(([, pool]) => pool.length > 0)
-)
-const CREATABLE_BROAD_TYPES = Object.keys(CREATABLE_HABITATS_BY_BROAD)
+const HABITATS_SQL_SYNTH = `
+  INSERT INTO "Habitats" (
+    geom, "Parcel Ref", "Baseline Broad Habitat Type", "Baseline Habitat Type",
+    "Area", "Baseline Condition", "Baseline Strategic Significance",
+    "Retention Category", "Proposed Broad Habitat Type", "Proposed Habitat Type",
+    "Proposed Condition", "Proposed Strategic Significance",
+    "Habitat created in advance/years", "Delay in starting habitat creation/years",
+    "Spatial risk category", "Location", "Site Name", "Survey Date",
+    "Survey Details", "Comment", "Mapped by", "Company", "Base Map",
+    "Baseline Distinctiveness", "Proposed Distinctiveness"
+  ) VALUES (${placeholders(HABITATS_INSERT_COLUMNS)})
+`
 
-const DEFAULT_HABITAT_POOLS = Object.freeze({
-  baseline: IN_SCOPE_HABITATS,
-  creatableByBroad: CREATABLE_HABITATS_BY_BROAD,
-  creatableBroadTypes: CREATABLE_BROAD_TYPES
-})
-
-/**
- * The area habitats a random draw picks from. A `habitatFilter` narrows
- * them, as the BNG Service template's Area Habitats layers do, which offer no
- * vertical area habitat. Without one the pools are the module's own, so every
- * draw is exactly as before.
- */
-function habitatPools(habitatFilter) {
-  if (!habitatFilter) {
-    return DEFAULT_HABITAT_POOLS
-  }
-  const creatableByBroad = Object.fromEntries(
-    Object.entries(CREATABLE_HABITATS_BY_BROAD)
-      .map(([broad, pool]) => [
-        broad,
-        pool.filter((h) => habitatFilter(h.fullName))
-      ])
-      .filter(([, pool]) => pool.length > 0)
-  )
-  return {
-    baseline: IN_SCOPE_HABITATS.filter((h) => habitatFilter(h.fullName)),
-    creatableByBroad,
-    creatableBroadTypes: Object.keys(creatableByBroad)
-  }
+function habitatRow(parcel) {
+  return [
+    gpkgPolygon(SRS_ID, parcel.ring),
+    parcel.ref,
+    parcel.baseline.broad,
+    parcel.baseline.type,
+    Math.round(polygonArea(parcel.ring)),
+    parcel.baselineCondition,
+    parcel.baselineSignificance,
+    gpkgAreaRetention(parcel.retention),
+    parcel.proposed.broad,
+    parcel.proposed.type,
+    parcel.proposedCondition,
+    parcel.proposedSignificance,
+    parcel.advanceYears,
+    parcel.delayYears,
+    parcel.spatialRisk,
+    parcel.location,
+    SITE_NAME,
+    SURVEY_DATE,
+    'Phase 1 habitat survey',
+    null,
+    MAPPED_BY,
+    SURVEY_COMPANY,
+    BASE_MAP,
+    parcel.baseline.distinctiveness,
+    parcel.proposed.distinctiveness
+  ]
 }
 
-// A retained or enhanced parcel keeps its habitat: an enhancement that
-// changes habitat is a distinctiveness uplift, which a scenario pins. A
-// created parcel (persisted as Lost) takes a habitat the metric can create.
-function pickProposedHabitat(baseline, retention, pools) {
-  if (retention === RETENTION_RETAINED || retention === RETENTION_ENHANCED) {
-    return baseline
-  }
-  const proposedBroad =
-    retention === 'Lost' ? pick(pools.creatableBroadTypes) : baseline.broad
-  const pool = pools.creatableByBroad[proposedBroad]
-  // A pinned habitat can sit in a broad type the random pools exclude (e.g.
-  // "Intertidal hard structures"). Enhancing or creating within that broad
-  // type has nothing to draw from, so the baseline habitat carries through —
-  // the row stays internally consistent either way.
-  return pool ? pick(pool) : baseline
-}
-
-function findHabitatByFullName(fullName) {
-  const habitat = ALL_HABITATS.find((h) => h.fullName === fullName)
-  if (!habitat) {
-    throw new Error(
-      `habitatFullName "${fullName}" not found in ALL_HABITATS reference data`
-    )
-  }
-  return habitat
-}
-
-// The proposed area habitat: a pinned `proposedHabitatFullName` wins (this is
-// how a scenario forces, say, a Low→Medium distinctiveness uplift), otherwise
-// it is derived from the baseline and retention as before.
-function resolveProposedHabitat(override, baseline, retention, pools) {
-  if (override?.proposedHabitatFullName) {
-    return findHabitatByFullName(override.proposedHabitatFullName)
-  }
-  return pickProposedHabitat(baseline, retention, pools)
-}
-
-/**
- * Draw the advance/delay pair for a created feature. At most one of the two
- * is non-zero: the statutory metric (and the backend's
- * ADVANCE_AND_DELAY_BOTH_SET check) rejects a habitat carrying both, so a
- * random fixture must never produce the pair.
- */
-function randomAdvanceDelay(maxAdvance, maxDelay) {
-  if (randInt(0, 1) === 0) {
-    return [String(randInt(0, maxAdvance)), ZERO_YEARS]
-  }
-  return [ZERO_YEARS, String(randInt(0, maxDelay))]
-}
-
-// ---------------------------------------------------------------------------
-// Per-row attribute overrides
-//
-// Every layer builder consults `perRowOverrides[i]` (see `generateOne`'s
-// `attributeOverrides` contract). A field left unset falls back to the random
-// draw, so a partial override pins only what it names and the rest of the row
-// stays coherent. Fields bound by a template invariant resolve as a unit —
-// the advance/delay pair, retention vs a differing proposed type, and the
-// culvert encroachment sentinel — so a partial override can never break an
-// invariant the random draw maintains. Baseline-side values still pass through
-// `baselineLinearType` / `baselineLinearAttribute`, so a `Created` linear row
-// keeps its "To be created" / "N/A" placeholders even when overridden.
-// ---------------------------------------------------------------------------
-
-// An explicit override for `key` wins over the random `fallback`; used for the
-// baseline-side cells, which are never blanked by `incomplete`.
-function overrideOr(override, key, fallback) {
-  return override?.[key] ?? fallback
-}
-
-// A proposed-side cell. An explicit override always wins — a scenario that
-// names a field owns its value, even on an `incomplete` row. Otherwise an
-// `incomplete` row leaves the cell blank to model post-intervention data a
-// user has not finished entering, and every other row takes the random
-// `fallback`.
-function resolveProposed(override, key, fallback) {
-  if (override?.[key] !== undefined) {
-    return override[key]
-  }
-  if (override?.incomplete) {
-    return null
-  }
-  return fallback
-}
-
-// The advance/delay pair. The statutory metric allows at most one of the two
-// to be non-zero, so the pair always resolves as a unit: an override naming
-// either field pins the whole pair (the un-named side stays zero) — merging a
-// single overridden field with the random draw could set both. Only a fully
-// un-overridden Created row takes the random draw.
-function resolveAdvanceDelay(override, retention, maxAdvance, maxDelay) {
-  if (
-    override?.advanceYears !== undefined ||
-    override?.delayYears !== undefined
-  ) {
-    return [
-      override.advanceYears ?? ZERO_YEARS,
-      override.delayYears ?? ZERO_YEARS
-    ]
-  }
-  if (retention === RETENTION_CREATED) {
-    return randomAdvanceDelay(maxAdvance, maxDelay)
-  }
-  return [ZERO_YEARS, ZERO_YEARS]
-}
-
-function pickOr(options, fallback) {
-  return options.length > 0 ? pick(options) : fallback
-}
-
-// The proposed condition when an enhancement pair does not apply: a retained
-// feature keeps its condition, an enhancement that changes type (a pinned
-// uplift) takes any condition the new type can have, and a created one a
-// condition the metric can create it in.
-function proposedConditionFallback(kind, proposedType, retention, baseline) {
-  if (retention === RETENTION_RETAINED) {
-    return baseline
-  }
-  if (retention === RETENTION_ENHANCED) {
-    return pickOr(baselineConditions(kind, proposedType), baseline)
-  }
-  return pickOr(creationConditions(kind, proposedType), baseline)
-}
-
-/**
- * The baseline and proposed conditions a row falls back to where a scenario
- * does not pin them, drawn so the metric accepts them: a condition the type
- * can have, an enhancement that improves on the baseline, a creation in a
- * condition the type can be created in. Pinned values still win at the call
- * site; this only makes the unpinned side agree with them where it can.
- */
-function drawConditions(kind, baselineType, proposedType, retention, override) {
-  const pinnedFrom = override?.baselineCondition
-  const pinnedTo = override?.proposedCondition
-  if (retention === RETENTION_ENHANCED && proposedType === baselineType) {
-    const pairs = enhancementPairs(kind, baselineType).filter(
-      ([from, to]) =>
-        (pinnedFrom === undefined || from === pinnedFrom) &&
-        (pinnedTo === undefined || to === pinnedTo)
-    )
-    if (pairs.length > 0) {
-      const [from, to] = pick(pairs)
-      return { baseline: from, proposed: to }
-    }
-  }
-  const baseline =
-    pinnedFrom ?? pickOr(baselineConditions(kind, baselineType), null)
-  return {
-    baseline,
-    proposed: proposedConditionFallback(kind, proposedType, retention, baseline)
-  }
-}
-
-// The retention categories a feature can validly take at random: no
-// enhancement the metric cannot make, no creation it cannot create.
-function validRetentionPool(pool, { enhance, create }) {
-  return pool.filter(
-    (retention) =>
-      (retention !== RETENTION_ENHANCED || enhance) &&
-      (retention !== RETENTION_CREATED || create)
-  )
-}
-
-// Retention couples to the proposed type: a Retained feature keeps its
-// baseline type, so an override pinning a proposed type that differs from the
-// baseline cannot share a row with a randomly drawn Retained. When a scenario
-// pins the proposed side without pinning retention, Retained drops out of the
-// draw; an explicit retention override always wins.
-function resolveRetention(override, pool, proposedTypeDiffers) {
-  if (override?.retention !== undefined) {
-    return override.retention
-  }
-  if (!proposedTypeDiffers) {
-    return pick(pool)
-  }
-  return pick(pool.filter((category) => category !== RETENTION_RETAINED))
-}
-
-/**
- * Inserts one habitat row per partitioned parcel. `perRowOverrides[i]`, if
- * provided, pins column values on row i; fields not set there are randomised as
- * normal. See `generateOne`'s `attributeOverrides` contract for the recognised
- * fields. Used by attribute-override flaws and the permutations runner.
- */
-function generateHabitats(
-  db,
-  boundaryRing,
-  numParcels,
-  perRowOverrides,
-  pools = DEFAULT_HABITAT_POOLS
-) {
-  const parcels = partitionPolygon(boundaryRing, numParcels)
-  const stmt = db.prepare(`
-    INSERT INTO "Habitats" (
-      geom, "Parcel Ref", "Baseline Broad Habitat Type", "Baseline Habitat Type",
-      "Area", "Baseline Condition", "Baseline Strategic Significance",
-      "Retention Category", "Proposed Broad Habitat Type", "Proposed Habitat Type",
-      "Proposed Condition", "Proposed Strategic Significance",
-      "Habitat created in advance/years", "Delay in starting habitat creation/years",
-      "Spatial risk category", "Location", "Site Name", "Survey Date",
-      "Survey Details", "Comment", "Mapped by", "Company", "Base Map",
-      "Baseline Distinctiveness", "Proposed Distinctiveness"
-    ) VALUES (${placeholders(HABITATS_INSERT_COLUMNS)})
-  `)
-
-  const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
-  for (let i = 0; i < parcels.length; i += 1) {
-    const ring = parcels[i]
-    expandEnvelope(allEnvelope, envelopeFromCoords(ring))
-    const override = perRowOverrides?.[i]
-    const baseline = override?.habitatFullName
-      ? findHabitatByFullName(override.habitatFullName)
-      : pick(pools.baseline)
-    const proposedDiffers =
-      override?.proposedHabitatFullName !== undefined &&
-      override.proposedHabitatFullName !== baseline.fullName
-    const retention = resolveRetention(
-      override,
-      validRetentionPool(RETENTION_CATEGORIES, {
-        enhance: canEnhance(AREA, baseline.fullName),
-        create: Boolean(pools.creatableByBroad[baseline.broad])
-      }),
-      proposedDiffers
-    )
-    const proposed = resolveProposedHabitat(
-      override,
-      baseline,
-      retention,
-      pools
-    )
-    const conditions = drawConditions(
-      AREA,
-      baseline.fullName,
-      proposed.fullName,
-      retention,
-      override
-    )
-    const [advanceYears, delayYears] = resolveAdvanceDelay(
-      override,
-      retention,
-      MAX_CREATED_ADVANCE_YEARS,
-      MAX_CREATED_DELAY_YEARS
-    )
-    stmt.run(
-      gpkgPolygon(SRS_ID, ring),
-      override?.parcelRef ?? syntheticRef('H', i),
-      baseline.broad,
-      baseline.type,
-      Math.round(polygonArea(ring)),
-      overrideOr(override, 'baselineCondition', conditions.baseline),
-      overrideOr(
-        override,
-        'baselineStrategicSignificance',
-        BASELINE_STRATEGIC_SIGNIFICANCE
-      ),
-      gpkgAreaRetention(retention),
-      proposed.broad,
-      proposed.type,
-      resolveProposed(override, 'proposedCondition', conditions.proposed),
-      resolveProposed(
-        override,
-        'proposedStrategicSignificance',
-        pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
-      ),
-      advanceYears,
-      delayYears,
-      pick(SPATIAL_RISK_HABITAT),
-      pick(LOCATIONS),
-      SITE_NAME,
-      SURVEY_DATE,
-      'Phase 1 habitat survey',
-      null,
-      MAPPED_BY,
-      SURVEY_COMPANY,
-      BASE_MAP,
-      baseline.distinctiveness,
-      proposed.distinctiveness
-    )
+function writeHabitats(db, parcels) {
+  const stmt = db.prepare(HABITATS_SQL_SYNTH)
+  for (const parcel of parcels) {
+    stmt.run(...habitatRow(parcel))
   }
   registerLayer(
     db,
     'Habitats',
     'POLYGON',
-    parcels.length > 0 ? allEnvelope : null
+    envelopeOf(parcels.map((p) => p.ring))
   )
-}
-
-// A row pinned to a length range accepts only a fraction of the lines drawn,
-// so a layer with one gets a larger rejection budget.
-const LENGTH_RANGE_BUDGET_MULTIPLIER = 10
-
-/**
- * Whether a drawn line suits the row it would become: any line does, unless
- * the row's override pins a `lengthRange` of [min, max] metres. Unrounded, so
- * the check sees the length the backend measures.
- */
-function suitsRow(coords, override) {
-  const range = override?.lengthRange
-  if (!range) {
-    return true
-  }
-  let length = 0
-  for (let i = 1; i < coords.length; i += 1) {
-    length += Math.hypot(
-      coords[i][0] - coords[i - 1][0],
-      coords[i][1] - coords[i - 1][1]
-    )
-  }
-  return length >= range[0] && length <= range[1]
-}
-
-/**
- * The index of the earlier feature a row's `sameLineAs` names ("HG001" is
- * the first), or null when the row draws a line of its own. The catalogue
- * checks the ref names an earlier row of the same layer.
- */
-function sameLineIndex(override) {
-  const match = /(\d+)$/.exec(override?.sameLineAs ?? '')
-  return match ? Number(match[1]) - 1 : null
-}
-
-/**
- * Shared rejection-sampling driver for the synthetic line-feature layers.
- * Picks linestrings via `generateLinestring`, rejects any whose vertices
- * fall outside the boundary — or whose length falls outside the row's pinned
- * `lengthRange` — and inserts up to `count` accepted features. A row pinned
- * with `sameLineAs` takes that earlier feature's line instead of drawing
- * one, as a hedgerow recreated in place of a lost one does. Without either
- * the draw sequence is exactly as before, so seeded fixtures are unchanged.
- */
-function generateLineFeatures(
-  db,
-  boundaryRing,
-  count,
-  { tableName, sql, buildRow, perRowOverrides }
-) {
-  const stmt = db.prepare(sql)
-  const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
-  let produced = 0
-  let attempts = 0
-  const pinsLength = perRowOverrides?.some((o) => o?.lengthRange) ?? false
-  const maxAttempts =
-    count *
-    LINE_FEATURE_REJECTION_BUDGET_FACTOR *
-    (pinsLength ? LENGTH_RANGE_BUDGET_MULTIPLIER : 1)
-  const lines = []
-  while (produced < count && attempts < maxAttempts) {
-    const copied = lines[sameLineIndex(perRowOverrides?.[produced])]
-    if (copied) {
-      stmt.run(...buildRow(copied, produced))
-      lines.push(copied)
-      produced += 1
-      continue
-    }
-    attempts += 1
-    const coords = generateLinestring(boundaryRing)
-    if (
-      coords &&
-      lineInsideRing(coords, boundaryRing) &&
-      suitsRow(coords, perRowOverrides?.[produced])
-    ) {
-      expandEnvelope(allEnvelope, envelopeFromCoords(coords))
-      stmt.run(...buildRow(coords, produced))
-      lines.push(coords)
-      produced += 1
-    }
-  }
-  registerLayer(db, tableName, 'LINESTRING', produced > 0 ? allEnvelope : null)
 }
 
 const HEDGEROWS_SQL_SYNTH = `
@@ -575,70 +149,26 @@ const HEDGEROWS_SQL_SYNTH = `
   ) VALUES (${placeholders(HEDGEROWS_INSERT_COLUMNS)})
 `
 
-// A lost hedgerow's proposed type is drawn afresh, so it must also stay in
-// scope. The distinctiveness columns are stamped with the band each chosen type
-// actually implies (the backend derives the band from the type, not from these
-// columns). A created hedgerow has no baseline: the drawn type describes what is
-// being planted, and the baseline columns fall back to the template's "To be
-// created" / "N/A" placeholders.
-function buildHedgerowRow(coords, i, override) {
-  const hedgeType = override?.hedgeType ?? pick(IN_SCOPE_HEDGE_TYPES)
-  const proposedDiffers =
-    override?.proposedHedgeType !== undefined &&
-    override.proposedHedgeType !== hedgeType
-  const retention = resolveRetention(
-    override,
-    validRetentionPool(RETENTION_CATEGORIES, {
-      enhance: canEnhance(HEDGEROW, hedgeType),
-      create: canCreate(HEDGEROW, hedgeType)
-    }),
-    proposedDiffers
-  )
-  const proposedHedgeType =
-    override?.proposedHedgeType ??
-    (retention === RETENTION_LOST ? pick(IN_SCOPE_HEDGE_TYPES) : hedgeType)
-  const conditions = drawConditions(
-    HEDGEROW,
-    hedgeType,
-    proposedHedgeType,
-    retention,
-    override
-  )
-  const [advanceYears, delayYears] = resolveAdvanceDelay(
-    override,
-    retention,
-    MAX_HEDGE_ADVANCE_YEARS,
-    MAX_HEDGE_DELAY_YEARS
-  )
+// The distinctiveness columns are stamped with the band each type implies. A
+// created hedgerow has no baseline: the baseline columns fall back to the
+// template's "To be created" / "N/A" placeholders.
+function hedgerowRow(hedge) {
+  const { retention } = hedge
   return [
-    gpkgLineString(SRS_ID, coords),
-    syntheticRef('HG', i),
-    baselineLinearType(retention, hedgeType),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(override, 'baselineCondition', conditions.baseline)
-    ),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(
-        override,
-        'baselineStrategicSignificance',
-        BASELINE_STRATEGIC_SIGNIFICANCE
-      )
-    ),
+    gpkgLineString(SRS_ID, hedge.coords),
+    hedge.ref,
+    baselineLinearType(retention, hedge.type),
+    baselineLinearAttribute(retention, hedge.baselineCondition),
+    baselineLinearAttribute(retention, hedge.baselineSignificance),
     retention,
-    proposedHedgeType,
-    resolveProposed(override, 'proposedCondition', conditions.proposed),
-    resolveProposed(
-      override,
-      'proposedStrategicSignificance',
-      pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
-    ),
-    linestringLength(coords),
-    advanceYears,
-    delayYears,
-    pick(SPATIAL_RISK_HABITAT),
-    pick(LOCATIONS),
+    hedge.proposedType,
+    hedge.proposedCondition,
+    hedge.proposedSignificance,
+    linestringLength(hedge.coords),
+    hedge.advanceYears,
+    hedge.delayYears,
+    hedge.spatialRisk,
+    hedge.location,
     SITE_NAME,
     SURVEY_DATE,
     'Hedgerow survey',
@@ -646,18 +176,9 @@ function buildHedgerowRow(coords, i, override) {
     MAPPED_BY,
     SURVEY_COMPANY,
     BASE_MAP,
-    baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedgeType]),
-    HEDGEROW_DISTINCTIVENESS[proposedHedgeType]
+    baselineLinearAttribute(retention, HEDGEROW_DISTINCTIVENESS[hedge.type]),
+    HEDGEROW_DISTINCTIVENESS[hedge.proposedType]
   ]
-}
-
-function generateHedgerows(db, boundaryRing, count, perRowOverrides) {
-  generateLineFeatures(db, boundaryRing, count, {
-    tableName: 'Hedgerows',
-    sql: HEDGEROWS_SQL_SYNTH,
-    perRowOverrides,
-    buildRow: (coords, i) => buildHedgerowRow(coords, i, perRowOverrides?.[i])
-  })
 }
 
 const RIVERS_SQL_SYNTH = `
@@ -679,256 +200,27 @@ const RIVERS_SQL_SYNTH = `
   ) VALUES (${placeholders(RIVERS_INSERT_COLUMNS)})
 `
 
-// In-scope river types excluding culverts, used to seed the non-culvert row.
-const NON_CULVERT_IN_SCOPE_RIVER_TYPES = IN_SCOPE_RIVER_TYPES.filter(
-  (type) => type !== CULVERT_TYPE
-)
-
-// Guarantee both watercourse dropdown branches are represented: the
-// first river is always a Culvert and the second a non-culvert, so any file
-// with at least two rivers exercises the culvert and non-culvert cases.
-// Remaining rivers are random.
-function pickRiverType(index) {
-  if (index === 0) {
-    return CULVERT_TYPE
-  }
-  if (index === 1) {
-    return pick(NON_CULVERT_IN_SCOPE_RIVER_TYPES)
-  }
-  return pick(IN_SCOPE_RIVER_TYPES)
-}
-
-// The seeded culvert and non-culvert rows exist to exercise their baseline
-// dropdown branches, so they must carry a real baseline. A Created watercourse
-// has none — it blanks the baseline type to "To be created" and every baseline
-// attribute (including the "N/A - Culvert" encroachment sentinel) to "N/A" —
-// so the seeded rows draw retention from the baseline-bearing categories only.
-const RETENTION_WITH_BASELINE = RETENTION_CATEGORIES.filter(
-  (retention) => retention !== RETENTION_CREATED
-)
-
-function riverRetentionPool(index) {
-  if (index < SEEDED_RIVER_COUNT) {
-    return RETENTION_WITH_BASELINE
-  }
-  if (index === CREATED_RIVER_INDEX) {
-    return [RETENTION_CREATED]
-  }
-  return RETENTION_CATEGORIES
-}
-
-// The encroachment override fields, split by the side of the row they pin.
-// Encroachment couples to the river type: a culvert's two encroachment
-// columns are fixed to the "N/A - Culvert" sentinel.
-const BASELINE_ENCROACHMENT_OVERRIDE_KEYS = [
-  'baselineWaterEncroachment',
-  'baselineRiparianEncroachment'
-]
-const PROPOSED_ENCROACHMENT_OVERRIDE_KEYS = [
-  'proposedWaterEncroachment',
-  'proposedRiparianEncroachment'
-]
-
-function hasAnyOverride(override, keys) {
-  return keys.some((key) => override?.[key] !== undefined)
-}
-
-// The baseline river type. A pinned `riverType` wins. Otherwise a row whose
-// override pins an encroachment degree cannot take the seeded culvert — its
-// encroachment columns are fixed to the culvert sentinel — so the draw is
-// steered to the non-culvert types. The proposed side counts too when
-// `proposedRiverType` is not pinned, because it defaults to this type.
-function resolveRiverType(override, index) {
-  if (override?.riverType !== undefined) {
-    return override.riverType
-  }
-  const pinsEncroachment =
-    hasAnyOverride(override, BASELINE_ENCROACHMENT_OVERRIDE_KEYS) ||
-    (override?.proposedRiverType === undefined &&
-      hasAnyOverride(override, PROPOSED_ENCROACHMENT_OVERRIDE_KEYS))
-  if (pinsEncroachment) {
-    return pick(NON_CULVERT_IN_SCOPE_RIVER_TYPES)
-  }
-  return pickRiverType(index)
-}
-
-// A scenario that pins a culvert together with a non-sentinel encroachment
-// asks for a row the NE template cannot express — fail loudly rather than
-// emit it.
-function assertCulvertEncroachment(riverType, override, keys, rowIndex) {
-  if (riverType !== CULVERT_TYPE) {
-    return
-  }
-  for (const key of keys) {
-    const value = override?.[key]
-    if (value !== undefined && value !== CULVERT_ENCROACHMENT) {
-      throw new Error(
-        `rivers row ${rowIndex}: ${key} "${value}" conflicts with the pinned ` +
-          `"${CULVERT_TYPE}" type — a culvert's encroachment is fixed to ` +
-          `"${CULVERT_ENCROACHMENT}"`
-      )
-    }
-  }
-}
-
-// Encroachment does not apply to a culvert: both columns take the fixed
-// "N/A - Culvert" category. Non-culverts draw a random degree, and baseline vs
-// proposed are resolved independently so they can differ (as before).
-function riverEncroachment(riverType) {
-  if (riverType === CULVERT_TYPE) {
-    return { water: CULVERT_ENCROACHMENT, riparian: CULVERT_ENCROACHMENT }
-  }
-  return {
-    water: pick(ENCROACHMENT_WATERCOURSE),
-    riparian: pick(ENCROACHMENT_RIPARIAN)
-  }
-}
-
-// The proposed encroachment. A retained watercourse keeps its baseline
-// encroachment, and an enhanced one never worsens it (the metric flags an
-// enhancement that does); a created one, a lost one, a type change or a
-// culvert draws afresh.
-function proposedRiverEncroachment(
-  retention,
-  riverType,
-  proposedRiverType,
-  baseline
-) {
-  const keepsType =
-    proposedRiverType === riverType && riverType !== CULVERT_TYPE
-  if (keepsType && retention === RETENTION_RETAINED) {
-    return baseline
-  }
-  if (keepsType && retention === RETENTION_ENHANCED) {
-    return {
-      water: pickOr(
-        encroachmentNoWorseThan(
-          'water',
-          ENCROACHMENT_WATERCOURSE,
-          baseline.water
-        ),
-        baseline.water
-      ),
-      riparian: pickOr(
-        encroachmentNoWorseThan(
-          'riparian',
-          ENCROACHMENT_RIPARIAN,
-          baseline.riparian
-        ),
-        baseline.riparian
-      )
-    }
-  }
-  return riverEncroachment(proposedRiverType)
-}
-
-// Unlike a hedgerow, a watercourse keeps its baseline type through the
-// intervention by default, so `proposedRiverType` defaults to the baseline
-// type; a scenario can still pin a different proposed type. Both encroachment
-// columns and the distinctiveness band are derived from the type, and the
-// encroachment sentinel must stay culvert-valued on exactly the culvert rows.
-// Only a created watercourse carries creation years, and at most one of advance
-// / delay — the statutory metric (and the backend's ADVANCE_AND_DELAY_BOTH_SET
-// check) rejects a feature setting both.
-function buildRiverRow(coords, i, override) {
-  const riverType = resolveRiverType(override, i)
-  const proposedRiverType = override?.proposedRiverType ?? riverType
-  assertCulvertEncroachment(
-    riverType,
-    override,
-    BASELINE_ENCROACHMENT_OVERRIDE_KEYS,
-    i
-  )
-  assertCulvertEncroachment(
-    proposedRiverType,
-    override,
-    PROPOSED_ENCROACHMENT_OVERRIDE_KEYS,
-    i
-  )
-  const proposedDiffers =
-    override?.proposedRiverType !== undefined &&
-    override.proposedRiverType !== riverType
-  const retention = resolveRetention(
-    override,
-    validRetentionPool(riverRetentionPool(i), {
-      enhance: canEnhance(WATERCOURSE, riverType),
-      create: true
-    }),
-    proposedDiffers
-  )
-  const conditions = drawConditions(
-    WATERCOURSE,
-    riverType,
-    proposedRiverType,
-    retention,
-    override
-  )
-  const drawnEncroachment = riverEncroachment(riverType)
-  const baselineEncroachment = {
-    water: overrideOr(
-      override,
-      'baselineWaterEncroachment',
-      drawnEncroachment.water
-    ),
-    riparian: overrideOr(
-      override,
-      'baselineRiparianEncroachment',
-      drawnEncroachment.riparian
-    )
-  }
-  const proposedEncroachment = proposedRiverEncroachment(
-    retention,
-    riverType,
-    proposedRiverType,
-    baselineEncroachment
-  )
-  const [advanceYears, delayYears] = resolveAdvanceDelay(
-    override,
-    retention,
-    MAX_RIVER_ADVANCE_YEARS,
-    MAX_RIVER_DELAY_YEARS
-  )
+function riverRow(river) {
+  const { retention } = river
   return [
-    gpkgLineString(SRS_ID, coords),
-    syntheticRef('R', i),
-    baselineLinearType(retention, riverType),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(override, 'baselineCondition', conditions.baseline)
-    ),
-    baselineLinearAttribute(
-      retention,
-      overrideOr(
-        override,
-        'baselineStrategicSignificance',
-        BASELINE_STRATEGIC_SIGNIFICANCE
-      )
-    ),
-    baselineLinearAttribute(retention, baselineEncroachment.water),
-    baselineLinearAttribute(retention, baselineEncroachment.riparian),
+    gpkgLineString(SRS_ID, river.coords),
+    river.ref,
+    baselineLinearType(retention, river.type),
+    baselineLinearAttribute(retention, river.baselineCondition),
+    baselineLinearAttribute(retention, river.baselineSignificance),
+    baselineLinearAttribute(retention, river.baselineEncroachment.water),
+    baselineLinearAttribute(retention, river.baselineEncroachment.riparian),
     retention,
-    proposedRiverType,
-    resolveProposed(override, 'proposedCondition', conditions.proposed),
-    resolveProposed(
-      override,
-      'proposedStrategicSignificance',
-      pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
-    ),
-    linestringLength(coords),
-    advanceYears,
-    delayYears,
-    pick(SPATIAL_RISK_RIVER),
-    pick(LOCATIONS),
-    resolveProposed(
-      override,
-      'proposedWaterEncroachment',
-      proposedEncroachment.water
-    ),
-    resolveProposed(
-      override,
-      'proposedRiparianEncroachment',
-      proposedEncroachment.riparian
-    ),
+    river.proposedType,
+    river.proposedCondition,
+    river.proposedSignificance,
+    linestringLength(river.coords),
+    river.advanceYears,
+    river.delayYears,
+    river.spatialRisk,
+    river.location,
+    river.proposedEncroachment.water,
+    river.proposedEncroachment.riparian,
     SITE_NAME,
     SURVEY_DATE,
     'River corridor survey',
@@ -937,18 +229,22 @@ function buildRiverRow(coords, i, override) {
     SURVEY_COMPANY,
     BASE_MAP,
     null,
-    baselineLinearAttribute(retention, WATERCOURSE_DISTINCTIVENESS[riverType]),
-    WATERCOURSE_DISTINCTIVENESS[proposedRiverType]
+    baselineLinearAttribute(retention, WATERCOURSE_DISTINCTIVENESS[river.type]),
+    WATERCOURSE_DISTINCTIVENESS[river.proposedType]
   ]
 }
 
-function generateRivers(db, boundaryRing, count, perRowOverrides) {
-  generateLineFeatures(db, boundaryRing, count, {
-    tableName: 'Rivers',
-    sql: RIVERS_SQL_SYNTH,
-    perRowOverrides,
-    buildRow: (coords, i) => buildRiverRow(coords, i, perRowOverrides?.[i])
-  })
+function writeLines(db, tableName, sql, features, toRow) {
+  const stmt = db.prepare(sql)
+  for (const feature of features) {
+    stmt.run(...toRow(feature))
+  }
+  registerLayer(
+    db,
+    tableName,
+    'LINESTRING',
+    envelopeOf(features.map((f) => f.coords))
+  )
 }
 
 const URBAN_TREES_SQL_SYNTH = `
@@ -966,137 +262,54 @@ const URBAN_TREES_SQL_SYNTH = `
   ) VALUES (${placeholders(URBAN_TREES_INSERT_COLUMNS)})
 `
 
-const TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
-// The two individual-tree habitat types. Despite its name, the "Urban Trees"
-// layer (a fixed name from the NE template) holds ALL individual trees — there
-// is no separate rural layer — so it carries both 'Urban' and 'Rural' rows.
-// Each row's type comes from the "Rural or Urban Tree" column, not the layer
-// name, which is what the engine reads to classify a tree as urban or rural.
-const TREE_RURAL_URBAN = ['Urban', 'Rural']
-const TREE_TYPES = [
-  TREE_TYPE_STREET,
-  'Park/garden tree',
-  'Woodland tree',
-  'Hedgerow tree'
-]
-
-// An individual tree's retention values that carry a real baseline. Unlike an
-// area habitat — whose Created is persisted as Lost — a created tree writes
-// Created straight through, with Category "Newly Planted" and every baseline
-// column "N/A" (see `treeCategory` / `baselineLinearAttribute`), so the seeded
-// non-created trees draw from the baseline-bearing categories only.
-const TREE_RETENTION_WITH_BASELINE = ['Retained', 'Enhanced', 'Lost']
-
-// One tree is deterministically seeded Created, so any fixture large enough to
-// reach it exercises the "Newly Planted" branch without relying on the
-// retention draw — the individual-tree mirror of the seeded Created river. It
-// sits just past the size-band seeds (indices 0..TREE_SIZES.length-1), which
-// keep a real baseline so every size band is still covered.
-export const CREATED_TREE_INDEX = TREE_SIZES.length
-
-function pickTreeRetention(index) {
-  if (index === CREATED_TREE_INDEX) {
-    return RETENTION_CREATED
-  }
-  return pick(TREE_RETENTION_WITH_BASELINE)
+// Despite its name, the "Urban Trees" layer (a fixed name from the NE
+// template) holds ALL individual trees, Urban and Rural. A created tree
+// writes Created straight through, with Category "Newly Planted" and every
+// baseline column "N/A".
+function treeRow(tree) {
+  const { retention } = tree
+  const [x, y] = tree.point
+  return [
+    gpkgPoint(SRS_ID, x, y),
+    tree.ref,
+    baselineLinearAttribute(retention, tree.size),
+    baselineLinearAttribute(retention, tree.baselineCondition),
+    baselineLinearAttribute(retention, tree.baselineSignificance),
+    baselineLinearAttribute(retention, tree.type),
+    retention,
+    treeCategory(retention),
+    tree.proposedSize,
+    tree.proposedCondition,
+    tree.proposedSignificance,
+    tree.proposedType,
+    tree.location,
+    tree.advanceYears,
+    tree.delayYears,
+    tree.spatialRisk,
+    SITE_NAME,
+    SURVEY_DATE,
+    'Tree survey',
+    null,
+    MAPPED_BY,
+    SURVEY_COMPANY,
+    BASE_MAP,
+    tree.count,
+    baselineLinearAttribute(retention, tree.ruralOrUrban),
+    tree.ruralOrUrban
+  ]
 }
 
-/**
- * Inserts `count` individual trees. `perRowOverrides[i]`, if provided, pins
- * column values on tree i; fields not set there are randomised as normal. See
- * `generateOne`'s `attributeOverrides` contract for the recognised fields.
- */
-function generateUrbanTrees(db, boundaryRing, count, perRowOverrides) {
+function writeTrees(db, trees) {
   const stmt = db.prepare(URBAN_TREES_SQL_SYNTH)
-  const allEnvelope = [Infinity, -Infinity, Infinity, -Infinity]
-  let produced = 0
-  while (produced < count) {
-    const point = pickInteriorPoint(boundaryRing)
-    if (!point) {
-      break
-    }
-    const [x, y] = point
-    expandEnvelope(allEnvelope, [x, x, y, y])
-    const override = perRowOverrides?.[produced]
-    // Deterministically seed one tree of each size band before falling back to
-    // random sizes, so a fixture covers all bands (incl. "Very large") as long
-    // as it has at least TREE_SIZES.length trees. A smaller explicit count
-    // simply covers the first few bands.
-    const size = overrideOr(
-      override,
-      'treeSize',
-      produced < TREE_SIZES.length ? TREE_SIZES[produced] : pick(TREE_SIZES)
-    )
-    // Alternate urban/rural so both habitat types appear once there are at
-    // least two trees (the engine keys area/units off this, not the layer).
-    const ruralOrUrban = overrideOr(
-      override,
-      'ruralOrUrban',
-      TREE_RURAL_URBAN[produced % TREE_RURAL_URBAN.length]
-    )
-    const type = overrideOr(override, 'treeType', pick(TREE_TYPES))
-    const retention = override?.retention ?? pickTreeRetention(produced)
-    const treeHabitat = `Individual trees - ${ruralOrUrban} tree`
-    const conditions = drawConditions(
-      AREA,
-      treeHabitat,
-      treeHabitat,
-      retention,
-      override
-    )
-    // Only a newly planted (Created) tree carries creation-in-advance / delay
-    // years, and at most one of the pair — as with hedgerows and habitats.
-    const [treeAdvanceYears, treeDelayYears] = resolveAdvanceDelay(
-      override,
-      retention,
-      MAX_TREE_ADVANCE_YEARS,
-      MAX_TREE_DELAY_YEARS
-    )
-    stmt.run(
-      gpkgPoint(SRS_ID, x, y),
-      syntheticRef('T', produced),
-      baselineLinearAttribute(retention, size),
-      baselineLinearAttribute(
-        retention,
-        overrideOr(override, 'baselineCondition', conditions.baseline)
-      ),
-      baselineLinearAttribute(
-        retention,
-        overrideOr(
-          override,
-          'baselineStrategicSignificance',
-          BASELINE_STRATEGIC_SIGNIFICANCE
-        )
-      ),
-      baselineLinearAttribute(retention, type),
-      retention,
-      treeCategory(retention),
-      retention === 'Lost' ? pick(TREE_SIZES) : size,
-      resolveProposed(override, 'proposedCondition', conditions.proposed),
-      resolveProposed(
-        override,
-        'proposedStrategicSignificance',
-        pick(PROPOSED_STRATEGIC_SIGNIFICANCE)
-      ),
-      retention === 'Lost' ? pick(TREE_TYPES) : type,
-      pick(LOCATIONS),
-      treeAdvanceYears,
-      treeDelayYears,
-      pick(SPATIAL_RISK_HABITAT),
-      SITE_NAME,
-      SURVEY_DATE,
-      'Tree survey',
-      null,
-      MAPPED_BY,
-      SURVEY_COMPANY,
-      BASE_MAP,
-      overrideOr(override, 'count', TREE_COUNT_DEFAULT),
-      baselineLinearAttribute(retention, ruralOrUrban),
-      ruralOrUrban
-    )
-    produced += 1
+  for (const tree of trees) {
+    stmt.run(...treeRow(tree))
   }
-  registerLayer(db, 'Urban Trees', 'POINT', produced > 0 ? allEnvelope : null)
+  registerLayer(
+    db,
+    'Urban Trees',
+    'POINT',
+    envelopeOf(trees.map((t) => [t.point]))
+  )
 }
 
 function reportContents(outPath) {
@@ -1113,52 +326,6 @@ function reportContents(outPath) {
     info(`  ${layer.table_name}: ${count.n} feature(s)`)
   }
   verify.close()
-}
-
-/**
- * Generate one synthetic GeoPackage (default mode). Pass `bad=true` to emit
- * the intentionally-invalid fixture instead.
- */
-/**
- * Resolve the urban-tree count. An explicit `numTrees` (e.g. from the
- * prototype's input box) is honoured as-is — even below DEFAULT_TREE_COUNT, in
- * which case the fixture simply covers fewer size bands (a request for 0
- * yields an empty layer). When absent it derives from the parcel count,
- * floored at DEFAULT_TREE_COUNT. Negatives are clamped to 0.
- */
-function resolveTreeCount(numParcels, numTrees) {
-  if (Number.isFinite(numTrees)) {
-    return Math.max(0, Math.floor(numTrees))
-  }
-  return Math.max(
-    DEFAULT_TREE_COUNT,
-    Math.floor(numParcels / TREE_PER_PARCEL_RATIO)
-  )
-}
-
-/**
- * The feature counts `generateOne` draws for a plan: habitats, hedgerows,
- * rivers and trees, each 0 for an emptied layer. Exported so a caller pinning
- * rows by position (the BNG Service format pins its last tree) knows how many
- * rows there will be.
- */
-export function computeLayerCounts(numParcels, emptyLayers, numTrees) {
-  const ifEmpty = (key, value) => (emptyLayers.has(key) ? 0 : value)
-  return {
-    numHabitats: ifEmpty('habitats', numParcels),
-    numHedgerows: ifEmpty(
-      'hedgerows',
-      Math.max(
-        MIN_HEDGEROW_COUNT,
-        Math.floor(numParcels / HEDGEROW_PER_PARCEL_RATIO)
-      )
-    ),
-    numRivers: ifEmpty(
-      'rivers',
-      Math.max(MIN_RIVER_COUNT, Math.floor(numParcels / RIVER_PER_PARCEL_RATIO))
-    ),
-    numTrees: ifEmpty('trees', resolveTreeCount(numParcels, numTrees))
-  }
 }
 
 function logSyntheticBanner(outPath, centre, ctx) {
@@ -1193,33 +360,24 @@ function registerEmptyLayers(db, emptyLayers) {
   }
 }
 
-function runLayerGenerators(db, ring, ctx) {
-  const { counts, emptyLayers, attributeOverrides, habitatFilter } = ctx
-  const generators = {
-    habitats: () =>
-      generateHabitats(
-        db,
-        ring,
-        counts.numHabitats,
-        attributeOverrides.habitats,
-        habitatPools(habitatFilter)
-      ),
-    hedgerows: () =>
-      generateHedgerows(
-        db,
-        ring,
-        counts.numHedgerows,
-        attributeOverrides.hedgerows
-      ),
-    rivers: () =>
-      generateRivers(db, ring, counts.numRivers, attributeOverrides.rivers),
-    trees: () =>
-      generateUrbanTrees(db, ring, counts.numTrees, attributeOverrides.trees)
+function writeLayers(db, site) {
+  if (site.habitats) {
+    writeHabitats(db, site.habitats)
   }
-  for (const [key, generate] of Object.entries(generators)) {
-    if (!emptyLayers.has(key)) {
-      generate()
-    }
+  if (site.hedgerows) {
+    writeLines(
+      db,
+      'Hedgerows',
+      HEDGEROWS_SQL_SYNTH,
+      site.hedgerows,
+      hedgerowRow
+    )
+  }
+  if (site.rivers) {
+    writeLines(db, 'Rivers', RIVERS_SQL_SYNTH, site.rivers, riverRow)
+  }
+  if (site.trees) {
+    writeTrees(db, site.trees)
   }
 }
 
@@ -1339,19 +497,25 @@ function generateOneInner(outPath, centre, plan) {
   }
 
   const counts = computeLayerCounts(numParcels, emptyLayers, numTrees)
-  const ctx = { counts, emptyLayers, attributeOverrides, habitatFilter }
+  logSyntheticBanner(outPath, centre, {
+    counts,
+    emptyLayers,
+    attributeOverrides
+  })
 
-  logSyntheticBanner(outPath, centre, ctx)
-
-  const [cx, cy] = centre
+  const site = drawSite(centre, {
+    numParcels,
+    numTrees,
+    emptyLayers,
+    attributeOverrides,
+    habitatFilter
+  })
   const db = openGeoPackage(outPath)
   createAllTables(db)
-
-  const ring = generateRedLineBoundary(db, cx, cy, SYNTHETIC_RLB_RADIUS_M)
+  writeRedLineBoundary(db, site.ring)
   registerEmptyLayers(db, emptyLayers)
-  runLayerGenerators(db, ring, ctx)
+  writeLayers(db, site)
   createLayerStyles(db)
-
   db.close()
 
   reportContents(outPath)

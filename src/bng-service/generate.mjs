@@ -169,9 +169,11 @@ function finishSite(site, outPath, chooser, options) {
  *   tables empty; 'post-intervention' (the default) writes both stages
  * @param {string} [options.templateVersion]  the version the record names;
  *   the current template version by default
- * @param {object} [options.overrides]  the generator's row overrides, for
- *   their template-only fields (`irreplaceable`, `comment`,
- *   `postInterventionComment`)
+ * @param {object} [options.overrides]  the generator's row overrides, checked
+ *   as every route checks them (see `native/overrides.mjs`). The file's own
+ *   values stand: only the template-only fields (`irreplaceable`, `comment`,
+ *   `postInterventionComment`) are applied, so a key that shapes a drawn
+ *   site, such as `habitatRef`, has nothing to act on
  * @param {boolean} [options.comments]  add surveyor comments
  * @param {{ count: number, rows?: object[] }} [options.verticalHabitats]
  * @param {boolean} [options.worseHabitats]  record habitats that get worse
@@ -199,6 +201,9 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
     versionFlaws = []
   } = options
   assertOptions({ stage, templateVersion })
+  // Checked as every route checks them, so a mistyped key is refused here
+  // too, though only the template-only fields act on a file read in.
+  const checkedOverrides = overrides && normaliseOverrides(overrides)
   const chooser = createChooser(seed)
   const readOptions = {
     uuidFor: (layerKey, index) => chooser.uuid(`${layerKey}/${index}`),
@@ -214,7 +219,7 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
   finishSite(site, outPath, chooser, {
     stage,
     templateVersion,
-    overrides,
+    overrides: checkedOverrides,
     comments,
     verticalHabitats,
     worseHabitats,

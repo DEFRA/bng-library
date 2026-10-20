@@ -148,7 +148,11 @@ the same file to the byte. The scenario catalogue and the workbook routes
 still convert legacy output for now; they are next to be drawn natively.
 
 `writeBngServiceFromLegacy` converts a legacy file (or pair) that already
-exists, such as an older fixture. No generator uses it, but it builds the
+exists, such as an older fixture. Its row overrides are checked as every
+route checks them, but the file's own values stand: only the template-only
+fields (`irreplaceable`, `comment`, `postInterventionComment`) are applied,
+so a field that shapes a drawn site, such as `habitatRef`, has nothing to
+act on. No generator uses it, but it builds the
 site by the same rules, and a test keeps the two in step. The workbook
 routes take a `seed` too (`generateFromWorkbookBuffer({ seed, … })`, in
 either format); without one, tree positions, line shapes and feature

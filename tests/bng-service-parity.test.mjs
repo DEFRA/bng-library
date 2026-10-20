@@ -110,3 +110,17 @@ describe('native and converted sites agree', () => {
     expect(native(name, plan)).toBe(converted(name, plan))
   })
 })
+
+describe('the converter checks its row overrides as every route does', () => {
+  it('refuses a mistyped key', () => {
+    const legacyPath = path.join(dir, 'checked-legacy.gpkg')
+    generateOne(legacyPath, CENTRE, { numParcels: 4, seed: 1 })
+    expect(() =>
+      writeBngServiceFromLegacy(
+        { legacyPath },
+        path.join(dir, 'checked.gpkg'),
+        { overrides: { habitats: [{ irreplacable: 'Yes' }] } }
+      )
+    ).toThrow(/unknown override "irreplacable"/)
+  })
+})

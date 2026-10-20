@@ -230,7 +230,7 @@ export const BNG_SERVICE_FLAWS = {
   },
   'degrade-not-worse': {
     description:
-      'a hedgerow recorded as getting worse (Created in its own type, linked to its parent, 30+ years in advance) is in its baseline condition, so it is not worse',
+      'a same-type creation that is not worse: a hedgerow Created in its own type, linked to its parent, with 30+ years in advance, in its baseline condition (a 30+ on a row that does not get worse overstates its units)',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
     applyToSite(site) {

@@ -471,9 +471,12 @@ function searchChordOffsetForArea(
   return hi
 }
 
-/** One attempt at carving — random chord direction + binary search. */
-function tryCarveTargetArea(ring, targetArea) {
-  const angle = randomAngle(Math.PI)
+/**
+ * Carve a piece of about `targetArea` off a convex polygon with a chord at
+ * `angle` (radians): { piece, rest, pieceArea }, or null if that chord gives
+ * no valid split. Pure, so a caller with its own random source can use it.
+ */
+export function carveAtAngle(ring, angle, targetArea) {
   const normal = [Math.cos(angle), Math.sin(angle)]
   const { minSd, maxSd } = projectionRange(ring, normal)
   const offset = searchChordOffsetForArea(
@@ -494,6 +497,11 @@ function tryCarveTargetArea(ring, targetArea) {
     return { piece, rest, pieceArea: polygonArea(piece) }
   }
   return null
+}
+
+/** One attempt at carving — random chord direction + binary search. */
+function tryCarveTargetArea(ring, targetArea) {
+  return carveAtAngle(ring, randomAngle(Math.PI), targetArea)
 }
 
 /**

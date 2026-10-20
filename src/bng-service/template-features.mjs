@@ -801,7 +801,7 @@ function encroachmentLists() {
 }
 
 /** The encroachment options of a type, and those that can get worse. */
-function encroachmentOf(type) {
+export function encroachmentOf(type) {
   const lists = encroachmentLists()
   const water = [...(lists.water.get(type) ?? [])]
   const riparian = [...(lists.riparian.get(type) ?? [])]
@@ -823,7 +823,7 @@ function keptConditions(type) {
 }
 
 /** The watercourse types, not a culvert, that pass `test`. */
-function riverTypes(test) {
+export function riverTypes(test) {
   return [...encroachmentLists().water.keys()].filter(
     (type) =>
       type !== CULVERT &&
@@ -834,10 +834,10 @@ function riverTypes(test) {
 }
 
 /**
- * A watercourse drawn for the purpose, with the baseline values given, and
- * its Created copy in its own type with the proposed values given.
+ * A baseline watercourse drawn for the purpose inside the red line, with
+ * the baseline values given, added to the layer; null if none fits.
  */
-function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
+export function drawnWatercourseBaseline(site, chooser, key, baselineValues) {
   const layer = site.layers.rivers
   const geometry = drawnLine(
     site,
@@ -849,7 +849,6 @@ function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
     return null
   }
   const type = baselineValues['Baseline River Type']
-  const length = lengthMetres(geometry)
   const baseline = {
     geometry,
     uuid: chooser.uuid(`rivers/${key}`),
@@ -859,10 +858,24 @@ function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
       ...baselineValues,
       'Baseline Distinctiveness': distinctiveness('rivers', type),
       'Baseline Strategic Significance': LOW,
-      Length: length,
+      Length: lengthMetres(geometry),
       [COMMENT]: null
     }
   }
+  layer.baseline.push(baseline)
+  return baseline
+}
+
+/**
+ * A watercourse drawn for the purpose, with the baseline values given, and
+ * its Created copy in its own type with the proposed values given.
+ */
+function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
+  const baseline = drawnWatercourseBaseline(site, chooser, key, baselineValues)
+  if (!baseline) {
+    return null
+  }
+  const type = baselineValues['Baseline River Type']
   const copy = worseCopy(
     baseline,
     {
@@ -871,12 +884,11 @@ function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
       ...proposed,
       // The template offers only N/A for a Created watercourse.
       'Enhancement Type': NOT_APPLICABLE,
-      Length: length
+      Length: baseline.values.Length
     },
     chooser
   )
-  layer.baseline.push(baseline)
-  layer.postIntervention.push(copy)
+  site.layers.rivers.postIntervention.push(copy)
   return copy
 }
 

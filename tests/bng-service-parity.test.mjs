@@ -5,14 +5,16 @@
  * that no generation route goes through the converter.
  */
 import { createHash } from 'node:crypto'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
+  generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,
+  generateFromWorkbook,
   generateOne,
   resolveFlawSelection,
   setMode,
@@ -179,5 +181,50 @@ describe('a scenario’s workbook reads the same from either format', () => {
         }
       })
     }
+  })
+})
+
+describe('a workbook site drawn natively is the one the converter reads from its legacy pair', () => {
+  const workbooks = {
+    'hedgerow-created': JSON.parse(
+      readFileSync(
+        new URL('./fixtures/workbook-hedgerow-created.json', import.meta.url),
+        'utf8'
+      )
+    ),
+    ...JSON.parse(
+      readFileSync(
+        new URL('./fixtures/scenario-workbooks.json', import.meta.url),
+        'utf8'
+      )
+    )
+  }
+
+  it.each(Object.keys(workbooks))('%s', (id) => {
+    const name = id.replaceAll('/', '-')
+    const seed = 23
+    const outPaths = {
+      baseline: path.join(dir, `wbp-${name}-b.gpkg`),
+      postIntervention: path.join(dir, `wbp-${name}-pi.gpkg`)
+    }
+    generateFromWorkbook(outPaths, workbooks[id], `${id}.xlsx`, {
+      centre: CENTRE,
+      seed
+    })
+    const converted = path.join(dir, `wbp-${name}-converted.gpkg`)
+    writeBngServiceFromLegacy(
+      {
+        baselinePath: outPaths.baseline,
+        postInterventionPath: outPaths.postIntervention
+      },
+      converted,
+      { seed }
+    )
+    const native = path.join(dir, `wbp-${name}-native.gpkg`)
+    generateBngServiceFromWorkbook(native, workbooks[id], `${id}.xlsx`, {
+      centre: CENTRE,
+      seed
+    })
+    expect(dumpHash(native)).toBe(dumpHash(converted))
   })
 })

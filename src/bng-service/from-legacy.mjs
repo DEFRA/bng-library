@@ -20,14 +20,10 @@
 
 import { randomUUID } from 'node:crypto'
 import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
-import { pointInRing, polygonCentroid } from '../geometry.mjs'
-import { HABITAT_REF } from './site.mjs'
+import { pairedLayer } from './pair.mjs'
 import {
-  baselineFeature,
-  hasPostIntervention,
   iggiVertical,
   layerFromSources,
-  postInterventionFeature,
   redlineFeature,
   text
 } from './site-features.mjs'
@@ -35,9 +31,7 @@ import { moveVerticalHabitats } from './vertical-from-area.mjs'
 import { withoutListNumber } from './vocabulary.mjs'
 
 export { timingValues } from './site-features.mjs'
-
-const CREATED = 'Created'
-const POINT_TOLERANCE_M = 1e-6
+export { interiorPoint } from './pair.mjs'
 
 /** The legacy layers, keyed as the generators key them. */
 const LEGACY = {
@@ -261,95 +255,6 @@ export function siteFromLegacyFile(legacyPath, options) {
   }
 }
 
-// ------------------------------------------------------------ pair matching
-
-const ring = (geometry) => geometry.coordinates[0]
-
-const SPLIT_SUFFIX = /(?:[a-z]|-\d+)$/
-
-/** A post-intervention ref's baseline ref: "H001a" → "H001", "T003-2" → "T003". */
-function baselineRefOf(ref) {
-  return ref?.replace(SPLIT_SUFFIX, '') ?? null
-}
-
-function samePoint([ax, ay], [bx, by]) {
-  return Math.hypot(ax - bx, ay - by) <= POINT_TOLERANCE_M
-}
-
-function distanceToSegment([px, py], [ax, ay], [bx, by]) {
-  const dx = bx - ax
-  const dy = by - ay
-  const lengthSquared = dx * dx + dy * dy
-  const t =
-    lengthSquared === 0
-      ? 0
-      : Math.max(
-          0,
-          Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSquared)
-        )
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
-}
-
-function onLine(point, coords) {
-  for (let i = 1; i < coords.length; i += 1) {
-    if (
-      distanceToSegment(point, coords[i - 1], coords[i]) <= POINT_TOLERANCE_M
-    ) {
-      return true
-    }
-  }
-  return false
-}
-
-/**
- * A point strictly inside a polygon: the middle of the widest stretch a
- * horizontal line through its centroid crosses. Works for the concave cells
- * the partitioner can draw, where the centroid itself may fall outside.
- */
-export function interiorPoint(coords) {
-  const [, cy] = polygonCentroid(coords)
-  const crossings = []
-  for (let i = 1; i < coords.length; i += 1) {
-    const [ax, ay] = coords[i - 1]
-    const [bx, by] = coords[i]
-    if (ay > cy !== by > cy) {
-      crossings.push(ax + ((cy - ay) / (by - ay)) * (bx - ax))
-    }
-  }
-  crossings.sort((a, b) => a - b)
-  let best = null
-  for (let i = 1; i < crossings.length; i += 2) {
-    const width = crossings[i] - crossings[i - 1]
-    if (!best || width > best.width) {
-      best = { width, x: (crossings[i] + crossings[i - 1]) / 2 }
-    }
-  }
-  return best ? [best.x, cy] : polygonCentroid(coords)
-}
-
-/** Whether a post-intervention shape lies within (or on) a baseline shape. */
-function liesWithin(child, parent) {
-  if (child.type === 'Point') {
-    return samePoint(child.coordinates, parent.coordinates)
-  }
-  if (child.type === 'LineString') {
-    return child.coordinates.every((p) => onLine(p, parent.coordinates))
-  }
-  return pointInRing(interiorPoint(ring(child)), ring(parent))
-}
-
-function findParent(feature, candidates) {
-  const ref = feature.values[HABITAT_REF]
-  const byRef = [ref, baselineRefOf(ref)]
-    .map((r) => candidates.find((c) => c.values[HABITAT_REF] === r))
-    .find((c) => c && liesWithin(feature.geometry, c.geometry))
-  return (
-    byRef ??
-    candidates.find((c) => liesWithin(feature.geometry, c.geometry)) ??
-    null
-  )
-}
-
 /**
  * The site in a legacy baseline and post-intervention pair, as the workbook
  * route writes them. Options as for `siteFromLegacyFile`.
@@ -370,37 +275,15 @@ export function siteFromLegacyPair(
     const layers = {}
     const allRows = []
     for (const [layerKey, legacy] of Object.entries(LEGACY)) {
-      const layer = emptyLayer()
-      for (const row of readRows(baselineDb, legacy.table)) {
-        allRows.push(row)
-        layer.baseline.push(
-          baselineFeature(layerKey, legacySource(layerKey, row), resolved)
-        )
-      }
-      for (const row of readRows(piDb, legacy.table)) {
-        const source = legacySource(layerKey, row)
-        if (
-          !source.geometry ||
-          !hasPostIntervention(layerKey, source.retention)
-        ) {
-          continue
-        }
-        const created = layerKey !== 'habitats' && source.retention === CREATED
-        const probe = {
-          geometry: source.geometry,
-          values: { [HABITAT_REF]: source.ref }
-        }
-        const parent = created ? null : findParent(probe, layer.baseline)
-        if (!created && !parent) {
-          throw new Error(
-            `${legacy.table} ${source.ref}: no baseline feature holds this post-intervention feature`
-          )
-        }
-        layer.postIntervention.push(
-          postInterventionFeature(layerKey, source, parent, resolved.choose)
-        )
-      }
-      layers[layerKey] = layer
+      const baselineRows = readRows(baselineDb, legacy.table)
+      allRows.push(...baselineRows)
+      layers[layerKey] = pairedLayer(
+        layerKey,
+        baselineRows.map((row) => legacySource(layerKey, row)),
+        readRows(piDb, legacy.table).map((row) => legacySource(layerKey, row)),
+        resolved,
+        legacy.table
+      )
     }
     layers.verticalHabitats = emptyLayer()
     const site = { redline: redline(baselineDb, allRows), layers }

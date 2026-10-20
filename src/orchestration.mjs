@@ -325,37 +325,53 @@ export function generateFromWorkbook(
   }
 }
 
+/**
+ * The workbook's rows and the site plan, with the banner logged. Null when
+ * the workbook maps too little area to draw, which is logged too.
+ */
+function prepareWorkbookSite(workbook, sourceLabel, options) {
+  const { strict, centre, mode, outPath } = options
+  const baselineRows = buildBaselineRows(workbook, { strict })
+  const postRows =
+    mode === MODE_BASELINE
+      ? null
+      : buildPostInterventionRows(workbook, { strict })
+  const plan = computeWorkbookFixturePlan(
+    workbook,
+    baselineRows.habitats.map((r) => ({ area: r.area }))
+  )
+  logWorkbookFixtureBanner({
+    workbook,
+    sourceLabel,
+    centre,
+    outPath,
+    habitatRows: baselineRows.habitats,
+    plan,
+    mode
+  })
+  if (plan.totalAreaM2 < MIN_GENERATED_AREA_SQ_M) {
+    warn(
+      `  total area is < ${MIN_GENERATED_AREA_SQ_M} m² — workbook may be empty or unparseable; aborting`
+    )
+    return { plan, aborted: true }
+  }
+  return { plan, baselineRows, postRows, aborted: false }
+}
+
 function generateFromWorkbookInner(
   outPaths,
   workbook,
   sourceLabel,
   { strict, centre, mode }
 ) {
-  const baselineRows = buildBaselineRows(workbook, { strict })
-  const postRows =
-    mode === MODE_BASELINE
-      ? null
-      : buildPostInterventionRows(workbook, { strict })
-
-  const habitatRowsForSizing = baselineRows.habitats.map((r) => ({
-    area: r.area
-  }))
-  const plan = computeWorkbookFixturePlan(workbook, habitatRowsForSizing)
-
-  logWorkbookFixtureBanner({
-    workbook,
-    sourceLabel,
+  const prepared = prepareWorkbookSite(workbook, sourceLabel, {
+    strict,
     centre,
-    outPath: bannerOutPath(outPaths, mode),
-    habitatRows: baselineRows.habitats,
-    plan,
-    mode
+    mode,
+    outPath: bannerOutPath(outPaths, mode)
   })
-
-  if (plan.totalAreaM2 < MIN_GENERATED_AREA_SQ_M) {
-    warn(
-      `  total area is < ${MIN_GENERATED_AREA_SQ_M} m² — workbook may be empty or unparseable; aborting`
-    )
+  const { plan, baselineRows, postRows } = prepared
+  if (prepared.aborted) {
     return { success: false, plan }
   }
 
@@ -390,4 +406,47 @@ function generateFromWorkbookInner(
   surfaceWorkbookWarnings(workbook, baselineRows, postRows)
   info(color('green', `✔ Done.`))
   return { success: true, plan }
+}
+
+/**
+ * Draw the site a workbook describes, without writing it: its rows, and the
+ * geometry the legacy route would write, drawn in the same order from the
+ * same seed. `mode: 'baseline'` draws the baseline only. The banner and the
+ * workbook's warnings are logged, naming `outPath`.
+ *
+ * @returns {{ success: boolean, plan: object, baselineRows?: object,
+ *   postRows?: object | null, baseline?: object, post?: object | null }}
+ */
+export function drawWorkbookSite(
+  workbook,
+  sourceLabel,
+  { strict = false, centre, mode = MODE_BOTH, seed, outPath } = {}
+) {
+  const prepared = prepareWorkbookSite(workbook, sourceLabel, {
+    strict,
+    centre,
+    mode,
+    outPath
+  })
+  const { plan, baselineRows, postRows } = prepared
+  if (prepared.aborted) {
+    return { success: false, plan }
+  }
+  const seeded = Number.isInteger(seed)
+  if (seeded) {
+    setSeed(seed)
+  }
+  try {
+    const baseline = drawBaselineGeometry(baselineRows, plan, centre)
+    const post =
+      mode === MODE_BASELINE
+        ? null
+        : drawPostInterventionGeometry(workbook, postRows, baseline)
+    surfaceWorkbookWarnings(workbook, baselineRows, postRows)
+    return { success: true, plan, baselineRows, postRows, baseline, post }
+  } finally {
+    if (seeded) {
+      clearSeed()
+    }
+  }
 }

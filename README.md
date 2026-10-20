@@ -138,16 +138,18 @@ mapping post-intervention habitats.
 | Scenario catalogue | `generatePermutations({ format: 'bng-service' })`: each scenario carries one `geoPackage: { path, buffer }`, and its workbook when asked for. The scenarios hold exactly what they pin: nothing is added |
 | Any legacy output  | `writeBngServiceFromLegacy({ legacyPath } \| { baselinePath, postInterventionPath }, outPath, options)`                                                                                                  |
 
-**Synthetic sites are drawn natively.** The synthetic routes (including
-every flaw) write no legacy file: a site is drawn by the same drawing step
+**Every route draws natively.** No route writes a legacy file to convert.
+The synthetic routes (including every flaw) draw a site with the same step
 the legacy format uses (`src/synthetic/draw/`), from the same seed, and
 built straight into the BNG Service site model by the template's rules
 (`src/bng-service/site-features.mjs`). So seeds, row overrides and flaws
 behave exactly as they do for the legacy format, and the same seed gives
 the same file to the byte. The scenario catalogue is drawn the same way,
 and each scenario's workbook is read from its BNG Service file, so it
-describes the file a user would upload. The workbook routes still convert
-legacy output for now; they are next to be drawn natively.
+describes the file a user would upload. The workbook routes draw the
+geometry the legacy workbook route draws, from the same seed, and pair the
+two stages as the template's own tools do: by reference first, then by
+shape (`src/bng-service/pair.mjs`).
 
 `writeBngServiceFromLegacy` converts a legacy file (or pair) that already
 exists, such as an older fixture. Its row overrides are checked as every

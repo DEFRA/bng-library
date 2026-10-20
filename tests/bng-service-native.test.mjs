@@ -3,7 +3,7 @@
  * generator, the bad-fixture writer or the legacy converter is taken, so no
  * legacy file is written. Each is mocked to throw if called.
  */
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import {
   checkTemplateValues,
+  generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,
   generateOne,
   generatePermutations,
@@ -35,6 +36,14 @@ vi.mock('../src/synthetic/synthetic.mjs', async (importOriginal) => ({
 vi.mock('../src/synthetic/synthetic-bad.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   generateOneBad: vi.fn(legacyCalled('generateOneBad'))
+}))
+vi.mock('../src/orchestration.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  generateFromWorkbook: vi.fn(legacyCalled('generateFromWorkbook')),
+  generateBaselineFile: vi.fn(legacyCalled('generateBaselineFile')),
+  generatePostInterventionFile: vi.fn(
+    legacyCalled('generatePostInterventionFile')
+  )
 }))
 vi.mock('../src/bng-service/from-legacy.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -142,6 +151,39 @@ describe('the scenario catalogue is drawn natively', () => {
     const file = written(
       'scenario-baseline.gpkg',
       scenarios[0].geoPackage.buffer
+    )
+    expect(count(file, 'Area Habitats Baseline')).toBeGreaterThan(0)
+    expect(count(file, 'Area Habitats Post-Intervention')).toBe(0)
+  })
+})
+
+describe('a workbook site is drawn natively', () => {
+  const workbooks = JSON.parse(
+    readFileSync(
+      new URL('./fixtures/scenario-workbooks.json', import.meta.url),
+      'utf8'
+    )
+  )
+
+  it.each(Object.keys(workbooks))('writes the site %s describes', (id) => {
+    const file = path.join(dir, `wb-${id.replaceAll('/', '-')}.gpkg`)
+    const result = generateBngServiceFromWorkbook(
+      file,
+      workbooks[id],
+      `${id}.xlsx`,
+      { centre: CENTRE, seed: 2 }
+    )
+    expect(result.success).toBe(true)
+    expect(count(file, 'Area Habitats Baseline')).toBeGreaterThan(0)
+  })
+
+  it('writes the baseline-stage file', () => {
+    const file = path.join(dir, 'wb-baseline.gpkg')
+    generateBngServiceFromWorkbook(
+      file,
+      workbooks['intervention/area-created'],
+      'area-created.xlsx',
+      { centre: CENTRE, seed: 2, stage: 'baseline' }
     )
     expect(count(file, 'Area Habitats Baseline')).toBeGreaterThan(0)
     expect(count(file, 'Area Habitats Post-Intervention')).toBe(0)

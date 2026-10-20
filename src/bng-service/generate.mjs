@@ -8,23 +8,21 @@
  * only the new template records and written as one file holding both
  * stages, with the template version record.
  *
- * The scenario catalogue draws its sites the same way. `writeBngServiceFromLegacy`
- * converts legacy files that already exist. The workbook route still
- * converts the legacy pair it writes, until it too is drawn natively.
+ * The scenario catalogue draws its sites the same way, and the workbook
+ * route draws the site a workbook describes as the legacy workbook route
+ * would, then pairs its stages as the template's tools do.
+ * `writeBngServiceFromLegacy` converts legacy files that already exist; no
+ * generator uses it.
  */
 
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import path from 'node:path'
-
 import { clearFixedTimestamp, setFixedTimestamp } from '../gpkg-io/index.mjs'
-import { captureMessages, color, header, info, warn } from '../log.mjs'
+import { color, header, info, warn } from '../log.mjs'
 import {
   CREATED_TREE_INDEX,
   computeLayerCounts
 } from '../synthetic/synthetic.mjs'
 import {
-  generateFromWorkbook,
+  drawWorkbookSite,
   MODE_BASELINE,
   MODE_BOTH
 } from '../orchestration.mjs'
@@ -43,6 +41,8 @@ import {
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
 import { normaliseOverrides } from './native/overrides.mjs'
 import { drawSyntheticSite } from './native/synthetic-site.mjs'
+import { siteFromWorkbookDraw } from './native/site-from-workbook.mjs'
+import { moveVerticalHabitats } from './vertical-from-area.mjs'
 import { createChooser } from './random.mjs'
 import {
   CURRENT_TEMPLATE_VERSION,
@@ -55,7 +55,6 @@ import { writeSite } from './site.mjs'
 import { checkTemplateValues } from './check-values.mjs'
 import { YES } from './vocabulary.mjs'
 
-const TMP_PREFIX = 'bng-service-'
 const VERSION_PATTERN = /^\d+\.\d+$/
 // Fixed metadata timestamp for seeded generation, as the legacy generator uses.
 const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
@@ -77,15 +76,6 @@ function assertOptions({ stage, templateVersion }) {
     throw new Error(
       `templateVersion must be "<major>.<minor>", such as "1.0" (got: ${templateVersion})`
     )
-  }
-}
-
-function withTempDir(fn) {
-  const dir = mkdtempSync(path.join(tmpdir(), TMP_PREFIX))
-  try {
-    return fn(dir)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
   }
 }
 
@@ -397,26 +387,11 @@ export function generateBngServiceSynthetic(
 
 // --------------------------------------------------------------- workbook
 
-// Re-emit the legacy route's messages, naming the file the caller gets in
-// place of the temporary pair.
-function reemit(messages, outPaths, outPath) {
-  const emit = { header, info, warn }
-  const temporary = [
-    `${outPaths.baseline} + ${outPaths.postIntervention}`,
-    outPaths.baseline,
-    outPaths.postIntervention
-  ]
-  for (const { level, message } of messages) {
-    emit[level](
-      temporary.reduce((text, from) => text.replaceAll(from, outPath), message)
-    )
-  }
-}
-
 /**
  * Generate the site a metric workbook describes, in the BNG Service template
- * format: the legacy workbook route's baseline and post-intervention pair,
- * joined into one file. `stage: 'baseline'` writes the baseline-stage file.
+ * format, drawn natively: the geometry the legacy workbook route draws, from
+ * the same seed, with its two stages paired into one file and no legacy file
+ * written. `stage: 'baseline'` writes the baseline-stage file.
  * `seed` makes it reproducible: the same workbook and seed give the same file
  * to the byte.
  *
@@ -435,40 +410,23 @@ export function generateBngServiceFromWorkbook(
   } = {}
 ) {
   assertOptions({ stage, templateVersion })
-  return withTempDir((dir) => {
-    const outPaths = {
-      baseline: path.join(dir, 'baseline.gpkg'),
-      postIntervention: path.join(dir, 'post-intervention.gpkg')
-    }
-    const mode = stage === STAGE_BASELINE ? MODE_BASELINE : MODE_BOTH
-    const { result, messages } = captureMessages(() =>
-      generateFromWorkbook(outPaths, workbook, sourceLabel, {
-        strict,
-        centre,
-        mode,
-        seed
-      })
-    )
-    reemit(
-      messages.filter((m) => !m.message.includes('✔ Done')),
-      outPaths,
-      outPath
-    )
-    if (!result.success) {
-      return result
-    }
-    const site = writeBngServiceFromLegacy(
-      {
-        baselinePath: outPaths.baseline,
-        postInterventionPath:
-          stage === STAGE_BASELINE
-            ? outPaths.baseline
-            : outPaths.postIntervention
-      },
-      outPath,
-      { seed, stage, templateVersion }
-    )
-    reportSite(site, outPath, stage)
-    return result
+  const drawn = drawWorkbookSite(workbook, sourceLabel, {
+    strict,
+    centre,
+    mode: stage === STAGE_BASELINE ? MODE_BASELINE : MODE_BOTH,
+    seed,
+    outPath
   })
+  if (!drawn.success) {
+    return { success: false, plan: drawn.plan }
+  }
+  const chooser = createChooser(seed)
+  const site = siteFromWorkbookDraw(drawn, {
+    uuidFor: (layerKey, index) => chooser.uuid(`${layerKey}/${index}`),
+    choose: chooser.next
+  })
+  moveVerticalHabitats(site, (i) => chooser.uuid(`verticalHabitats/moved/${i}`))
+  finishSite(site, outPath, chooser, { stage, templateVersion })
+  reportSite(site, outPath, stage)
+  return { success: true, plan: drawn.plan }
 }

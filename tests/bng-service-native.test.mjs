@@ -154,7 +154,6 @@ describe('the row overrides a native site takes', () => {
   })
 
   it.each([
-    [{ trees: [{ count: 3 }] }, /no Count column/],
     [{ habitats: [{ parcleRef: 'x' }] }, /unknown override "parcleRef"/],
     [{ ponds: [{}] }, /unknown override layer "ponds"/],
     [
@@ -163,6 +162,12 @@ describe('the row overrides a native site takes', () => {
     ]
   ])('refuses %j', (overrides, message) => {
     expect(() => normaliseOverrides(overrides)).toThrow(message)
+  })
+
+  it('ignores a tree count, as the format always has: each point is one tree', () => {
+    expect(normaliseOverrides({ trees: [{ count: 3 }] })).toEqual({
+      trees: [{ count: 3 }]
+    })
   })
 
   it('keeps a tree count of 1, which is what a tree point is', () => {

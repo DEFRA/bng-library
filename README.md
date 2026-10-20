@@ -163,9 +163,10 @@ three more in this format: `irreplaceable` (`"Yes"` or `"No"`, on `habitats`
 and `trees`), `comment` and `postInterventionComment`. `habitatRef` names an
 area habitat's Habitat Ref (as `parcelRef` does), strategic significance is
 `Low` or `High` (or the legacy wording), and an area habitat's `Lost` is a
-creation in another broad type, written as Created. A tree's `count` must be
-1, as each tree point is one tree; an unknown field is refused rather than
-ignored, and `$comment` fields document a row. A `verticalHabitats` layer
+creation in another broad type, written as Created. A tree's `count` is
+ignored with a warning, as the template has no Count column and each tree
+point is one tree (how several trees at one point are recorded is still
+being decided); an unknown field is refused rather than ignored, and `$comment` fields document a row. A `verticalHabitats` layer
 takes rows of `habitatFullName`, `retention` (`Retained`, `Enhanced`,
 `Created`, or `Lost`: absent post-intervention), `baselineCondition`,
 `proposedCondition`, `proposedHabitatFullName`, `area` (hectares) and the two

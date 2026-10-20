@@ -7,10 +7,14 @@
  * - Strategic significance is `Low` or `High`, or the legacy wording.
  * - An area habitat's `Lost` is a creation in a new broad type, written as
  *   Created; a hedgerow, watercourse or tree that is `Lost` is removed.
- * - A tree's `count` must be 1: each tree point is one tree, as the template
- *   has no Count column.
+ * - A tree's `count` is ignored, with a warning: the template has no Count
+ *   column, so each tree point is one tree. How the service should record
+ *   several trees at one point is still being decided; until it is, this is
+ *   what the format has always done with a count.
  * - `$comment` keys document a row and are ignored.
  */
+
+import { warn } from '../../log.mjs'
 
 const COMMON = [
   'retention',
@@ -69,8 +73,8 @@ function checkRow(layer, row, index) {
     }
   }
   if (layer === 'trees' && row.count !== undefined && row.count !== ONE_TREE) {
-    throw new Error(
-      `trees row ${index}: count ${row.count} cannot be written in the BNG Service template: it has no Count column, each tree point is one tree`
+    warn(
+      `  trees row ${index}: count ${row.count} ignored: the BNG Service template has no Count column, so each tree point is one tree`
     )
   }
 }

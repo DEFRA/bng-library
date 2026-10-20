@@ -14,7 +14,8 @@
  *   its own retention and size, the rest lost. A hedgerow is always placed
  *   by its parts' lengths, so a shorter hedge loses the rest.
  * - No post-intervention feature: lost.
- * - A post-intervention feature with no parent: a creation only.
+ * - A post-intervention feature with no parent: a creation if Created;
+ *   otherwise noted and left out, as nothing can be kept from no parent.
  * - A parent_uuid that names no baseline feature: noted, and placed as a
  *   creation if Created.
  *
@@ -268,6 +269,25 @@ function placeOrphan(layer, child, context) {
   return created ? { creations: [proposedRow(layer, child)] } : {}
 }
 
+/**
+ * A post-intervention feature that names no parent. Created, it is new: a
+ * hedgerow, watercourse or tree drawn from nothing, or an area habitat from
+ * Fill Ring. Kept, it has nothing to be kept from, as a link removed leaves
+ * it, so it is noted and left out, and its baseline parent counts as lost.
+ */
+function placeParentless(layer, child, context) {
+  const retention = retentionOf(child, context)
+  if (retention === CREATED) {
+    return { creations: [proposedRow(layer, child)] }
+  }
+  if (retention !== null) {
+    context.notes.push(
+      `${context.table} ${child['Habitat Ref']}: no parent named; ${retention} row left out`
+    )
+  }
+  return {}
+}
+
 function layerEntries(db, layerKey, notes) {
   const layer = LAYERS[layerKey]
   const context = { notes, table: tableName(layerKey, POST_INTERVENTION) }
@@ -286,13 +306,13 @@ function layerEntries(db, layerKey, notes) {
       context
     )
   )
-  const created = children
+  const parentless = children
     .filter((c) => !c.parent_uuid)
-    .map((c) => ({ creations: [proposedRow(layer, c)] }))
+    .map((c) => placeParentless(layer, c, context))
   const orphans = children
     .filter((c) => c.parent_uuid && !uuids.has(c.parent_uuid))
     .map((c) => placeOrphan(layer, c, context))
-  return [...kept, ...created, ...orphans]
+  return [...kept, ...parentless, ...orphans]
 }
 
 /** Split placed entries into the three sheets of one habitat kind. */

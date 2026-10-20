@@ -215,6 +215,38 @@ describe('the edge cases a user’s file can hold', () => {
     ])
   })
 
+  it('notes a kept feature that names no parent, as lineage-parent-missing writes it, and counts its parent lost', () => {
+    const flawed = path.join(dir, 'parent-missing.gpkg')
+    writeFileSync(
+      flawed,
+      generateSyntheticGpkg({
+        format: 'bng-service',
+        numParcels: 8,
+        seed: 3,
+        flaws: ['lineage-parent-missing']
+      }).buffer
+    )
+    const db = new Database(flawed, { readonly: true })
+    const [unlinked] = db
+      .prepare(
+        `SELECT "Habitat Ref" AS ref FROM "Area Habitats Post-Intervention"
+          WHERE parent_uuid IS NULL AND "Retention Category" = 'Retained'`
+      )
+      .all()
+    db.close()
+    const { rows: sheets, notes } = workbookRowsFromBngService(flawed)
+    expect(notes).toEqual([
+      `Area Habitats Post-Intervention ${unlinked.ref}: no parent named; Retained row left out`
+    ])
+    expect(
+      sheets.habitatCreation.filter((r) => r.reference === unlinked.ref)
+    ).toEqual([])
+    const parent = sheets.habitatBaseline.find(
+      (r) => r.reference === unlinked.ref
+    )
+    expect(parent.retained).toBeUndefined()
+  })
+
   it('notes a kept feature whose parent is unknown, as lineage-parent-unknown writes it', () => {
     const flawed = path.join(dir, 'parent-unknown.gpkg')
     writeFileSync(

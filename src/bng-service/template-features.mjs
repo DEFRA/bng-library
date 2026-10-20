@@ -513,7 +513,7 @@ function worseCopy(parent, proposed, chooser) {
  * The next ref in the style of a layer's refs: HG003 after HG002. Counts
  * both stages, as a created feature has a ref but no baseline row.
  */
-export function nextRef(layer, prefix) {
+function nextRef(layer, prefix) {
   let last = 0
   for (const feature of [...layer.baseline, ...layer.postIntervention]) {
     const match = NUMBERED_REF.exec(feature.values[HABITAT_REF] ?? '')
@@ -625,7 +625,7 @@ function worseVertical(site, chooser) {
 }
 
 /** A straight line inside the red line, `min` to `max` metres long. */
-export function drawnLine(site, chooser, min, max) {
+function drawnLine(site, chooser, min, max) {
   const line = wallLine(
     site.redline.geometry.coordinates[0],
     chooser,

@@ -12,6 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
   checkTemplateValues,
+  generateBngServiceSynthetic,
   generateSyntheticGpkg,
   setMode
 } from '../index.mjs'
@@ -19,8 +20,10 @@ import { wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
 import { areaSquareMetres } from '../src/measure/index.mjs'
 import {
   REALIGNED_WATERCOURSE_COMMENT,
-  SHORTER_WATERCOURSE_COMMENT
+  SHORTER_WATERCOURSE_COMMENT,
+  addSiteChanges
 } from '../src/bng-service/site-changes.mjs'
+import { createChooser } from '../src/bng-service/random.mjs'
 import { workbookRowsFromBngService } from '../src/workbook-writer/index.mjs'
 
 const SQ_M_PER_HECTARE = 10_000
@@ -118,7 +121,28 @@ describe.each([4, 9, 15])('a default site, seed %i', (seed) => {
 })
 
 describe('the changes are template features', () => {
-  it('leaves them out with templateFeatures: false', () => {
+  it('leaves them out with templateFeatures: false: no changed watercourse, no repeated Habitat Ref', () => {
+    const file = path.join(dir, 'no-template-features.gpkg')
+    generateBngServiceSynthetic(
+      file,
+      [530000, 180000],
+      { numParcels: 30, seed: 4 },
+      { templateFeatures: false }
+    )
+    expect(
+      rows(file, 'Watercourses Post-Intervention').filter((r) =>
+        [REALIGNED_WATERCOURSE_COMMENT, SHORTER_WATERCOURSE_COMMENT].includes(
+          r.Comment
+        )
+      )
+    ).toEqual([])
+    const refs = rows(file, 'Area Habitats Post-Intervention').map(
+      (r) => r['Habitat Ref']
+    )
+    expect(new Set(refs).size).toBe(refs.length)
+  })
+
+  it('leaves them out of a geometric flaw’s fixture', () => {
     const { buffer } = generateSyntheticGpkg({
       format: 'bng-service',
       numParcels: 30,
@@ -145,4 +169,64 @@ describe('the changes are template features', () => {
     expect(rows(file, 'Watercourses Baseline')).toEqual([])
     expect(rows(file, 'Watercourses Post-Intervention')).toEqual([])
   })
+})
+
+describe('a change that cannot be drawn leaves nothing behind', () => {
+  // A red line 400 m long and 2 m wide: a watercourse fits along it, but
+  // no bend that makes the route longer fits beside it.
+  const LENGTH_M = 400
+  const WIDTH_M = 2
+  const thin = () => ({
+    redline: {
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0],
+            [LENGTH_M, 0],
+            [LENGTH_M, WIDTH_M],
+            [0, WIDTH_M],
+            [0, 0]
+          ]
+        ]
+      }
+    },
+    layers: {
+      habitats: { baseline: [], postIntervention: [] },
+      rivers: { baseline: [], postIntervention: [] }
+    }
+  })
+
+  it.each([1, 2, 3, 4, 5])(
+    'keeps every baseline watercourse recorded, seed %i',
+    (seed) => {
+      const site = thin()
+      addSiteChanges(site, createChooser(seed), new Set(['habitats']))
+      const { baseline, postIntervention } = site.layers.rivers
+      for (const feature of baseline) {
+        expect(
+          postIntervention.some((p) => p.parent === feature),
+          feature.values['Habitat Ref']
+        ).toBe(true)
+      }
+      expect(
+        postIntervention.filter(
+          (p) => p.values.Comment === REALIGNED_WATERCOURSE_COMMENT
+        )
+      ).toEqual([])
+    }
+  )
+})
+
+describe('a split parcel', () => {
+  it.each([1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14])(
+    'repeats a Habitat Ref, seed %i',
+    (seed) => {
+      const file = site(`split-${seed}`, { numParcels: 30, seed })
+      const refs = rows(file, 'Area Habitats Post-Intervention').map(
+        (r) => r['Habitat Ref']
+      )
+      expect(refs.length - new Set(refs).size).toBe(1)
+    }
+  )
 })

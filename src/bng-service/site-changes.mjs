@@ -48,6 +48,8 @@ const MIN_BEND_SHARE = 0.25
 const MAX_BEND_SHARE = 0.45
 const BEND_TRIES = 6
 const BEND_SHRINK = 0.7
+// Chord angles tried before a parcel is left whole, as carveTargetArea tries.
+const CARVE_TRIES = 8
 // A shorter watercourse keeps this share of its surveyed length.
 const MIN_KEPT_SHARE = 0.5
 const MAX_KEPT_SHARE = 0.8
@@ -85,9 +87,40 @@ function enhanceableRiverTypes() {
   )
 }
 
+/** Which side of the line through `a` and `b` the point `c` is on. */
+function orientation(a, b, c) {
+  return Math.sign(
+    (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+  )
+}
+
+/** Whether segments `p1`-`p2` and `q1`-`q2` cross each other. */
+function segmentsCross(p1, p2, q1, q2) {
+  return (
+    orientation(p1, p2, q1) * orientation(p1, p2, q2) < 0 &&
+    orientation(q1, q2, p1) * orientation(q1, q2, p2) < 0
+  )
+}
+
 /**
- * The straight line `[start, end]` bent once to one side, inside the red
- * line, so the route is longer; null if no bend fits.
+ * Whether the segment `a`-`b` lies inside `ring`: both ends inside, and no
+ * edge of the ring crossed, so it holds for a red line that is not convex.
+ */
+function segmentInsideRing(a, b, ring) {
+  if (!pointInRing(a, ring) || !pointInRing(b, ring)) {
+    return false
+  }
+  for (let i = 1; i < ring.length; i += 1) {
+    if (segmentsCross(a, b, ring[i - 1], ring[i])) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * The straight line `[start, end]` bent once to one side, both its legs
+ * inside the red line, so the route is longer; null if no bend fits.
  */
 function meander([start, end], ring, chooser) {
   const dx = end[0] - start[0]
@@ -101,7 +134,10 @@ function meander([start, end], ring, chooser) {
       (start[0] + end[0]) / 2 - (dy / length) * offset,
       (start[1] + end[1]) / 2 + (dx / length) * offset
     ]
-    if (pointInRing(bend, ring)) {
+    if (
+      segmentInsideRing(start, bend, ring) &&
+      segmentInsideRing(bend, end, ring)
+    ) {
       return { type: 'LineString', coordinates: [start, bend, end] }
     }
     share *= BEND_SHRINK
@@ -134,6 +170,13 @@ function realignedWatercourse(site, chooser) {
       chooser
     )
   if (!route) {
+    // No bend fits: take the baseline row back out, so the site holds no
+    // watercourse lost unrecorded. The chooser's draws are spent either
+    // way, so a seed still gives the same site.
+    if (parent) {
+      const { baseline } = site.layers.rivers
+      baseline.splice(baseline.indexOf(parent), 1)
+    }
     return
   }
   site.layers.rivers.postIntervention.push({
@@ -203,6 +246,27 @@ function shorterWatercourse(site, chooser) {
 }
 
 /**
+ * A parcel's two parts, at a share of its area the chooser picks and the
+ * first of up to CARVE_TRIES chord angles that splits it; null if none
+ * does. The first angle is drawn before the share, as it always was.
+ */
+function carvedParts(ring, chooser) {
+  let angle = chooser.between(0, Math.PI)
+  const target =
+    hectares(ring) *
+    SQ_M_PER_HECTARE *
+    chooser.between(MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
+  for (let attempt = 0; attempt < CARVE_TRIES; attempt += 1) {
+    const parts = carveAtAngle(ring, angle, target)
+    if (parts) {
+      return parts
+    }
+    angle = chooser.between(0, Math.PI)
+  }
+  return null
+}
+
+/**
  * A Retained parcel split into two parts that keep its Habitat Ref, as a
  * split leaves them until the refs are tidied. Not the first Retained
  * parcel, which the lineage flaws take, nor an irreplaceable one, nor one
@@ -222,13 +286,7 @@ function repeatedRefs(site, chooser) {
   }
   const [, feature] = retained
   const ring = feature.geometry.coordinates[0]
-  const parts = carveAtAngle(
-    ring,
-    chooser.between(0, Math.PI),
-    hectares(ring) *
-      SQ_M_PER_HECTARE *
-      chooser.between(MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
-  )
+  const parts = carvedParts(ring, chooser)
   if (!parts) {
     return
   }

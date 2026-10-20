@@ -208,11 +208,33 @@ function placeWhole(layer, baseline, child, context) {
 
 const sizeOf = (rows) => rows.reduce((sum, row) => sum + (row.size ?? 0), 0)
 
+/** Whether two proposed rows agree on everything but their ref and size. */
+function sameProposal(a, b) {
+  const { reference: _ra, size: _sa, ...restA } = a
+  const { reference: _rb, size: _sb, ...restB } = b
+  return JSON.stringify(restA) === JSON.stringify(restB)
+}
+
+/**
+ * Several Enhanced parts of one baseline feature (a hedge enhanced in two
+ * stretches) as the one enhancement row the workbook pairs with its
+ * baseline row: their sizes summed, the first part's proposed values. Parts
+ * that propose different values are noted, as only the first's are kept.
+ */
+function mergedEnhancement(enhanced, context) {
+  const [first, ...rest] = enhanced
+  if (rest.some((part) => !sameProposal(first, part))) {
+    context.notes.push(
+      `${context.table} ${enhanced.map((p) => p.reference).join(', ')}: Enhanced parts of one baseline feature with different proposed values; read as one enhancement with ${first.reference}'s`
+    )
+  }
+  return { ...first, size: sizeOf(enhanced) }
+}
+
 /**
  * Where a baseline feature goes by its parts' own sizes: its Retained parts
- * are retained, an Enhanced part enhanced, and each Created part a
- * creation; the rest is lost. The enhancement sheet pairs one enhancement
- * with each baseline row, so two Enhanced parts are refused.
+ * are retained, its Enhanced parts enhanced, and each Created part a
+ * creation; the rest is lost.
  */
 function placeParts(layer, baseline, parts, context) {
   const retentions = parts.map((p) => retentionOf(p, context))
@@ -222,18 +244,13 @@ function placeParts(layer, baseline, parts, context) {
       .map((p) => proposedRow(layer, p))
   const retained = byRetention(RETAINED)
   const enhanced = byRetention(ENHANCED)
-  if (enhanced.length > 1) {
-    throw new Error(
-      `${baseline.reference}: split into ${enhanced.length} Enhanced parts, which the workbook pairs with one baseline row`
-    )
-  }
   const placed = { ...baseline }
   if (retained.length > 0) {
     placed.retained = sizeOf(retained)
   }
   if (enhanced.length > 0) {
     placed.enhanced = sizeOf(enhanced)
-    placed.enhancement = enhanced[0]
+    placed.enhancement = mergedEnhancement(enhanced, context)
   }
   return { baseline: placed, creations: byRetention(CREATED) }
 }

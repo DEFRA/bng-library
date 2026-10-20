@@ -194,6 +194,51 @@ describe('the edge cases a user’s file can hold', () => {
     ])
   })
 
+  it('reads a hedge enhanced in two stretches as one enhancement, sizes summed', () => {
+    const [kept] = rows(HEDGES, `"Habitat Ref" LIKE '%a'`)
+    const parentRef = kept['Parent Ref']
+    const [worse] = rows(HEDGES, `"Habitat Ref" = '${parentRef}b'`)
+    const twice = (name, condition) =>
+      edited(
+        name,
+        `UPDATE "${HEDGES}" SET "Retention Category" = 'Enhanced',
+           "Proposed Condition" = '${condition}', "Habitat created in advance/years" = '0'
+           WHERE "Parent Ref" = '${parentRef}'`
+      )
+    const same = workbookRowsFromBngService(twice('enhanced-twice', 'Good'))
+    const baseline = same.rows.hedgerowBaseline.find(
+      (r) => r.reference === parentRef
+    )
+    const [enhancement] = same.rows.hedgerowEnhancement.filter((r) =>
+      r.reference.startsWith(parentRef)
+    )
+    expect(same.notes).toEqual([])
+    expect(baseline.enhanced).toBeCloseTo(
+      (kept.Length + worse.Length) / 1000,
+      9
+    )
+    expect(enhancement.size).toBeCloseTo(baseline.enhanced, 12)
+    expect(enhancement.condition).toBe('Good')
+
+    const different = edited(
+      'enhanced-differently',
+      `UPDATE "${HEDGES}" SET "Retention Category" = 'Enhanced',
+         "Proposed Condition" = 'Good', "Habitat created in advance/years" = '0'
+         WHERE "Parent Ref" = '${parentRef}';
+       UPDATE "${HEDGES}" SET "Proposed Condition" = 'Moderate'
+         WHERE "Habitat Ref" = '${parentRef}b'`
+    )
+    const { rows: sheets, notes } = workbookRowsFromBngService(different)
+    expect(
+      sheets.hedgerowEnhancement.filter((r) =>
+        r.reference.startsWith(parentRef)
+      )
+    ).toHaveLength(1)
+    expect(notes).toEqual([
+      `Hedgerows Post-Intervention ${parentRef}a, ${parentRef}b: Enhanced parts of one baseline feature with different proposed values; read as one enhancement with ${parentRef}a's`
+    ])
+  })
+
   it('places a Created feature whose parent is missing as a creation, with a note', () => {
     const [worse] = rows(
       HEDGES,

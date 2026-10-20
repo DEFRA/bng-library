@@ -14,6 +14,7 @@ import {
   PROPOSED_STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
+import { VALID_FORMATS } from '../bng-service/schema.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -356,8 +357,23 @@ function checkEmptyLayers(value, where) {
   ]
 }
 
+/** A non-empty list of output formats, each named once. */
+function checkFormats(value, where) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [`${where}: must be a non-empty list of formats`]
+  }
+  const formats = [...VALID_FORMATS]
+  return [
+    ...value.flatMap((f, i) => checkOneOf(f, formats, `${where}[${i}]`)),
+    ...value
+      .filter((f, i) => value.indexOf(f) !== i)
+      .map((f) => `${where}: "${f}" is listed twice`)
+  ]
+}
+
 // Each optional field's check; a field not listed here is unknown.
 const OPTIONAL_FIELDS = {
+  formats: checkFormats,
   size: (v, where) =>
     isPositiveInteger(v) ? [] : [`${where}: must be a whole number above 0`],
   treeCount: (v, where) =>
@@ -498,3 +514,12 @@ const catalogue = loadCatalogue()
 export const DEFAULT_SIZE = catalogue.defaultSize
 export const SCENARIOS = catalogue.scenarios
 export const PURPOSES = catalogue.purposes
+
+/**
+ * Whether a scenario is generated in `format`. A scenario lists `formats`
+ * only when it holds what another format cannot express; without the list
+ * it is generated in every format.
+ */
+export function scenarioInFormat(scenario, format) {
+  return !scenario.formats || scenario.formats.includes(format)
+}

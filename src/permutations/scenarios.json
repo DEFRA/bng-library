@@ -3294,6 +3294,8 @@
     {
       "id": "trees-count-above-one",
       "purpose": "trees",
+      "$comment": "Legacy only for now: the BNG Service template has no Count column, so each tree point is one tree, and this scenario's ratios cannot hold. It returns to the BNG Service format once the service decides how several trees at one point are recorded (BMD-1171, BMD-1172).",
+      "formats": ["legacy"],
       "title": "Individual trees — a point that stands for several trees",
       "description": "Each tree point carries a \"Count\": the number of trees it stands for. The metric sizes the point as its size band's area times that count, so a Medium point with a count of 3 is three Medium trees (0.0489 ha, not 0.0163 ha). Three pairs of trees are identical but for their count, one pair on each pricing path: T001 and T002 are retained Medium urban trees with counts of 3 and 1, T003 and T005 created Large urban trees with counts of 2 and 1, and T004 and T006 Small rural trees enhanced from Poor to Good with counts of 4 and 1. Each pair's units must stand in exactly the ratio of its counts, so a service that prices every point as one tree, or scales by the wrong amount, fails on every path.",
       "size": 1,

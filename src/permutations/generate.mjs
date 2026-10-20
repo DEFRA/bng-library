@@ -23,7 +23,12 @@ import {
   readTemplateVocabulary,
   workbookFromGeoPackage
 } from '../workbook-writer/index.mjs'
-import { DEFAULT_SIZE, PURPOSES, SCENARIOS } from './catalogue.mjs'
+import {
+  DEFAULT_SIZE,
+  PURPOSES,
+  SCENARIOS,
+  scenarioInFormat
+} from './catalogue.mjs'
 import { derivePermutationSeed } from './seed.mjs'
 import {
   generateBngServiceSynthetic,
@@ -226,9 +231,9 @@ export function generatePermutations({
       `format must be one of: ${[...VALID_FORMATS].join(', ')} (got: ${format})`
     )
   }
-  const selected = only
-    ? SCENARIOS.filter((s) => s.purpose === only)
-    : SCENARIOS
+  const selected = SCENARIOS.filter(
+    (s) => (!only || s.purpose === only) && scenarioInFormat(s, format)
+  )
   const withWorkbook = Boolean(workbookTemplate)
   if (manifestOnly) {
     const scenarios = selected.map((s) =>

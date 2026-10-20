@@ -27,10 +27,12 @@ import { geometryWkt } from '../src/bng-service/site.mjs'
 import {
   ENCROACHED_WATERCOURSE_COMMENT,
   WORSE_HABITAT_COMMENT,
-  WORSE_WATERCOURSE_COMMENT
+  WORSE_WATERCOURSE_COMMENT,
+  addVerticalHabitats,
+  addWorseHabitats
 } from '../src/bng-service/template-features.mjs'
 import { listIndex } from '../src/bng-service/reference.mjs'
-import { uuidV5 } from '../src/bng-service/random.mjs'
+import { createChooser, uuidV5 } from '../src/bng-service/random.mjs'
 
 const CENTRE = [530000, 180000]
 const SQ_M_PER_HECTARE = 10_000
@@ -843,6 +845,53 @@ describe('AC5: habitats that get worse', () => {
         type
       ).toEqual([])
     }
+  })
+
+  it('gives the worse vertical habitat its own identity when a vertical habitat could not be placed', () => {
+    const SIDE_M = 200
+    const [x, y] = CENTRE
+    const empty = () => ({ baseline: [], postIntervention: [] })
+    const site = {
+      redline: {
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [x, y],
+              [x + SIDE_M, y],
+              [x + SIDE_M, y + SIDE_M],
+              [x, y + SIDE_M],
+              [x, y]
+            ]
+          ]
+        }
+      },
+      layers: {
+        habitats: empty(),
+        verticalHabitats: empty(),
+        hedgerows: empty(),
+        rivers: empty(),
+        trees: empty()
+      }
+    }
+    const chooser = createChooser(1)
+    addVerticalHabitats(site, { count: 3 }, chooser)
+    // Drop the middle row, as addVerticalHabitats does with one it cannot
+    // place, so the row count falls below the highest index in use.
+    const layer = site.layers.verticalHabitats
+    const skipped = layer.baseline[1]
+    layer.baseline = layer.baseline.filter((f) => f !== skipped)
+    layer.postIntervention = layer.postIntervention.filter(
+      (f) => f.parent !== skipped
+    )
+
+    addWorseHabitats(site, chooser)
+
+    expect(layer.baseline).toHaveLength(3)
+    const uuids = layer.baseline.map((f) => f.uuid)
+    const refs = layer.baseline.map((f) => f.values['Habitat Ref'])
+    expect(new Set(uuids).size, uuids.join()).toBe(uuids.length)
+    expect(new Set(refs).size, refs.join()).toBe(refs.length)
   })
 })
 

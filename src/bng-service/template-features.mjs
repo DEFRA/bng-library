@@ -567,6 +567,14 @@ function worseParcel(site, chooser) {
   feature.worse = WORSE.parcel
 }
 
+/**
+ * The index after the highest a vertical habitat has. Not the row count, as
+ * `addVerticalHabitats` skips a row it cannot place and leaves a gap.
+ */
+function nextVerticalIndex(layer) {
+  return Math.max(-1, ...layer.baseline.map((f) => f.source.index)) + 1
+}
+
 /** A vertical area habitat drawn for the purpose, and its worse copy. */
 function worseVertical(site, chooser) {
   const names = verticalHabitatNames().filter(
@@ -576,7 +584,7 @@ function worseVertical(site, chooser) {
   const layer = site.layers.verticalHabitats
   const feature = verticalFeature(
     site.redline.geometry.coordinates[0],
-    layer.baseline.length,
+    nextVerticalIndex(layer),
     {
       habitatFullName: name,
       retention: RETAINED,

@@ -197,20 +197,32 @@ describe('a change that cannot be drawn leaves nothing behind', () => {
     }
   })
 
-  it.each([1, 2, 3, 4, 5])(
-    'keeps every baseline watercourse recorded, seed %i',
+  // Seeds on which both watercourses fit along the red line, so the
+  // re-meander is drawn and then fails, rather than never being tried.
+  it.each([2, 3, 6, 8, 10])(
+    'takes back a watercourse that cannot be re-meandered, seed %i',
     (seed) => {
       const site = thin()
+      const { rivers } = site.layers
+      const drawn = []
+      rivers.baseline.push = (...features) => {
+        drawn.push(...features)
+        return Array.prototype.push.apply(rivers.baseline, features)
+      }
       addSiteChanges(site, createChooser(seed), new Set(['habitats']))
-      const { baseline, postIntervention } = site.layers.rivers
-      for (const feature of baseline) {
+      // The re-meandered and the shorter watercourse were both drawn, and
+      // only the shorter one, which needs no bend, is kept.
+      expect(drawn).toHaveLength(2)
+      expect(rivers.baseline).toHaveLength(1)
+      expect(rivers.baseline[0]).toBe(drawn[1])
+      for (const feature of rivers.baseline) {
         expect(
-          postIntervention.some((p) => p.parent === feature),
+          rivers.postIntervention.some((p) => p.parent === feature),
           feature.values['Habitat Ref']
         ).toBe(true)
       }
       expect(
-        postIntervention.filter(
+        rivers.postIntervention.filter(
           (p) => p.values.Comment === REALIGNED_WATERCOURSE_COMMENT
         )
       ).toEqual([])

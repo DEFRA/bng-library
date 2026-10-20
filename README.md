@@ -508,6 +508,12 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `expectMetricWarnings` |          | `invalid-` only. Text of warnings the metric must raise on the subject                                                                                                                                                                            |
 | `expectRejectedInputs` |          | `invalid-` only. `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                                                            |
 
+A scenario's `formats` is a rule for every consumer of the catalogue, not
+just this library: whatever builds files from `PERMUTATION_SCENARIOS` itself
+must leave out a scenario whose `formats` does not include the format it
+writes, as `generatePermutations` does. `scenarioInFormat(scenario, format)`,
+exported from the package, says whether it does.
+
 Override rows take the fields of `generateOne`'s `attributeOverrides`:
 
 | Layer       | Fields                                                                                                                                                                                                                                                 |

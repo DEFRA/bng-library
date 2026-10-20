@@ -7,6 +7,7 @@ import {
   parseScenarioCatalogue,
   scenarioInFormat
 } from '../src/permutations/catalogue.mjs'
+import * as library from '../index.mjs'
 import { generatePermutations } from '../index.mjs'
 
 const shipped = JSON.parse(
@@ -493,5 +494,12 @@ describe('the formats a scenario is generated in', () => {
       }).scenarios.map((s) => s.id)
     expect(ids('legacy')).toContain('trees-count-above-one')
     expect(ids('bng-service')).not.toContain('trees-count-above-one')
+  })
+})
+
+describe('the formats rule, for consumers of the catalogue', () => {
+  it('is exported from the package, as the catalogue is', () => {
+    expect(library.scenarioInFormat).toBe(scenarioInFormat)
+    expect(library.PERMUTATION_SCENARIOS).toBe(SCENARIOS)
   })
 })

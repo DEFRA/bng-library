@@ -92,6 +92,9 @@ export {
   scenarioPlan as permutationScenarioPlan
 } from './src/permutations/generate.mjs'
 export { derivePermutationSeed } from './src/permutations/seed.mjs'
+// A scenario that lists `formats` is generated in those formats only: every
+// consumer of PERMUTATION_SCENARIOS applies this, as generatePermutations does.
+export { scenarioInFormat } from './src/permutations/catalogue.mjs'
 
 // The BNG Service template format (BMD-1080): one GeoPackage holding both
 // stages, in the template the service's users upload. Opt-in: every

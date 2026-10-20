@@ -1,12 +1,16 @@
 /**
  * Generate GeoPackages in the BNG Service template format.
  *
- * Every route reuses the legacy generator unchanged, so seeds, row
- * overrides, flaws, scenarios and workbook input all behave as they do for
- * the legacy format. The legacy output is an intermediate step: it is
- * written to a temporary file, read into the two-stage site model, given
- * what only the new template records, and written as one file holding both
+ * A synthetic site is drawn natively (`native/`): the same drawing step as
+ * the legacy format, from the same seed, built straight into the two-stage
+ * site model, so seeds, row overrides and flaws behave as they do for the
+ * legacy format and no legacy file is written. The site is then given what
+ * only the new template records and written as one file holding both
  * stages, with the template version record.
+ *
+ * `writeBngServiceFromLegacy` converts legacy files that already exist. The
+ * workbook route and the scenario catalogue still convert the legacy output
+ * they write, until they too are drawn natively.
  */
 
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -14,18 +18,10 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { clearFixedTimestamp, setFixedTimestamp } from '../gpkg-io/index.mjs'
-import {
-  captureMessages,
-  color,
-  header,
-  info,
-  warn,
-  withMode
-} from '../log.mjs'
+import { captureMessages, color, header, info, warn } from '../log.mjs'
 import {
   CREATED_TREE_INDEX,
-  computeLayerCounts,
-  generateOne
+  computeLayerCounts
 } from '../synthetic/synthetic.mjs'
 import {
   generateFromWorkbook,
@@ -45,6 +41,8 @@ import {
   versionRecordsFor
 } from './flaws.mjs'
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
+import { normaliseOverrides } from './native/overrides.mjs'
+import { drawSyntheticSite } from './native/synthetic-site.mjs'
 import { createChooser } from './random.mjs'
 import {
   CURRENT_TEMPLATE_VERSION,
@@ -55,7 +53,7 @@ import {
 } from './schema.mjs'
 import { writeSite } from './site.mjs'
 import { checkTemplateValues } from './check-values.mjs'
-import { YES, areaLayerOffers } from './vocabulary.mjs'
+import { YES } from './vocabulary.mjs'
 
 const TMP_PREFIX = 'bng-service-'
 const VERSION_PATTERN = /^\d+\.\d+$/
@@ -123,6 +121,44 @@ function reportSite(site, outPath, stage) {
 }
 
 /**
+ * Give a site what only the new template records, apply the format's own
+ * flaws, and write it as one BNG Service template file. Options as for
+ * `writeBngServiceFromLegacy`, all resolved.
+ */
+function finishSite(site, outPath, chooser, options) {
+  const {
+    stage,
+    templateVersion,
+    overrides,
+    comments = false,
+    verticalHabitats,
+    worseHabitats = false,
+    emptyLayers = new Set(),
+    lineageFlaws = [],
+    degradeFlaws = [],
+    versionFlaws = []
+  } = options
+  applyTemplateOverrides(site, overrides)
+  if (verticalHabitats) {
+    addVerticalHabitats(site, verticalHabitats, chooser)
+  }
+  if (worseHabitats) {
+    addWorseHabitats(site, chooser, emptyLayers)
+  }
+  applyDegradeFlaws(site, degradeFlaws)
+  if (comments) {
+    addComments(site, chooser)
+  }
+  applyLineageFlaws(site, lineageFlaws)
+  withSeededClock(chooser.seeded, () =>
+    writeSite(outPath, site, {
+      stage,
+      versionRecords: versionRecordsFor(versionFlaws, templateVersion)
+    })
+  )
+}
+
+/**
  * Write a site read from legacy output as one BNG Service template file.
  *
  * @param {{ legacyPath: string } | { baselinePath: string, postInterventionPath: string }} input
@@ -175,24 +211,18 @@ export function writeBngServiceFromLegacy(input, outPath, options = {}) {
         input.postInterventionPath,
         readOptions
       )
-  applyTemplateOverrides(site, overrides)
-  if (verticalHabitats) {
-    addVerticalHabitats(site, verticalHabitats, chooser)
-  }
-  if (worseHabitats) {
-    addWorseHabitats(site, chooser, emptyLayers)
-  }
-  applyDegradeFlaws(site, degradeFlaws)
-  if (comments) {
-    addComments(site, chooser)
-  }
-  applyLineageFlaws(site, lineageFlaws)
-  withSeededClock(chooser.seeded, () =>
-    writeSite(outPath, site, {
-      stage,
-      versionRecords: versionRecordsFor(versionFlaws, templateVersion)
-    })
-  )
+  finishSite(site, outPath, chooser, {
+    stage,
+    templateVersion,
+    overrides,
+    comments,
+    verticalHabitats,
+    worseHabitats,
+    emptyLayers,
+    lineageFlaws,
+    degradeFlaws,
+    versionFlaws
+  })
   return site
 }
 
@@ -259,8 +289,9 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
 }
 
 /**
- * Generate one synthetic site in the BNG Service template format: the same
- * plan `generateOne` takes, plus the new format's flaws and options.
+ * Generate one synthetic site in the BNG Service template format, drawn
+ * natively: the same plan `generateOne` takes, plus the new format's flaws
+ * and options. No legacy file is written.
  *
  * @param {string} outPath
  * @param {[number, number]} centre
@@ -299,40 +330,37 @@ export function generateBngServiceSynthetic(
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
   const enrich = templateFeatures && geometricFlawNames.length === 0
   const counts = computeLayerCounts(plan.numParcels, emptyLayers, plan.numTrees)
-  const overrides = enrich
-    ? templateFeatureOverrides(counts, attributeOverrides)
-    : attributeOverrides
+  const overrides = normaliseOverrides(
+    enrich
+      ? templateFeatureOverrides(counts, attributeOverrides)
+      : attributeOverrides
+  )
   logSyntheticBanner(outPath, centre, plan, stage, templateVersion)
-  return withTempDir((dir) => {
-    const legacyPath = path.join(dir, 'legacy.gpkg')
-    withMode('silent', () =>
-      generateOne(legacyPath, centre, {
-        ...plan,
-        attributeOverrides: overrides,
-        habitatFilter: areaLayerOffers
-      })
-    )
-    const verticalRows = attributeOverrides.verticalHabitats ?? []
-    const site = writeBngServiceFromLegacy({ legacyPath }, outPath, {
-      seed: plan.seed,
-      stage,
-      templateVersion,
-      overrides,
-      comments: enrich,
-      // A degrade flaw breaks a habitat that gets worse, so it adds them.
-      worseHabitats: enrich || degradeFlawNames.length > 0,
-      emptyLayers,
-      verticalHabitats:
-        enrich && !emptyLayers.has('verticalHabitats')
-          ? { count: defaultVerticalCount(plan.numParcels), rows: verticalRows }
-          : { count: 0, rows: verticalRows },
-      lineageFlaws: lineageFlawNames,
-      degradeFlaws: degradeFlawNames,
-      versionFlaws: versionFlawNames
-    })
-    reportSite(site, outPath, stage)
-    return site
+  const chooser = createChooser(plan.seed)
+  const site = drawSyntheticSite(
+    centre,
+    { ...plan, attributeOverrides: overrides },
+    chooser
+  )
+  const verticalRows = overrides.verticalHabitats ?? []
+  finishSite(site, outPath, chooser, {
+    stage,
+    templateVersion,
+    overrides,
+    comments: enrich,
+    // A degrade flaw breaks a habitat that gets worse, so it adds them.
+    worseHabitats: enrich || degradeFlawNames.length > 0,
+    emptyLayers,
+    verticalHabitats:
+      enrich && !emptyLayers.has('verticalHabitats')
+        ? { count: defaultVerticalCount(plan.numParcels), rows: verticalRows }
+        : { count: 0, rows: verticalRows },
+    lineageFlaws: lineageFlawNames,
+    degradeFlaws: degradeFlawNames,
+    versionFlaws: versionFlawNames
   })
+  reportSite(site, outPath, stage)
+  return site
 }
 
 // --------------------------------------------------------------- workbook

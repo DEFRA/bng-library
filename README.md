@@ -138,23 +138,38 @@ mapping post-intervention habitats.
 | Scenario catalogue | `generatePermutations({ format: 'bng-service' })`: each scenario carries one `geoPackage: { path, buffer }`, and its workbook when asked for. The scenarios hold exactly what they pin: nothing is added |
 | Any legacy output  | `writeBngServiceFromLegacy({ legacyPath } \| { baselinePath, postInterventionPath }, outPath, options)`                                                                                                  |
 
-Each route runs the legacy generator unchanged and converts its output, so
-seeds, row overrides, flaws and scenarios behave exactly as they do for the
-legacy format, and the same seed gives the same file to the byte. The workbook
+**Synthetic sites are drawn natively.** The synthetic routes (including
+every flaw) write no legacy file: a site is drawn by the same drawing step
+the legacy format uses (`src/synthetic/draw/`), from the same seed, and
+built straight into the BNG Service site model by the template's rules
+(`src/bng-service/site-features.mjs`). So seeds, row overrides and flaws
+behave exactly as they do for the legacy format, and the same seed gives
+the same file to the byte. The scenario catalogue and the workbook routes
+still convert legacy output for now; they are next to be drawn natively.
+
+`writeBngServiceFromLegacy` converts a legacy file (or pair) that already
+exists, such as an older fixture. No generator uses it, but it builds the
+site by the same rules, and a test keeps the two in step. The workbook
 routes take a `seed` too (`generateFromWorkbookBuffer({ seed, … })`, in
 either format); without one, tree positions, line shapes and feature
-identities are drawn afresh on each run. The habitat
-draws are narrowed to those the template's Area Habitats layers offer, and a
-green wall or other vertical area habitat a workbook lists among its area
-habitats moves to the vertical layers, with the ground under it mapped as
-Developed land; sealed surface.
+identities are drawn afresh on each run. The habitat draws are narrowed to
+those the template's Area Habitats layers offer, and a green wall or other
+vertical area habitat a workbook lists among its area habitats moves to the
+vertical layers, with the ground under it mapped as Developed land; sealed
+surface.
 
-Row overrides take three more fields in this format: `irreplaceable` (`"Yes"`
-or `"No"`, on `habitats` and `trees`), `comment` and
-`postInterventionComment`. A `verticalHabitats` layer takes rows of
-`habitatFullName`, `retention` (`Retained`, `Enhanced`, `Created`, or `Lost`:
-absent post-intervention), `baselineCondition`, `proposedCondition`,
-`proposedHabitatFullName`, `area` (hectares) and the two comments.
+Row overrides take the legacy generator's fields (see `generateOne`) and
+three more in this format: `irreplaceable` (`"Yes"` or `"No"`, on `habitats`
+and `trees`), `comment` and `postInterventionComment`. `habitatRef` names an
+area habitat's Habitat Ref (as `parcelRef` does), strategic significance is
+`Low` or `High` (or the legacy wording), and an area habitat's `Lost` is a
+creation in another broad type, written as Created. A tree's `count` must be
+1, as each tree point is one tree; an unknown field is refused rather than
+ignored, and `$comment` fields document a row. A `verticalHabitats` layer
+takes rows of `habitatFullName`, `retention` (`Retained`, `Enhanced`,
+`Created`, or `Lost`: absent post-intervention), `baselineCondition`,
+`proposedCondition`, `proposedHabitatFullName`, `area` (hectares) and the two
+comments.
 
 **Flaws.** `listFlaws({ format: 'bng-service' })` lists the flaws the format
 takes: every legacy flaw remapped to its tables (the IGGI polygon becomes a

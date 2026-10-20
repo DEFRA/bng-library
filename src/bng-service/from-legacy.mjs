@@ -12,61 +12,32 @@
  *   workbook route writes. Each post-intervention feature is matched to its
  *   baseline parent: by reference first, then by shape.
  *
- * Either way the rules are the template's (its plugin/README.md, "What the
- * tools translate"):
- *
- * - An area habitat cannot be removed: the legacy "Lost" row of an area
- *   habitat is a creation in its place, and becomes Created with the parcel as
- *   its parent.
- * - A lost hedgerow, watercourse or tree is absent from the post-intervention
- *   table. Its absence is the record.
- * - A created hedgerow, watercourse or tree has no parent and no baseline row.
- * - Sizes are measured from the shape: areas in hectares, lengths in metres.
- * - Values lose their list numbers, strategic significance becomes Low or
- *   High (Low at baseline and on a Retained row), spatial risk is N/A, and
- *   distinctiveness and a single allowed Irreplaceable Habitat answer come
- *   from the template's own lists.
+ * No generator uses this: they draw the BNG Service format natively. It
+ * converts legacy files that already exist. Each legacy row is read as a
+ * feature source, its values without their list numbers, and the site is
+ * built by `site-features.mjs`, whose rules are the template's.
  */
 
 import { randomUUID } from 'node:crypto'
 import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
-import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 import { pointInRing, polygonCentroid } from '../geometry.mjs'
-import { warn } from '../log.mjs'
-import { listIndex } from './reference.mjs'
-import { COMMENT, HABITAT_REF } from './site.mjs'
-import { moveVerticalHabitats } from './vertical-from-area.mjs'
+import { HABITAT_REF } from './site.mjs'
 import {
-  LOW,
-  NO,
-  NOT_APPLICABLE,
-  TO_BE_CREATED,
-  distinctiveness,
-  irreplaceableAnswers,
-  riparianEncroachment,
-  significance,
-  treeSetting,
-  withoutListNumber
-} from './vocabulary.mjs'
+  baselineFeature,
+  hasPostIntervention,
+  iggiVertical,
+  layerFromSources,
+  postInterventionFeature,
+  redlineFeature,
+  text
+} from './site-features.mjs'
+import { moveVerticalHabitats } from './vertical-from-area.mjs'
+import { withoutListNumber } from './vocabulary.mjs'
 
-const SQ_M_PER_HECTARE = 10_000
-const RETAINED = 'Retained'
-const ENHANCED = 'Enhanced'
+export { timingValues } from './site-features.mjs'
+
 const CREATED = 'Created'
-const LOST = 'Lost'
-const NEWLY_PLANTED = 'Newly Planted'
-const EXISTING = 'Existing'
-const ON_SITE_RISK = NOT_APPLICABLE
-const STANDARD_ENHANCEMENT = 'Standard Enhancement'
-const NATIVE = 'Native'
-const NON_NATIVE = 'Non-native'
-const NATIVE_SHARE = 0.8
 const POINT_TOLERANCE_M = 1e-6
-const IGGI_HABITAT = {
-  broad: 'Intertidal hard structures',
-  type: 'Artificial hard structures with integrated greening of grey infrastructure (IGGI)'
-}
-const IGGI_CONDITION = 'Moderate'
 
 /** The legacy layers, keyed as the generators key them. */
 const LEGACY = {
@@ -87,11 +58,6 @@ const TIMING_COLUMNS = {
     'Delay in starting habitat creation/enhancement in years'
   ]
 }
-
-const text = (value) =>
-  value === null || value === undefined ? null : String(value)
-
-const hectares = (geometry) => areaSquareMetres(geometry) / SQ_M_PER_HECTARE
 
 function tableExists(db, table) {
   return Boolean(
@@ -136,412 +102,114 @@ function simpleGeometry(geometry) {
   return geometry
 }
 
-function defaultIrreplaceable(habitatType) {
-  const answers = irreplaceableAnswers(habitatType)
-  return answers.size === 1 ? [...answers][0] : NO
-}
+// ------------------------------------------------- legacy row → source
 
-// --------------------------------------------------------------- baseline
+const condition = (row, side) => withoutListNumber(row[`${side} Condition`])
 
-function areaBaseline(row, geometry, ref) {
-  const type = withoutListNumber(row['Baseline Habitat Type'])
-  return {
-    [HABITAT_REF]: ref,
-    'Baseline Broad Habitat Type': row['Baseline Broad Habitat Type'],
-    'Baseline Habitat Type': type,
-    'Baseline Distinctiveness': distinctiveness('habitats', type),
-    'Baseline Condition': withoutListNumber(row['Baseline Condition']),
-    'Baseline Strategic Significance': LOW,
-    'Irreplaceable Habitat': defaultIrreplaceable(type),
-    Area: hectares(geometry),
-    [COMMENT]: row[LEGACY.habitats.comment] ?? null
-  }
-}
-
-function hedgerowBaseline(row, geometry, ref) {
-  const type = row['Baseline Hedge Type']
-  return {
-    [HABITAT_REF]: ref,
-    'Baseline Hedge Type': type,
-    'Baseline Distinctiveness': distinctiveness('hedgerows', type),
-    'Baseline Condition': withoutListNumber(row['Baseline Condition']),
-    'Baseline Strategic Significance': LOW,
-    Length: lengthMetres(geometry),
-    [COMMENT]: row[LEGACY.hedgerows.comment] ?? null
-  }
-}
-
-function riverBaseline(row, geometry, ref) {
-  const type = row['Baseline River Type']
-  return {
-    [HABITAT_REF]: ref,
-    'Baseline River Type': type,
-    'Baseline Distinctiveness': distinctiveness('rivers', type),
-    'Baseline Condition': withoutListNumber(row['Baseline Condition']),
-    'Baseline Strategic Significance': LOW,
-    'Baseline Encroachment into Watercourse':
-      row['Baseline Encroachment into Watercourse'],
-    'Baseline Encroachment into riparian zone': riparianEncroachment(
-      type,
-      row['Baseline Encroachment into riparian zone']
-    ),
-    Length: lengthMetres(geometry),
-    [COMMENT]: row[LEGACY.rivers.comment] ?? null
-  }
-}
-
-function treeType(value, choose) {
-  if (value === NATIVE || value === NON_NATIVE) {
-    return value
-  }
-  return choose() < NATIVE_SHARE ? NATIVE : NON_NATIVE
-}
-
-function treeBaseline(row, geometry, ref, choose) {
-  return {
-    [HABITAT_REF]: ref,
-    'Baseline Tree Size': row['Baseline Tree Size'],
-    'Baseline Tree Type': treeType(row['Baseline Tree Type'], choose),
-    'Baseline Rural or Urban Tree': treeSetting(
-      row['Baseline Rural or Urban Tree']
-    ),
-    'Baseline Condition': withoutListNumber(row['Baseline Condition']),
-    'Baseline Strategic Significance': LOW,
-    'Irreplaceable Habitat': NO,
-    [COMMENT]: row[LEGACY.trees.comment] ?? null
-  }
-}
-
-const BASELINE_VALUES = {
-  habitats: areaBaseline,
-  hedgerows: hedgerowBaseline,
-  rivers: riverBaseline,
-  trees: treeBaseline
-}
-
-// ------------------------------------------------------- post-intervention
-
-/** Retention as the template stores it: an area habitat's "Lost" is Created. */
-function templateRetention(layerKey, retention) {
-  return layerKey === 'habitats' && retention === LOST ? CREATED : retention
-}
-
-function proposedSignificance(retention, value) {
-  return retention === RETAINED ? LOW : significance(value)
-}
-
-const aboveZero = (value) => value !== null && value !== '0'
-
-/**
- * The advance and delay years. The template allows both at 0, but greys out
- * one while the other is above 0, so that one is blank, not 0.
- */
-export function timingValues(advance, delay) {
-  const a = text(advance)
-  const d = text(delay)
-  return [
-    aboveZero(d) && a === '0' ? null : a,
-    aboveZero(a) && d === '0' ? null : d
-  ]
-}
-
-function timing(layerKey, row) {
+function timingOf(layerKey, row) {
   const [advance, delay] = TIMING_COLUMNS[layerKey] ?? TIMING_COLUMNS.default
-  const [a, d] = timingValues(row[advance], row[delay])
-  return { [advance]: a, [delay]: d }
+  return { advance: row[advance], delay: row[delay] }
 }
 
-function areaProposed(row, geometry, retention) {
-  const type = withoutListNumber(row['Proposed Habitat Type'])
-  return {
-    'Retention Category': retention,
-    'Proposed Broad Habitat Type': row['Proposed Broad Habitat Type'],
-    'Proposed Habitat Type': type,
-    'Proposed Distinctiveness': distinctiveness('habitats', type, true),
-    'Proposed Condition': withoutListNumber(row['Proposed Condition']),
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      row['Proposed Strategic Significance']
-    ),
-    ...timing('habitats', row),
-    'Spatial risk category': ON_SITE_RISK,
-    Area: hectares(geometry)
-  }
-}
-
-function hedgerowProposed(row, geometry, retention) {
-  const type = row['Proposed Hedge Type']
-  return {
-    'Retention Category': retention,
-    'Proposed Hedge Type': type,
-    'Proposed Distinctiveness': distinctiveness('hedgerows', type, true),
-    'Proposed Condition': withoutListNumber(row['Proposed Condition']),
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      row['Proposed Strategic Significance']
-    ),
-    ...timing('hedgerows', row),
-    'Spatial risk category': ON_SITE_RISK,
-    Length: lengthMetres(geometry)
-  }
-}
-
-function riverProposed(row, geometry, retention) {
-  const type = row['Proposed River Type']
-  return {
-    'Retention Category': retention,
-    'Proposed River Type': type,
-    'Proposed Distinctiveness': distinctiveness('rivers', type, true),
-    'Proposed Condition': withoutListNumber(row['Proposed Condition']),
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      row['Proposed Strategic Significance']
-    ),
-    'Proposed Encroachment into Watercourse':
-      row['Proposed Encroachment into Watercourse'],
-    'Proposed Encroachment into riparian zone': riparianEncroachment(
-      type,
-      row['Proposed Encroachment into riparian zone']
-    ),
-    'Enhancement Type':
-      retention === ENHANCED ? STANDARD_ENHANCEMENT : NOT_APPLICABLE,
-    ...timing('rivers', row),
-    'Spatial risk category': ON_SITE_RISK,
-    Length: lengthMetres(geometry)
-  }
-}
-
-function treeProposed(row, geometry, retention) {
-  return {
-    'Retention Category': retention,
-    'Proposed Tree Size': row['Proposed Tree Size'],
-    'Proposed Rural or Urban Tree': treeSetting(
-      row['Proposed Rural or Urban Tree']
-    ),
-    'Proposed Condition': withoutListNumber(row['Proposed Condition']),
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      row['Proposed Strategic Significance']
-    ),
-    Category: retention === CREATED ? NEWLY_PLANTED : EXISTING,
-    ...timing('trees', row),
-    'Spatial risk category': ON_SITE_RISK
-  }
-}
-
-const PROPOSED_VALUES = {
-  habitats: areaProposed,
-  hedgerows: hedgerowProposed,
-  rivers: riverProposed,
-  trees: treeProposed
-}
-
-/**
- * The baseline columns of a post-intervention row created from nothing,
- * which the template fills with "To be created" and "N/A", and leaves the
- * baseline significance blank.
- */
-const PARENTLESS_BASELINE = {
-  hedgerows: () => ({
-    'Baseline Hedge Type': TO_BE_CREATED,
-    'Baseline Distinctiveness': NOT_APPLICABLE,
-    'Baseline Condition': NOT_APPLICABLE,
-    'Baseline Strategic Significance': null,
-    'Baseline Length': null
+const LEGACY_VALUES = {
+  habitats: (row) => ({
+    baseline: {
+      broad: row['Baseline Broad Habitat Type'],
+      type: withoutListNumber(row['Baseline Habitat Type']),
+      condition: condition(row, 'Baseline')
+    },
+    proposed: {
+      broad: row['Proposed Broad Habitat Type'],
+      type: withoutListNumber(row['Proposed Habitat Type']),
+      condition: condition(row, 'Proposed'),
+      significance: row['Proposed Strategic Significance'],
+      ...timingOf('habitats', row)
+    }
   }),
-  rivers: () => ({
-    'Baseline River Type': TO_BE_CREATED,
-    'Baseline Distinctiveness': NOT_APPLICABLE,
-    'Baseline Condition': NOT_APPLICABLE,
-    'Baseline Strategic Significance': null,
-    'Baseline Encroachment into Watercourse': NOT_APPLICABLE,
-    'Baseline Encroachment into riparian zone': NOT_APPLICABLE,
-    'Baseline Length': null
+  hedgerows: (row) => ({
+    baseline: {
+      type: row['Baseline Hedge Type'],
+      condition: condition(row, 'Baseline')
+    },
+    proposed: {
+      type: row['Proposed Hedge Type'],
+      condition: condition(row, 'Proposed'),
+      significance: row['Proposed Strategic Significance'],
+      ...timingOf('hedgerows', row)
+    }
   }),
-  trees: (row, choose) => ({
-    'Baseline Tree Size': NOT_APPLICABLE,
-    'Baseline Tree Type': NOT_APPLICABLE,
-    'Baseline Rural or Urban Tree': NOT_APPLICABLE,
-    'Baseline Condition': NOT_APPLICABLE,
-    'Baseline Strategic Significance': null,
-    'Irreplaceable Habitat': NO,
-    'Proposed Tree Type': treeType(row['Proposed Tree Type'], choose)
+  rivers: (row) => ({
+    baseline: {
+      type: row['Baseline River Type'],
+      condition: condition(row, 'Baseline'),
+      water: row['Baseline Encroachment into Watercourse'],
+      riparian: row['Baseline Encroachment into riparian zone']
+    },
+    proposed: {
+      type: row['Proposed River Type'],
+      condition: condition(row, 'Proposed'),
+      significance: row['Proposed Strategic Significance'],
+      water: row['Proposed Encroachment into Watercourse'],
+      riparian: row['Proposed Encroachment into riparian zone'],
+      ...timingOf('rivers', row)
+    }
+  }),
+  trees: (row) => ({
+    baseline: {
+      size: row['Baseline Tree Size'],
+      type: row['Baseline Tree Type'],
+      setting: row['Baseline Rural or Urban Tree'],
+      condition: condition(row, 'Baseline')
+    },
+    proposed: {
+      size: row['Proposed Tree Size'],
+      type: row['Proposed Tree Type'],
+      setting: row['Proposed Rural or Urban Tree'],
+      condition: condition(row, 'Proposed'),
+      significance: row['Proposed Strategic Significance'],
+      ...timingOf('trees', row)
+    }
   })
 }
 
-function postInterventionFeature(layerKey, source, parent, ref, choose) {
-  const retention = templateRetention(
-    layerKey,
-    source.row['Retention Category']
-  )
-  const values = {
-    [HABITAT_REF]: ref,
-    ...PROPOSED_VALUES[layerKey](source.row, source.geometry, retention),
-    [COMMENT]: null
-  }
-  if (!parent) {
-    Object.assign(
-      values,
-      PARENTLESS_BASELINE[layerKey]?.(source.row, choose) ?? {}
-    )
-  } else if (layerKey === 'trees') {
-    // A kept tree keeps its type: the Metric does not record a change.
-    values['Proposed Tree Type'] = parent.values['Baseline Tree Type']
-    keepTreeEnhancementBetter(values, parent)
-  }
+/** A legacy row as a feature source. */
+function legacySource(layerKey, { index, row, geometry }) {
+  const legacy = LEGACY[layerKey]
   return {
-    geometry: source.geometry,
-    values,
-    parent,
-    source: { index: source.index, retention: source.row['Retention Category'] }
-  }
-}
-
-let enhancedTreeConditions = null
-
-/**
- * An Enhanced tree moves to a better condition only: the template offers
- * nothing else. The legacy workbook route can mark a tree Enhanced without
- * one, because it reads no enhancement for trees, so such a tree is written
- * as the Retained tree it is, with a warning.
- */
-function keepTreeEnhancementBetter(values, parent) {
-  if (values['Retention Category'] !== ENHANCED) {
-    return
-  }
-  enhancedTreeConditions ??= listIndex(
-    'Individual trees/Individual tree Condition - options.csv',
-    'ID',
-    'New'
-  )
-  const baseline = parent.values['Baseline Condition']
-  const better =
-    enhancedTreeConditions.get(`${baseline}${ENHANCED}`) ?? new Set()
-  if (better.has(values['Proposed Condition'])) {
-    return
-  }
-  warn(
-    `  tree ${values[HABITAT_REF]}: Enhanced with no better condition (${baseline} → ${values['Proposed Condition']}); written as Retained`
-  )
-  values['Retention Category'] = RETAINED
-  values['Proposed Condition'] = baseline
-  values['Proposed Strategic Significance'] = LOW
-}
-
-function hasBaseline(layerKey, retention) {
-  return layerKey === 'habitats' || retention !== CREATED
-}
-
-function hasPostIntervention(layerKey, retention) {
-  if (
-    retention === RETAINED ||
-    retention === ENHANCED ||
-    retention === CREATED
-  ) {
-    return true
-  }
-  return layerKey === 'habitats' && retention === LOST
-}
-
-function baselineFeature(layerKey, source, ref, options) {
-  return {
-    geometry: source.geometry,
-    values: BASELINE_VALUES[layerKey](
-      source.row,
-      source.geometry,
-      ref,
-      options.choose
-    ),
-    uuid: options.uuidFor(layerKey, source.index),
-    source: { index: source.index }
+    index,
+    geometry,
+    ref: text(row[legacy.ref]),
+    retention: row['Retention Category'],
+    comment: row[legacy.comment] ?? null,
+    ...LEGACY_VALUES[layerKey](row)
   }
 }
 
 // ---------------------------------------------------------------- redline
-
-const ring = (geometry) => geometry.coordinates[0]
 
 function redline(db, rows) {
   const [first] = readRows(db, 'Red Line Boundary')
   if (!first?.geometry) {
     throw new Error('The legacy GeoPackage has no Red Line Boundary')
   }
-  const [cx, cy] = polygonCentroid(ring(first.geometry))
   const survey = rows.find((r) => r.row['Survey Date'])?.row ?? {}
-  return {
-    geometry: first.geometry,
-    values: {
-      'Site Name': first.row['Site Name'] ?? survey['Site Name'] ?? null,
-      Location: `Centred on easting ${Math.round(cx)}, northing ${Math.round(cy)}`,
-      'Survey Date': survey['Survey Date'] ?? null,
-      'Survey Details': survey['Survey Details'] ?? null,
-      'Mapped by': survey['Mapped by'] ?? null,
-      Company: survey.Company ?? null,
-      'Base Map': survey['Base Map'] ?? null
-    }
-  }
+  return redlineFeature(first.geometry, first.row['Site Name'], survey)
 }
 
-// ---------------------------------------------- IGGI, as a vertical habitat
-
-/**
- * The legacy bad fixture can draw an IGGI polygon. The template maps IGGI as
- * a vertical area habitat, drawn as a line along its base, so the polygon's
- * edge becomes the line and its area the area typed in.
- */
+/** The legacy bad fixture's IGGI polygons, as vertical habitats. */
 function iggiFeatures(db, options) {
-  const baseline = []
-  const postIntervention = []
+  const layer = { baseline: [], postIntervention: [] }
   for (const source of readRows(db, LEGACY_IGGIS)) {
-    const geometry = {
-      type: 'LineString',
-      coordinates: ring(source.geometry).slice(0, -1)
-    }
-    const ref = source.row['IGGI Ref']
-    const area = hectares(source.geometry)
-    const parent = {
-      geometry,
-      uuid: options.uuidFor('verticalHabitats', source.index),
-      values: {
-        [HABITAT_REF]: ref,
-        'Baseline Broad Habitat Type': IGGI_HABITAT.broad,
-        'Baseline Habitat Type': IGGI_HABITAT.type,
-        'Baseline Distinctiveness': distinctiveness(
-          'verticalHabitats',
-          IGGI_HABITAT.type
-        ),
-        'Baseline Condition': IGGI_CONDITION,
-        'Baseline Strategic Significance': LOW,
-        'Irreplaceable Habitat': defaultIrreplaceable(IGGI_HABITAT.type),
-        Area: area,
-        [COMMENT]: null
-      },
-      source: { index: source.index }
-    }
-    baseline.push(parent)
-    postIntervention.push({
-      geometry,
-      parent,
-      values: {
-        [HABITAT_REF]: ref,
-        'Retention Category': RETAINED,
-        'Proposed Broad Habitat Type': IGGI_HABITAT.broad,
-        'Proposed Habitat Type': IGGI_HABITAT.type,
-        'Proposed Distinctiveness': distinctiveness(
-          'verticalHabitats',
-          IGGI_HABITAT.type,
-          true
-        ),
-        'Proposed Condition': IGGI_CONDITION,
-        'Proposed Strategic Significance': LOW,
-        'Spatial risk category': ON_SITE_RISK,
-        Area: area,
-        [COMMENT]: null
-      },
-      source: { index: source.index, retention: RETAINED }
-    })
+    const { parent, child } = iggiVertical(
+      source.geometry,
+      source.row['IGGI Ref'],
+      source.index,
+      options.uuidFor('verticalHabitats', source.index)
+    )
+    layer.baseline.push(parent)
+    layer.postIntervention.push(child)
   }
-  return { baseline, postIntervention }
+  return layer
 }
 
 // ---------------------------------------------------------------- options
@@ -574,30 +242,13 @@ export function siteFromLegacyFile(legacyPath, options) {
     const layers = {}
     const allRows = []
     for (const [layerKey, legacy] of Object.entries(LEGACY)) {
-      const layer = emptyLayer()
-      for (const source of readRows(db, legacy.table)) {
-        allRows.push(source)
-        const retention = source.row['Retention Category']
-        const ref = text(source.row[legacy.ref])
-        const parent = hasBaseline(layerKey, retention)
-          ? baselineFeature(layerKey, source, ref, resolved)
-          : null
-        if (parent) {
-          layer.baseline.push(parent)
-        }
-        if (hasPostIntervention(layerKey, retention)) {
-          layer.postIntervention.push(
-            postInterventionFeature(
-              layerKey,
-              source,
-              parent,
-              ref,
-              resolved.choose
-            )
-          )
-        }
-      }
-      layers[layerKey] = layer
+      const rows = readRows(db, legacy.table)
+      allRows.push(...rows)
+      layers[layerKey] = layerFromSources(
+        layerKey,
+        rows.map((row) => legacySource(layerKey, row)),
+        resolved
+      )
     }
     layers.verticalHabitats = iggiFeatures(db, resolved)
     const site = { redline: redline(db, allRows), layers }
@@ -611,6 +262,8 @@ export function siteFromLegacyFile(legacyPath, options) {
 }
 
 // ------------------------------------------------------------ pair matching
+
+const ring = (geometry) => geometry.coordinates[0]
 
 const SPLIT_SUFFIX = /(?:[a-z]|-\d+)$/
 
@@ -718,42 +371,33 @@ export function siteFromLegacyPair(
     const allRows = []
     for (const [layerKey, legacy] of Object.entries(LEGACY)) {
       const layer = emptyLayer()
-      for (const source of readRows(baselineDb, legacy.table)) {
-        allRows.push(source)
+      for (const row of readRows(baselineDb, legacy.table)) {
+        allRows.push(row)
         layer.baseline.push(
-          baselineFeature(
-            layerKey,
-            source,
-            text(source.row[legacy.ref]),
-            resolved
-          )
+          baselineFeature(layerKey, legacySource(layerKey, row), resolved)
         )
       }
-      for (const source of readRows(piDb, legacy.table)) {
-        const retention = source.row['Retention Category']
-        if (!source.geometry || !hasPostIntervention(layerKey, retention)) {
+      for (const row of readRows(piDb, legacy.table)) {
+        const source = legacySource(layerKey, row)
+        if (
+          !source.geometry ||
+          !hasPostIntervention(layerKey, source.retention)
+        ) {
           continue
         }
-        const ref = text(source.row[legacy.ref])
-        const created = layerKey !== 'habitats' && retention === CREATED
+        const created = layerKey !== 'habitats' && source.retention === CREATED
         const probe = {
           geometry: source.geometry,
-          values: { [HABITAT_REF]: ref }
+          values: { [HABITAT_REF]: source.ref }
         }
         const parent = created ? null : findParent(probe, layer.baseline)
         if (!created && !parent) {
           throw new Error(
-            `${legacy.table} ${ref}: no baseline feature holds this post-intervention feature`
+            `${legacy.table} ${source.ref}: no baseline feature holds this post-intervention feature`
           )
         }
         layer.postIntervention.push(
-          postInterventionFeature(
-            layerKey,
-            source,
-            parent,
-            ref,
-            resolved.choose
-          )
+          postInterventionFeature(layerKey, source, parent, resolved.choose)
         )
       }
       layers[layerKey] = layer

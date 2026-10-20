@@ -23,16 +23,23 @@ import {
   readTemplateVocabulary,
   workbookFromGeoPackage
 } from '../workbook-writer/index.mjs'
-import { DEFAULT_SIZE, PURPOSES, SCENARIOS } from './catalogue.mjs'
+import {
+  DEFAULT_SIZE,
+  PURPOSES,
+  SCENARIOS,
+  scenarioInFormat
+} from './catalogue.mjs'
 import { derivePermutationSeed } from './seed.mjs'
-import { writeBngServiceFromLegacy } from '../bng-service/generate.mjs'
+import {
+  generateBngServiceSynthetic,
+  writeBngServiceSite
+} from '../bng-service/generate.mjs'
 import {
   FORMAT_BNG_SERVICE,
   FORMAT_LEGACY,
   STAGE_POST_INTERVENTION,
   VALID_FORMATS
 } from '../bng-service/schema.mjs'
-import { areaLayerOffers } from '../bng-service/vocabulary.mjs'
 
 const TMP_PREFIX = 'bng-perms-'
 // Geometry layout is irrelevant to these attribute-driven scenarios, so every
@@ -107,12 +114,14 @@ export function scenarioPlan(scenario, size = scenario.size ?? DEFAULT_SIZE) {
 }
 
 /**
- * A scenario in the BNG Service format: the legacy generator's
- * post-intervention half (every row carrying both stages), drawn from the
- * habitats the template's Area Habitats layers offer, then written as one
- * file. The workbook is derived from the same legacy half, so the two still
- * cannot drift. The scenario holds exactly what it pins: no vertical
- * habitats or comments are added.
+ * A scenario in the BNG Service format, drawn natively: the same plan and
+ * seed as its legacy pair, built straight into one file holding both
+ * stages, with no legacy file written. Its habitat draws are those the
+ * template's Area Habitats layers offer, and it holds exactly what it pins:
+ * no vertical habitats, comments or habitats that get worse are added. The
+ * workbook is read from the file holding both stages, so it describes the
+ * file a user would upload; a baseline-stage file is written from the same
+ * site.
  */
 function generateBngServiceScenario(
   scenario,
@@ -123,22 +132,25 @@ function generateBngServiceScenario(
   stage
 ) {
   const size = scenario.size ?? DEFAULT_SIZE
-  const piPath = path.join(dir, `${scenario.id}-post-intervention.gpkg`)
-  const outPath = path.join(dir, `${scenario.id}.gpkg`)
-  const plan = {
-    ...scenarioPlan(scenario, size),
-    habitatFilter: areaLayerOffers
-  }
+  const fullPath = path.join(dir, `${scenario.id}-both-stages.gpkg`)
+  const outPath =
+    stage === STAGE_POST_INTERVENTION
+      ? fullPath
+      : path.join(dir, `${scenario.id}.gpkg`)
+  const plan = scenarioPlan(scenario, size)
   if (Number.isInteger(seed)) {
     plan.seed = derivePermutationSeed(seed, scenario.id)
   }
   captureMessages(() => {
-    generateOne(piPath, centre, plan)
-    writeBngServiceFromLegacy({ legacyPath: piPath }, outPath, {
-      seed: plan.seed,
-      stage,
-      overrides: plan.attributeOverrides
+    const site = generateBngServiceSynthetic(fullPath, centre, plan, {
+      templateFeatures: false
     })
+    if (outPath !== fullPath) {
+      writeBngServiceSite(outPath, site, {
+        stage,
+        seeded: Number.isInteger(plan.seed)
+      })
+    }
   })
   const entry = manifestEntry(
     scenario,
@@ -151,7 +163,7 @@ function generateBngServiceScenario(
     geoPackage: { path: entry.files.geoPackage, buffer: readFileSync(outPath) }
   }
   if (workbook) {
-    result.workbook = scenarioWorkbook(piPath, entry, workbook)
+    result.workbook = scenarioWorkbook(fullPath, entry, workbook)
   }
   return result
 }
@@ -219,9 +231,9 @@ export function generatePermutations({
       `format must be one of: ${[...VALID_FORMATS].join(', ')} (got: ${format})`
     )
   }
-  const selected = only
-    ? SCENARIOS.filter((s) => s.purpose === only)
-    : SCENARIOS
+  const selected = SCENARIOS.filter(
+    (s) => (!only || s.purpose === only) && scenarioInFormat(s, format)
+  )
   const withWorkbook = Boolean(workbookTemplate)
   if (manifestOnly) {
     const scenarios = selected.map((s) =>

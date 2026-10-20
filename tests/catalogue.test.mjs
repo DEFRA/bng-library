@@ -4,8 +4,11 @@ import {
   DEFAULT_SIZE,
   PURPOSES,
   SCENARIOS,
-  parseScenarioCatalogue
+  parseScenarioCatalogue,
+  scenarioInFormat
 } from '../src/permutations/catalogue.mjs'
+import * as library from '../index.mjs'
+import { generatePermutations } from '../index.mjs'
 
 const shipped = JSON.parse(
   readFileSync(
@@ -64,6 +67,19 @@ describe('parseScenarioCatalogue', () => {
     )
     expect(problems(doc)).toEqual([])
     expect(parseScenarioCatalogue(doc).purposes).toEqual(['intervention'])
+  })
+
+  it('accepts the formats a scenario is generated in, and rejects an unknown or repeated one', () => {
+    expect(problems(catalogue(scenario({ formats: ['legacy'] })))).toEqual([])
+    expect(
+      problems(catalogue(scenario({ formats: ['legacy', 'qgis', 'legacy'] })))
+    ).toEqual([
+      expect.stringMatching(/formats\[1\]: "qgis" is not one of/),
+      expect.stringMatching(/formats: "legacy" is listed twice/)
+    ])
+    expect(problems(catalogue(scenario({ formats: [] })))).toEqual([
+      expect.stringMatching(/formats: must be a non-empty list of formats/)
+    ])
   })
 
   it('rejects a misspelt field instead of ignoring it', () => {
@@ -455,5 +471,35 @@ describe('parseScenarioCatalogue', () => {
     expect(() => parseScenarioCatalogue(null)).toThrow(
       expect.objectContaining({ name: 'ScenarioCatalogueError' })
     )
+  })
+})
+
+describe('the formats a scenario is generated in', () => {
+  it('generates a scenario in every format unless it lists them', () => {
+    expect(scenarioInFormat(scenario(), 'bng-service')).toBe(true)
+    expect(
+      scenarioInFormat(scenario({ formats: ['legacy'] }), 'bng-service')
+    ).toBe(false)
+    expect(scenarioInFormat(scenario({ formats: ['legacy'] }), 'legacy')).toBe(
+      true
+    )
+  })
+
+  it('keeps the tree count scenario legacy only, until the service decides how several trees at one point are recorded', () => {
+    const ids = (format) =>
+      generatePermutations({
+        format,
+        only: 'trees',
+        manifestOnly: true
+      }).scenarios.map((s) => s.id)
+    expect(ids('legacy')).toContain('trees-count-above-one')
+    expect(ids('bng-service')).not.toContain('trees-count-above-one')
+  })
+})
+
+describe('the formats rule, for consumers of the catalogue', () => {
+  it('is exported from the package, as the catalogue is', () => {
+    expect(library.scenarioInFormat).toBe(scenarioInFormat)
+    expect(library.PERMUTATION_SCENARIOS).toBe(SCENARIOS)
   })
 })

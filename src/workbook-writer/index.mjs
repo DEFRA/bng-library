@@ -27,6 +27,7 @@ import { writeMetricWorkbook } from './write-workbook.mjs'
 
 export { METRIC_SHEETS } from './template-layout.mjs'
 export { WORKBOOK_SPELLINGS, workbookRowsFromGeoPackage } from './gpkg-rows.mjs'
+export { workbookRowsFromBngService } from './bng-service-rows.mjs'
 export {
   checkVocabulary,
   readTemplateVocabulary
@@ -56,7 +57,8 @@ export {
 } from './published-template.mjs'
 
 /**
- * Derive a metric workbook from a post-intervention GeoPackage.
+ * Derive a metric workbook from a post-intervention GeoPackage, legacy or in
+ * the BNG Service template format.
  *
  * @param {object} options
  * @param {string} options.postInterventionPath

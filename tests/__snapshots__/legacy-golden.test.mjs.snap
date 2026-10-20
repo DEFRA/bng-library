@@ -137,7 +137,6 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "trading-trade-down": "fe13d2d004389989bc45062f542ac3a6b742d56c8388cdffcf66d2bce7c51388",
   "trading-trade-up": "2a231a666eacb6a1a1f9800829cb92a524ab9d12eaba99505bccda122d40bf32",
   "trading-wrong-habitat": "309df6b2221fed0e4f12b0fd8085f0e8952937913353c559c204748a0037fa48",
-  "trees-count-above-one": "747792ff288ab3b12309ed672f746ba558bd4b35591b8ac62799379d23b70bc4",
   "watercourse-enhanced-culvert": "aaae319413d795b4d706c0763f867b338c72789b307f032b8d6bbfe5730e41eb",
 }
 `;

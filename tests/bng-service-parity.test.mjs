@@ -19,6 +19,10 @@ import {
   writeBngServiceFromLegacy
 } from '../index.mjs'
 import { areaLayerOffers } from '../src/bng-service/vocabulary.mjs'
+import { SCENARIOS, scenarioInFormat } from '../src/permutations/catalogue.mjs'
+import { scenarioPlan } from '../src/permutations/generate.mjs'
+import { derivePermutationSeed } from '../src/permutations/seed.mjs'
+import { workbookRowsFromGeoPackage } from '../src/workbook-writer/index.mjs'
 
 const CENTRE = [530000, 180000]
 
@@ -122,5 +126,58 @@ describe('the converter checks its row overrides as every route does', () => {
         { overrides: { habitats: [{ irreplacable: 'Yes' }] } }
       )
     ).toThrow(/unknown override "irreplacable"/)
+  })
+})
+
+const byReference = (a, b) =>
+  String(a.reference).localeCompare(String(b.reference)) ||
+  JSON.stringify(a).localeCompare(JSON.stringify(b))
+
+function sortedRows(file) {
+  const { rows } = workbookRowsFromGeoPackage(file)
+  return Object.fromEntries(
+    Object.entries(rows).map(([sheet, list]) => [
+      sheet,
+      [...list].sort(byReference)
+    ])
+  )
+}
+
+describe('a scenario’s workbook reads the same from either format', () => {
+  it.each(
+    SCENARIOS.filter((s) => scenarioInFormat(s, 'bng-service')).map((s) => s.id)
+  )('%s', (id) => {
+    const scenario = SCENARIOS.find((s) => s.id === id)
+    const plan = {
+      ...scenarioPlan(scenario),
+      seed: derivePermutationSeed(1, id)
+    }
+    const legacyPath = path.join(dir, `${id}-legacy.gpkg`)
+    const outPath = path.join(dir, `${id}-native.gpkg`)
+    generateOne(legacyPath, CENTRE, {
+      ...plan,
+      habitatFilter: areaLayerOffers
+    })
+    generateBngServiceSynthetic(outPath, CENTRE, plan, {
+      templateFeatures: false
+    })
+    const legacy = sortedRows(legacyPath)
+    const native = sortedRows(outPath)
+    for (const sheet of Object.keys(legacy)) {
+      expect(native[sheet], sheet).toHaveLength(legacy[sheet].length)
+      legacy[sheet].forEach((row, i) => {
+        for (const [key, value] of Object.entries(row)) {
+          const actual = native[sheet][i][key]
+          if (typeof value === 'number') {
+            expect(actual, `${sheet} ${row.reference} ${key}`).toBeCloseTo(
+              value,
+              9
+            )
+          } else {
+            expect(actual, `${sheet} ${row.reference} ${key}`).toBe(value)
+          }
+        }
+      })
+    }
   })
 })

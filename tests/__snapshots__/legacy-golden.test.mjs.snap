@@ -435,3 +435,124 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
   ],
 }
 `;
+
+exports[`workbook output is pinned > BNG Service file from advance-delay/created-trees 1`] = `"ea45c2101c05390e1ef8f4ab9d46b12878cefba24a476242a25c14c2c9e1b392"`;
+
+exports[`workbook output is pinned > BNG Service file from conditions/area-spread 1`] = `"20b0b80dc277a35b67f819d1e9b5b85d01f1f25ae03111a4b1b8da376cadab88"`;
+
+exports[`workbook output is pinned > BNG Service file from hedgerow-created 1`] = `"6e11080727c5b694dcb447865464baded2163f6025f401fe785f3dd80babdfdd"`;
+
+exports[`workbook output is pinned > BNG Service file from intervention/area-created 1`] = `"fbab29a1f3a227f55cba8909419a6100d0dfdf6b520a0c960c739a95ab0fedd9"`;
+
+exports[`workbook output is pinned > BNG Service file from intervention/area-enhanced-intertidal 1`] = `"7054fa8709b3763aeed8d545976a69992457946add98501934a183ad6ae4b635"`;
+
+exports[`workbook output is pinned > BNG Service file from intervention/hedgerow-condition-lowered 1`] = `"993c995ca4c2d8a0eb326df51aeb6cb2b90f0bf20e0c7d7e37a0ca6fcff836c8"`;
+
+exports[`workbook output is pinned > BNG Service file from intervention/watercourse-enhanced 1`] = `"95fdec7b9c184b0327232f553ddf606d14e9a287c2e9dcd8864421b4732cfa85"`;
+
+exports[`workbook output is pinned > BNG Service file from intervention/watercourse-enhanced-culvert 1`] = `"5ff433689f6c3c90e0314ffcc26232aff4fe940402ccb741df72af004346feb3"`;
+
+exports[`workbook output is pinned > BNG Service file from net-gain/met 1`] = `"5b80e17c55c2926c6c8af76cce83b5d9d48c469fa13933d2d0d884320699bd48"`;
+
+exports[`workbook output is pinned > BNG Service file from strategic-significance/spread 1`] = `"a2f7d940edaf6f9446325af004e11f50d534fa3f5875c7aff62b7a12c18131fa"`;
+
+exports[`workbook output is pinned > BNG Service file from trading-rules/trading-lost-to-development 1`] = `"bdd970ef81a02de54a4a917013e1b459512f3202e3f66f607f42cf7121e59e34"`;
+
+exports[`workbook output is pinned > BNG Service file from trading-rules/trading-lost-trees 1`] = `"8be5158e4db194e7dec0b3f0f85076a62ddf34e83d6ecb80c92b5add54d5953b"`;
+
+exports[`workbook output is pinned > BNG Service file from trees/count-above-one 1`] = `"1ed93bf5e929447a30d94fa179709c68bdcf6082d613b5ba0a73e1182f1fb83d"`;
+
+exports[`workbook output is pinned > a BNG Service baseline-stage file from a workbook 1`] = `"97ffa26baafa61b0529d73f78ba1aab9e686b6585663fa1b1869023bdcc93130"`;
+
+exports[`workbook output is pinned > a legacy baseline file alone 1`] = `"81e76511c225e95bc6197d6c10d2abf7b1479c91f2bbf4625bafcf5032efeae2"`;
+
+exports[`workbook output is pinned > legacy pair from advance-delay/created-trees 1`] = `
+[
+  "84965226654f5836ed22043c4497b96326311469e0dacade9f171123ecee4f10",
+  "7e2f94c2a0e9502b32f7997e74455255cfd672878c0bdd77623923d2098420e5",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from conditions/area-spread 1`] = `
+[
+  "e9f98da0cf57c452cb0a95e3866976d92e581069aabcc0047ca8f8251d64dfd8",
+  "72d281329cf81818d198e76c1507ed9e800a6c270cfbd66751cdb5b26cc6123a",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from hedgerow-created 1`] = `
+[
+  "9daf3ca7f1fd51ce089332c1f98666c57852478daa0fd477c6670c5db14725e5",
+  "ab5e9813bfd73105ce31aa28e16441de8c3fb3b00dbfb49dc52aa7b21f561c5c",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from intervention/area-created 1`] = `
+[
+  "a435b18de31e1eb218a238f482a5d7aa4b44d5f83141ea26663ddbc7d5c1821a",
+  "58395f4b855511ff94d3e940efe7c7d8a8b9cb664f8b901007e6d5859492e7e3",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from intervention/area-enhanced-intertidal 1`] = `
+[
+  "5e5bd47d7cda657dcb8cf5880ae546a499698e75a6f26ef79d38853f064c8e45",
+  "68477f5b9009e5abb3bcc923879be7619ccf2b33b46b55761d664f0d0166ca88",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from intervention/hedgerow-condition-lowered 1`] = `
+[
+  "5ebf2c7d9158205d1fcea8320b74eb479cc16f30ef6e95aef356111ddb14076f",
+  "c83ea4e5af48aa28b14dbfc795bcd9be357925350a9802c9d05bbf9804d51b36",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from intervention/watercourse-enhanced 1`] = `
+[
+  "2c68ab687c828d66c54f17eb28d4fdf04de67c7ebeda4c75fc888fd766c4214c",
+  "325bc1e98a181bac94d03af2665332fbafa60adf59570167ca474f7a8bae2a1d",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from intervention/watercourse-enhanced-culvert 1`] = `
+[
+  "633b7e9b20135e5d1d4e6bb317b24a5b61662e9d93621707b1bc66a16f11c991",
+  "82077a8f25ea6bdbdd120bcc63e27e8d481b7968c0a93693e990db6b26c79301",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from net-gain/met 1`] = `
+[
+  "2c158bcae73dc2eb56fe80252db0b17431bbbfa52a3929ee02078e00e28f99a1",
+  "698aaa1cf4d81d3326a8ba45846916b5ec0ea50b9fb010f554ca1f1af1549c86",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from strategic-significance/spread 1`] = `
+[
+  "b6d7989b77c3b9345086903b865c5c5b04ba51387fd52579651c0c994533225f",
+  "6c27718ff8f654b7d86a034560fb8e8be10c510bed840e449ca3e40dfae879e4",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from trading-rules/trading-lost-to-development 1`] = `
+[
+  "09973bc60daea828b54c5f53013b64b2bf810dd92248b412328355f896df8f45",
+  "8e95c6f7ceda9e9a3ebf80974b5654582e5992301a3ad1cb8f3108c8dcbc2c9b",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from trading-rules/trading-lost-trees 1`] = `
+[
+  "81e76511c225e95bc6197d6c10d2abf7b1479c91f2bbf4625bafcf5032efeae2",
+  "c0d504b6748b34b1c2f5a1f77cbeed245c4a25e6dee367795c8015b277b51db9",
+]
+`;
+
+exports[`workbook output is pinned > legacy pair from trees/count-above-one 1`] = `
+[
+  "55590865a0d155092c81500a19365cefd550f9d43dc7da85d32b9342627b1adc",
+  "29f6eb48ea9089813a934226dc75cb3fef381039c3fdf4134b733cd7118c4188",
+]
+`;

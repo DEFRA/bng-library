@@ -4,6 +4,13 @@
  * site model. Each feature becomes a feature source with the values the
  * workbook gives it, and the stages are paired as the template's tools pair
  * them (`pair.mjs`): no legacy file is written.
+ *
+ * The values each feature takes are the ones the legacy workbook writers
+ * write (`workbook/workbook-layers-lines.mjs`, `workbook-layers-trees.mjs`,
+ * `workbook-layers.mjs`), so both formats describe the same site. Where a
+ * rule is repeated here, each copy names the other: change both together.
+ * The parity test (`tests/bng-service-parity.test.mjs`) checks they agree
+ * on the fixture workbooks.
  */
 
 import { gpkgAreaRetention } from '../../retention.mjs'
@@ -35,6 +42,7 @@ const LAYER_LABELS = {
 const polygon = (ring) => ({ type: 'Polygon', coordinates: [ring] })
 const line = (coords) => ({ type: 'LineString', coordinates: coords })
 const point = ([x, y]) => ({ type: 'Point', coordinates: [x, y] })
+// As the legacy post-intervention bindings write years: String(v ?? 0).
 const years = (value) => String(value ?? 0)
 
 /** Sources for the features that were placed, indexed in placing order. */
@@ -78,7 +86,7 @@ function habitatBaselines(rows, cells) {
 }
 
 // A culvert's encroachment is the culvert category when the workbook
-// leaves it blank.
+// leaves it blank. Repeats riverBaselineBindings (workbook-layers-lines.mjs).
 function baselineEncroachment(row) {
   const culvert = row.type === CULVERT_TYPE ? CULVERT_ENCROACHMENT : null
   return {
@@ -104,6 +112,8 @@ function lineBaselines(rows, coordsList, withEncroachment) {
   )
 }
 
+// Every tree is set Urban, as treeBaselineBindings and treePostBindings
+// (workbook-layers-trees.mjs) write it.
 function treeBaselines(rows, instances) {
   return placed(
     instances,
@@ -142,7 +152,7 @@ function habitatPosts(rows, cells) {
 }
 
 // A culvert's proposed encroachment is the culvert category; otherwise the
-// workbook's, or none.
+// workbook's, or none. Repeats riverPostBindings (workbook-layers-lines.mjs).
 function proposedEncroachment(proposed) {
   if (proposed.type === CULVERT_TYPE) {
     return { water: CULVERT_ENCROACHMENT, riparian: CULVERT_ENCROACHMENT }

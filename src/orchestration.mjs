@@ -326,8 +326,9 @@ export function generateFromWorkbook(
 }
 
 /**
- * The workbook's rows and the site plan, with the banner logged. Null when
- * the workbook maps too little area to draw, which is logged too.
+ * The workbook's rows and the site plan, with the banner logged. When the
+ * workbook maps too little area to draw, which is logged too, only the plan
+ * comes back, with `aborted: true`.
  */
 function prepareWorkbookSite(workbook, sourceLabel, options) {
   const { strict, centre, mode, outPath } = options

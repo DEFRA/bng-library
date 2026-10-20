@@ -57,7 +57,6 @@ export {
   HECTARES_TO_SQ_M,
   MIN_GENERATED_AREA_SQ_M,
   computeWorkbookFixturePlan,
-  generateRedLineBoundaryFromArea,
   redLineRingFromArea,
   writeRedLineBoundary
 } from './workbook-layers-shared.mjs'

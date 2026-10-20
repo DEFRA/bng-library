@@ -107,9 +107,3 @@ export function writeRedLineBoundary(db, ring, siteName = SITE_NAME) {
   ).run(gpkgPolygon(SRS_ID, ring), Math.round(polygonArea(ring)), siteName)
   registerLayer(db, 'Red Line Boundary', 'POLYGON', envelopeFromCoords(ring))
 }
-
-export function generateRedLineBoundaryFromArea(db, cx, cy, totalAreaM2) {
-  const ring = redLineRingFromArea(cx, cy, totalAreaM2)
-  writeRedLineBoundary(db, ring)
-  return ring
-}

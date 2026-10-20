@@ -1,7 +1,8 @@
 /**
  * A BNG Service site is drawn natively: no route through the legacy
- * generator, the bad-fixture writer or the legacy converter is taken, so no
- * legacy file is written. Each is mocked to throw if called.
+ * generator, the bad-fixture writer, the workbook writers or the legacy
+ * converter is taken, so no legacy file is written. Each is mocked to throw
+ * if called, and so is the legacy layout's file opener.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -12,6 +13,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import {
   checkTemplateValues,
   generateBngServiceFromWorkbook,
+  generateBaselineFile,
   generateBngServiceSynthetic,
   generateOne,
   generatePermutations,
@@ -39,11 +41,14 @@ vi.mock('../src/synthetic/synthetic-bad.mjs', async (importOriginal) => ({
 }))
 vi.mock('../src/orchestration.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
-  generateFromWorkbook: vi.fn(legacyCalled('generateFromWorkbook')),
-  generateBaselineFile: vi.fn(legacyCalled('generateBaselineFile')),
-  generatePostInterventionFile: vi.fn(
-    legacyCalled('generatePostInterventionFile')
-  )
+  generateFromWorkbook: vi.fn(legacyCalled('generateFromWorkbook'))
+}))
+// Every legacy writer opens its file here, the workbook route's own
+// writers inside orchestration.mjs included; the BNG Service writer opens
+// its file through gpkg-io, so this catches any legacy file being written.
+vi.mock('../src/bng-schema.mjs', async (importOriginal) => ({
+  ...(await importOriginal()),
+  openGeoPackage: vi.fn(legacyCalled('openGeoPackage'))
 }))
 vi.mock('../src/bng-service/from-legacy.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -84,6 +89,18 @@ describe('a BNG Service site is drawn natively', () => {
     expect(() =>
       generateOne(path.join(dir, 'legacy.gpkg'), CENTRE, { numParcels: 3 })
     ).toThrow(/must not write legacy/)
+  })
+
+  it('would fail if a legacy file were written, by any writer', () => {
+    expect(() =>
+      generateBaselineFile(
+        path.join(dir, 'legacy-baseline.gpkg'),
+        null,
+        { habitats: [], hedgerows: [], rivers: [], trees: [] },
+        { totalAreaM2: 10_000 },
+        CENTRE
+      )
+    ).toThrow(/openGeoPackage was called/)
   })
 
   it('writes a default site, every value one the template offers', () => {

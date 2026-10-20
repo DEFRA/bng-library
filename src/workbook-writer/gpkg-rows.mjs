@@ -30,64 +30,26 @@ import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
 import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 import {
   isBngServiceGeoPackage,
-  workbookRowsFromBngService
+  workbookRowsFromBngServiceDb
 } from './bng-service-rows.mjs'
+import {
+  CREATED,
+  ENHANCED,
+  LOST,
+  RETAINED,
+  normaliseRetention,
+  workbookSpelling,
+  years
+} from './workbook-values.mjs'
+
+export { WORKBOOK_SPELLINGS } from './workbook-values.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
 
-const RETAINED = 'Retained'
-const ENHANCED = 'Enhanced'
-const LOST = 'Lost'
-const CREATED = 'Created'
-
 const INDIVIDUAL_TREES = 'Individual trees'
 const NOT_IRREPLACEABLE = 'No'
 const DEFAULT_TREE_COUNT = 1
-
-/**
- * List entries the GeoPackage template and the metric workbook spell
- * differently for the same category. The workbook puts a space after the
- * slash in most riparian encroachment pairs; written without it, the metric's
- * lookup fails and the row silently generates nothing. Only spellings listed
- * here are translated — anything else reaches the vocabulary check as it is.
- */
-export const WORKBOOK_SPELLINGS = Object.freeze({
-  riparianEncroachment: Object.freeze({
-    'Moderate/Moderate': 'Moderate/ Moderate',
-    'Moderate/Minor': 'Moderate/ Minor',
-    'Moderate/No Encroachment': 'Moderate/ No Encroachment',
-    'Minor/Minor': 'Minor/ Minor',
-    'Minor/No Encroachment': 'Minor/ No Encroachment',
-    'No Encroachment/No Encroachment': 'No Encroachment/ No Encroachment'
-  })
-})
-
-function workbookSpelling(field, value) {
-  return WORKBOOK_SPELLINGS[field]?.[value] ?? value
-}
-
-// Retention values sometimes arrive numbered ("3. Lost"), as the NE template's
-// list entries once were; the service strips the prefix, and so does this.
-const NUMBERED_PREFIX = /^\d+\.\s*/
-
-function normaliseRetention(value) {
-  if (typeof value !== 'string') {
-    return null
-  }
-  const trimmed = value.trim().replace(NUMBERED_PREFIX, '')
-  const known = [RETAINED, ENHANCED, LOST, CREATED]
-  return known.find((k) => k.toLowerCase() === trimmed.toLowerCase()) ?? null
-}
-
-/** Years as the workbook's list holds them: a number where there is one. */
-function years(value) {
-  if (value === null || value === undefined || value === '') {
-    return 0
-  }
-  const n = Number(value)
-  return Number.isFinite(n) ? n : value
-}
 
 function geometryColumn(db, table) {
   return db
@@ -290,7 +252,7 @@ export function workbookRowsFromGeoPackage(postInterventionPath) {
   const notes = []
   try {
     if (isBngServiceGeoPackage(db)) {
-      return workbookRowsFromBngService(postInterventionPath)
+      return workbookRowsFromBngServiceDb(db)
     }
     const areas = toSheets([
       ...habitatEntries(readLayer(db, 'Habitats'), notes),

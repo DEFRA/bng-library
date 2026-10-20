@@ -11,9 +11,15 @@
  * - Created with a parent: an area habitat that cannot be kept is lost and
  *   created in its place (a baseline loss plus a creation row).
  * - Split into parts (a hedge that gets worse in part): each part placed by
- *   its own retention, the rest lost.
+ *   its own retention and size, the rest lost. A hedgerow is always placed
+ *   by its parts' lengths, so a shorter hedge loses the rest.
  * - No post-intervention feature: lost.
  * - A post-intervention feature with no parent: a creation only.
+ * - A parent_uuid that names no baseline feature: noted, and placed as a
+ *   creation if Created.
+ *
+ * Retention is read as the service reads it, without a list number; an
+ * unrecognised value is noted.
  *
  * Area and vertical area habitats and trees go to the habitat sheets.
  * Sizes are measured from the shape as the service measures them, except a
@@ -26,15 +32,19 @@ import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
 import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 import { GEOMETRY_COLUMN, tableName } from '../bng-service/schema.mjs'
 import { STRATEGIC_SIGNIFICANCE } from '../synthetic/synthetic-constants.mjs'
-import { WORKBOOK_SPELLINGS } from './gpkg-rows.mjs'
+import {
+  CREATED,
+  ENHANCED,
+  RETAINED,
+  normaliseRetention,
+  workbookSpelling,
+  years
+} from './workbook-values.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
 const BASELINE = 'Baseline'
 const POST_INTERVENTION = 'Post-Intervention'
-const RETAINED = 'Retained'
-const ENHANCED = 'Enhanced'
-const CREATED = 'Created'
 const INDIVIDUAL_TREES = 'Individual trees'
 const NOT_IRREPLACEABLE = 'No'
 const [HIGH_WORDING, , LOW_WORDING] = STRATEGIC_SIGNIFICANCE
@@ -52,15 +62,6 @@ const TIMING = [
 export const BNG_SERVICE_MARKER = tableName('habitats', BASELINE)
 
 const significance = (value) => WORKBOOK_SIGNIFICANCE[value] ?? value ?? null
-
-/** Years as the workbook's list holds them: a number where there is one. */
-function years(value) {
-  if (value === null || value === undefined || value === '') {
-    return 0
-  }
-  const n = Number(value)
-  return Number.isFinite(n) ? n : value
-}
 
 function readTable(db, layerKey, stage) {
   return db
@@ -134,15 +135,14 @@ function encroachment(row, side) {
   const riparian = row[`${side} Encroachment into riparian zone`]
   return {
     watercourseEncroachment: row[`${side} Encroachment into Watercourse`],
-    riparianEncroachment:
-      WORKBOOK_SPELLINGS.riparianEncroachment[riparian] ?? riparian
+    riparianEncroachment: workbookSpelling('riparianEncroachment', riparian)
   }
 }
 
 const LAYERS = {
   habitats: habitatSide(areaSize),
   verticalHabitats: habitatSide(verticalSize),
-  hedgerows: linear('Hedge Type', () => ({})),
+  hedgerows: { ...linear('Hedge Type', () => ({})), byParts: true },
   rivers: linear('River Type', encroachment),
   trees: TREES
 }
@@ -168,10 +168,25 @@ function proposedRow(layer, row) {
   }
 }
 
+/**
+ * A post-intervention feature's retention, as the service reads it: without
+ * a list number, in its own case. An unknown value is noted, and the
+ * feature is then read as not continuing.
+ */
+function retentionOf(child, context) {
+  const retention = normaliseRetention(child['Retention Category'])
+  if (retention === null) {
+    context.notes.push(
+      `${context.table} ${child['Habitat Ref']}: unrecognised retention category ${JSON.stringify(child['Retention Category'])}; read as not continuing`
+    )
+  }
+  return retention
+}
+
 /** Where a baseline feature goes when it becomes one feature, whole. */
-function placeWhole(layer, baseline, child) {
+function placeWhole(layer, baseline, child, context) {
   const proposed = proposedRow(layer, child)
-  switch (child['Retention Category']) {
+  switch (retentionOf(child, context)) {
     case RETAINED:
       return { baseline: { ...baseline, retained: baseline.size } }
     case ENHANCED:
@@ -193,15 +208,16 @@ function placeWhole(layer, baseline, child) {
 const sizeOf = (rows) => rows.reduce((sum, row) => sum + (row.size ?? 0), 0)
 
 /**
- * Where a baseline feature goes when it is split, as a hedge that gets worse
- * in part is: its Retained parts are retained, an Enhanced part enhanced, and
- * each Created part a creation; the rest is lost. The enhancement sheet pairs
- * one enhancement with each baseline row, so two Enhanced parts are refused.
+ * Where a baseline feature goes by its parts' own sizes: its Retained parts
+ * are retained, an Enhanced part enhanced, and each Created part a
+ * creation; the rest is lost. The enhancement sheet pairs one enhancement
+ * with each baseline row, so two Enhanced parts are refused.
  */
-function placeSplit(layer, baseline, parts) {
+function placeParts(layer, baseline, parts, context) {
+  const retentions = parts.map((p) => retentionOf(p, context))
   const byRetention = (retention) =>
     parts
-      .filter((p) => p['Retention Category'] === retention)
+      .filter((p, i) => retentions[i] === retention)
       .map((p) => proposedRow(layer, p))
   const retained = byRetention(RETAINED)
   const enhanced = byRetention(ENHANCED)
@@ -221,31 +237,62 @@ function placeSplit(layer, baseline, parts) {
   return { baseline: placed, creations: byRetention(CREATED) }
 }
 
-/** Where a baseline feature goes, by the features it becomes. */
-function placeBaseline(layer, parent, parts) {
+/**
+ * Where a baseline feature goes, by the features it becomes. A split is
+ * placed by its parts' sizes. A hedgerow always is, as the service counts
+ * a shorter hedge's lost length (template guide, Hedgerows). A watercourse
+ * kept whole keeps its surveyed length however its line changes, as the
+ * service cannot measure a watercourse's part loss from the map.
+ */
+function placeBaseline(layer, parent, parts, context) {
   const baseline = baselineRow(layer, parent)
   if (parts.length === 0) {
     return { baseline }
   }
-  return parts.length === 1
-    ? placeWhole(layer, baseline, parts[0])
-    : placeSplit(layer, baseline, parts)
+  return parts.length === 1 && !layer.byParts
+    ? placeWhole(layer, baseline, parts[0], context)
+    : placeParts(layer, baseline, parts, context)
 }
 
-function layerEntries(db, layerKey) {
+/**
+ * A post-intervention feature whose parent_uuid names no baseline feature,
+ * as a broken link leaves it: noted, and placed as a creation if Created,
+ * as nothing can be retained or enhanced from no baseline.
+ */
+function placeOrphan(layer, child, context) {
+  const retention = retentionOf(child, context)
+  const created = retention === CREATED
+  context.notes.push(
+    `${context.table} ${child['Habitat Ref']}: its parent_uuid names no baseline feature; ${created ? 'placed as a creation' : `${retention ?? 'its'} row left out`}`
+  )
+  return created ? { creations: [proposedRow(layer, child)] } : {}
+}
+
+function layerEntries(db, layerKey, notes) {
   const layer = LAYERS[layerKey]
+  const context = { notes, table: tableName(layerKey, POST_INTERVENTION) }
   const children = readTable(db, layerKey, POST_INTERVENTION)
+  const parents = readTable(db, layerKey, BASELINE)
+  const uuids = new Set(parents.map((p) => p.feature_uuid))
   const byParent = Map.groupBy(
-    children.filter((c) => c.parent_uuid),
+    children.filter((c) => uuids.has(c.parent_uuid)),
     (c) => c.parent_uuid
   )
-  const kept = readTable(db, layerKey, BASELINE).map((parent) =>
-    placeBaseline(layer, parent, byParent.get(parent.feature_uuid) ?? [])
+  const kept = parents.map((parent) =>
+    placeBaseline(
+      layer,
+      parent,
+      byParent.get(parent.feature_uuid) ?? [],
+      context
+    )
   )
   const created = children
     .filter((c) => !c.parent_uuid)
     .map((c) => ({ creations: [proposedRow(layer, c)] }))
-  return [...kept, ...created]
+  const orphans = children
+    .filter((c) => c.parent_uuid && !uuids.has(c.parent_uuid))
+    .map((c) => placeOrphan(layer, c, context))
+  return [...kept, ...created, ...orphans]
 }
 
 /** Split placed entries into the three sheets of one habitat kind. */
@@ -268,6 +315,38 @@ export function isBngServiceGeoPackage(db) {
 }
 
 /**
+ * Read an open BNG Service GeoPackage into rows for each input sheet.
+ *
+ * @param {import('better-sqlite3').Database} db
+ * @returns {{ rows: Record<string, object[]>, notes: string[] }} as
+ *   `workbookRowsFromGeoPackage`
+ */
+export function workbookRowsFromBngServiceDb(db) {
+  const notes = []
+  const areas = toSheets([
+    ...layerEntries(db, 'habitats', notes),
+    ...layerEntries(db, 'verticalHabitats', notes),
+    ...layerEntries(db, 'trees', notes)
+  ])
+  const hedgerows = toSheets(layerEntries(db, 'hedgerows', notes))
+  const watercourses = toSheets(layerEntries(db, 'rivers', notes))
+  return {
+    rows: {
+      habitatBaseline: areas.baseline,
+      habitatCreation: areas.creation,
+      habitatEnhancement: areas.enhancement,
+      hedgerowBaseline: hedgerows.baseline,
+      hedgerowCreation: hedgerows.creation,
+      hedgerowEnhancement: hedgerows.enhancement,
+      watercourseBaseline: watercourses.baseline,
+      watercourseCreation: watercourses.creation,
+      watercourseEnhancement: watercourses.enhancement
+    },
+    notes
+  }
+}
+
+/**
  * Read a BNG Service GeoPackage into rows for each input sheet.
  *
  * @param {string} path
@@ -277,27 +356,7 @@ export function isBngServiceGeoPackage(db) {
 export function workbookRowsFromBngService(path) {
   const db = openGeoPackageReadonly(path)
   try {
-    const areas = toSheets([
-      ...layerEntries(db, 'habitats'),
-      ...layerEntries(db, 'verticalHabitats'),
-      ...layerEntries(db, 'trees')
-    ])
-    const hedgerows = toSheets(layerEntries(db, 'hedgerows'))
-    const watercourses = toSheets(layerEntries(db, 'rivers'))
-    return {
-      rows: {
-        habitatBaseline: areas.baseline,
-        habitatCreation: areas.creation,
-        habitatEnhancement: areas.enhancement,
-        hedgerowBaseline: hedgerows.baseline,
-        hedgerowCreation: hedgerows.creation,
-        hedgerowEnhancement: hedgerows.enhancement,
-        watercourseBaseline: watercourses.baseline,
-        watercourseCreation: watercourses.creation,
-        watercourseEnhancement: watercourses.enhancement
-      },
-      notes: []
-    }
+    return workbookRowsFromBngServiceDb(db)
   } finally {
     db.close()
   }

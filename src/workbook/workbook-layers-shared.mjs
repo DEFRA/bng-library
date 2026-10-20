@@ -87,18 +87,29 @@ export function computeWorkbookFixturePlan(workbook, habitatRows) {
   }
 }
 
-export function generateRedLineBoundaryFromArea(db, cx, cy, totalAreaM2) {
+/**
+ * A red line of `totalAreaM2` (at least MIN_RLB_AREA_M2) around the centre:
+ * a random hull, scaled to the exact area.
+ */
+export function redLineRingFromArea(cx, cy, totalAreaM2) {
   const targetRingArea = Math.max(totalAreaM2, MIN_RLB_AREA_M2)
   const radius = Math.sqrt(targetRingArea / (HULL_AREA_FACTOR * Math.PI))
-  let ring = generateIrregularPolygon(cx, cy, radius)
   // Adjust to exact area in case the random hull was unlucky.
-  ring = scaleRingToArea(ring, targetRingArea)
+  return scaleRingToArea(
+    generateIrregularPolygon(cx, cy, radius),
+    targetRingArea
+  )
+}
 
-  const geom = gpkgPolygon(SRS_ID, ring)
-  const area = polygonArea(ring)
+export function writeRedLineBoundary(db, ring, siteName = SITE_NAME) {
   db.prepare(
     `INSERT INTO "Red Line Boundary" (geometry, "Area", "Site Name") VALUES (?, ?, ?)`
-  ).run(geom, Math.round(area), SITE_NAME)
+  ).run(gpkgPolygon(SRS_ID, ring), Math.round(polygonArea(ring)), siteName)
   registerLayer(db, 'Red Line Boundary', 'POLYGON', envelopeFromCoords(ring))
+}
+
+export function generateRedLineBoundaryFromArea(db, cx, cy, totalAreaM2) {
+  const ring = redLineRingFromArea(cx, cy, totalAreaM2)
+  writeRedLineBoundary(db, ring)
   return ring
 }

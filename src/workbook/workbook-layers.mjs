@@ -57,7 +57,9 @@ export {
   HECTARES_TO_SQ_M,
   MIN_GENERATED_AREA_SQ_M,
   computeWorkbookFixturePlan,
-  generateRedLineBoundaryFromArea
+  generateRedLineBoundaryFromArea,
+  redLineRingFromArea,
+  writeRedLineBoundary
 } from './workbook-layers-shared.mjs'
 export {
   derivePostInterventionLinearCoords,
@@ -123,7 +125,7 @@ function writeHabitatLayer(db, cells, rows, bindings) {
     const cell = cells[i]
     if (cell) {
       expandEnvelope(allEnvelope, envelopeFromCoords(cell))
-      stmt.run(...bindings(rows[i], cell))
+      stmt.run(...bindings(rows[i], cell, i))
       written += 1
     }
   }
@@ -161,7 +163,15 @@ function habitatBaselineBindings(r, cell) {
   ]
 }
 
-function habitatPostBindings(r, cell) {
+/**
+ * The spatial risk category of each post-intervention parcel that has a
+ * cell, drawn in row order: the legacy file records one per parcel.
+ */
+export function drawPostHabitatSpatialRisks(cells) {
+  return cells.map((cell) => (cell ? pick(SPATIAL_RISK_HABITAT) : null))
+}
+
+function habitatPostBindings(r, cell, spatialRisk) {
   return [
     gpkgPolygon(SRS_ID, cell),
     r.ref,
@@ -177,7 +187,7 @@ function habitatPostBindings(r, cell) {
     r.proposed.strategicSig,
     String(r.proposed.advanceYears ?? 0),
     String(r.proposed.delayYears ?? 0),
-    pick(SPATIAL_RISK_HABITAT),
+    spatialRisk,
     LOCATION_ON_SITE,
     SITE_NAME,
     SURVEY_DATE,
@@ -195,8 +205,11 @@ export function writeHabitatsBaseline(db, cells, rows) {
   return writeHabitatLayer(db, cells, rows, habitatBaselineBindings)
 }
 
-export function writeHabitatsPostIntervention(db, cells, rows) {
-  return writeHabitatLayer(db, cells, rows, habitatPostBindings)
+/** `spatialRisks` as `drawPostHabitatSpatialRisks` draws them for `cells`. */
+export function writeHabitatsPostIntervention(db, cells, rows, spatialRisks) {
+  return writeHabitatLayer(db, cells, rows, (r, cell, i) =>
+    habitatPostBindings(r, cell, spatialRisks[i])
+  )
 }
 
 // ---------------------------------------------------------------------------

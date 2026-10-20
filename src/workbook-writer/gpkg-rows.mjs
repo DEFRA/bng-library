@@ -28,6 +28,10 @@
 import { INDIVIDUAL_TREE_AREA_HECTARES } from '../metric/index.mjs'
 import { openGeoPackageReadonly, wkbToGeoJSON } from '../gpkg-io/index.mjs'
 import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
+import {
+  isBngServiceGeoPackage,
+  workbookRowsFromBngService
+} from './bng-service-rows.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
@@ -273,7 +277,9 @@ function toSheets(entries) {
 }
 
 /**
- * Read a post-intervention GeoPackage into rows for each input sheet.
+ * Read a post-intervention GeoPackage into rows for each input sheet. A file
+ * in the BNG Service template format, which holds both stages, is read by
+ * `workbookRowsFromBngService`.
  *
  * @param {string} postInterventionPath
  * @returns {{ rows: Record<string, object[]>, notes: string[] }} rows keyed
@@ -283,6 +289,9 @@ export function workbookRowsFromGeoPackage(postInterventionPath) {
   const db = openGeoPackageReadonly(postInterventionPath)
   const notes = []
   try {
+    if (isBngServiceGeoPackage(db)) {
+      return workbookRowsFromBngService(postInterventionPath)
+    }
     const areas = toSheets([
       ...habitatEntries(readLayer(db, 'Habitats'), notes),
       ...treeEntries(readLayer(db, 'Urban Trees'), notes)

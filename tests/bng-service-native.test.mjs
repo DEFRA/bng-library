@@ -13,6 +13,7 @@ import {
   checkTemplateValues,
   generateBngServiceSynthetic,
   generateOne,
+  generatePermutations,
   generateSyntheticGpkg,
   listFlaws,
   setMode
@@ -117,6 +118,33 @@ describe('a BNG Service site is drawn natively', () => {
     const file = path.join(dir, 'path.gpkg')
     generateBngServiceSynthetic(file, CENTRE, { numParcels: 6, seed: 1 })
     expect(count(file, 'Area Habitats Baseline')).toBe(6)
+  })
+})
+
+describe('the scenario catalogue is drawn natively', () => {
+  it('writes every scenario, one file holding both stages', () => {
+    const { scenarios } = generatePermutations({
+      format: 'bng-service',
+      seed: 1
+    })
+    expect(scenarios.length).toBeGreaterThan(0)
+    const file = written('scenario.gpkg', scenarios[0].geoPackage.buffer)
+    expect(count(file, 'Area Habitats Post-Intervention')).toBeGreaterThan(0)
+  })
+
+  it('writes the baseline-stage file of a scenario', () => {
+    const { scenarios } = generatePermutations({
+      format: 'bng-service',
+      stage: 'baseline',
+      only: 'net-gain',
+      seed: 1
+    })
+    const file = written(
+      'scenario-baseline.gpkg',
+      scenarios[0].geoPackage.buffer
+    )
+    expect(count(file, 'Area Habitats Baseline')).toBeGreaterThan(0)
+    expect(count(file, 'Area Habitats Post-Intervention')).toBe(0)
   })
 })
 

@@ -144,8 +144,10 @@ the legacy format uses (`src/synthetic/draw/`), from the same seed, and
 built straight into the BNG Service site model by the template's rules
 (`src/bng-service/site-features.mjs`). So seeds, row overrides and flaws
 behave exactly as they do for the legacy format, and the same seed gives
-the same file to the byte. The scenario catalogue and the workbook routes
-still convert legacy output for now; they are next to be drawn natively.
+the same file to the byte. The scenario catalogue is drawn the same way,
+and each scenario's workbook is read from its BNG Service file, so it
+describes the file a user would upload. The workbook routes still convert
+legacy output for now; they are next to be drawn natively.
 
 `writeBngServiceFromLegacy` converts a legacy file (or pair) that already
 exists, such as an older fixture. Its row overrides are checked as every
@@ -270,6 +272,13 @@ const [results] = await recalculateWorkbooks(['./out/site.xlsx'], {
 })
 // results.headline.netUnitChange.area, results.trading, results.rowWarnings …
 ```
+
+`postInterventionPath` may also be a BNG Service file, which holds both
+stages: each baseline feature is placed by the post-intervention features
+that name it as their parent (retained, enhanced, created in its place, or
+lost when none does), a hedge split into parts by each part, and strategic
+significance is written in the workbook's own words.
+`workbookRowsFromBngService` reads one directly.
 
 Only input cells are written, and the formulas are left as Defra wrote them,
 so the results are the metric's, not ours. The exception is the metric's known

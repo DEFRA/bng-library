@@ -8,9 +8,9 @@
  * only the new template records and written as one file holding both
  * stages, with the template version record.
  *
- * `writeBngServiceFromLegacy` converts legacy files that already exist. The
- * workbook route and the scenario catalogue still convert the legacy output
- * they write, until they too are drawn natively.
+ * The scenario catalogue draws its sites the same way. `writeBngServiceFromLegacy`
+ * converts legacy files that already exist. The workbook route still
+ * converts the legacy pair it writes, until it too is drawn natively.
  */
 
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -154,6 +154,33 @@ function finishSite(site, outPath, chooser, options) {
     writeSite(outPath, site, {
       stage,
       versionRecords: versionRecordsFor(versionFlaws, templateVersion)
+    })
+  )
+}
+
+/**
+ * Write a site already built as a BNG Service file at another stage, with
+ * the template version record: the baseline-stage file of a site whose full
+ * file was written first.
+ *
+ * @param {string} outPath
+ * @param {object} site  as `generateBngServiceSynthetic` returns it
+ * @param {object} options
+ * @param {string} options.stage
+ * @param {boolean} [options.seeded]  fix the metadata timestamps
+ * @param {string} [options.templateVersion]
+ */
+export function writeBngServiceSite(outPath, site, options) {
+  const {
+    stage,
+    seeded = false,
+    templateVersion = CURRENT_TEMPLATE_VERSION
+  } = options
+  assertOptions({ stage, templateVersion })
+  withSeededClock(seeded, () =>
+    writeSite(outPath, site, {
+      stage,
+      versionRecords: versionRecordsFor([], templateVersion)
     })
   )
 }

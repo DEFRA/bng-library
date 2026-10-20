@@ -1,0 +1,2447 @@
+{
+  "intervention/area-created": {
+    "siteInfo": { "totalSiteAreaHa": 46.5710160152481 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 10.7928496165455,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 10.7928496165455
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.43934612118541,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 8.43934612118541
+        },
+        {
+          "ref": "3",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.07655618871608,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 8.07655618871608
+        },
+        {
+          "ref": "4",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 6.77469598704253,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 6.77469598704253
+        },
+        {
+          "ref": "5",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.94960206948224,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 8.94960206948224
+        },
+        {
+          "ref": "6",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 3.5379660322763,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 3.5379660322763
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 10.7928496165455,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.43934612118541,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 3,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "3",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.07655618871608,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 4,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "4",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 6.77469598704253,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 3,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "5",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.94960206948224,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 4,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "6",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 3.5379660322763,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 4,
+          "delayYears": 0,
+          "isIndividualTree": false
+        }
+      ],
+      "enhancements": [
+        {
+          "baselineRef": "9",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Urban tree",
+          "proposedFullName": "Individual trees - Urban tree",
+          "proposedArea": 0.0366,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Ecologically valuable line of trees",
+          "lengthKm": 0.567207678278145,
+          "lengthM": 567,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.567207678278145,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 567
+        },
+        {
+          "ref": "2",
+          "type": "Species-rich native hedgerow",
+          "lengthKm": 0.2006478197819,
+          "lengthM": 201,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.2006478197819,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 201,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "3",
+          "type": "Ecologically valuable line of trees - associated with bank or ditch",
+          "lengthKm": 0.456776508763999,
+          "lengthM": 457,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.456776508763999,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 457
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "2",
+          "proposedBroad": null,
+          "proposedType": "Species-rich native hedgerow",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "proposedWaterEncroachment": null,
+          "proposedRiparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Culvert",
+          "lengthKm": 0.375700472465412,
+          "lengthM": 376,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "N/A - Culvert",
+          "riparianEncroachment": "N/A - Culvert",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.375700472465412,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 376
+        },
+        {
+          "ref": "2",
+          "type": "Ditches",
+          "lengthKm": 0.635298616022652,
+          "lengthM": 635,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "Major",
+          "riparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.635298616022652,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 635
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0041,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "8",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0163,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "9",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0366,
+          "areaLost": 0
+        },
+        {
+          "ref": "10",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0765,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 1,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "intervention/area-enhanced-intertidal": {
+    "siteInfo": { "totalSiteAreaHa": 49.6909714709287 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Intertidal sediment",
+          "type": "Littoral sand",
+          "fullName": "Intertidal sediment - Littoral sand",
+          "area": 27.0512537537892,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 27.0512537537892,
+          "areaLost": 0
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 22.6397177171395,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 22.6397177171395,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "1",
+          "proposedBroad": "Intertidal sediment",
+          "proposedType": "Littoral coarse sediment",
+          "proposedFullName": "Intertidal sediment - Littoral coarse sediment",
+          "proposedArea": 27.0512537537892,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": { "baseline": [], "created": [], "enhancements": [] },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": { "baseline": [], "created": [] },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "intervention/hedgerow-condition-lowered": {
+    "siteInfo": { "totalSiteAreaHa": 52.0293145273159 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 27.9160192928544,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 27.9160192928544,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 24.1132952344614,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 24.1132952344614,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Native hedgerow",
+          "lengthKm": 0.393313729234017,
+          "lengthM": 393,
+          "distinctiveness": "Low",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.393313729234017,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 393
+        },
+        {
+          "ref": "2",
+          "type": "Native hedgerow",
+          "lengthKm": 0.306955400325169,
+          "lengthM": 307,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.306955400325169,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 307,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "type": "Native hedgerow",
+          "lengthKm": 0.393313729234017,
+          "lengthM": 393,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ],
+      "enhancements": []
+    },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": { "baseline": [], "created": [] },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "intervention/watercourse-enhanced": {
+    "siteInfo": { "totalSiteAreaHa": 52.4765516412583 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Lakes",
+          "type": "Ornamental lake or pond",
+          "fullName": "Lakes - Ornamental lake or pond",
+          "area": 12.1433362345052,
+          "distinctiveness": "Low",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 12.1433362345052
+        },
+        {
+          "ref": "2",
+          "broad": "Woodland and forest",
+          "type": "Other woodland; mixed",
+          "fullName": "Woodland and forest - Other woodland; mixed",
+          "area": 11.9490674508912,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 11.9490674508912,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "3",
+          "broad": "Urban",
+          "type": "Intensive green roof",
+          "fullName": "Urban - Intensive green roof",
+          "area": 10.2436410799537,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 10.2436410799537
+        },
+        {
+          "ref": "4",
+          "broad": "Cropland",
+          "type": "Arable field margins cultivated annually",
+          "fullName": "Cropland - Arable field margins cultivated annually",
+          "area": 4.98645261229933,
+          "distinctiveness": "Medium",
+          "condition": "Condition Assessment N/A",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 4.98645261229933
+        },
+        {
+          "ref": "5",
+          "broad": "Woodland and forest",
+          "type": "Other Scot's pine woodland",
+          "fullName": "Woodland and forest - Other Scot's pine woodland",
+          "area": 6.65899973742005,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 6.65899973742005,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "6",
+          "broad": "Heathland and shrub",
+          "type": "Gorse scrub",
+          "fullName": "Heathland and shrub - Gorse scrub",
+          "area": 6.49505452618879,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 6.49505452618879,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Lakes",
+          "type": "Reservoirs",
+          "fullName": "Lakes - Reservoirs",
+          "area": 12.1433362345052,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 3,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "2",
+          "broad": "Cropland",
+          "type": "Horticulture",
+          "fullName": "Cropland - Horticulture",
+          "area": 10.2436410799537,
+          "distinctiveness": "Low",
+          "condition": "Condition Assessment N/A",
+          "strategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "3",
+          "broad": "Heathland and shrub",
+          "type": "Mixed scrub",
+          "fullName": "Heathland and shrub - Mixed scrub",
+          "area": 4.98645261229933,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": false
+        }
+      ],
+      "enhancements": [
+        {
+          "baselineRef": "6",
+          "proposedBroad": "Heathland and shrub",
+          "proposedType": "Gorse scrub",
+          "proposedFullName": "Heathland and shrub - Gorse scrub",
+          "proposedArea": 6.49505452618879,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "7",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Urban tree",
+          "proposedFullName": "Individual trees - Urban tree",
+          "proposedArea": 0.0041,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "9",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Urban tree",
+          "proposedFullName": "Individual trees - Urban tree",
+          "proposedArea": 0.0366,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Ecologically valuable line of trees - associated with bank or ditch",
+          "lengthKm": 0.215715379335265,
+          "lengthM": 216,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.215715379335265,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 216,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "type": "Native hedgerow with trees",
+          "lengthKm": 0.20223429822392,
+          "lengthM": 202,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "ref": "2",
+          "type": "Line of trees - associated with bank or ditch",
+          "lengthKm": 0.526223434884286,
+          "lengthM": 526,
+          "distinctiveness": "Low",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ],
+      "enhancements": [
+        {
+          "baselineRef": "1",
+          "proposedBroad": null,
+          "proposedType": "Ecologically valuable line of trees - associated with bank or ditch",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "proposedWaterEncroachment": null,
+          "proposedRiparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Canals",
+          "lengthKm": 0.10005135237193,
+          "lengthM": 100,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "No Encroachment",
+          "riparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.10005135237193,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 100,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Canals",
+          "lengthKm": 0.164441023896742,
+          "lengthM": 164,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "No Encroachment",
+          "riparianEncroachment": "Major/Major",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.164441023896742,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 164
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "1",
+          "proposedBroad": null,
+          "proposedType": "Canals",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "proposedWaterEncroachment": "No Encroachment",
+          "proposedRiparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0041,
+          "areaLost": 0
+        },
+        {
+          "ref": "8",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0163,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "9",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0366,
+          "areaLost": 0
+        },
+        {
+          "ref": "10",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0765
+        }
+      ],
+      "created": [
+        {
+          "ref": "4",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 1,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "intervention/watercourse-enhanced-culvert": {
+    "siteInfo": { "totalSiteAreaHa": 59.5746608931124 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 59.5746608931124,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 59.5746608931124,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "hedgerows": { "baseline": [], "created": [], "enhancements": [] },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Culvert",
+          "lengthKm": 0.144175641749101,
+          "lengthM": 144,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "N/A - Culvert",
+          "riparianEncroachment": "N/A - Culvert",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.144175641749101,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 144,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Ditches",
+          "lengthKm": 0.809661414965045,
+          "lengthM": 810,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "Minor",
+          "riparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.809661414965045,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 810,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "1",
+          "proposedBroad": null,
+          "proposedType": "Ditches",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "proposedWaterEncroachment": "No Encroachment",
+          "proposedRiparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "2",
+          "proposedBroad": null,
+          "proposedType": "Ditches",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Fairly Good",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "proposedWaterEncroachment": "No Encroachment",
+          "proposedRiparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "trees": { "baseline": [], "created": [] },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "advance-delay/created-trees": {
+    "siteInfo": { "totalSiteAreaHa": 47.3243996799561 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 47.3243996799561,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 47.3243996799561,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "hedgerows": { "baseline": [], "created": [], "enhancements": [] },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": {
+      "baseline": [],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": true
+        },
+        {
+          "ref": "2",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 5,
+          "delayYears": 0,
+          "isIndividualTree": true
+        },
+        {
+          "ref": "3",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 5,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "trading-rules/trading-lost-to-development": {
+    "siteInfo": { "totalSiteAreaHa": 65.7687830725224 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 29.1389174868585,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 29.1389174868585
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 36.6298655856639,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 36.6298655856639,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Urban",
+          "type": "Developed land; sealed surface",
+          "fullName": "Urban - Developed land; sealed surface",
+          "area": 29.1389174868585,
+          "distinctiveness": "V.Low",
+          "condition": "N/A - Other",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": false
+        }
+      ],
+      "enhancements": []
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Non-native and ornamental hedgerow",
+          "lengthKm": 0.329947977865307,
+          "lengthM": 330,
+          "distinctiveness": "V.Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.329947977865307,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 330
+        },
+        {
+          "ref": "2",
+          "type": "Species-rich native hedgerow",
+          "lengthKm": 0.397368018204285,
+          "lengthM": 397,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.397368018204285,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 397,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "3",
+          "type": "Native hedgerow",
+          "lengthKm": 0.381946342646575,
+          "lengthM": 382,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.381946342646575,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 382,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": { "baseline": [], "created": [] },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "trading-rules/trading-lost-trees": {
+    "siteInfo": { "totalSiteAreaHa": 45.9408196089439 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 45.9408196089439,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 45.9408196089439,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "hedgerows": { "baseline": [], "created": [], "enhancements": [] },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "2",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0366
+        },
+        {
+          "ref": "3",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0163
+        },
+        {
+          "ref": "4",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0366,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": []
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "net-gain/met": {
+    "siteInfo": { "totalSiteAreaHa": 58.5583715274445 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 14.5581583464321,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 14.5581583464321,
+          "areaLost": 0
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 11.2061664039187,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 11.2061664039187,
+          "areaLost": 0
+        },
+        {
+          "ref": "3",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 9.28005536749968,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 9.28005536749968,
+          "areaLost": 0
+        },
+        {
+          "ref": "4",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 6.16539025605788,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 6.16539025605788,
+          "areaLost": 0
+        },
+        {
+          "ref": "5",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 6.96910702528348,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 6.96910702528348,
+          "areaLost": 0
+        },
+        {
+          "ref": "6",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 10.3794941282527,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 10.3794941282527,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "1",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 14.5581583464321,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "2",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 11.2061664039187,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "3",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 9.28005536749968,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "4",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 6.16539025605788,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "5",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 6.96910702528348,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "6",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 10.3794941282527,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "9",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Urban tree",
+          "proposedFullName": "Individual trees - Urban tree",
+          "proposedArea": 0.0366,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Native hedgerow",
+          "lengthKm": 0.382626997019413,
+          "lengthM": 383,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.382626997019413,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 383,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Ecologically valuable line of trees - associated with bank or ditch",
+          "lengthKm": 0.479178904358037,
+          "lengthM": 479,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.479178904358037,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 479,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "3",
+          "type": "Species-rich native hedgerow",
+          "lengthKm": 0.33727339340969,
+          "lengthM": 337,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.33727339340969,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 337,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "2",
+          "proposedBroad": null,
+          "proposedType": "Ecologically valuable line of trees - associated with bank or ditch",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "proposedWaterEncroachment": null,
+          "proposedRiparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Culvert",
+          "lengthKm": 0.155371819106164,
+          "lengthM": 155,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "N/A - Culvert",
+          "riparianEncroachment": "N/A - Culvert",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.155371819106164,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 155,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Canals",
+          "lengthKm": 0.626192932385378,
+          "lengthM": 626,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "Minor",
+          "riparianEncroachment": "Minor/ Minor",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.626192932385378,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 626,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "2",
+          "proposedBroad": null,
+          "proposedType": "Canals",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Fairly Poor",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "proposedWaterEncroachment": "Minor",
+          "proposedRiparianEncroachment": "No Encroachment/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0041
+        },
+        {
+          "ref": "8",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0163
+        },
+        {
+          "ref": "9",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0366,
+          "areaLost": 0
+        },
+        {
+          "ref": "10",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0765,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 1,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "conditions/area-spread": {
+    "siteInfo": { "totalSiteAreaHa": 50.530345324661 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 13.561830099982,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 13.561830099982,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 9.90993231527584,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 9.90993231527584,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "3",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 7.93559731860658,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 7.93559731860658,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "4",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 10.3603325918966,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 10.3603325918966,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "5",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 8.76265299890003,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 8.76265299890003,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "6",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Urban tree",
+          "proposedFullName": "Individual trees - Urban tree",
+          "proposedArea": 0.0041,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Fairly Poor",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "7",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Rural tree",
+          "proposedFullName": "Individual trees - Rural tree",
+          "proposedArea": 0.0163,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Moderate",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "9",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Rural tree",
+          "proposedFullName": "Individual trees - Rural tree",
+          "proposedArea": 0.0765,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Fairly Good",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Native hedgerow - associated with bank or ditch",
+          "lengthKm": 0.479701834115849,
+          "lengthM": 480,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.479701834115849,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 480
+        },
+        {
+          "ref": "2",
+          "type": "Ecologically valuable line of trees",
+          "lengthKm": 0.459975379543117,
+          "lengthM": 460,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.459975379543117,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 460
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "type": "Ecologically valuable line of trees - associated with bank or ditch",
+          "lengthKm": 0.680229324078851,
+          "lengthM": 680,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Formally identified in local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ],
+      "enhancements": []
+    },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Culvert",
+          "lengthKm": 0.17629138369788,
+          "lengthM": 176,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "N/A - Culvert",
+          "riparianEncroachment": "N/A - Culvert",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.17629138369788,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 176,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Ditches",
+          "lengthKm": 0.518627085483988,
+          "lengthM": 519,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "Minor",
+          "riparianEncroachment": "Minor/ No Encroachment",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.518627085483988,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 519
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "6",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0041,
+          "areaLost": 0
+        },
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0163,
+          "areaLost": 0
+        },
+        {
+          "ref": "8",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0366
+        },
+        {
+          "ref": "9",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0765,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "strategic-significance/spread": {
+    "siteInfo": { "totalSiteAreaHa": 52.4104070380256 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 18.9034029532309,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 18.9034029532309
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 14.3782423834161,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 14.3782423834161
+        },
+        {
+          "ref": "3",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 19.1287617013786,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 0,
+          "areaEnhanced": 19.1287617013786,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 18.9034029532309,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 1,
+          "delayYears": 0,
+          "isIndividualTree": false
+        },
+        {
+          "ref": "2",
+          "broad": "Grassland",
+          "type": "Other neutral grassland",
+          "fullName": "Grassland - Other neutral grassland",
+          "area": 14.3782423834161,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 3,
+          "delayYears": 0,
+          "isIndividualTree": false
+        }
+      ],
+      "enhancements": [
+        {
+          "baselineRef": "3",
+          "proposedBroad": "Grassland",
+          "proposedType": "Other neutral grassland",
+          "proposedFullName": "Grassland - Other neutral grassland",
+          "proposedArea": 19.1287617013786,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "5",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Rural tree",
+          "proposedFullName": "Individual trees - Rural tree",
+          "proposedArea": 0.0163,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Fairly Poor",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Line of trees",
+          "lengthKm": 0.386065740736926,
+          "lengthM": 386,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.386065740736926,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 386,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        },
+        {
+          "ref": "2",
+          "type": "Ecologically valuable line of trees",
+          "lengthKm": 0.416771263688089,
+          "lengthM": 417,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0.416771263688089,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 417,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "type": "Line of trees - associated with bank or ditch",
+          "lengthKm": 0.679780570605109,
+          "lengthM": 680,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Formally identified in local strategy",
+          "waterEncroachment": null,
+          "riparianEncroachment": null,
+          "advanceYears": 1,
+          "delayYears": 0
+        }
+      ],
+      "enhancements": [
+        {
+          "baselineRef": "2",
+          "proposedBroad": null,
+          "proposedType": "Ecologically valuable line of trees",
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Formally identified in local strategy",
+          "proposedWaterEncroachment": null,
+          "proposedRiparianEncroachment": null,
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "watercourses": {
+      "baseline": [
+        {
+          "ref": "1",
+          "type": "Culvert",
+          "lengthKm": 0.605977842856953,
+          "lengthM": 606,
+          "distinctiveness": "Low",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "N/A - Culvert",
+          "riparianEncroachment": "N/A - Culvert",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0.605977842856953,
+          "lengthRetainedM": 0,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 606
+        },
+        {
+          "ref": "2",
+          "type": "Ditches",
+          "lengthKm": 0.201220252728923,
+          "lengthM": 201,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "waterEncroachment": "Minor",
+          "riparianEncroachment": "Moderate/ Moderate",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "lengthRetainedKm": 0.201220252728923,
+          "lengthEnhancedKm": 0,
+          "lengthLostKm": 0,
+          "lengthRetainedM": 201,
+          "lengthEnhancedM": 0,
+          "lengthLostM": 0
+        }
+      ],
+      "created": [],
+      "enhancements": []
+    },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "4",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0,
+          "areaLost": 0.0041
+        },
+        {
+          "ref": "5",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0163,
+          "areaLost": 0
+        },
+        {
+          "ref": "6",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Good",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0366,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "7",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0765,
+          "distinctiveness": "Medium",
+          "condition": "Fairly Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0765,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "3",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 2,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  },
+  "trees/count-above-one": {
+    "siteInfo": { "totalSiteAreaHa": 49.9807963997473 },
+    "version": "4.0",
+    "habitats": {
+      "baseline": [
+        {
+          "ref": "1",
+          "broad": "Grassland",
+          "type": "Modified grassland",
+          "fullName": "Grassland - Modified grassland",
+          "area": 49.9807963997473,
+          "distinctiveness": "Low",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": false,
+          "areaRetained": 49.9807963997473,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        }
+      ],
+      "created": [],
+      "enhancements": [
+        {
+          "baselineRef": "4",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Rural tree",
+          "proposedFullName": "Individual trees - Rural tree",
+          "proposedArea": 0.0164,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        },
+        {
+          "baselineRef": "5",
+          "proposedBroad": "Individual trees",
+          "proposedType": "Rural tree",
+          "proposedFullName": "Individual trees - Rural tree",
+          "proposedArea": 0.0041,
+          "proposedDistinctiveness": "Medium",
+          "proposedCondition": "Good",
+          "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0
+        }
+      ]
+    },
+    "hedgerows": { "baseline": [], "created": [], "enhancements": [] },
+    "watercourses": { "baseline": [], "created": [], "enhancements": [] },
+    "trees": {
+      "baseline": [
+        {
+          "ref": "2",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0489,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0489,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "3",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0163,
+          "distinctiveness": "Medium",
+          "condition": "Moderate",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0.0163,
+          "areaEnhanced": 0,
+          "areaLost": 0
+        },
+        {
+          "ref": "4",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0164,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0164,
+          "areaLost": 0
+        },
+        {
+          "ref": "5",
+          "broad": "Individual trees",
+          "type": "Rural tree",
+          "fullName": "Individual trees - Rural tree",
+          "area": 0.0041,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "irreplaceable": false,
+          "isIndividualTree": true,
+          "areaRetained": 0,
+          "areaEnhanced": 0.0041,
+          "areaLost": 0
+        }
+      ],
+      "created": [
+        {
+          "ref": "1",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0732,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": true
+        },
+        {
+          "ref": "2",
+          "broad": "Individual trees",
+          "type": "Urban tree",
+          "fullName": "Individual trees - Urban tree",
+          "area": 0.0366,
+          "distinctiveness": "Medium",
+          "condition": "Poor",
+          "strategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+          "advanceYears": 0,
+          "delayYears": 0,
+          "isIndividualTree": true
+        }
+      ]
+    },
+    "summary": { "warnings": [], "skipped": [] }
+  }
+}

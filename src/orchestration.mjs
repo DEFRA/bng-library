@@ -6,19 +6,12 @@
  */
 
 import {
-  SRS_ID,
   createAllTables,
   createLayerStyles,
-  openGeoPackage,
-  registerLayer
+  openGeoPackage
 } from './bng-schema.mjs'
-import {
-  clearFixedTimestamp,
-  envelopeFromCoords,
-  gpkgPolygon,
-  setFixedTimestamp
-} from './gpkg-io/index.mjs'
-import { clearSeed, polygonArea, setSeed } from './geometry.mjs'
+import { clearFixedTimestamp, setFixedTimestamp } from './gpkg-io/index.mjs'
+import { clearSeed, setSeed } from './geometry.mjs'
 import { color, header, info, warn } from './log.mjs'
 import {
   buildBaselineRows,
@@ -33,14 +26,16 @@ import {
   generateBaselineHedgerowGeometry,
   generateBaselineRiverGeometry,
   generateBaselineTreePoints,
-  generateRedLineBoundaryFromArea,
+  drawPostHabitatSpatialRisks,
   partitionBaselineHabitats,
+  redLineRingFromArea,
   writeHabitatsBaseline,
   writeHabitatsPostIntervention,
   writeHedgerowsBaseline,
   writeHedgerowsPostIntervention,
   writeRiversBaseline,
   writeRiversPostIntervention,
+  writeRedLineBoundary,
   writeUrbanTreesBaseline,
   writeUrbanTreesPostIntervention
 } from './workbook/workbook-layers.mjs'
@@ -59,6 +54,128 @@ const IN_MEMORY_DB = ':memory:'
 const DETERMINISTIC_TIMESTAMP = '2020-01-01T00:00:00.000Z'
 
 /**
+ * Draw the baseline geometry: the red line sized to the habitat area, the
+ * habitat parcels, the linear feature routes and the tree positions.
+ */
+export function drawBaselineGeometry(baselineRows, plan, centre) {
+  const [cx, cy] = centre
+  const ring = redLineRingFromArea(cx, cy, plan.totalAreaM2)
+  const habitats = partitionBaselineHabitats(ring, baselineRows.habitats)
+  const hedgerows = generateBaselineHedgerowGeometry(
+    ring,
+    baselineRows.hedgerows
+  )
+  const rivers = generateBaselineRiverGeometry(ring, baselineRows.rivers)
+  const trees = generateBaselineTreePoints(ring, baselineRows.trees)
+  return {
+    ring,
+    habitatCells: habitats.cells,
+    habitatCellsByRef: habitats.byRef,
+    hedgeCoords: hedgerows.coordsList,
+    hedgeCoordsByRef: hedgerows.byRef,
+    riverCoords: rivers.coordsList,
+    riverCoordsByRef: rivers.byRef,
+    treeInstances: trees.instances,
+    treePointsByRef: trees.byRef
+  }
+}
+
+/**
+ * Derive the post-intervention geometry from the baseline's, and draw the
+ * spatial risk each parcel records.
+ */
+export function drawPostInterventionGeometry(workbook, postRows, baselineGeom) {
+  const { ring } = baselineGeom
+  const { cells: habitatCells, extraRows: sealedSurfaceRows } =
+    derivePostInterventionHabitatCells(
+      baselineGeom.habitatCellsByRef,
+      workbook.habitats.baseline,
+      postRows.habitats,
+      postRows.warnings
+    )
+  // Sealed-surface parcels cover the leftover lost-area footprint so the
+  // post-intervention file tessellates the redline like its baseline does.
+  // They're appended after the workbook-derived rows; habitatCells already
+  // carries their geometry in the same trailing positions.
+  const habitatRows =
+    sealedSurfaceRows.length > 0
+      ? postRows.habitats.concat(sealedSurfaceRows)
+      : postRows.habitats
+  const spatialRisks = drawPostHabitatSpatialRisks(habitatCells)
+  return {
+    habitatCells,
+    habitatRows,
+    spatialRisks,
+    hedgeCoords: derivePostInterventionLinearCoords(
+      ring,
+      baselineGeom.hedgeCoordsByRef,
+      postRows.hedgerows
+    ),
+    riverCoords: derivePostInterventionLinearCoords(
+      ring,
+      baselineGeom.riverCoordsByRef,
+      postRows.rivers
+    ),
+    treeInstances: derivePostInterventionTreePoints(
+      ring,
+      baselineGeom.treePointsByRef,
+      postRows.trees
+    )
+  }
+}
+
+function writeBaselineGeometry(outPath, baselineRows, geom) {
+  const db = openGeoPackage(outPath)
+  createAllTables(db)
+  writeRedLineBoundary(db, geom.ring)
+  const written = {
+    habitats: writeHabitatsBaseline(
+      db,
+      geom.habitatCells,
+      baselineRows.habitats
+    ),
+    hedgerows: writeHedgerowsBaseline(
+      db,
+      geom.hedgeCoords,
+      baselineRows.hedgerows
+    ),
+    rivers: writeRiversBaseline(db, geom.riverCoords, baselineRows.rivers),
+    trees: writeUrbanTreesBaseline(db, geom.treeInstances, baselineRows.trees)
+  }
+  createLayerStyles(db)
+  db.close()
+  return written
+}
+
+function writePostInterventionGeometry(outPath, postRows, geom, ring, plan) {
+  const db = openGeoPackage(outPath)
+  createAllTables(db)
+  writeRedLineBoundary(db, ring, plan.siteName)
+  const written = {
+    habitats: writeHabitatsPostIntervention(
+      db,
+      geom.habitatCells,
+      geom.habitatRows,
+      geom.spatialRisks
+    ),
+    hedgerows: writeHedgerowsPostIntervention(
+      db,
+      geom.hedgeCoords,
+      postRows.hedgerows
+    ),
+    rivers: writeRiversPostIntervention(db, geom.riverCoords, postRows.rivers),
+    trees: writeUrbanTreesPostIntervention(
+      db,
+      geom.treeInstances,
+      postRows.trees
+    )
+  }
+  createLayerStyles(db)
+  db.close()
+  return written
+}
+
+/**
  * Generate the baseline GeoPackage. Lays out the RLB, partitions habitats,
  * picks linear feature routes and tree positions. Returns the geometry it
  * produced so the post-intervention pass can derive from it.
@@ -70,59 +187,10 @@ export function generateBaselineFile(
   plan,
   centre
 ) {
-  const [cx, cy] = centre
-  const db = openGeoPackage(outPath)
-  createAllTables(db)
-
-  const ring = generateRedLineBoundaryFromArea(db, cx, cy, plan.totalAreaM2)
-
-  const { cells: habitatCells, byRef: habitatCellsByRef } =
-    partitionBaselineHabitats(ring, baselineRows.habitats)
-  const habitatsWritten = writeHabitatsBaseline(
-    db,
-    habitatCells,
-    baselineRows.habitats
-  )
-
-  const { coordsList: hedgeCoords, byRef: hedgeCoordsByRef } =
-    generateBaselineHedgerowGeometry(ring, baselineRows.hedgerows)
-  const hedgesWritten = writeHedgerowsBaseline(
-    db,
-    hedgeCoords,
-    baselineRows.hedgerows
-  )
-
-  const { coordsList: riverCoords, byRef: riverCoordsByRef } =
-    generateBaselineRiverGeometry(ring, baselineRows.rivers)
-  const riversWritten = writeRiversBaseline(
-    db,
-    riverCoords,
-    baselineRows.rivers
-  )
-
-  const { instances: treeInstances, byRef: treePointsByRef } =
-    generateBaselineTreePoints(ring, baselineRows.trees)
-  const treesWritten = writeUrbanTreesBaseline(
-    db,
-    treeInstances,
-    baselineRows.trees
-  )
-
-  createLayerStyles(db)
-  db.close()
-
+  const geom = drawBaselineGeometry(baselineRows, plan, centre)
   return {
-    ring,
-    habitatCellsByRef,
-    hedgeCoordsByRef,
-    riverCoordsByRef,
-    treePointsByRef,
-    written: {
-      habitats: habitatsWritten,
-      hedgerows: hedgesWritten,
-      rivers: riversWritten,
-      trees: treesWritten
-    }
+    ...geom,
+    written: writeBaselineGeometry(outPath, baselineRows, geom)
   }
 }
 
@@ -137,80 +205,15 @@ export function generatePostInterventionFile(
   baselineGeom,
   plan
 ) {
-  const db = openGeoPackage(outPath)
-  createAllTables(db)
-
-  const ring = baselineGeom.ring
-  const geom = gpkgPolygon(SRS_ID, ring)
-  db.prepare(
-    `INSERT INTO "Red Line Boundary" (geometry, "Area", "Site Name") VALUES (?, ?, ?)`
-  ).run(geom, Math.round(polygonArea(ring)), plan.siteName)
-  registerLayer(db, 'Red Line Boundary', 'POLYGON', envelopeFromCoords(ring))
-
-  const { cells: habitatCells, extraRows: sealedSurfaceRows } =
-    derivePostInterventionHabitatCells(
-      baselineGeom.habitatCellsByRef,
-      workbook.habitats.baseline,
-      postRows.habitats,
-      postRows.warnings
-    )
-  // Sealed-surface parcels cover the leftover lost-area footprint so the
-  // post-intervention file tessellates the redline like its baseline does.
-  // They're appended after the workbook-derived rows; habitatCells already
-  // carries their geometry in the same trailing positions.
-  const habitatRowsToWrite =
-    sealedSurfaceRows.length > 0
-      ? postRows.habitats.concat(sealedSurfaceRows)
-      : postRows.habitats
-  const habitatsWritten = writeHabitatsPostIntervention(
-    db,
-    habitatCells,
-    habitatRowsToWrite
-  )
-
-  const hedgeCoords = derivePostInterventionLinearCoords(
-    ring,
-    baselineGeom.hedgeCoordsByRef,
-    postRows.hedgerows
-  )
-  const hedgesWritten = writeHedgerowsPostIntervention(
-    db,
-    hedgeCoords,
-    postRows.hedgerows
-  )
-
-  const riverCoords = derivePostInterventionLinearCoords(
-    ring,
-    baselineGeom.riverCoordsByRef,
-    postRows.rivers
-  )
-  const riversWritten = writeRiversPostIntervention(
-    db,
-    riverCoords,
-    postRows.rivers
-  )
-
-  const treeInstances = derivePostInterventionTreePoints(
-    ring,
-    baselineGeom.treePointsByRef,
-    postRows.trees
-  )
-  const treesWritten = writeUrbanTreesPostIntervention(
-    db,
-    treeInstances,
-    postRows.trees
-  )
-
-  createLayerStyles(db)
-  db.close()
-
+  const geom = drawPostInterventionGeometry(workbook, postRows, baselineGeom)
   return {
-    written: {
-      habitats: habitatsWritten,
-      hedgerows: hedgesWritten,
-      rivers: riversWritten,
-      trees: treesWritten
-    }
+    written: writePostInterventionGeometry(
+      outPath,
+      postRows,
+      geom,
+      baselineGeom.ring,
+      plan
+    )
   }
 }
 
@@ -322,37 +325,54 @@ export function generateFromWorkbook(
   }
 }
 
+/**
+ * The workbook's rows and the site plan, with the banner logged. When the
+ * workbook maps too little area to draw, which is logged too, only the plan
+ * comes back, with `aborted: true`.
+ */
+function prepareWorkbookSite(workbook, sourceLabel, options) {
+  const { strict, centre, mode, outPath } = options
+  const baselineRows = buildBaselineRows(workbook, { strict })
+  const postRows =
+    mode === MODE_BASELINE
+      ? null
+      : buildPostInterventionRows(workbook, { strict })
+  const plan = computeWorkbookFixturePlan(
+    workbook,
+    baselineRows.habitats.map((r) => ({ area: r.area }))
+  )
+  logWorkbookFixtureBanner({
+    workbook,
+    sourceLabel,
+    centre,
+    outPath,
+    habitatRows: baselineRows.habitats,
+    plan,
+    mode
+  })
+  if (plan.totalAreaM2 < MIN_GENERATED_AREA_SQ_M) {
+    warn(
+      `  total area is < ${MIN_GENERATED_AREA_SQ_M} m² — workbook may be empty or unparseable; aborting`
+    )
+    return { plan, aborted: true }
+  }
+  return { plan, baselineRows, postRows, aborted: false }
+}
+
 function generateFromWorkbookInner(
   outPaths,
   workbook,
   sourceLabel,
   { strict, centre, mode }
 ) {
-  const baselineRows = buildBaselineRows(workbook, { strict })
-  const postRows =
-    mode === MODE_BASELINE
-      ? null
-      : buildPostInterventionRows(workbook, { strict })
-
-  const habitatRowsForSizing = baselineRows.habitats.map((r) => ({
-    area: r.area
-  }))
-  const plan = computeWorkbookFixturePlan(workbook, habitatRowsForSizing)
-
-  logWorkbookFixtureBanner({
-    workbook,
-    sourceLabel,
+  const prepared = prepareWorkbookSite(workbook, sourceLabel, {
+    strict,
     centre,
-    outPath: bannerOutPath(outPaths, mode),
-    habitatRows: baselineRows.habitats,
-    plan,
-    mode
+    mode,
+    outPath: bannerOutPath(outPaths, mode)
   })
-
-  if (plan.totalAreaM2 < MIN_GENERATED_AREA_SQ_M) {
-    warn(
-      `  total area is < ${MIN_GENERATED_AREA_SQ_M} m² — workbook may be empty or unparseable; aborting`
-    )
+  const { plan, baselineRows, postRows } = prepared
+  if (prepared.aborted) {
     return { success: false, plan }
   }
 
@@ -387,4 +407,47 @@ function generateFromWorkbookInner(
   surfaceWorkbookWarnings(workbook, baselineRows, postRows)
   info(color('green', `✔ Done.`))
   return { success: true, plan }
+}
+
+/**
+ * Draw the site a workbook describes, without writing it: its rows, and the
+ * geometry the legacy route would write, drawn in the same order from the
+ * same seed. `mode: 'baseline'` draws the baseline only. The banner and the
+ * workbook's warnings are logged, naming `outPath`.
+ *
+ * @returns {{ success: boolean, plan: object, baselineRows?: object,
+ *   postRows?: object | null, baseline?: object, post?: object | null }}
+ */
+export function drawWorkbookSite(
+  workbook,
+  sourceLabel,
+  { strict = false, centre, mode = MODE_BOTH, seed, outPath } = {}
+) {
+  const prepared = prepareWorkbookSite(workbook, sourceLabel, {
+    strict,
+    centre,
+    mode,
+    outPath
+  })
+  const { plan, baselineRows, postRows } = prepared
+  if (prepared.aborted) {
+    return { success: false, plan }
+  }
+  const seeded = Number.isInteger(seed)
+  if (seeded) {
+    setSeed(seed)
+  }
+  try {
+    const baseline = drawBaselineGeometry(baselineRows, plan, centre)
+    const post =
+      mode === MODE_BASELINE
+        ? null
+        : drawPostInterventionGeometry(workbook, postRows, baseline)
+    surfaceWorkbookWarnings(workbook, baselineRows, postRows)
+    return { success: true, plan, baselineRows, postRows, baseline, post }
+  } finally {
+    if (seeded) {
+      clearSeed()
+    }
+  }
 }

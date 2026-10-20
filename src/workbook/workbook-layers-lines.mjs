@@ -546,6 +546,8 @@ export function generateBaselineRiverGeometry(boundaryRing, baselineRows) {
   return generateBaselineLineGeometry(boundaryRing, baselineRows)
 }
 
+// The encroachment fallbacks below are repeated by the native BNG Service
+// workbook route (bng-service/native/site-from-workbook.mjs): change both.
 function riverBaselineBindings(r, coords) {
   // Prefer the real encroachment read from the workbook. Fall back to the
   // fixed "N/A - Culvert" category for culverts (the workbook stores that same
@@ -588,6 +590,7 @@ function riverBaselineBindings(r, coords) {
   ]
 }
 
+// Repeated by proposedEncroachment in bng-service/native/site-from-workbook.mjs.
 function riverPostBindings(r, coords) {
   // Baseline side: prefer the real encroachment carried from the baseline
   // workbook row, then culvert-by-type, then the "No Encroachment" default. A

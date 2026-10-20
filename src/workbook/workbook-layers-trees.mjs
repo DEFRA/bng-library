@@ -102,6 +102,8 @@ function writePointFeatureLayer(db, sql, tableName, instances, rows, bindings) {
   return written
 }
 
+// The Urban setting and the years written below are repeated by the native
+// BNG Service workbook route (bng-service/native/site-from-workbook.mjs).
 function treeBaselineBindings(r, instance) {
   const [x, y] = instance.point
   return [

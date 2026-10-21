@@ -34,18 +34,16 @@ import { pointInRing } from '../geometry.mjs'
 import { interiorPoint } from './pair.mjs'
 import {
   BASELINE,
+  FEATURE_UUID,
   GEOMETRY_COLUMN,
+  HABITAT_REF,
   LAYERS,
+  PARENT_GEOM,
+  PARENT_REF,
+  PARENT_UUID,
   POST_INTERVENTION,
   tableName
 } from './schema.mjs'
-import {
-  FEATURE_UUID,
-  HABITAT_REF,
-  PARENT_GEOM,
-  PARENT_REF,
-  PARENT_UUID
-} from './site.mjs'
 
 /**
  * The one problem no lineage flaw writes: a parent_geom or parent shape that

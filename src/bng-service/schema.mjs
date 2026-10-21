@@ -41,6 +41,14 @@ export const tableName = (layerKey, stage) => `${LAYERS[layerKey]} ${stage}`
 
 export const GEOMETRY_COLUMN = 'geom'
 
+// The columns that name a feature and its parent. Here rather than in
+// site.mjs, which writes them, so a reader can have them without the writer.
+export const HABITAT_REF = 'Habitat Ref'
+export const PARENT_REF = 'Parent Ref'
+export const FEATURE_UUID = 'feature_uuid'
+export const PARENT_UUID = 'parent_uuid'
+export const PARENT_GEOM = 'parent_geom'
+
 const TABLES = new Map(TEMPLATE_SCHEMA.tables.map((t) => [t.name, t]))
 
 /** A template table's description: geometry column and type, and columns. */

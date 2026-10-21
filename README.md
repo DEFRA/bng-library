@@ -4,6 +4,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI, in the legacy Natural England layout (the default) or the [BNG Service template format](#bng-service-template-format).
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
+- **Reading the BNG Service template** (`bng-library/bng-service`) — the template's schema, table and column names, version record and file checks, for a consumer that reads uploads.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
@@ -601,6 +602,7 @@ harness), so renaming or removing one of those means updating the test.
 | Specifier                     | Purpose                                             |
 | ----------------------------- | --------------------------------------------------- |
 | `bng-library`                 | Main API — synthesis, workbook reading, flaws, etc. |
+| `bng-library/bng-service`     | Read a BNG Service template file (BMD-1082).        |
 | `bng-library/gpkg-io`         | Schema-agnostic GeoPackage read/write helpers.      |
 | `bng-library/measure`         | The area and length a feature is priced on.         |
 | `bng-library/metric`          | Statutory reference tables and unit calculations.   |
@@ -613,6 +615,10 @@ for the metric engine.
 `bng-library/metric` is pure calculation over bundled JSON tables — it needs
 neither of the peer dependencies below, so a consumer that only wants the maths
 can import it without installing `better-sqlite3` or `xlsx`.
+
+`bng-library/bng-service` needs `better-sqlite3` but never `xlsx`, which the
+root entry point loads for the workbook code. The service reads the template
+through it for that reason, and a test walks its imports to keep it so.
 
 ## Development
 

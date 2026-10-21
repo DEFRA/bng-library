@@ -6,6 +6,7 @@
   "main": "./index.mjs",
   "exports": {
     ".": "./index.mjs",
+    "./bng-service": "./src/bng-service/index.mjs",
     "./gpkg-io": "./src/gpkg-io/index.mjs",
     "./measure": "./src/measure/index.mjs",
     "./metric": "./src/metric/index.mjs",

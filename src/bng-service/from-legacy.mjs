@@ -31,7 +31,7 @@ import { moveVerticalHabitats } from './vertical-from-area.mjs'
 import { withoutListNumber } from './vocabulary.mjs'
 
 export { timingValues } from './site-features.mjs'
-export { interiorPoint } from './pair.mjs'
+export { interiorPoint } from '../geometry.mjs'
 
 /** The legacy layers, keyed as the generators key them. */
 const LEGACY = {

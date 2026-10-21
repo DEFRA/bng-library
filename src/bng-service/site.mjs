@@ -33,7 +33,13 @@ import {
 import { SRS_ID } from '../bng-schema.mjs'
 import {
   BASELINE,
+  COMMENT,
+  FEATURE_UUID,
+  HABITAT_REF,
   LAYERS,
+  PARENT_GEOM,
+  PARENT_REF,
+  PARENT_UUID,
   POST_INTERVENTION,
   RED_LINE_BOUNDARY,
   STAGE_BASELINE,
@@ -44,12 +50,14 @@ import {
   writeVersionRecords
 } from './schema.mjs'
 
-export const HABITAT_REF = 'Habitat Ref'
-export const PARENT_REF = 'Parent Ref'
-export const FEATURE_UUID = 'feature_uuid'
-export const PARENT_UUID = 'parent_uuid'
-export const PARENT_GEOM = 'parent_geom'
-export const COMMENT = 'Comment'
+export {
+  COMMENT,
+  FEATURE_UUID,
+  HABITAT_REF,
+  PARENT_GEOM,
+  PARENT_REF,
+  PARENT_UUID
+}
 const LENGTH = 'Length'
 const BASELINE_LENGTH = 'Baseline Length'
 const AREA = 'Area'

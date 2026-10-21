@@ -27,7 +27,7 @@ import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 import { polygonCentroid } from '../geometry.mjs'
 import { warn } from '../log.mjs'
 import { listIndex } from './reference.mjs'
-import { COMMENT, HABITAT_REF } from './site.mjs'
+import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   LOW,
   NO,

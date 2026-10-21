@@ -10,13 +10,21 @@
  *   (A Created feature with no parent is new, and fine.)
  * - `lineage-parent-unknown`: its parent_uuid names no baseline feature.
  * - `lineage-parent-wrong`: its Parent Ref is not the parent's Habitat Ref,
- *   or an area habitat lies outside the parent it names.
+ *   or a point inside an area habitat falls outside the parent it names (or
+ *   in one of its holes). One interior point is checked, not every edge: a
+ *   split part's edges lie on its parent's boundary, where rounding would
+ *   decide.
  * - `lineage-parent-geom-missing`: it names its parent but has no parent_geom.
  * - `lineage-parent-geom-mismatch`: its parent_geom is not the parent's shape,
  *   to the millimetre the service compares to.
  *
  * Only an area habitat is checked against its parent's shape: a hedgerow or
  * watercourse can move off its baseline line (a re-meandered channel does).
+ *
+ * The template's layers hold Polygons, LineStrings and Points, but a file
+ * edited elsewhere can hold their multi-part forms, which are read part by
+ * part. A shape that cannot be read at all is reported as
+ * `unreadable-geometry`, not as a mismatch.
  */
 
 import Database from 'better-sqlite3'
@@ -68,59 +76,97 @@ function rows(db, layerKey, stage) {
     }))
 }
 
-/** The points of a WKT POINT, LINESTRING or POLYGON, ring by ring; null if unread. */
-function wktRings(wkt) {
-  const match = /^\s*(POINT|LINESTRING|POLYGON)\s*\((.*)\)\s*$/is.exec(wkt)
+const WKT = /^\s*(?:MULTI)?(?:POINT|LINESTRING|POLYGON)\s*\((.*)\)\s*$/is
+
+/** The points of a WKT Point, LineString or Polygon, or a multi-part one, in order; null if unread. */
+function wktPoints(wkt) {
+  const match = WKT.exec(wkt)
   if (!match) {
     return null
   }
-  const groups = match[2].includes('(')
-    ? [...match[2].matchAll(/\(([^()]*)\)/g)].map((m) => m[1])
-    : [match[2]]
-  const rings = groups.map((group) =>
-    group.split(',').map((point) => point.trim().split(/\s+/).map(Number))
-  )
-  return rings.flat(2).every(Number.isFinite) ? rings : null
+  const points = match[1]
+    .replaceAll(/[()]/g, ' ')
+    .split(',')
+    .map((point) => point.trim().split(/\s+/).map(Number))
+  return points.every((p) => p.length >= 2 && p.every(Number.isFinite))
+    ? points
+    : null
 }
 
-/** A geometry's points, ring by ring, as `wktRings` gives them. */
-function geometryRings(geometry) {
-  switch (geometry.type) {
+/** A geometry's points, in the order its WKT lists them; null if unread. */
+function geometryPoints(geometry) {
+  switch (geometry?.type) {
     case 'Point':
-      return [[geometry.coordinates]]
-    case 'LineString':
       return [geometry.coordinates]
-    case 'Polygon':
+    case 'LineString':
+    case 'MultiPoint':
       return geometry.coordinates
+    case 'Polygon':
+    case 'MultiLineString':
+      return geometry.coordinates.flat(1)
+    case 'MultiPolygon':
+      return geometry.coordinates.flat(2)
     default:
       return null
   }
 }
 
 /** Whether a parent_geom is the parent's shape, to the millimetre. */
-function sameShape(wkt, geometry) {
-  const a = wktRings(wkt)
-  const b = geometry && geometryRings(geometry)
-  if (!a || !b || a.length !== b.length) {
-    return false
-  }
-  return a.every(
-    (ring, i) =>
-      ring.length === b[i].length &&
-      ring.every(
-        ([x, y], j) =>
-          Math.abs(x - b[i][j][0]) <= TOLERANCE_M &&
-          Math.abs(y - b[i][j][1]) <= TOLERANCE_M
-      )
+function sameShape(a, b) {
+  return (
+    a.length === b.length &&
+    a.every(
+      ([x, y], i) =>
+        Math.abs(x - b[i][0]) <= TOLERANCE_M &&
+        Math.abs(y - b[i][1]) <= TOLERANCE_M
+    )
   )
 }
 
-/** Whether an area habitat lies within the parcel it names. */
+/** A Polygon or MultiPolygon as its polygons, each a list of rings; else null. */
+function polygonsOf(geometry) {
+  if (geometry?.type === 'Polygon') {
+    return [geometry.coordinates]
+  }
+  return geometry?.type === 'MultiPolygon' ? geometry.coordinates : null
+}
+
+const insidePolygon = (point, [outer, ...holes]) =>
+  pointInRing(point, outer) && !holes.some((hole) => pointInRing(point, hole))
+
+/**
+ * Whether a point inside an area habitat falls within the parcel it names:
+ * inside one of the parent's polygons and not in one of its holes.
+ */
 function liesWithin(child, parent) {
-  if (child?.type !== 'Polygon' || parent?.type !== 'Polygon') {
+  const [childPolygon] = polygonsOf(child) ?? []
+  const parentPolygons = polygonsOf(parent)
+  if (!childPolygon || !parentPolygons) {
     return true
   }
-  return pointInRing(interiorPoint(child.coordinates[0]), parent.coordinates[0])
+  const point = interiorPoint(childPolygon[0])
+  return parentPolygons.some((polygon) => insidePolygon(point, polygon))
+}
+
+/** The parent_geom problem of a linked row, if it has one. */
+function parentGeomProblem(row, parent) {
+  if (blank(row[PARENT_GEOM])) {
+    return ['lineage-parent-geom-missing', 'has no parent_geom']
+  }
+  const named = wktPoints(row[PARENT_GEOM])
+  const actual = geometryPoints(parent.geometry)
+  if (!named || !actual) {
+    return [
+      'unreadable-geometry',
+      `cannot read ${named ? `${parent[HABITAT_REF]}'s shape` : 'its parent_geom'} to compare them`
+    ]
+  }
+  return sameShape(named, actual)
+    ? null
+    : [
+        'lineage-parent-geom-mismatch',
+        `parent_geom is not the shape of ${parent[HABITAT_REF]}`
+      ]
 }
 
 /** The lineage flaws one post-intervention row shows. */
@@ -152,16 +198,12 @@ function rowProblems(layerKey, row, parents) {
   ) {
     problems.push([
       'lineage-parent-wrong',
-      `lies outside the parent it names, ${parent[HABITAT_REF]}`
+      `a point inside it falls outside the parent it names, ${parent[HABITAT_REF]}`
     ])
   }
-  if (blank(row[PARENT_GEOM])) {
-    problems.push(['lineage-parent-geom-missing', 'has no parent_geom'])
-  } else if (!sameShape(row[PARENT_GEOM], parent.geometry)) {
-    problems.push([
-      'lineage-parent-geom-mismatch',
-      `parent_geom is not the shape of ${parent[HABITAT_REF]}`
-    ])
+  const geomProblem = parentGeomProblem(row, parent)
+  if (geomProblem) {
+    problems.push(geomProblem)
   }
   return problems
 }

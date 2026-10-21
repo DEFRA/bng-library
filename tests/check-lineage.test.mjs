@@ -17,6 +17,7 @@ import {
 import { geometryWkt } from '../src/bng-service/site.mjs'
 import { interiorPoint } from '../src/bng-service/pair.mjs'
 import {
+  UNREADABLE_GEOMETRY,
   checkLineage,
   generatePermutations,
   generateSyntheticGpkg,
@@ -93,15 +94,15 @@ describe('checkLineage', () => {
 
   it('reads parent_geom as a shape, not as text', () => {
     const file = site('wkt', { numParcels: 8, seed: 3 })
+    // 'POLYGON ((x y, …))' respelt 'polygon((x y,  …))': another tool's
+    // spelling of the same shape, in lower case with other spacing.
     const respelt = edited(
       file,
       'wkt-respelt',
       `UPDATE "Area Habitats Post-Intervention"
-         SET parent_geom = lower(replace(parent_geom, 'POLYGON (', 'Polygon(('))
-           || ')'
+         SET parent_geom = lower(replace(replace(parent_geom, 'POLYGON (', 'Polygon('), ', ', ',  '))
          WHERE parent_geom LIKE 'POLYGON%'`
     )
-    // 'POLYGON ((…))' respelt 'polygon((((…)))': still the parent's shape.
     const db = new Database(respelt, { readonly: true })
     const sample = db
       .prepare(
@@ -109,7 +110,7 @@ describe('checkLineage', () => {
       )
       .get().parent_geom
     db.close()
-    expect(sample.startsWith('polygon')).toBe(true)
+    expect(sample.startsWith('polygon((')).toBe(true)
     expect(checkLineage(respelt)).toEqual([])
   })
 
@@ -282,6 +283,25 @@ describe('checkLineage on files written outside the generator', () => {
     ])
   })
 
+  it('does not take the same points grouped differently as the same shape', () => {
+    const regrouped = changed(file, 'regrouped', (db) => {
+      const { child, parent } = keptParcel(db)
+      const outer = parent.shape.coordinates[0]
+      // The parent's ring, split into two parts of the same points.
+      const half = Math.ceil(outer.length / 2)
+      const first = outer.slice(0, half)
+      const second = outer.slice(half)
+      const wkt = (ring) => `(${ring.map(([x, y]) => `${x} ${y}`).join(', ')})`
+      db.prepare(`UPDATE "${AREA_PI}" SET parent_geom = ? WHERE fid = ?`).run(
+        `MULTIPOLYGON ((${wkt(first)}), (${wkt(second)}))`,
+        child.fid
+      )
+    })
+    expect(checkLineage(regrouped)).toEqual([
+      expect.objectContaining({ flaw: 'lineage-parent-geom-mismatch' })
+    ])
+  })
+
   it('reports a parent_geom it cannot read as unreadable, not as a mismatch', () => {
     const unreadable = changed(file, 'unreadable', (db) =>
       db
@@ -291,7 +311,25 @@ describe('checkLineage on files written outside the generator', () => {
         .run(keptParcel(db).child.fid)
     )
     expect(checkLineage(unreadable)).toEqual([
-      expect.objectContaining({ flaw: 'unreadable-geometry' })
+      expect.objectContaining({ flaw: UNREADABLE_GEOMETRY })
     ])
+  })
+})
+
+describe('the names checkLineage reports problems by', () => {
+  it('are lineage flaw names, bar the one problem no flaw writes', () => {
+    const flaws = new Set(
+      listFlaws({ format: 'bng-service' }).map((f) => f.name)
+    )
+    expect(flaws.has(UNREADABLE_GEOMETRY)).toBe(false)
+    const reported = lineageFlaws.flatMap((flaw) =>
+      checkLineage(
+        site(`named-${flaw}`, { numParcels: 8, seed: 3, flaws: [flaw] })
+      ).map((p) => p.flaw)
+    )
+    expect(reported.length).toBeGreaterThan(0)
+    for (const name of reported) {
+      expect(flaws.has(name), name).toBe(true)
+    }
   })
 })

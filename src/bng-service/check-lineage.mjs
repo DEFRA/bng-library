@@ -4,7 +4,8 @@
  *
  * Each problem is named by the lineage flaw that writes it
  * (`flaws.mjs`), so a file made with a lineage flaw reports exactly that
- * flaw, and a valid file reports none:
+ * flaw, and a valid file reports none. The one exception is
+ * `unreadable-geometry`, which no flaw writes (see below).
  *
  * - `lineage-parent-missing`: a Retained or Enhanced feature names no parent.
  *   (A Created feature with no parent is new, and fine.)
@@ -46,6 +47,12 @@ import {
   PARENT_UUID
 } from './site.mjs'
 
+/**
+ * The one problem no lineage flaw writes: a parent_geom or parent shape that
+ * cannot be read, so cannot be compared.
+ */
+export const UNREADABLE_GEOMETRY = 'unreadable-geometry'
+
 const KEPT = new Set(['Retained', 'Enhanced'])
 const RETENTION = 'Retention Category'
 // The service compares parent_geom to the millimetre (WKT to 3 places).
@@ -76,51 +83,107 @@ function rows(db, layerKey, stage) {
     }))
 }
 
-const WKT = /^\s*(?:MULTI)?(?:POINT|LINESTRING|POLYGON)\s*\((.*)\)\s*$/is
+const WKT = /^\s*(MULTI)?(POINT|LINESTRING|POLYGON)\s*\((.*)\)\s*$/is
 
-/** The points of a WKT Point, LineString or Polygon, or a multi-part one, in order; null if unread. */
-function wktPoints(wkt) {
+/** The parenthesised groups at the top level of `text`, without their parentheses. */
+function groups(text) {
+  const found = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] === '(') {
+      depth += 1
+      if (depth === 1) {
+        start = i + 1
+      }
+    } else if (text[i] === ')') {
+      depth -= 1
+      if (depth === 0) {
+        found.push(text.slice(start, i))
+      }
+    }
+  }
+  return found
+}
+
+const points = (text) =>
+  text.split(',').map((point) => point.trim().split(/\s+/).map(Number))
+
+/** A multi-part body's parts, each as a list of rings of points. */
+const MULTI_PARTS = {
+  POINT: (body) =>
+    body.includes('(')
+      ? groups(body).map((part) => [points(part)])
+      : points(body).map((point) => [[point]]),
+  LINESTRING: (body) => groups(body).map((part) => [points(part)]),
+  POLYGON: (body) => groups(body).map((part) => groups(part).map(points))
+}
+
+/** A single-part body as its one part, a list of rings of points. */
+const SINGLE_PART = {
+  POINT: (body) => [points(body)],
+  LINESTRING: (body) => [points(body)],
+  POLYGON: (body) => groups(body).map(points)
+}
+
+const readable = (parts) =>
+  parts.length > 0 &&
+  parts
+    .flat(2)
+    .every((point) => point.length >= 2 && point.every(Number.isFinite))
+
+/**
+ * A WKT Point, LineString or Polygon, or a multi-part one, as its parts,
+ * each a list of rings of points; null if it cannot be read. A single-part
+ * shape is one part, so a single-part MULTIPOLYGON reads as its Polygon.
+ */
+function wktParts(wkt) {
   const match = WKT.exec(wkt)
   if (!match) {
     return null
   }
-  const points = match[1]
-    .replaceAll(/[()]/g, ' ')
-    .split(',')
-    .map((point) => point.trim().split(/\s+/).map(Number))
-  return points.every((p) => p.length >= 2 && p.every(Number.isFinite))
-    ? points
-    : null
+  const [, multi, type, body] = match
+  const kind = type.toUpperCase()
+  const parts = multi ? MULTI_PARTS[kind](body) : [SINGLE_PART[kind](body)]
+  return readable(parts) ? parts : null
 }
 
-/** A geometry's points, in the order its WKT lists them; null if unread. */
-function geometryPoints(geometry) {
+/** A geometry as `wktParts` reads its WKT; null if it is no such shape. */
+function geometryParts(geometry) {
+  const c = geometry?.coordinates
   switch (geometry?.type) {
     case 'Point':
-      return [geometry.coordinates]
+      return [[[c]]]
     case 'LineString':
-    case 'MultiPoint':
-      return geometry.coordinates
+      return [[c]]
     case 'Polygon':
+      return [c]
+    case 'MultiPoint':
+      return c.map((point) => [[point]])
     case 'MultiLineString':
-      return geometry.coordinates.flat(1)
+      return c.map((line) => [line])
     case 'MultiPolygon':
-      return geometry.coordinates.flat(2)
+      return c
     default:
       return null
   }
 }
 
-/** Whether a parent_geom is the parent's shape, to the millimetre. */
+const samePoint = ([x, y], [bx, by]) =>
+  Math.abs(x - bx) <= TOLERANCE_M && Math.abs(y - by) <= TOLERANCE_M
+
+const sameRing = (a, b) =>
+  a.length === b.length && a.every((point, i) => samePoint(point, b[i]))
+
+const samePart = (a, b) =>
+  a.length === b.length && a.every((ring, i) => sameRing(ring, b[i]))
+
+/**
+ * Whether a parent_geom is the parent's shape, to the millimetre: the same
+ * parts, each with the same rings, each with the same points.
+ */
 function sameShape(a, b) {
-  return (
-    a.length === b.length &&
-    a.every(
-      ([x, y], i) =>
-        Math.abs(x - b[i][0]) <= TOLERANCE_M &&
-        Math.abs(y - b[i][1]) <= TOLERANCE_M
-    )
-  )
+  return a.length === b.length && a.every((part, i) => samePart(part, b[i]))
 }
 
 /** A Polygon or MultiPolygon as its polygons, each a list of rings; else null. */
@@ -153,11 +216,11 @@ function parentGeomProblem(row, parent) {
   if (blank(row[PARENT_GEOM])) {
     return ['lineage-parent-geom-missing', 'has no parent_geom']
   }
-  const named = wktPoints(row[PARENT_GEOM])
-  const actual = geometryPoints(parent.geometry)
+  const named = wktParts(row[PARENT_GEOM])
+  const actual = geometryParts(parent.geometry)
   if (!named || !actual) {
     return [
-      'unreadable-geometry',
+      UNREADABLE_GEOMETRY,
       `cannot read ${named ? `${parent[HABITAT_REF]}'s shape` : 'its parent_geom'} to compare them`
     ]
   }
@@ -214,7 +277,11 @@ function rowProblems(layerKey, row, parents) {
  * @param {string | import('better-sqlite3').Database} source  a GeoPackage
  *   path, or an open handle (left open)
  * @returns {{ table: string, ref: string | null, flaw: string, detail: string }[]}
- *   empty when every post-intervention feature names its parent correctly
+ *   empty when every post-intervention feature names its parent correctly.
+ *   `flaw` is the name of the lineage flaw that writes the problem (one of
+ *   `listFlaws({ format: 'bng-service' })`), except
+ *   `UNREADABLE_GEOMETRY`, which no flaw writes: a shape the check cannot
+ *   read, so cannot compare
  */
 export function checkLineage(source) {
   const db =

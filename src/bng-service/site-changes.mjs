@@ -24,7 +24,7 @@ import {
   baselineConditions,
   enhancementPairs
 } from '../synthetic/valid-draws.mjs'
-import { COMMENT, HABITAT_REF } from './site.mjs'
+import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   ADVANCE,
   RETAINED,

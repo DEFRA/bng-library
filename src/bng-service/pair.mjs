@@ -6,8 +6,8 @@
  * legacy pair this way, and the native workbook route its drawn pair.
  */
 
-import { pointInRing, polygonCentroid } from '../geometry.mjs'
-import { HABITAT_REF } from './site.mjs'
+import { interiorPoint, pointInRing } from '../geometry.mjs'
+import { HABITAT_REF } from './schema.mjs'
 import {
   baselineFeature,
   hasPostIntervention,
@@ -53,32 +53,6 @@ function onLine(point, coords) {
     }
   }
   return false
-}
-
-/**
- * A point strictly inside a polygon: the middle of the widest stretch a
- * horizontal line through its centroid crosses. Works for the concave cells
- * the partitioner can draw, where the centroid itself may fall outside.
- */
-export function interiorPoint(coords) {
-  const [, cy] = polygonCentroid(coords)
-  const crossings = []
-  for (let i = 1; i < coords.length; i += 1) {
-    const [ax, ay] = coords[i - 1]
-    const [bx, by] = coords[i]
-    if (ay > cy !== by > cy) {
-      crossings.push(ax + ((cy - ay) / (by - ay)) * (bx - ax))
-    }
-  }
-  crossings.sort((a, b) => a - b)
-  let best = null
-  for (let i = 1; i < crossings.length; i += 2) {
-    const width = crossings[i] - crossings[i - 1]
-    if (!best || width > best.width) {
-      best = { width, x: (crossings[i] + crossings[i - 1]) / 2 }
-    }
-  }
-  return best ? [best.x, cy] : polygonCentroid(coords)
 }
 
 /** Whether a post-intervention shape lies within (or on) a baseline shape. */

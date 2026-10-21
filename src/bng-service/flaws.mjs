@@ -27,8 +27,12 @@
 
 import { error } from '../log.mjs'
 import { lengthMetres } from '../measure/index.mjs'
-import { geometryWkt, HABITAT_REF } from './site.mjs'
-import { CURRENT_TEMPLATE_VERSION, versionRecordText } from './schema.mjs'
+import { geometryWkt } from './site.mjs'
+import {
+  CURRENT_TEMPLATE_VERSION,
+  HABITAT_REF,
+  versionRecordText
+} from './schema.mjs'
 import {
   ADVANCE,
   WORSE,

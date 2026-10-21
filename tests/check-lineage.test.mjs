@@ -15,7 +15,7 @@ import {
   wkbToGeoJSON
 } from '../src/gpkg-io/index.mjs'
 import { geometryWkt } from '../src/bng-service/site.mjs'
-import { interiorPoint } from '../src/bng-service/pair.mjs'
+import { interiorPoint } from '../src/geometry.mjs'
 import {
   UNREADABLE_GEOMETRY,
   checkLineage,

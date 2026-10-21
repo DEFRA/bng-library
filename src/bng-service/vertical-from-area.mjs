@@ -22,7 +22,7 @@
  */
 
 import { warn } from '../log.mjs'
-import { COMMENT, HABITAT_REF } from './site.mjs'
+import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   LOW,
   NO,

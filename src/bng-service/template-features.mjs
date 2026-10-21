@@ -32,7 +32,7 @@ import {
   worseCreationConditions
 } from '../synthetic/valid-draws.mjs'
 import { listIndex } from './reference.mjs'
-import { COMMENT, HABITAT_REF } from './site.mjs'
+import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   HIGH,
   LOW,

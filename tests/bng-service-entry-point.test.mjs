@@ -57,9 +57,24 @@ const PUBLIC_EXPORTS = [
 /** The root entry point's name for an export, where it differs. */
 const ROOT_NAMES = { LAYERS: 'BNG_SERVICE_LAYERS' }
 
-// Static and dynamic imports, re-exports and require() calls.
+/**
+ * The template modules a reader may load: the schema, the reference lists and
+ * the two checks. Spelled out, like PUBLIC_EXPORTS, so a new one is a
+ * deliberate edit — and so the writer (site.mjs and everything that draws or
+ * pairs features) can never come in by the back door.
+ */
+const READER_MODULES = [
+  'src/bng-service/check-lineage.mjs',
+  'src/bng-service/check-values.mjs',
+  'src/bng-service/filter.mjs',
+  'src/bng-service/index.mjs',
+  'src/bng-service/reference.mjs',
+  'src/bng-service/schema.mjs'
+]
+
+// Static, dynamic and side-effect imports, re-exports and require() calls.
 const MODULE_SPECIFIER =
-  /(?:^|\n)\s*(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|require\(\s*['"]([^'"]+)['"]\s*\)/g
+  /(?:^|\n)\s*(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|(?:^|\n)\s*import\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|require\(\s*['"]([^'"]+)['"]\s*\)/g
 
 /**
  * Every module file reachable from `entry` by relative import, and every bare
@@ -76,7 +91,7 @@ function importGraph(entry) {
     }
     files.add(file)
     for (const match of readFileSync(file, 'utf8').matchAll(MODULE_SPECIFIER)) {
-      const specifier = match[1] ?? match[2] ?? match[3]
+      const specifier = match[1] ?? match[2] ?? match[3] ?? match[4]
       if (specifier.startsWith('.')) {
         pending.push(resolve(dirname(file), specifier))
       } else {
@@ -122,6 +137,13 @@ describe("the 'bng-library/bng-service' subpath export", () => {
     expect(
       files.filter((file) => /^src\/workbook(-writer)?\//.test(file))
     ).toEqual([])
+  })
+
+  it('loads no template module but the reader ones', () => {
+    const { files } = importGraph(ENTRY_POINT)
+    expect(
+      files.filter((file) => file.startsWith('src/bng-service/')).sort()
+    ).toEqual(READER_MODULES)
   })
 
   it('reads the version record a consumer will look for', () => {

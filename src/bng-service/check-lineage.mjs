@@ -30,8 +30,7 @@
 
 import Database from 'better-sqlite3'
 import { wkbToGeoJSON } from '../gpkg-io/index.mjs'
-import { pointInRing } from '../geometry.mjs'
-import { interiorPoint } from './pair.mjs'
+import { interiorPoint, pointInRing } from '../geometry.mjs'
 import {
   BASELINE,
   FEATURE_UUID,

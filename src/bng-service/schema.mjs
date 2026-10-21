@@ -48,6 +48,7 @@ export const PARENT_REF = 'Parent Ref'
 export const FEATURE_UUID = 'feature_uuid'
 export const PARENT_UUID = 'parent_uuid'
 export const PARENT_GEOM = 'parent_geom'
+export const COMMENT = 'Comment'
 
 const TABLES = new Map(TEMPLATE_SCHEMA.tables.map((t) => [t.name, t]))
 

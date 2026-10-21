@@ -120,6 +120,12 @@ export {
   TEMPLATE_SOURCE
 } from './src/bng-service/reference.mjs'
 export { checkTemplateValues } from './src/bng-service/check-values.mjs'
+// `checkLineage` checks how each post-intervention feature names its parent,
+// reporting each problem by the lineage flaw that writes it.
+export {
+  UNREADABLE_GEOMETRY,
+  checkLineage
+} from './src/bng-service/check-lineage.mjs'
 export {
   generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,

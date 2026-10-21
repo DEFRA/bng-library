@@ -221,6 +221,24 @@ template repository's `scale-test-nsip/generator/dropdown_check.py`, and
 every generated file is checked as it is written, with a warning for anything
 the template would not offer.
 
+**Checking lineage.** `checkLineage(path)` checks how each post-intervention
+feature names its baseline parent, and reports each problem by the lineage
+flaw that writes it: `lineage-parent-missing` (a Retained or Enhanced feature
+names no parent), `lineage-parent-unknown` (its parent_uuid names no baseline
+feature), `lineage-parent-wrong` (its Parent Ref is not the parent's, or a
+point inside an area habitat falls outside the parent it names, or in one of
+its holes), `lineage-parent-geom-missing` and `lineage-parent-geom-mismatch`
+(parent_geom is not the parent's shape, to the millimetre). A Created feature
+with no parent is new, and fine. Multi-part shapes, which a file edited
+outside the template can hold, are read part by part, and a shape it cannot
+read is reported as `unreadable-geometry` (`UNREADABLE_GEOMETRY`), not as a
+mismatch: the one problem no lineage flaw writes, so it is not among
+`listFlaws()`. Shapes are compared part by part and ring by ring, so the same
+points grouped differently (a Polygon with a hole against two parts) do not
+match. It returns
+`[]` for every generated site, scenario and workbook site, and exactly the one
+problem for a file made with a lineage flaw.
+
 **The template's schema and lists** are copied into
 `src/bng-service/template/` from a checkout of
 [bng-metric-template](https://github.com/DEFRA/bng-metric-template): the

@@ -29,7 +29,8 @@ import {
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT,
   addVerticalHabitats,
-  addWorseHabitats
+  addWorseHabitats,
+  drawnWatercourseBaseline
 } from '../src/bng-service/template-features.mjs'
 import { listIndex } from '../src/bng-service/reference.mjs'
 import { createChooser, uuidV5 } from '../src/bng-service/random.mjs'
@@ -895,6 +896,57 @@ describe('AC5: habitats that get worse', () => {
   })
 })
 
+describe('AC5: every hedgerow and watercourse drawn is in the service scope', () => {
+  // The service refuses a High or V.High hedgerow or watercourse
+  // (HABITAT_DISTINCTIVENESS_NOT_IN_SCOPE), so a valid site draws none. The
+  // bands are written out, not imported from IN_SCOPE_DISTINCTIVENESS_BANDS,
+  // so this checks the drawn site against the service's rule rather than
+  // against the set the generator draws from.
+  const IN_SCOPE = new Set(['Medium', 'Low', 'V.Low'])
+  const MANY = {
+    hedge: 6,
+    'partly-worse-hedge': 6,
+    'encroached-watercourse': 6,
+    'worse-watercourse': 6
+  }
+  const COLUMNS = ['Baseline Distinctiveness', 'Proposed Distinctiveness']
+
+  function outOfScope(file) {
+    return ['Hedgerows', 'Watercourses'].flatMap((type) =>
+      [BASELINE(type), PI(type)].flatMap((table) =>
+        rows(file, table).flatMap((row) =>
+          COLUMNS.filter(
+            (column) =>
+              row[column] !== undefined &&
+              row[column] !== 'N/A' &&
+              !IN_SCOPE.has(row[column])
+          ).map((column) => `${table} ${row['Habitat Ref']} ${column}`)
+        )
+      )
+    )
+  }
+
+  it.each(['Other rivers and streams', 'Priority habitat'])(
+    'refuses to draw a %s watercourse for the purpose',
+    (type) => {
+      expect(() =>
+        drawnWatercourseBaseline(null, null, 'test', {
+          'Baseline River Type': type
+        })
+      ).toThrow(/must be in the service scope/)
+    }
+  )
+
+  it.each([1, 3, 6, 7, 21])('seed %i, with many that get worse', (seed) => {
+    const out = synthetic(
+      { seed, numParcels: 15 },
+      { worseHabitatCounts: MANY }
+    )
+    expect(rows(out, BASELINE('Watercourses')).length).toBeGreaterThan(0)
+    expect(outOfScope(out)).toEqual([])
+  })
+})
+
 describe('AC6: flaws in the new format', () => {
   const bngFlaws = listFlaws({ format: 'bng-service' })
 
@@ -1128,17 +1180,23 @@ describe('AC6: flaws in the new format', () => {
   })
 
   it.each([
-    ['version-record-missing', []],
+    ['version-record-missing', [], 'TEMPLATE_VERSION_MISSING'],
     [
       'version-record-duplicated',
       [
         { format: 'bng-service', version: '1.0' },
         { format: 'bng-service', version: '1.0' }
-      ]
+      ],
+      'TEMPLATE_VERSION_DUPLICATED'
     ],
-    ['version-unsupported', [{ format: 'bng-service', version: '2.0' }]]
-  ])('%s', (name, records) => {
+    [
+      'version-unsupported',
+      [{ format: 'bng-service', version: '2.0' }],
+      'TEMPLATE_VERSION_UNSUPPORTED'
+    ]
+  ])('%s, refused by the service with its code', (name, records, code) => {
     expect(withDb(flawed(name), readVersionRecords)).toEqual(records)
+    expect(bngFlaws.find((f) => f.name === name).errorCode).toBe(code)
   })
 
   it('maps the legacy IGGI polygon to a vertical area habitat outside the red line', () => {

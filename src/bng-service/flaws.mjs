@@ -51,8 +51,6 @@ const CATEGORY_LABELS = {
   [CATEGORY_DEGRADE]: 'degraded-habitat'
 }
 
-const NO_BACKEND_CODE_YET =
-  '(refused; the service does not check the version yet)'
 const ACCEPTED_WITHOUT_SHAPE_CHECK =
   '(accepted; the service skips the shape check without parent_geom)'
 const NOT_CHECKED_YET =
@@ -287,13 +285,13 @@ export const BNG_SERVICE_FLAWS = {
   },
   'version-record-missing': {
     description: 'the GeoPackage has no template version record',
-    errorCode: NO_BACKEND_CODE_YET,
+    errorCode: 'TEMPLATE_VERSION_MISSING',
     category: CATEGORY_VERSION,
     versionRecords: () => []
   },
   'version-record-duplicated': {
     description: 'the GeoPackage has two template version records',
-    errorCode: NO_BACKEND_CODE_YET,
+    errorCode: 'TEMPLATE_VERSION_DUPLICATED',
     category: CATEGORY_VERSION,
     versionRecords: (version) => [
       versionRecordText(version),
@@ -302,7 +300,7 @@ export const BNG_SERVICE_FLAWS = {
   },
   'version-unsupported': {
     description: `the template version record names a version the service does not support (the next major version after ${CURRENT_TEMPLATE_VERSION})`,
-    errorCode: NO_BACKEND_CODE_YET,
+    errorCode: 'TEMPLATE_VERSION_UNSUPPORTED',
     category: CATEGORY_VERSION,
     versionRecords: (version) => [versionRecordText(nextMajorVersion(version))]
   }

@@ -31,6 +31,7 @@ import {
   enhancementPairs,
   worseCreationConditions
 } from '../synthetic/valid-draws.mjs'
+import { IN_SCOPE_DISTINCTIVENESS_BANDS } from '../synthetic/synthetic-constants.mjs'
 import { listIndex } from './reference.mjs'
 import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
@@ -656,8 +657,18 @@ export function splitLine(geometry, share) {
   ]
 }
 
+/**
+ * Whether the service accepts a type's distinctiveness: it refuses High and
+ * V.High hedgerows and watercourses (HABITAT_DISTINCTIVENESS_NOT_IN_SCOPE),
+ * so a valid site draws none.
+ */
+function inServiceScope(layerKey, type) {
+  return IN_SCOPE_DISTINCTIVENESS_BANDS.has(distinctiveness(layerKey, type))
+}
+
 let hedgeTypes = null
 
+/** The in-scope hedgerow types that can get worse. */
 function worseningHedgeTypes() {
   hedgeTypes ??= [
     ...listIndex(
@@ -665,7 +676,11 @@ function worseningHedgeTypes() {
       'Habitat',
       'Condition'
     ).keys()
-  ].filter((type) => worseningFrom(HEDGEROW, type).length > 0)
+  ].filter(
+    (type) =>
+      inServiceScope('hedgerows', type) &&
+      worseningFrom(HEDGEROW, type).length > 0
+  )
   return hedgeTypes
 }
 
@@ -831,13 +846,14 @@ function keptConditions(type) {
   return baselineConditions(WATERCOURSE, type).filter((c) => creatable.has(c))
 }
 
-/** The watercourse types, not a culvert, that pass `test`. */
+/** The in-scope watercourse types, not a culvert, that pass `test`. */
 export function riverTypes(test) {
   return [...encroachmentLists().water.keys()].filter(
     (type) =>
       type !== CULVERT &&
       type !== TO_BE_CREATED &&
       type !== NOT_APPLICABLE &&
+      inServiceScope('rivers', type) &&
       test(type)
   )
 }

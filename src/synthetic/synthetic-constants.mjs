@@ -173,7 +173,11 @@ for (const fullName of Object.keys(metricDistinctiveness)) {
 // rejected on the PI upload. Flaws that need an out-of-scope habitat (e.g.
 // distinctiveness-out-of-scope) pin it explicitly via habitatFullName and
 // look it up against the full HABITATS list.
-const IN_SCOPE_DISTINCTIVENESS_BANDS = new Set(['Medium', 'Low', 'V.Low'])
+export const IN_SCOPE_DISTINCTIVENESS_BANDS = new Set([
+  'Medium',
+  'Low',
+  'V.Low'
+])
 export const IN_SCOPE_HABITATS = HABITATS.filter((h) =>
   IN_SCOPE_DISTINCTIVENESS_BANDS.has(h.distinctiveness)
 )

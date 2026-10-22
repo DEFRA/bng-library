@@ -82,8 +82,12 @@ function lineageSubject(site) {
   return feature
 }
 
-/** The habitat that gets worse of this kind: the row a degrade flaw breaks. */
-function worseSubject(site, layerKey, kind, flaw) {
+/**
+ * The habitat that gets worse that the degrade flaw `flaw` breaks: the first
+ * of the kind its `worse` names, on that layer.
+ */
+function worseSubject(site, flaw) {
+  const { layerKey, kind } = BNG_SERVICE_FLAWS[flaw].worse
   const feature = site.layers[layerKey].postIntervention.find(
     (f) => f.worse === kind
   )
@@ -222,13 +226,9 @@ export const BNG_SERVICE_FLAWS = {
       'a hedgerow that gets worse (Created in its own type, linked to its parent, in a lower condition) has no years created in advance, where the Metric asks for 30 plus',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
-      const feature = worseSubject(
-        site,
-        'hedgerows',
-        WORSE.hedge,
-        'degrade-advance-missing'
-      )
+      const feature = worseSubject(site, 'degrade-advance-missing')
       feature.values[ADVANCE] = null
     }
   },
@@ -237,13 +237,9 @@ export const BNG_SERVICE_FLAWS = {
       'a same-type creation that is not worse: a hedgerow Created in its own type, linked to its parent, with 30+ years in advance, in its baseline condition (a 30+ on a row that does not get worse overstates its units)',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
-      const feature = worseSubject(
-        site,
-        'hedgerows',
-        WORSE.hedge,
-        'degrade-not-worse'
-      )
+      const feature = worseSubject(site, 'degrade-not-worse')
       feature.values['Proposed Condition'] =
         feature.parent.values['Baseline Condition']
     }
@@ -253,11 +249,10 @@ export const BNG_SERVICE_FLAWS = {
       'a watercourse whose condition gets worse, with no change of encroachment, is created 10 years in advance, which the Metric allows only where encroachment increases with no other impact',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'rivers', kind: WORSE.worseWatercourse },
     applyToSite(site) {
       const feature = worseSubject(
         site,
-        'rivers',
-        WORSE.worseWatercourse,
         'degrade-watercourse-advance-not-encroachment'
       )
       feature.values[ADVANCE] = WATERCOURSE_ADVANCE
@@ -268,11 +263,10 @@ export const BNG_SERVICE_FLAWS = {
       'a watercourse whose only change is more encroachment has no years created in advance, though the Metric allows 10 or more for it',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {
       const feature = worseSubject(
         site,
-        'rivers',
-        WORSE.encroachedWatercourse,
         'degrade-watercourse-encroachment-no-advance'
       )
       feature.values[ADVANCE] = null
@@ -283,15 +277,11 @@ export const BNG_SERVICE_FLAWS = {
       'a baseline watercourse has both a Retained and a Created post-intervention part. The template records part of a stretch changing by splitting it at the baseline survey, as the service cannot measure part of a watercourse',
     errorCode: NOT_CHECKED_YET,
     category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {
       splitWatercourse(
         site,
-        worseSubject(
-          site,
-          'rivers',
-          WORSE.encroachedWatercourse,
-          'degrade-watercourse-retained-and-created'
-        )
+        worseSubject(site, 'degrade-watercourse-retained-and-created')
       )
     }
   },
@@ -377,6 +367,32 @@ export function partitionFlaws(names = []) {
     )
   }
   return { legacy, lineage, version, degrade }
+}
+
+/**
+ * Refuse counts that draw none of the habitat that gets worse a degrade flaw
+ * breaks, so the flaw is not left to fail later for a reason it cannot name.
+ *
+ * Throws FlawSelectionError for a name that is not a degrade flaw.
+ *
+ * @param {string[]} names  the degrade flaws asked for
+ * @param {Record<string, number>} counts  by kind, as resolveWorseCounts gives
+ */
+export function assertDegradeSubjectsDrawn(names, counts) {
+  for (const name of names) {
+    const flaw = BNG_SERVICE_FLAWS[name]
+    if (flaw?.category !== CATEGORY_DEGRADE) {
+      error(
+        `"${name}" is not a degraded-habitat flaw; assertDegradeSubjectsDrawn takes only those`
+      )
+    }
+    const { kind } = flaw.worse
+    if (counts[kind] === 0) {
+      throw new Error(
+        `${name} breaks a habitat that gets worse of kind ${kind}, so worseHabitatCounts cannot set ${kind} to 0`
+      )
+    }
+  }
 }
 
 /** Apply degrade flaws to the site, after its habitats that get worse. */

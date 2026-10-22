@@ -490,6 +490,15 @@ function worseningFrom(kind, type) {
   )
 }
 
+/**
+ * The name a drawn feature's identity is derived from: `key` on the first
+ * pass, as it always was, so a default site keeps its bytes; `key/2` on the
+ * second, and so on, so a repeated draw does not repeat an identity.
+ */
+function passKey(key, pass) {
+  return pass === 0 ? key : `${key}/${pass + 1}`
+}
+
 /** A Created copy of `parent`, in its own type, worse, 30+ years in advance. */
 function worseCopy(parent, proposed, chooser) {
   return {
@@ -717,8 +726,8 @@ function worseHedgePart(parent, geometry, ref, chooser) {
 }
 
 /** A hedgerow drawn for the purpose, which gets worse as a whole. */
-function worseHedgerow(site, chooser) {
-  const baseline = drawnHedgerow(site, chooser, 'worse')
+function worseHedgerow(site, chooser, pass = 0) {
+  const baseline = drawnHedgerow(site, chooser, passKey('worse', pass))
   if (baseline) {
     const part = worseHedgePart(
       baseline,
@@ -760,8 +769,8 @@ export function retainedPart(parent, geometry, ref, proposed) {
  * Created in a worse condition. Both parts keep the parent, and take the
  * template's tidied refs, "HG006a" and "HG006b".
  */
-function partlyWorseHedgerow(site, chooser) {
-  const baseline = drawnHedgerow(site, chooser, 'partly-worse')
+function partlyWorseHedgerow(site, chooser, pass = 0) {
+  const baseline = drawnHedgerow(site, chooser, passKey('partly-worse', pass))
   if (!baseline) {
     return
   }
@@ -896,7 +905,7 @@ function drawnWatercourse(site, chooser, key, baselineValues, proposed) {
  * A watercourse whose encroachment gets worse on both sides, with no other
  * impact: Created in its own type and condition, 10 years in advance.
  */
-function encroachedWatercourse(site, chooser) {
+function encroachedWatercourse(site, chooser, pass = 0) {
   const types = riverTypes((type) => {
     const options = encroachmentOf(type)
     return (
@@ -916,7 +925,7 @@ function encroachedWatercourse(site, chooser) {
   const copy = drawnWatercourse(
     site,
     chooser,
-    'encroached',
+    passKey('encroached', pass),
     {
       'Baseline River Type': type,
       'Baseline Condition': condition,
@@ -947,7 +956,7 @@ function encroachedWatercourse(site, chooser) {
  * the loss, and the post-intervention length in the creation tab), so the
  * surveyor's choice is left blank.
  */
-function worseConditionWatercourse(site, chooser) {
+function worseConditionWatercourse(site, chooser, pass = 0) {
   const types = riverTypes(
     (type) =>
       worseningFrom(WATERCOURSE, type).length > 0 &&
@@ -965,7 +974,7 @@ function worseConditionWatercourse(site, chooser) {
   const copy = drawnWatercourse(
     site,
     chooser,
-    'worse',
+    passKey('worse', pass),
     {
       'Baseline River Type': type,
       'Baseline Condition': condition,
@@ -985,6 +994,67 @@ function worseConditionWatercourse(site, chooser) {
     copy.values[COMMENT] = WORSE_WATERCOURSE_COMMENT
     copy.worse = WORSE.worseWatercourse
   }
+}
+
+/**
+ * Each kind of habitat that gets worse, the layer it is drawn on and its
+ * draw, in the order they are drawn: the order a default site always drew
+ * them in, so its choices, and its bytes, are unchanged.
+ */
+const WORSE_DRAWS = [
+  { kind: WORSE.parcel, layerKey: 'habitats', draw: worseParcel },
+  { kind: WORSE.vertical, layerKey: 'verticalHabitats', draw: worseVertical },
+  { kind: WORSE.hedge, layerKey: 'hedgerows', draw: worseHedgerow },
+  {
+    kind: WORSE.partlyWorseHedge,
+    layerKey: 'hedgerows',
+    draw: partlyWorseHedgerow
+  },
+  {
+    kind: WORSE.encroachedWatercourse,
+    layerKey: 'rivers',
+    draw: encroachedWatercourse
+  },
+  {
+    kind: WORSE.worseWatercourse,
+    layerKey: 'rivers',
+    draw: worseConditionWatercourse
+  }
+]
+
+/** The kinds a count can name: each kind of habitat that gets worse. */
+export const WORSE_KINDS = Object.freeze(WORSE_DRAWS.map((d) => d.kind))
+
+// How many of a kind one site may ask for: well past any demonstration or
+// test, short of a site whose red line cannot fit the lines drawn.
+export const MAX_WORSE_COUNT = 50
+
+/**
+ * How many of each kind of habitat that gets worse to draw: one of each,
+ * but for the kinds `counts` names. Refuses a kind it does not know, and a
+ * count that is not a whole number from 0 to MAX_WORSE_COUNT.
+ *
+ * @param {Record<string, number>} [counts]  by kind, as WORSE_KINDS names them
+ * @returns {Record<string, number>}
+ */
+export function resolveWorseCounts(counts = {}) {
+  const unknown = Object.keys(counts).filter((k) => !WORSE_KINDS.includes(k))
+  if (unknown.length > 0) {
+    throw new Error(
+      `unknown kind of habitat that gets worse: ${unknown.join(', ')} (known: ${WORSE_KINDS.join(', ')})`
+    )
+  }
+  const resolved = {}
+  for (const kind of WORSE_KINDS) {
+    const count = counts[kind] ?? 1
+    if (!Number.isInteger(count) || count < 0 || count > MAX_WORSE_COUNT) {
+      throw new Error(
+        `${kind}: the count must be a whole number from 0 to ${MAX_WORSE_COUNT} (got: ${count})`
+      )
+    }
+    resolved[kind] = count
+  }
+  return resolved
 }
 
 /**
@@ -1009,20 +1079,29 @@ function worseConditionWatercourse(site, chooser) {
  * in `emptyLayers`, which an empty-layer flaw leaves with no rows, is left
  * empty.
  *
+ * `counts` asks for more or fewer of a kind than the one each (see
+ * `resolveWorseCounts`). Each further feature is drawn as the first was,
+ * with its own identity. An area parcel is set worse only while another
+ * Retained parcel stays, so a site may give fewer than it asks for; so may
+ * a red line too small for every line drawn.
+ *
  * @param {object} site
  * @param {ReturnType<import('./random.mjs').createChooser>} chooser
  * @param {Set<string>} [emptyLayers]
+ * @param {Record<string, number>} [counts]  by kind, as WORSE_KINDS names them
  */
-export function addWorseHabitats(site, chooser, emptyLayers = new Set()) {
-  const add = (layerKey, ...draws) => {
+export function addWorseHabitats(
+  site,
+  chooser,
+  emptyLayers = new Set(),
+  counts = {}
+) {
+  const resolved = resolveWorseCounts(counts)
+  for (const { kind, layerKey, draw } of WORSE_DRAWS) {
     if (!emptyLayers.has(layerKey)) {
-      for (const draw of draws) {
-        draw(site, chooser)
+      for (let pass = 0; pass < resolved[kind]; pass += 1) {
+        draw(site, chooser, pass)
       }
     }
   }
-  add('habitats', worseParcel)
-  add('verticalHabitats', worseVertical)
-  add('hedgerows', worseHedgerow, partlyWorseHedgerow)
-  add('rivers', encroachedWatercourse, worseConditionWatercourse)
 }

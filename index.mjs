@@ -131,11 +131,19 @@ export {
   generateBngServiceSynthetic,
   writeBngServiceFromLegacy
 } from './src/bng-service/generate.mjs'
+// The kinds of habitat that gets worse a site draws, one of each by
+// default; `worseHabitatCounts` asks for more or fewer of a kind.
+export {
+  MAX_WORSE_COUNT,
+  WORSE_KINDS,
+  resolveWorseCounts
+} from './src/bng-service/template-features.mjs'
 export {
   BNG_SERVICE_FLAWS,
   BNG_SERVICE_FLAW_NAMES,
   CATEGORY_DEGRADE,
   CATEGORY_LINEAGE,
   CATEGORY_VERSION,
-  LEGACY_ONLY_FLAWS
+  LEGACY_ONLY_FLAWS,
+  assertDegradeSubjectsDrawn
 } from './src/bng-service/flaws.mjs'

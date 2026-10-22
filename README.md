@@ -134,6 +134,17 @@ its own type.
 A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
 empty. `templateFeatures: false` leaves them all out.
 
+There is one of each by default. **`worseHabitatCounts`** asks for more or
+fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,
+`hedge`, `partly-worse-hedge`, `encroached-watercourse`,
+`worse-watercourse`), 0 to `MAX_WORSE_COUNT` each:
+`{ hedge: 4, 'partly-worse-hedge': 3 }` draws a site that shows hedgerows
+getting worse. Each further feature is drawn as the first is, with its own
+identity, and a default site keeps its bytes. Area parcels get worse only
+while another Retained parcel stays, so a site may give fewer than it asks
+for. It is refused for a site that draws no habitats that get worse
+(`templateFeatures: false` with no degrade flaw, or a geometric flaw).
+
 `stage: 'baseline'` writes the **baseline-stage file**: the same tables, with
 the Post-Intervention tables empty. It is the file an ecologist has before
 mapping post-intervention habitats.
@@ -141,7 +152,7 @@ mapping post-intervention habitats.
 | Route              | In the BNG Service format                                                                                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Synthetic (buffer) | `generateSyntheticGpkg({ format: 'bng-service', … })` returns one `buffer`                                                                                                                               |
-| Synthetic (path)   | `generateBngServiceSynthetic(outPath, centre, plan, { stage, templateVersion, templateFeatures })`, where `plan` is `generateOne`'s                                                                      |
+| Synthetic (path)   | `generateBngServiceSynthetic(outPath, centre, plan, { stage, templateVersion, templateFeatures, worseHabitatCounts })`, where `plan` is `generateOne`'s                                                  |
 | Workbook (buffer)  | `generateFromWorkbookBuffer({ format: 'bng-service', … })` returns one `buffer`; `mode: 'baseline'` writes the baseline-stage file                                                                       |
 | Workbook (path)    | `generateBngServiceFromWorkbook(outPath, workbook, sourceLabel, { stage, … })`                                                                                                                           |
 | Scenario catalogue | `generatePermutations({ format: 'bng-service' })`: each scenario carries one `geoPackage: { path, buffer }`, and its workbook when asked for. The scenarios hold exactly what they pin: nothing is added |

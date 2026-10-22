@@ -31,10 +31,12 @@ import {
   addVerticalHabitats,
   addWorseHabitats,
   applyTemplateOverrides,
-  defaultVerticalCount
+  defaultVerticalCount,
+  resolveWorseCounts
 } from './template-features.mjs'
 import {
   applyDegradeFlaws,
+  assertDegradeSubjectsDrawn,
   applyLineageFlaws,
   versionRecordsFor
 } from './flaws.mjs'
@@ -124,6 +126,7 @@ function finishSite(site, outPath, chooser, options) {
     comments = false,
     verticalHabitats,
     worseHabitats = false,
+    worseHabitatCounts = {},
     siteChanges = false,
     emptyLayers = new Set(),
     lineageFlaws = [],
@@ -135,7 +138,7 @@ function finishSite(site, outPath, chooser, options) {
     addVerticalHabitats(site, verticalHabitats, chooser)
   }
   if (worseHabitats) {
-    addWorseHabitats(site, chooser, emptyLayers)
+    addWorseHabitats(site, chooser, emptyLayers, worseHabitatCounts)
   }
   if (siteChanges) {
     addSiteChanges(site, chooser, emptyLayers)
@@ -333,6 +336,11 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *   irreplaceable parcel and tree, an Enhanced tree, and a habitat that gets
  *   worse on each layer that can. The scenario
  *   catalogue turns it off, so each scenario holds exactly what it pins.
+ * @param {Record<string, number>} [options.worseHabitatCounts]  how many of
+ *   each kind of habitat that gets worse to draw, by kind (WORSE_KINDS), in
+ *   place of one each: `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more
+ *   hedgerows that get worse. Taken only where the site draws habitats that
+ *   get worse: with template features, or a degrade flaw
  */
 export function generateBngServiceSynthetic(
   outPath,
@@ -343,7 +351,8 @@ export function generateBngServiceSynthetic(
   const {
     stage = STAGE_POST_INTERVENTION,
     templateVersion = CURRENT_TEMPLATE_VERSION,
-    templateFeatures = true
+    templateFeatures = true,
+    worseHabitatCounts
   } = options
   assertOptions({ stage, templateVersion })
   const {
@@ -356,6 +365,18 @@ export function generateBngServiceSynthetic(
   } = plan
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
   const enrich = templateFeatures && geometricFlawNames.length === 0
+  const worseHabitats = enrich || degradeFlawNames.length > 0
+  if (worseHabitatCounts !== undefined) {
+    if (!worseHabitats) {
+      throw new Error(
+        'worseHabitatCounts needs a site that draws habitats that get worse: one with template features and no geometric flaw, or a degrade flaw'
+      )
+    }
+    assertDegradeSubjectsDrawn(
+      degradeFlawNames,
+      resolveWorseCounts(worseHabitatCounts)
+    )
+  }
   const counts = computeLayerCounts(plan.numParcels, emptyLayers, plan.numTrees)
   const overrides = normaliseOverrides(
     enrich
@@ -376,7 +397,8 @@ export function generateBngServiceSynthetic(
     overrides,
     comments: enrich,
     // A degrade flaw breaks a habitat that gets worse, so it adds them.
-    worseHabitats: enrich || degradeFlawNames.length > 0,
+    worseHabitats,
+    worseHabitatCounts,
     siteChanges: enrich,
     emptyLayers,
     verticalHabitats:

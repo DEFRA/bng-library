@@ -106,6 +106,9 @@ function assertFormat(format) {
  *   templateFeatures BNG Service format only: false leaves out what only the
  *                new template records (vertical area habitats, comments, an
  *                irreplaceable parcel and tree, an Enhanced tree)
+ *   worseHabitatCounts BNG Service format only: how many of each kind of
+ *                habitat that gets worse to draw, by kind (WORSE_KINDS), in
+ *                place of one each, e.g. { hedge: 4 }
  */
 export function generateSyntheticGpkg(options = {}) {
   const {
@@ -153,7 +156,8 @@ function generateSyntheticBngServiceGpkg(options, centre) {
     seed,
     stage = STAGE_POST_INTERVENTION,
     templateVersion,
-    templateFeatures
+    templateFeatures,
+    worseHabitatCounts
   } = options
   const { result, messages } = captureMessages(() => {
     const { legacy, lineage, version, degrade } = partitionFlaws(flaws)
@@ -186,7 +190,7 @@ function generateSyntheticBngServiceGpkg(options, centre) {
           versionFlawNames: result.version,
           seed
         },
-        { stage, templateVersion, templateFeatures }
+        { stage, templateVersion, templateFeatures, worseHabitatCounts }
       )
     )
     return {

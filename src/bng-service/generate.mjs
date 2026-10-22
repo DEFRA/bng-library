@@ -36,6 +36,7 @@ import {
 } from './template-features.mjs'
 import {
   applyDegradeFlaws,
+  assertDegradeSubjectsDrawn,
   applyLineageFlaws,
   versionRecordsFor
 } from './flaws.mjs'
@@ -371,7 +372,10 @@ export function generateBngServiceSynthetic(
         'worseHabitatCounts needs a site that draws habitats that get worse: one with template features and no geometric flaw, or a degrade flaw'
       )
     }
-    resolveWorseCounts(worseHabitatCounts)
+    assertDegradeSubjectsDrawn(
+      degradeFlawNames,
+      resolveWorseCounts(worseHabitatCounts)
+    )
   }
   const counts = computeLayerCounts(plan.numParcels, emptyLayers, plan.numTrees)
   const overrides = normaliseOverrides(

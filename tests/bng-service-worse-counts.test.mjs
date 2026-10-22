@@ -5,6 +5,8 @@ import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
+  BNG_SERVICE_FLAWS,
+  CATEGORY_DEGRADE,
   MAX_WORSE_COUNT,
   WORSE_KINDS,
   checkLineage,
@@ -216,5 +218,58 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
         { geometricFlawNames: ['bowtie-parcel'] }
       )
     ).toThrow(/needs a site that draws habitats that get worse/)
+  })
+
+  describe('with a degrade flaw', () => {
+    const DEGRADE_FLAWS = Object.entries(BNG_SERVICE_FLAWS)
+      .filter(([, flaw]) => flaw.category === CATEGORY_DEGRADE)
+      .map(([name, flaw]) => [name, flaw.worse.kind])
+
+    it('names a kind for every degrade flaw', () => {
+      expect(DEGRADE_FLAWS.length).toBeGreaterThan(0)
+      for (const [name, kind] of DEGRADE_FLAWS) {
+        expect(WORSE_KINDS, name).toContain(kind)
+      }
+    })
+
+    it.each(DEGRADE_FLAWS)(
+      'refuses %s with no %s drawn, naming the count as the cause',
+      (name, kind) => {
+        expect(() =>
+          synthetic(
+            { worseHabitatCounts: { [kind]: 0 } },
+            { degradeFlawNames: [name] }
+          )
+        ).toThrow(
+          `${name} breaks a habitat that gets worse of kind ${kind}, so worseHabitatCounts cannot set ${kind} to 0`
+        )
+      }
+    )
+
+    it.each(DEGRADE_FLAWS)(
+      'writes %s when more than one %s is drawn',
+      (name, kind) => {
+        const file = synthetic(
+          { worseHabitatCounts: { [kind]: 3 } },
+          { degradeFlawNames: [name] }
+        )
+        expect(checkLineage(file)).toEqual([])
+      }
+    )
+
+    it('takes a zero count for a kind the flaw does not break', () => {
+      const file = synthetic(
+        { worseHabitatCounts: { 'worse-watercourse': 0 } },
+        { degradeFlawNames: ['degrade-not-worse'] }
+      )
+      expect(
+        hedgerows(file).filter(
+          (r) =>
+            r['Retention Category'] === 'Created' &&
+            r['Habitat created in advance/years'] === '30+' &&
+            r['Proposed Condition'] === r['Baseline Condition']
+        )
+      ).toHaveLength(1)
+    })
   })
 })

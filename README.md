@@ -131,9 +131,10 @@ its own type.
   Another keeps its encroachment, and its condition gets worse, with no
   years in advance. Neither is a culvert.
 
-Every hedgerow and watercourse drawn for the purpose is of a type the
-service accepts, Medium, Low or V.Low distinctiveness, so a valid site is
-not refused as out of scope.
+Every hedgerow and watercourse drawn for the purpose, including the
+re-meandered and shorter watercourses, is of a type the service accepts,
+Medium, Low or V.Low distinctiveness, so a valid site is not refused as out
+of scope.
 
 A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
 empty. `templateFeatures: false` leaves them all out.

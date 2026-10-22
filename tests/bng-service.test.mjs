@@ -29,7 +29,8 @@ import {
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT,
   addVerticalHabitats,
-  addWorseHabitats
+  addWorseHabitats,
+  drawnWatercourseBaseline
 } from '../src/bng-service/template-features.mjs'
 import { listIndex } from '../src/bng-service/reference.mjs'
 import { createChooser, uuidV5 } from '../src/bng-service/random.mjs'
@@ -897,7 +898,10 @@ describe('AC5: habitats that get worse', () => {
 
 describe('AC5: every hedgerow and watercourse drawn is in the service scope', () => {
   // The service refuses a High or V.High hedgerow or watercourse
-  // (HABITAT_DISTINCTIVENESS_NOT_IN_SCOPE), so a valid site draws none.
+  // (HABITAT_DISTINCTIVENESS_NOT_IN_SCOPE), so a valid site draws none. The
+  // bands are written out, not imported from IN_SCOPE_DISTINCTIVENESS_BANDS,
+  // so this checks the drawn site against the service's rule rather than
+  // against the set the generator draws from.
   const IN_SCOPE = new Set(['Medium', 'Low', 'V.Low'])
   const MANY = {
     hedge: 6,
@@ -921,6 +925,17 @@ describe('AC5: every hedgerow and watercourse drawn is in the service scope', ()
       )
     )
   }
+
+  it.each(['Other rivers and streams', 'Priority habitat'])(
+    'refuses to draw a %s watercourse for the purpose',
+    (type) => {
+      expect(() =>
+        drawnWatercourseBaseline(null, null, 'test', {
+          'Baseline River Type': type
+        })
+      ).toThrow(/must be in the service scope/)
+    }
+  )
 
   it.each([1, 3, 6, 7, 21])('seed %i, with many that get worse', (seed) => {
     const out = synthetic(

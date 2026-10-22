@@ -860,9 +860,16 @@ export function riverTypes(test) {
 
 /**
  * A baseline watercourse drawn for the purpose inside the red line, with
- * the baseline values given, added to the layer; null if none fits.
+ * the baseline values given, added to the layer; null if none fits. Its type
+ * must be in the service scope, as riverTypes gives.
  */
 export function drawnWatercourseBaseline(site, chooser, key, baselineValues) {
+  const type = baselineValues['Baseline River Type']
+  if (!inServiceScope('rivers', type)) {
+    throw new Error(
+      `A watercourse drawn for the purpose must be in the service scope (Medium, Low or V.Low distinctiveness); got ${type}`
+    )
+  }
   const layer = site.layers.rivers
   const geometry = drawnLine(
     site,
@@ -873,7 +880,6 @@ export function drawnWatercourseBaseline(site, chooser, key, baselineValues) {
   if (!geometry) {
     return null
   }
-  const type = baselineValues['Baseline River Type']
   const baseline = {
     geometry,
     uuid: chooser.uuid(`rivers/${key}`),

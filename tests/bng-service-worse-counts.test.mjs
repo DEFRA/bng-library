@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   BNG_SERVICE_FLAWS,
   CATEGORY_DEGRADE,
+  FlawSelectionError,
   MAX_WORSE_COUNT,
   WORSE_KINDS,
   assertDegradeSubjectsDrawn,
@@ -271,6 +272,18 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
           resolveWorseCounts({ hedge: 2 })
         )
       ).not.toThrow()
+    })
+
+    it.each([
+      ['an unknown name', 'no-such-flaw'],
+      ['a flaw that is not a degrade flaw', 'lineage-parent-missing']
+    ])('refuses %s by name, rather than failing on it', (_, name) => {
+      const call = () =>
+        assertDegradeSubjectsDrawn([name], resolveWorseCounts({}))
+      expect(call).toThrow(FlawSelectionError)
+      expect(call).toThrow(
+        `"${name}" is not a degraded-habitat flaw; assertDegradeSubjectsDrawn takes only those`
+      )
     })
 
     it('takes a zero count for a kind the flaw does not break', () => {

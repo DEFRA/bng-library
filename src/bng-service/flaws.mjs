@@ -373,12 +373,20 @@ export function partitionFlaws(names = []) {
  * Refuse counts that draw none of the habitat that gets worse a degrade flaw
  * breaks, so the flaw is not left to fail later for a reason it cannot name.
  *
+ * Throws FlawSelectionError for a name that is not a degrade flaw.
+ *
  * @param {string[]} names  the degrade flaws asked for
  * @param {Record<string, number>} counts  by kind, as resolveWorseCounts gives
  */
 export function assertDegradeSubjectsDrawn(names, counts) {
   for (const name of names) {
-    const { kind } = BNG_SERVICE_FLAWS[name].worse
+    const flaw = BNG_SERVICE_FLAWS[name]
+    if (flaw?.category !== CATEGORY_DEGRADE) {
+      error(
+        `"${name}" is not a degraded-habitat flaw; assertDegradeSubjectsDrawn takes only those`
+      )
+    }
+    const { kind } = flaw.worse
     if (counts[kind] === 0) {
       throw new Error(
         `${name} breaks a habitat that gets worse of kind ${kind}, so worseHabitatCounts cannot set ${kind} to 0`

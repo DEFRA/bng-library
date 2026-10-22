@@ -9,6 +9,7 @@ import {
   CATEGORY_DEGRADE,
   MAX_WORSE_COUNT,
   WORSE_KINDS,
+  assertDegradeSubjectsDrawn,
   checkLineage,
   checkTemplateValues,
   generateBngServiceSynthetic,
@@ -256,6 +257,21 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
         expect(checkLineage(file)).toEqual([])
       }
     )
+
+    it('exports the check, for a caller to run before generating', () => {
+      expect(() =>
+        assertDegradeSubjectsDrawn(
+          ['degrade-not-worse'],
+          resolveWorseCounts({ hedge: 0 })
+        )
+      ).toThrow(/cannot set hedge to 0/)
+      expect(() =>
+        assertDegradeSubjectsDrawn(
+          ['degrade-not-worse'],
+          resolveWorseCounts({ hedge: 2 })
+        )
+      ).not.toThrow()
+    })
 
     it('takes a zero count for a kind the flaw does not break', () => {
       const file = synthetic(

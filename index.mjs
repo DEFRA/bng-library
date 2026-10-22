@@ -144,5 +144,6 @@ export {
   CATEGORY_DEGRADE,
   CATEGORY_LINEAGE,
   CATEGORY_VERSION,
-  LEGACY_ONLY_FLAWS
+  LEGACY_ONLY_FLAWS,
+  assertDegradeSubjectsDrawn
 } from './src/bng-service/flaws.mjs'

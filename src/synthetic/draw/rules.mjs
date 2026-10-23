@@ -78,8 +78,32 @@ export function habitatPools(habitatFilter) {
   return {
     baseline: IN_SCOPE_HABITATS.filter((h) => habitatFilter(h.fullName)),
     creatableByBroad,
-    creatableBroadTypes: Object.keys(creatableByBroad)
+    creatableBroadTypes: Object.keys(creatableByBroad),
+    excludeOwnType: true
   }
+}
+
+/**
+ * The habitats a creation in `broad` can pick for a parcel of `baseline`.
+ * The BNG Service template reads a creation in the parcel's own type as a
+ * habitat that gets worse, or one that is not worse at all, and the service
+ * refuses either unless it is drawn for the purpose (`addWorseHabitats`). So
+ * its pools (`excludeOwnType`) leave the parcel's own type out; the default
+ * pools keep it, so a legacy site draws exactly as before.
+ */
+export function creatableFor(pools, broad, baseline) {
+  const pool = pools.creatableByBroad[broad] ?? []
+  return pools.excludeOwnType
+    ? pool.filter((h) => h.fullName !== baseline.fullName)
+    : pool
+}
+
+function creationBroadTypes(pools, baseline) {
+  return pools.excludeOwnType
+    ? pools.creatableBroadTypes.filter(
+        (broad) => creatableFor(pools, broad, baseline).length > 0
+      )
+    : pools.creatableBroadTypes
 }
 
 // A retained or enhanced parcel keeps its habitat: an enhancement that
@@ -91,13 +115,15 @@ function pickProposedHabitat(baseline, retention, pools) {
     return baseline
   }
   const proposedBroad =
-    retention === 'Lost' ? pick(pools.creatableBroadTypes) : baseline.broad
-  const pool = pools.creatableByBroad[proposedBroad]
+    retention === 'Lost'
+      ? pick(creationBroadTypes(pools, baseline))
+      : baseline.broad
+  const pool = creatableFor(pools, proposedBroad, baseline)
   // A pinned habitat can sit in a broad type the random pools exclude (e.g.
   // "Intertidal hard structures"). Enhancing or creating within that broad
   // type has nothing to draw from, so the baseline habitat carries through —
   // the row stays internally consistent either way.
-  return pool ? pick(pool) : baseline
+  return pool.length > 0 ? pick(pool) : baseline
 }
 
 export function findHabitatByFullName(fullName) {

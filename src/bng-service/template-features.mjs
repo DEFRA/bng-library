@@ -209,6 +209,58 @@ export function addComments(site, chooser) {
   }
 }
 
+const IRREPLACEABLE_COMMENTS = new Set([
+  ANCIENT_WOODLAND_COMMENT,
+  VETERAN_TREE_COMMENT
+])
+
+/** Whether the template lets this irreplaceable feature be marked No. */
+function canBeReplaceable(layerKey, feature) {
+  return (
+    layerKey !== 'habitats' ||
+    irreplaceableAnswers(feature.values['Baseline Habitat Type']).has(NO)
+  )
+}
+
+/**
+ * Mark no feature irreplaceable on the layers `layerKeys` names, in either
+ * stage, where the template also offers No, and drop the comment
+ * `addComments` gives an irreplaceable feature. Run once every feature is
+ * drawn, so the site is the one a default site draws, bar these answers:
+ * the parcel that gets worse and the parcel split into repeated refs, which
+ * are never irreplaceable, are the ones they would have been.
+ *
+ * A habitat the template always marks irreplaceable (Coastal sand dunes,
+ * Limestone pavement, Blanket bog) keeps its Yes, as the template offers
+ * nothing else, and is returned so the caller can say so. None is in the
+ * service's scope, so a random draw never picks one; only a plan that pins
+ * one does.
+ *
+ * @param {object} site
+ * @param {Iterable<string>} layerKeys  of 'habitats' and 'trees'
+ * @returns {object[]} the features left irreplaceable on those layers
+ */
+export function clearIrreplaceable(site, layerKeys) {
+  const kept = []
+  for (const layerKey of layerKeys) {
+    const layer = site.layers[layerKey]
+    const marked = [...layer.baseline, ...layer.postIntervention].filter(
+      (f) => f.values[IRREPLACEABLE] === YES
+    )
+    for (const feature of marked) {
+      if (!canBeReplaceable(layerKey, feature)) {
+        kept.push(feature)
+        continue
+      }
+      feature.values[IRREPLACEABLE] = NO
+      if (IRREPLACEABLE_COMMENTS.has(feature.values[COMMENT])) {
+        feature.values[COMMENT] = null
+      }
+    }
+  }
+  return kept
+}
+
 // --------------------------------------------------- vertical area habitats
 
 const VERTICAL_BROAD_TYPES = new Set(['Urban', 'Intertidal hard structures'])

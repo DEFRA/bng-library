@@ -9,6 +9,7 @@ import {
   CURRENT_TEMPLATE_VERSION,
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE,
+  captureMessages,
   checkTemplateValues,
   generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,
@@ -25,7 +26,9 @@ import { wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
 import { areaSquareMetres } from '../src/measure/index.mjs'
 import { geometryWkt } from '../src/bng-service/site.mjs'
 import {
+  ANCIENT_WOODLAND_COMMENT,
   ENCROACHED_WATERCOURSE_COMMENT,
+  VETERAN_TREE_COMMENT,
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT,
   addVerticalHabitats,
@@ -615,6 +618,95 @@ describe('AC5: what only the new template records', () => {
     ])
   })
 
+  const SITE = { seed: 4, numParcels: 30 }
+  const IRREPLACEABLE_TABLES = [
+    BASELINE('Area Habitats'),
+    PI('Area Habitats'),
+    BASELINE('Individual Trees'),
+    PI('Individual Trees')
+  ]
+
+  it.each([
+    [[], []],
+    [['habitats'], [BASELINE('Area Habitats'), PI('Area Habitats')]],
+    [['trees'], [BASELINE('Individual Trees'), PI('Individual Trees')]]
+  ])(
+    'marks only the layers irreplaceableLayers names irreplaceable: %j',
+    (layers, marked) => {
+      const file = synthetic(SITE, { irreplaceableLayers: layers })
+      for (const table of IRREPLACEABLE_TABLES) {
+        const yes = rows(file, table).filter(
+          (r) => r['Irreplaceable Habitat'] === 'Yes'
+        )
+        expect(yes.length > 0, table).toBe(marked.includes(table))
+      }
+      expect(checkTemplateValues(file)).toEqual([])
+    }
+  )
+
+  it.each([1, 4])(
+    'draws the same site with irreplaceableLayers: [], bar the irreplaceable answer and comment (seed %i)',
+    (seed) => {
+      const site = { ...SITE, seed }
+      const plain = synthetic(site, { irreplaceableLayers: [] })
+      const full = synthetic(site)
+      const irreplaceableComments = new Set([
+        ANCIENT_WOODLAND_COMMENT,
+        VETERAN_TREE_COMMENT
+      ])
+      const strip = (file, table) =>
+        rows(file, table).map(({ 'Irreplaceable Habitat': _, ...rest }) => ({
+          ...rest,
+          Comment: irreplaceableComments.has(rest.Comment) ? null : rest.Comment
+        }))
+      for (const table of [
+        ...IRREPLACEABLE_TABLES,
+        PI('Hedgerows'),
+        PI('Watercourses')
+      ]) {
+        expect(strip(plain, table)).toEqual(strip(full, table))
+      }
+    }
+  )
+
+  it('refuses a layer irreplaceableLayers does not know', () => {
+    expect(() =>
+      synthetic(SITE, { irreplaceableLayers: ['hedgerows'] })
+    ).toThrow(/irreplaceableLayers takes only habitats, trees/)
+  })
+
+  it('refuses irreplaceableLayers that is not an array, saying so', () => {
+    expect(() => synthetic(SITE, { irreplaceableLayers: 'trees' })).toThrow(
+      /irreplaceableLayers takes an array of habitats, trees \(got: "trees"\)/
+    )
+  })
+
+  it('keeps a habitat the template always marks irreplaceable, and warns', () => {
+    const { result: file, messages } = captureMessages(() =>
+      synthetic(
+        {
+          ...SITE,
+          attributeOverrides: {
+            habitats: [{ habitatFullName: 'Wetland - Blanket bog' }]
+          }
+        },
+        { irreplaceableLayers: [] }
+      )
+    )
+    const kept = rows(file, BASELINE('Area Habitats')).filter(
+      (r) => r['Irreplaceable Habitat'] === 'Yes'
+    )
+    expect(kept.map((r) => r['Baseline Habitat Type'])).toEqual(['Blanket bog'])
+    expect(messages).toContainEqual({
+      level: 'warn',
+      message: expect.stringMatching(
+        new RegExp(
+          `${kept[0]['Habitat Ref']} \\(Blanket bog\\) stays irreplaceable`
+        )
+      )
+    })
+  })
+
   it('refuses an irreplaceable tree that is Enhanced', () => {
     expect(() =>
       synthetic({
@@ -1036,6 +1128,39 @@ describe('AC6: flaws in the new format', () => {
     expect(row['Proposed Hedge Type']).toBe(row['Baseline Hedge Type'])
     expect(row['Proposed Condition']).toBe(row['Baseline Condition'])
     expect(row['Habitat created in advance/years']).toBe('30+')
+  })
+
+  it('degrade-habitat-ref-blank: an area habitat that gets worse, its ref empty on its post-intervention row only', () => {
+    // A site large enough to draw an area habitat that gets worse.
+    const out = synthetic({
+      seed: 1,
+      numParcels: 50,
+      degradeFlawNames: ['degrade-habitat-ref-blank']
+    })
+    const blank = rows(out, PI('Area Habitats')).filter(
+      (r) => (r['Habitat Ref'] ?? '').trim() === ''
+    )
+    expect(blank).toHaveLength(1)
+    const [row] = blank
+    expect(row['Habitat Ref']).toBe('')
+    expect(row.Comment).toBe(WORSE_HABITAT_COMMENT)
+    expect(row['Retention Category']).toBe('Created')
+    const parent = rows(out, BASELINE('Area Habitats')).find(
+      (r) => r.feature_uuid === row.parent_uuid
+    )
+    expect(parent['Habitat Ref']).toBe(row['Parent Ref'])
+    for (const r of rows(out, BASELINE('Area Habitats'))) {
+      expect(r['Habitat Ref'].trim()).not.toBe('')
+    }
+  })
+
+  it('degrade-habitat-ref-blank: on a site too small for one that gets worse, empties a linked area habitat', () => {
+    const out = flawed('degrade-habitat-ref-blank')
+    const blank = rows(out, PI('Area Habitats')).filter(
+      (r) => (r['Habitat Ref'] ?? '').trim() === ''
+    )
+    expect(blank).toHaveLength(1)
+    expect(blank[0].parent_uuid).toBeTruthy()
   })
 
   it('degrade-watercourse-advance-not-encroachment: a watercourse worse in condition only, 10 years in advance', () => {

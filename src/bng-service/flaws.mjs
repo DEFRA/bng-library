@@ -98,6 +98,28 @@ function worseSubject(site, flaw) {
 }
 
 /**
+ * The post-intervention area habitat degrade-habitat-ref-blank empties the
+ * ref of: the one that gets worse, or, on a site too small to draw one, the
+ * last linked to its parent, clear of the first continuing one the lineage
+ * flaws take.
+ */
+function blankRefSubject(site) {
+  const rows = site.layers.habitats.postIntervention
+  const worse = rows.find((f) => f.worse === WORSE.parcel)
+  if (worse) {
+    return worse
+  }
+  const first = rows.find(continuing)
+  const linked = rows.filter((f) => f.parent && f !== first)
+  if (linked.length === 0) {
+    throw new Error(
+      'degrade-habitat-ref-blank needs a post-intervention area habitat linked to its parent, besides the one the lineage flaws take; this site has none'
+    )
+  }
+  return linked.at(-1)
+}
+
+/**
  * Split a Created watercourse's row in two: a Retained first part, in its
  * baseline values, and the Created rest. Both keep the parent.
  */
@@ -240,6 +262,18 @@ export const BNG_SERVICE_FLAWS = {
       const feature = worseSubject(site, 'degrade-not-worse')
       feature.values['Proposed Condition'] =
         feature.parent.values['Baseline Condition']
+    }
+  },
+  'degrade-habitat-ref-blank': {
+    description:
+      'an area habitat that gets worse has an empty Habitat Ref on its post-intervention row only; its baseline row keeps its ref, so only a check of the post-intervention tables finds it',
+    errorCode: 'HABITAT_REF_MISSING',
+    category: CATEGORY_DEGRADE,
+    worse: { layerKey: 'habitats', kind: WORSE.parcel },
+    applyToSite(site) {
+      // Empty rather than spaces, which missing-habitat-ref writes on both
+      // stages: between them the two cover a blank and an empty ref.
+      blankRefSubject(site).values[HABITAT_REF] = ''
     }
   },
   'degrade-watercourse-advance-not-encroachment': {

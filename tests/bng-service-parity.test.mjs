@@ -68,7 +68,11 @@ function dumpHash(file) {
 function converted(name, plan) {
   const legacyPath = path.join(dir, `${name}-legacy.gpkg`)
   const outPath = path.join(dir, `${name}-converted.gpkg`)
-  generateOne(legacyPath, CENTRE, { ...plan, habitatFilter: areaLayerOffers })
+  generateOne(legacyPath, CENTRE, {
+    ...plan,
+    habitatFilter: areaLayerOffers,
+    excludeOwnTypeCreation: true
+  })
   writeBngServiceFromLegacy({ legacyPath }, outPath, {
     seed: plan.seed,
     overrides: plan.attributeOverrides,
@@ -158,7 +162,8 @@ describe('a scenario’s workbook reads the same from either format', () => {
     const outPath = path.join(dir, `${id}-native.gpkg`)
     generateOne(legacyPath, CENTRE, {
       ...plan,
-      habitatFilter: areaLayerOffers
+      habitatFilter: areaLayerOffers,
+      excludeOwnTypeCreation: true
     })
     generateBngServiceSynthetic(outPath, CENTRE, plan, {
       templateFeatures: false

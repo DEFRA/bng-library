@@ -5,6 +5,9 @@ import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { generateBngServiceSynthetic, setMode } from '../index.mjs'
+import { clearSeed, setSeed } from '../src/geometry.mjs'
+import { drawSite } from '../src/synthetic/draw/site.mjs'
+import { habitatPools } from '../src/synthetic/draw/rules.mjs'
 import { WORSE_HABITAT_COMMENT } from '../src/bng-service/template-features.mjs'
 
 const CENTRE = [530000, 180000]
@@ -70,4 +73,41 @@ describe('a random BNG Service site creates no area habitat in its own type by c
       })
     }
   }
+})
+
+describe('the own-type creation rule is its own option', () => {
+  const NEUTRAL = 'Grassland - Other neutral grassland'
+  const onlyNeutral = (fullName) => fullName === NEUTRAL
+  const PARCELS = 40
+
+  function retentions(plan) {
+    setSeed(1)
+    try {
+      return drawSite(CENTRE, { numParcels: PARCELS, ...plan }).habitats.map(
+        (parcel) => parcel.retention
+      )
+    } finally {
+      clearSeed()
+    }
+  }
+
+  it('a habitat filter alone only narrows the pools', () => {
+    expect(habitatPools(onlyNeutral).excludeOwnType).toBe(false)
+    expect(
+      habitatPools(onlyNeutral, { excludeOwnTypeCreation: true }).excludeOwnType
+    ).toBe(true)
+    expect(retentions({ habitatFilter: onlyNeutral })).toEqual(
+      expect.arrayContaining(['Created', 'Lost'])
+    )
+  })
+
+  it('draws neither Created nor Lost where the parcel own type is all there is to create', () => {
+    const drawn = retentions({
+      habitatFilter: onlyNeutral,
+      excludeOwnTypeCreation: true
+    })
+    expect(drawn).toHaveLength(PARCELS)
+    expect(drawn).not.toContain('Created')
+    expect(drawn).not.toContain('Lost')
+  })
 })

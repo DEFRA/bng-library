@@ -45,7 +45,13 @@ export function drawSyntheticSite(centre, plan, chooser) {
       ? badSite(centre, geometricFlawNames, options)
       : siteFromDraw(
           withSeed(plan.seed, () =>
-            drawSite(centre, { ...plan, habitatFilter: areaLayerOffers })
+            drawSite(centre, {
+              ...plan,
+              habitatFilter: areaLayerOffers,
+              // The template reads a creation in the parcel's own type as a
+              // habitat that gets worse: only addWorseHabitats draws one.
+              excludeOwnTypeCreation: true
+            })
           ),
           options
         )

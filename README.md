@@ -139,6 +139,14 @@ of scope.
 A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
 empty. `templateFeatures: false` leaves them all out.
 
+**`irreplaceableLayers`** names the layers (`IRREPLACEABLE_LAYERS`:
+`habitats`, `trees`) whose template-feature parcel or tree is marked
+irreplaceable; both by default. The service refuses a file with an
+irreplaceable habitat (BMD-1176, and BMD-1172 for trees), so a file meant to
+upload cleanly takes `[]`. The site is drawn as the default site is, then
+the parcel or tree is marked `No` and loses its irreplaceable comment, so
+the file differs from the default site in those values alone.
+
 There is one of each by default. **`worseHabitatCounts`** asks for more or
 fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,
 `hedge`, `partly-worse-hedge`, `encroached-watercourse`,
@@ -157,7 +165,7 @@ mapping post-intervention habitats.
 | Route              | In the BNG Service format                                                                                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Synthetic (buffer) | `generateSyntheticGpkg({ format: 'bng-service', … })` returns one `buffer`                                                                                                                               |
-| Synthetic (path)   | `generateBngServiceSynthetic(outPath, centre, plan, { stage, templateVersion, templateFeatures, worseHabitatCounts })`, where `plan` is `generateOne`'s                                                  |
+| Synthetic (path)   | `generateBngServiceSynthetic(outPath, centre, plan, { stage, templateVersion, templateFeatures, irreplaceableLayers, worseHabitatCounts })`, where `plan` is `generateOne`'s                             |
 | Workbook (buffer)  | `generateFromWorkbookBuffer({ format: 'bng-service', … })` returns one `buffer`; `mode: 'baseline'` writes the baseline-stage file                                                                       |
 | Workbook (path)    | `generateBngServiceFromWorkbook(outPath, workbook, sourceLabel, { stage, … })`                                                                                                                           |
 | Scenario catalogue | `generatePermutations({ format: 'bng-service' })`: each scenario carries one `geoPackage: { path, buffer }`, and its workbook when asked for. The scenarios hold exactly what they pin: nothing is added |
@@ -210,25 +218,35 @@ takes: every legacy flaw remapped to its tables (the IGGI polygon becomes a
 vertical area habitat) bar `tree-count-not-whole`, as the template has no
 Count column, and its own:
 
-| Flaw                                           | What it writes                                                                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `lineage-parent-missing`                       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom                                             |
-| `lineage-parent-unknown`                       | a Retained area habitat whose parent is not in the baseline                                                        |
-| `lineage-parent-wrong`                         | a Retained area habitat naming another baseline parcel, which it lies outside                                      |
-| `lineage-parent-geom-mismatch`                 | the right parent, with a parent_geom 5 m from the parent's shape                                                   |
-| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom; accepted, as the service skips the check                                    |
-| `version-record-missing`                       | no template version record                                                                                         |
-| `version-record-duplicated`                    | two records                                                                                                        |
-| `version-unsupported`                          | one record naming the next major version, which the service does not support yet                                   |
-| `degrade-advance-missing`                      | a hedgerow that gets worse with no years created in advance, where the Metric asks for 30+                         |
-| `degrade-not-worse`                            | a same-type creation that is not worse: a hedgerow Created in its own type, linked, 30+, in its baseline condition |
-| `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment     |
-| `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                     |
-| `degrade-watercourse-retained-and-created`     | one baseline watercourse with a Retained part and a Created part                                                   |
+| Flaw                                           | What it writes                                                                                                              |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `lineage-parent-missing`                       | a Retained area habitat with no Parent Ref, parent_uuid or parent_geom                                                      |
+| `lineage-parent-unknown`                       | a Retained area habitat whose parent is not in the baseline                                                                 |
+| `lineage-parent-wrong`                         | a Retained area habitat naming another baseline parcel, which it lies outside                                               |
+| `lineage-parent-geom-mismatch`                 | the right parent, with a parent_geom 5 m from the parent's shape                                                            |
+| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom; accepted, as the service skips the check                                             |
+| `version-record-missing`                       | no template version record                                                                                                  |
+| `version-record-duplicated`                    | two records                                                                                                                 |
+| `version-unsupported`                          | one record naming the next major version, which the service does not support yet                                            |
+| `degrade-advance-missing`                      | a hedgerow that gets worse with no years created in advance, where the Metric asks for 30+                                  |
+| `degrade-not-worse`                            | a same-type creation that is not worse: a hedgerow Created in its own type, linked, 30+, in its baseline condition          |
+| `degrade-habitat-ref-blank`                    | an area habitat that gets worse (on a small site, a linked one) with an empty Habitat Ref on its post-intervention row only |
+| `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment              |
+| `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                              |
+| `degrade-watercourse-retained-and-created`     | one baseline watercourse with a Retained part and a Created part                                                            |
 
 At most one lineage flaw and one degrade flaw at a time. A degrade flaw adds
 the habitats that get worse, if the site has none, and breaks one of them.
-The service does not check these yet, so a file with one is accepted.
+The service does not check these yet, so a file with one is accepted, bar
+`degrade-habitat-ref-blank`, which it refuses as it refuses any blank
+Habitat Ref (`HABITAT_REF_MISSING`).
+
+There is no degrade flaw for a natural river left out, or for an
+irreplaceable tree that gets worse: the service refuses either file for
+another reason first, so the flaw could not be told apart. Natural rivers
+(Other rivers and streams, High; Priority habitat, V.High) are out of the
+service's scope, and only canals and ditches may be lost; and the service
+refuses any irreplaceable habitat, which `irreplaceableLayers` covers.
 
 **Checking a file.** `checkTemplateValues(path)` checks every value in a BNG
 Service file against the template's own drop-downs, applying each list's

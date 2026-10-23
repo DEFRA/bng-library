@@ -126,7 +126,10 @@ export {
   UNREADABLE_GEOMETRY,
   checkLineage
 } from './src/bng-service/check-lineage.mjs'
+// IRREPLACEABLE_LAYERS: the layers a default site marks a feature
+// irreplaceable on; `irreplaceableLayers` names fewer.
 export {
+  IRREPLACEABLE_LAYERS,
   generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,
   writeBngServiceFromLegacy

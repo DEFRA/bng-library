@@ -16,6 +16,8 @@ exports[`BNG Service output is pinned > flaw bowtie-parcel 1`] = `"6a690817b2e92
 
 exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"61554e6cbce40b032348bda34da39643387fa0d7922a428cdb2aafd77f935391"`;
 
+exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"079bbb964feee3e32436ac0fb43e917e4d4c1082cdd2c660398fd6e3e8e84c97"`;
+
 exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"7bc1dc393331b70c41c8cf983a5468316044a5895ac1df8d84d39f408e9d2639"`;
 
 exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"0c892fb94745538a0680c2157f069881bf4a98fac5e30d091afe3f4f82ffa511"`;

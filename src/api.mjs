@@ -106,6 +106,10 @@ function assertFormat(format) {
  *   templateFeatures BNG Service format only: false leaves out what only the
  *                new template records (vertical area habitats, comments, an
  *                irreplaceable parcel and tree, an Enhanced tree)
+ *   irreplaceableLayers BNG Service format only: the layers ('habitats',
+ *                'trees') whose template-feature parcel or tree is marked
+ *                irreplaceable; both by default. [] for a file the service
+ *                should accept, as it refuses an irreplaceable habitat
  *   worseHabitatCounts BNG Service format only: how many of each kind of
  *                habitat that gets worse to draw, by kind (WORSE_KINDS), in
  *                place of one each, e.g. { hedge: 4 }
@@ -157,6 +161,7 @@ function generateSyntheticBngServiceGpkg(options, centre) {
     stage = STAGE_POST_INTERVENTION,
     templateVersion,
     templateFeatures,
+    irreplaceableLayers,
     worseHabitatCounts
   } = options
   const { result, messages } = captureMessages(() => {
@@ -190,7 +195,13 @@ function generateSyntheticBngServiceGpkg(options, centre) {
           versionFlawNames: result.version,
           seed
         },
-        { stage, templateVersion, templateFeatures, worseHabitatCounts }
+        {
+          stage,
+          templateVersion,
+          templateFeatures,
+          irreplaceableLayers,
+          worseHabitatCounts
+        }
       )
     )
     return {

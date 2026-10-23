@@ -31,6 +31,7 @@ import {
   addVerticalHabitats,
   addWorseHabitats,
   applyTemplateOverrides,
+  clearIrreplaceable,
   defaultVerticalCount,
   resolveWorseCounts
 } from './template-features.mjs'
@@ -68,6 +69,17 @@ export const IRREPLACEABLE_WOODLAND =
   'Woodland and forest - Other woodland; broadleaved'
 const MIN_PARCELS_FOR_IRREPLACEABLE = 3
 const MIN_TREES_FOR_TEMPLATE_TREES = 3
+// The layers a default site marks a feature irreplaceable on.
+export const IRREPLACEABLE_LAYERS = Object.freeze(['habitats', 'trees'])
+
+function assertIrreplaceableLayers(layers) {
+  const unknown = layers.filter((l) => !IRREPLACEABLE_LAYERS.includes(l))
+  if (unknown.length > 0) {
+    throw new Error(
+      `irreplaceableLayers takes only ${IRREPLACEABLE_LAYERS.join(', ')} (got: ${unknown.join(', ')})`
+    )
+  }
+}
 
 function assertOptions({ stage, templateVersion }) {
   if (!VALID_STAGES.has(stage)) {
@@ -131,7 +143,8 @@ function finishSite(site, outPath, chooser, options) {
     emptyLayers = new Set(),
     lineageFlaws = [],
     degradeFlaws = [],
-    versionFlaws = []
+    versionFlaws = [],
+    replaceableLayers = []
   } = options
   applyTemplateOverrides(site, overrides)
   if (verticalHabitats) {
@@ -147,6 +160,7 @@ function finishSite(site, outPath, chooser, options) {
   if (comments) {
     addComments(site, chooser)
   }
+  clearIrreplaceable(site, replaceableLayers)
   applyLineageFlaws(site, lineageFlaws)
   withSeededClock(chooser.seeded, () =>
     writeSite(outPath, site, {
@@ -267,7 +281,8 @@ function unpinned(rows, index) {
  * records: an irreplaceable woodland parcel, a veteran (irreplaceable) tree
  * and an Enhanced tree. Each goes on a row nothing else pins, at the end of
  * its layer, clear of the flaw overrides that pin the first rows and of the
- * tree the legacy generator always plants.
+ * tree the legacy generator always plants. `irreplaceableLayers` marks
+ * them No once the site is drawn (see `clearIrreplaceable`).
  */
 function templateFeatureOverrides(counts, attributeOverrides) {
   const overrides = { ...attributeOverrides }
@@ -336,6 +351,11 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *   irreplaceable parcel and tree, an Enhanced tree, and a habitat that gets
  *   worse on each layer that can. The scenario
  *   catalogue turns it off, so each scenario holds exactly what it pins.
+ * @param {string[]} [options.irreplaceableLayers]  the layers, of
+ *   IRREPLACEABLE_LAYERS, whose template-feature parcel or tree is marked
+ *   irreplaceable: both by default. The service refuses an irreplaceable
+ *   habitat (BMD-1176, BMD-1172), so a file meant to upload cleanly takes
+ *   `[]`. Taken only with template features
  * @param {Record<string, number>} [options.worseHabitatCounts]  how many of
  *   each kind of habitat that gets worse to draw, by kind (WORSE_KINDS), in
  *   place of one each: `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more
@@ -352,9 +372,11 @@ export function generateBngServiceSynthetic(
     stage = STAGE_POST_INTERVENTION,
     templateVersion = CURRENT_TEMPLATE_VERSION,
     templateFeatures = true,
+    irreplaceableLayers = IRREPLACEABLE_LAYERS,
     worseHabitatCounts
   } = options
   assertOptions({ stage, templateVersion })
+  assertIrreplaceableLayers(irreplaceableLayers)
   const {
     attributeOverrides = {},
     emptyLayers = new Set(),
@@ -407,7 +429,12 @@ export function generateBngServiceSynthetic(
         : { count: 0, rows: verticalRows },
     lineageFlaws: lineageFlawNames,
     degradeFlaws: degradeFlawNames,
-    versionFlaws: versionFlawNames
+    versionFlaws: versionFlawNames,
+    // Drawn irreplaceable as the default site draws them, so the rest of the
+    // site is the same, then marked No on the layers not named.
+    replaceableLayers: enrich
+      ? IRREPLACEABLE_LAYERS.filter((l) => !irreplaceableLayers.includes(l))
+      : []
   })
   reportSite(site, outPath, stage)
   return site

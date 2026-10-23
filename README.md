@@ -140,12 +140,16 @@ A layer that an empty-layer flaw, such as `no-hedgerows`, leaves empty stays
 empty. `templateFeatures: false` leaves them all out.
 
 **`irreplaceableLayers`** names the layers (`IRREPLACEABLE_LAYERS`:
-`habitats`, `trees`) whose template-feature parcel or tree is marked
-irreplaceable; both by default. The service refuses a file with an
-irreplaceable habitat (BMD-1176, and BMD-1172 for trees), so a file meant to
-upload cleanly takes `[]`. The site is drawn as the default site is, then
-the parcel or tree is marked `No` and loses its irreplaceable comment, so
-the file differs from the default site in those values alone.
+`habitats`, `trees`) that keep the irreplaceable parcel or tree the template
+features add; both by default. The service refuses a file with an
+irreplaceable habitat (BMD-1176, and BMD-1172 for trees). On a layer not
+named, the site is drawn as the default site is, then every feature is
+marked `No` and the parcel or tree loses its irreplaceable comment, so the
+file differs from the default site in those values alone. The exception is
+a habitat the template always marks irreplaceable (Coastal sand dunes,
+Limestone pavement, Blanket bog): it stays `Yes`, with a warning, as the
+template offers nothing else. None is in the service's scope, so only a plan
+that pins one can draw it, and the service refuses that file anyway.
 
 There is one of each by default. **`worseHabitatCounts`** asks for more or
 fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,

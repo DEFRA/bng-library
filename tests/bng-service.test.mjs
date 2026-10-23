@@ -9,6 +9,7 @@ import {
   CURRENT_TEMPLATE_VERSION,
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE,
+  captureMessages,
   checkTemplateValues,
   generateBngServiceFromWorkbook,
   generateBngServiceSynthetic,
@@ -672,6 +673,38 @@ describe('AC5: what only the new template records', () => {
     expect(() =>
       synthetic(SITE, { irreplaceableLayers: ['hedgerows'] })
     ).toThrow(/irreplaceableLayers takes only habitats, trees/)
+  })
+
+  it('refuses irreplaceableLayers that is not an array, saying so', () => {
+    expect(() => synthetic(SITE, { irreplaceableLayers: 'trees' })).toThrow(
+      /irreplaceableLayers takes an array of habitats, trees \(got: "trees"\)/
+    )
+  })
+
+  it('keeps a habitat the template always marks irreplaceable, and warns', () => {
+    const { result: file, messages } = captureMessages(() =>
+      synthetic(
+        {
+          ...SITE,
+          attributeOverrides: {
+            habitats: [{ habitatFullName: 'Wetland - Blanket bog' }]
+          }
+        },
+        { irreplaceableLayers: [] }
+      )
+    )
+    const kept = rows(file, BASELINE('Area Habitats')).filter(
+      (r) => r['Irreplaceable Habitat'] === 'Yes'
+    )
+    expect(kept.map((r) => r['Baseline Habitat Type'])).toEqual(['Blanket bog'])
+    expect(messages).toContainEqual({
+      level: 'warn',
+      message: expect.stringMatching(
+        new RegExp(
+          `${kept[0]['Habitat Ref']} \\(Blanket bog\\) stays irreplaceable`
+        )
+      )
+    })
   })
 
   it('refuses an irreplaceable tree that is Enhanced', () => {

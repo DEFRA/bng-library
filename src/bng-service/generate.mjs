@@ -50,6 +50,7 @@ import { moveVerticalHabitats } from './vertical-from-area.mjs'
 import { createChooser } from './random.mjs'
 import {
   CURRENT_TEMPLATE_VERSION,
+  HABITAT_REF,
   LAYERS,
   STAGE_BASELINE,
   STAGE_POST_INTERVENTION,
@@ -73,6 +74,11 @@ const MIN_TREES_FOR_TEMPLATE_TREES = 3
 export const IRREPLACEABLE_LAYERS = Object.freeze(['habitats', 'trees'])
 
 function assertIrreplaceableLayers(layers) {
+  if (!Array.isArray(layers)) {
+    throw new Error(
+      `irreplaceableLayers takes an array of ${IRREPLACEABLE_LAYERS.join(', ')} (got: ${JSON.stringify(layers)})`
+    )
+  }
   const unknown = layers.filter((l) => !IRREPLACEABLE_LAYERS.includes(l))
   if (unknown.length > 0) {
     throw new Error(
@@ -160,7 +166,7 @@ function finishSite(site, outPath, chooser, options) {
   if (comments) {
     addComments(site, chooser)
   }
-  clearIrreplaceable(site, replaceableLayers)
+  warnIrreplaceableKept(clearIrreplaceable(site, replaceableLayers))
   applyLineageFlaws(site, lineageFlaws)
   withSeededClock(chooser.seeded, () =>
     writeSite(outPath, site, {
@@ -168,6 +174,19 @@ function finishSite(site, outPath, chooser, options) {
       versionRecords: versionRecordsFor(versionFlaws, templateVersion)
     })
   )
+}
+
+/**
+ * Say which features `clearIrreplaceable` had to leave irreplaceable, as the
+ * service refuses the file for them (BMD-1176) though the caller asked for
+ * none on their layer.
+ */
+function warnIrreplaceableKept(features) {
+  for (const feature of features) {
+    warn(
+      `  ${feature.values[HABITAT_REF]} (${feature.values['Baseline Habitat Type']}) stays irreplaceable: the template allows only Yes for it, so the service will refuse the file`
+    )
+  }
 }
 
 /**
@@ -352,10 +371,12 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *   worse on each layer that can. The scenario
  *   catalogue turns it off, so each scenario holds exactly what it pins.
  * @param {string[]} [options.irreplaceableLayers]  the layers, of
- *   IRREPLACEABLE_LAYERS, whose template-feature parcel or tree is marked
- *   irreplaceable: both by default. The service refuses an irreplaceable
- *   habitat (BMD-1176, BMD-1172), so a file meant to upload cleanly takes
- *   `[]`. Taken only with template features
+ *   IRREPLACEABLE_LAYERS, that keep the irreplaceable parcel or tree the
+ *   template features add: both by default. On a layer not named, no
+ *   feature is marked irreplaceable, bar a habitat the template always
+ *   marks so, which stays Yes with a warning (see `clearIrreplaceable`).
+ *   The service refuses an irreplaceable habitat (BMD-1176, BMD-1172).
+ *   Taken only with template features
  * @param {Record<string, number>} [options.worseHabitatCounts]  how many of
  *   each kind of habitat that gets worse to draw, by kind (WORSE_KINDS), in
  *   place of one each: `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more

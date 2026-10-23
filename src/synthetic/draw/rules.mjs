@@ -18,7 +18,7 @@ import {
   FEATURE_REF_PAD,
   FEATURE_REF_PAD_CHAR
 } from '../../workbook/workbook-rows.mjs'
-import { RETENTION_CREATED } from '../../retention.mjs'
+import { RETENTION_CREATED, RETENTION_LOST } from '../../retention.mjs'
 import {
   ALL_HABITATS,
   IN_SCOPE_BROAD_HABITAT_TYPES,
@@ -60,12 +60,22 @@ export const DEFAULT_HABITAT_POOLS = Object.freeze({
 /**
  * The area habitats a random draw picks from. A `habitatFilter` narrows
  * them, as the BNG Service template's Area Habitats layers do, which offer no
- * vertical area habitat. Without one the pools are the module's own, so every
- * draw is exactly as before.
+ * vertical area habitat. `excludeOwnTypeCreation` keeps a creation out of the
+ * parcel's own habitat type (see `creatableFor`). Without either the pools
+ * are the module's own, so every draw is exactly as before.
+ *
+ * @param {(fullName: string) => boolean} [habitatFilter]
+ * @param {{ excludeOwnTypeCreation?: boolean }} [options]
  */
-export function habitatPools(habitatFilter) {
+export function habitatPools(
+  habitatFilter,
+  { excludeOwnTypeCreation = false } = {}
+) {
+  const excludeOwnType = { excludeOwnType: excludeOwnTypeCreation }
   if (!habitatFilter) {
-    return DEFAULT_HABITAT_POOLS
+    return excludeOwnTypeCreation
+      ? { ...DEFAULT_HABITAT_POOLS, ...excludeOwnType }
+      : DEFAULT_HABITAT_POOLS
   }
   const creatableByBroad = Object.fromEntries(
     Object.entries(CREATABLE_HABITATS_BY_BROAD)
@@ -78,8 +88,33 @@ export function habitatPools(habitatFilter) {
   return {
     baseline: IN_SCOPE_HABITATS.filter((h) => habitatFilter(h.fullName)),
     creatableByBroad,
-    creatableBroadTypes: Object.keys(creatableByBroad)
+    creatableBroadTypes: Object.keys(creatableByBroad),
+    ...excludeOwnType
   }
+}
+
+/**
+ * The habitats a creation in `broad` can pick for a parcel of `baseline`.
+ * The BNG Service template reads a creation in the parcel's own type as a
+ * habitat that gets worse, or one that is not worse at all, and the service
+ * refuses either unless it is drawn for the purpose (`addWorseHabitats`). So
+ * pools built with `excludeOwnTypeCreation` leave the parcel's own type out;
+ * the default pools keep it, so a legacy site draws exactly as before.
+ */
+export function creatableFor(pools, broad, baseline) {
+  const pool = pools.creatableByBroad[broad] ?? []
+  return pools.excludeOwnType
+    ? pool.filter((h) => h.fullName !== baseline.fullName)
+    : pool
+}
+
+/** The broad types a "Lost" parcel's creation can pick from. */
+export function creationBroadTypes(pools, baseline) {
+  return pools.excludeOwnType
+    ? pools.creatableBroadTypes.filter(
+        (broad) => creatableFor(pools, broad, baseline).length > 0
+      )
+    : pools.creatableBroadTypes
 }
 
 // A retained or enhanced parcel keeps its habitat: an enhancement that
@@ -91,13 +126,15 @@ function pickProposedHabitat(baseline, retention, pools) {
     return baseline
   }
   const proposedBroad =
-    retention === 'Lost' ? pick(pools.creatableBroadTypes) : baseline.broad
-  const pool = pools.creatableByBroad[proposedBroad]
+    retention === RETENTION_LOST
+      ? pick(creationBroadTypes(pools, baseline))
+      : baseline.broad
+  const pool = creatableFor(pools, proposedBroad, baseline)
   // A pinned habitat can sit in a broad type the random pools exclude (e.g.
   // "Intertidal hard structures"). Enhancing or creating within that broad
   // type has nothing to draw from, so the baseline habitat carries through —
   // the row stays internally consistent either way.
-  return pool ? pick(pool) : baseline
+  return pool.length > 0 ? pick(pool) : baseline
 }
 
 export function findHabitatByFullName(fullName) {
@@ -229,12 +266,15 @@ export function drawConditions(
 }
 
 // The retention categories a feature can validly take at random: no
-// enhancement the metric cannot make, no creation it cannot create.
-export function validRetentionPool(pool, { enhance, create }) {
+// enhancement the metric cannot make, no creation it cannot create. `lose`
+// false drops Lost, for an area parcel whose creation elsewhere has nothing
+// to pick from; left out, Lost stays.
+export function validRetentionPool(pool, { enhance, create, lose = true }) {
   return pool.filter(
     (retention) =>
       (retention !== RETENTION_ENHANCED || enhance) &&
-      (retention !== RETENTION_CREATED || create)
+      (retention !== RETENTION_CREATED || create) &&
+      (retention !== RETENTION_LOST || lose)
   )
 }
 

@@ -441,6 +441,10 @@ function writeLayers(db, site) {
  *                        habitats a random draw picks from (a pinned habitat
  *                        is never filtered). The BNG Service template format
  *                        passes the habitats its Area Habitats layers offer.
+ *   excludeOwnTypeCreation  optional boolean: keep a random area creation
+ *                        out of its parcel's own habitat type, which the BNG
+ *                        Service template reads as a habitat that gets worse
+ *                        (see `habitatPools`). Off by default.
  *   seed                 optional 32-bit integer. When set, every random draw
  *                        (geometry and attributes) is drawn from a deterministic
  *                        sequence, so the same seed + plan yields a
@@ -454,6 +458,7 @@ export function generateOne(outPath, centre, plan) {
     emptyLayers = new Set(),
     attributeOverrides = {},
     habitatFilter,
+    excludeOwnTypeCreation = false,
     seed
   } = plan
 
@@ -471,7 +476,8 @@ export function generateOne(outPath, centre, plan) {
       geometricFlawNames,
       emptyLayers,
       attributeOverrides,
-      habitatFilter
+      habitatFilter,
+      excludeOwnTypeCreation
     })
   } finally {
     if (seeded) {
@@ -488,7 +494,8 @@ function generateOneInner(outPath, centre, plan) {
     geometricFlawNames,
     emptyLayers,
     attributeOverrides,
-    habitatFilter
+    habitatFilter,
+    excludeOwnTypeCreation
   } = plan
 
   if (geometricFlawNames.length > 0) {
@@ -508,7 +515,8 @@ function generateOneInner(outPath, centre, plan) {
     numTrees,
     emptyLayers,
     attributeOverrides,
-    habitatFilter
+    habitatFilter,
+    excludeOwnTypeCreation
   })
   const db = openGeoPackage(outPath)
   createAllTables(db)

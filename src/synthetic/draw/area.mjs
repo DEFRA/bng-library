@@ -14,6 +14,8 @@ import {
 import { AREA, canEnhance } from '../valid-draws.mjs'
 import {
   DEFAULT_HABITAT_POOLS,
+  creatableFor,
+  creationBroadTypes,
   drawConditions,
   findHabitatByFullName,
   overrideOr,
@@ -44,7 +46,8 @@ function drawParcel(ring, i, override, pools) {
     override,
     validRetentionPool(RETENTION_CATEGORIES, {
       enhance: canEnhance(AREA, baseline.fullName),
-      create: Boolean(pools.creatableByBroad[baseline.broad])
+      create: creatableFor(pools, baseline.broad, baseline).length > 0,
+      lose: creationBroadTypes(pools, baseline).length > 0
     }),
     proposedDiffers
   )

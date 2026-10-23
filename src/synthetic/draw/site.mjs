@@ -64,8 +64,11 @@ export function computeLayerCounts(numParcels, emptyLayers, numTrees) {
 
 /**
  * Draw a site from a plan: `{ numParcels, numTrees, emptyLayers,
- * attributeOverrides, habitatFilter }` (see `generateOne`). Draws read the
- * geometry module's random source; seed it first for a reproducible site.
+ * attributeOverrides, habitatFilter, excludeOwnTypeCreation }` (see
+ * `generateOne`). `excludeOwnTypeCreation`, which the BNG Service format sets,
+ * keeps an area creation out of its parcel's own habitat type (see
+ * `habitatPools`). Draws read the geometry module's random source; seed it
+ * first for a reproducible site.
  *
  * @returns {{ ring: number[][], counts: object, habitats: object[] | null,
  *   hedgerows: object[] | null, rivers: object[] | null,
@@ -77,7 +80,8 @@ export function drawSite(centre, plan) {
     numTrees,
     emptyLayers = new Set(),
     attributeOverrides = {},
-    habitatFilter
+    habitatFilter,
+    excludeOwnTypeCreation = false
   } = plan
   const counts = computeLayerCounts(numParcels, emptyLayers, numTrees)
   const [cx, cy] = centre
@@ -88,7 +92,7 @@ export function drawSite(centre, plan) {
         ring,
         counts.numHabitats,
         attributeOverrides.habitats,
-        habitatPools(habitatFilter)
+        habitatPools(habitatFilter, { excludeOwnTypeCreation })
       ),
     hedgerows: () =>
       drawHedgerows(ring, counts.numHedgerows, attributeOverrides.hedgerows),

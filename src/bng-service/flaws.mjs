@@ -244,7 +244,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-advance-missing': {
     description:
       'a hedgerow that gets worse (Created in its own type, linked to its parent, in a lower condition) has no years created in advance, where the Metric asks for 30 plus',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_DEGRADE_ADVANCE_NOT_30_PLUS',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
@@ -255,7 +255,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-not-worse': {
     description:
       'a same-type creation that is not worse: a hedgerow Created in its own type, linked to its parent, with 30+ years in advance, in its baseline condition (a 30+ on a row that does not get worse overstates its units)',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_DEGRADE_NOT_WORSE',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
@@ -307,7 +307,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-retained-and-created': {
     description:
       'a baseline watercourse has both a Retained and a Created post-intervention part. The template records part of a stretch changing by splitting it at the baseline survey, as the service cannot measure part of a watercourse',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_WATERCOURSE_RETAINED_AND_CREATED',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {

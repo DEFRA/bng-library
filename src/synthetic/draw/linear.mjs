@@ -243,6 +243,10 @@ function riverRetentionPool(index) {
   return RETENTION_CATEGORIES
 }
 
+// The watercourse types the Metric lets be permanently lost (guide: "Permanent
+// loss of a watercourse length only applies to canals or ditches").
+const REMOVABLE_RIVER_TYPES = new Set(['Canals', 'Ditches'])
+
 // The encroachment override fields, split by the side of the row they pin.
 // Encroachment couples to the river type: a culvert's two encroachment
 // columns are fixed to the "N/A - Culvert" sentinel.
@@ -351,7 +355,10 @@ function proposedRiverEncroachment(
 // intervention by default, so `proposedRiverType` defaults to the baseline
 // type; a scenario can still pin a different proposed type. Only a created
 // watercourse carries creation years, and at most one of advance / delay.
-function drawRiver(coords, i, override) {
+// `loseOnlyCanalsAndDitches`, which the BNG Service format sets, keeps Lost
+// out of the draw for any other type: the template records a loss by the
+// watercourse's absence, and the service refuses a natural river left out.
+function drawRiver(coords, i, override, { loseOnlyCanalsAndDitches = false }) {
   const riverType = resolveRiverType(override, i)
   const proposedType = override?.proposedRiverType ?? riverType
   assertCulvertEncroachment(
@@ -373,7 +380,8 @@ function drawRiver(coords, i, override) {
     override,
     validRetentionPool(riverRetentionPool(i), {
       enhance: canEnhance(WATERCOURSE, riverType),
-      create: true
+      create: true,
+      lose: !loseOnlyCanalsAndDitches || REMOVABLE_RIVER_TYPES.has(riverType)
     }),
     proposedDiffers
   )
@@ -439,8 +447,12 @@ function drawRiver(coords, i, override) {
   }
 }
 
-export function drawRivers(boundaryRing, count, perRowOverrides) {
+/**
+ * @param {{ loseOnlyCanalsAndDitches?: boolean }} [options] see `drawRiver`;
+ *   off by default, so a legacy site draws exactly as before
+ */
+export function drawRivers(boundaryRing, count, perRowOverrides, options = {}) {
   return drawLineFeatures(boundaryRing, count, perRowOverrides, (coords, i) =>
-    drawRiver(coords, i, perRowOverrides?.[i])
+    drawRiver(coords, i, perRowOverrides?.[i], options)
   )
 }

@@ -314,25 +314,36 @@ function repeatedRefs(site, chooser) {
   )
 }
 
-const yearsSet = (value) =>
-  value !== null && value !== undefined && value !== ZERO_YEARS
+// The override keys that pin a row's timing: its years, or a row left
+// incomplete, whose blank timing stands for data not yet entered.
+const TIMING_OVERRIDES = ['advanceYears', 'delayYears', 'incomplete']
+
+/** Whether the caller's row override pins this feature's timing. */
+function timingPinned(feature, rows) {
+  const override = rows[feature.source?.index]
+  return TIMING_OVERRIDES.some((key) => override?.[key] !== undefined)
+}
 
 /**
  * The row of a layer to delay: its last Created row, failing one its last
  * Enhanced row, and failing either a row another change drew (on a site
  * whose only Enhanced watercourse is the re-meandered one). Never a row
- * that gets worse, nor one with an irreplaceable parent, nor one that sets
- * both advance and delay, as the advance-delay-both-set flaw pins.
+ * that gets worse, nor one with an irreplaceable parent, nor one whose
+ * timing a row override pins, as a caller or a flaw such as
+ * advance-delay-both-set may.
+ *
+ * @param {object} layer
+ * @param {object[]} rows  the layer's row overrides
  */
-function rowToDelay(layer, [advance, delay]) {
+function rowToDelay(layer, rows) {
   const candidates = layer.postIntervention.filter(
     (f) =>
       !f.worse &&
       f.parent?.values[IRREPLACEABLE] !== YES &&
-      !(yearsSet(f.values[advance]) && yearsSet(f.values[delay]))
+      !timingPinned(f, rows)
   )
-  const last = (rows, retention) =>
-    rows.findLast((f) => f.values[RETENTION] === retention)
+  const last = (features, retention) =>
+    features.findLast((f) => f.values[RETENTION] === retention)
   const unchanged = candidates.filter((f) => !f.change)
   return (
     last(unchanged, CREATED) ??
@@ -347,14 +358,14 @@ function rowToDelay(layer, [advance, delay]) {
  * row is chosen, not drawn, so the chooser's draws, and so the rest of the
  * site, are unchanged. A row another change drew keeps its comment.
  */
-function thirtyPlusDelays(site, emptyLayers) {
+function thirtyPlusDelays(site, emptyLayers, overrides) {
   for (const [layerKey, layer] of Object.entries(site.layers)) {
-    const columns = TIMING_COLUMNS[layerKey] ?? TIMING_COLUMNS.default
     const feature = emptyLayers.has(layerKey)
       ? null
-      : rowToDelay(layer, columns)
+      : rowToDelay(layer, overrides[layerKey] ?? [])
     if (feature) {
-      const [advance, delay] = columns
+      const [advance, delay] =
+        TIMING_COLUMNS[layerKey] ?? TIMING_COLUMNS.default
       feature.values[advance] = null
       feature.values[delay] = THIRTY_PLUS_DELAY
       feature.values[COMMENT] ??= THIRTY_PLUS_DELAY_COMMENT
@@ -369,8 +380,15 @@ function thirtyPlusDelays(site, emptyLayers) {
  * @param {object} site
  * @param {ReturnType<import('./random.mjs').createChooser>} chooser
  * @param {Set<string>} [emptyLayers]
+ * @param {Record<string, object[]>} [overrides]  the generator's row
+ *   overrides, whose pinned timing the 30+ delay leaves as it is
  */
-export function addSiteChanges(site, chooser, emptyLayers = new Set()) {
+export function addSiteChanges(
+  site,
+  chooser,
+  emptyLayers = new Set(),
+  overrides = {}
+) {
   if (!emptyLayers.has('rivers')) {
     realignedWatercourse(site, chooser)
     shorterWatercourse(site, chooser)
@@ -378,5 +396,5 @@ export function addSiteChanges(site, chooser, emptyLayers = new Set()) {
   if (!emptyLayers.has('habitats')) {
     repeatedRefs(site, chooser)
   }
-  thirtyPlusDelays(site, emptyLayers)
+  thirtyPlusDelays(site, emptyLayers, overrides)
 }

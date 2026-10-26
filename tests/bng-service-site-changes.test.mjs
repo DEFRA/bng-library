@@ -138,12 +138,19 @@ describe.each([4, 9, 15])('a default site, seed %i', (seed) => {
     }
   )
 
-  it('reads into workbook rows with the 30+ delay', () => {
+  it('reads into workbook rows with the 30+ delay, every delayed row', () => {
+    // Trees and vertical habitats go on the area habitat sheets, so match
+    // by reference: the workbook delays exactly the rows the file does.
     const { rows: sheets } = workbookRowsFromBngService(file)
-    const delays = Object.values(sheets)
+    const workbook = Object.values(sheets)
       .flat()
       .filter((r) => r.delayYears === '30+')
-    expect(delays.length).toBeGreaterThanOrEqual(1)
+      .map((r) => r.reference)
+    const geoPackage = POST_INTERVENTION_TABLES.flatMap((table) =>
+      delayedRows(file, table).map((r) => r['Habitat Ref'])
+    )
+    expect(geoPackage).toHaveLength(POST_INTERVENTION_TABLES.length)
+    expect(workbook.toSorted()).toEqual(geoPackage.toSorted())
   })
 
   it('reads into workbook rows: the split parcel retained whole', () => {
@@ -212,6 +219,64 @@ describe('the changes are template features', () => {
 })
 
 describe('a delay of 30+ years', () => {
+  const CENTRE = [530000, 180000]
+
+  /** The post-intervention area habitat drawn from override row `index`. */
+  const fromRow = (site, index) =>
+    site.layers.habitats.postIntervention.find(
+      (f) => f.source.index === index && !f.change && !f.worse
+    )
+
+  it('leaves a caller’s advance-only pin on the row it would delay as it is', () => {
+    const plan = { numParcels: 30, seed: 4 }
+    const unpinned = generateBngServiceSynthetic(
+      path.join(dir, 'unpinned.gpkg'),
+      CENTRE,
+      plan
+    )
+    const delayed = unpinned.layers.habitats.postIntervention.find(
+      (f) => f.values['Delay in starting habitat creation/years'] === '30+'
+    )
+    expect(delayed.values['Retention Category']).toBe('Created')
+    const { index } = delayed.source
+    const habitats = Array.from({ length: index + 1 }, (_, i) =>
+      i === index ? { retention: 'Created', advanceYears: '5' } : {}
+    )
+    const pinned = generateBngServiceSynthetic(
+      path.join(dir, 'pinned.gpkg'),
+      CENTRE,
+      { ...plan, attributeOverrides: { habitats } }
+    )
+    const row = fromRow(pinned, index)
+    expect(row.values['Habitat created in advance/years']).toBe('5')
+    // Blank, as the template greys it out while the advance is above 0.
+    expect(row.values['Delay in starting habitat creation/years']).toBeNull()
+    // Another row takes the delay instead.
+    const others = pinned.layers.habitats.postIntervention.filter(
+      (f) => f.values['Delay in starting habitat creation/years'] === '30+'
+    )
+    expect(others).toHaveLength(1)
+    expect(others[0]).not.toBe(row)
+  })
+
+  it('leaves a row left incomplete as it is', () => {
+    const habitats = Array.from({ length: 30 }, () => ({ incomplete: true }))
+    const site = generateBngServiceSynthetic(
+      path.join(dir, 'incomplete.gpkg'),
+      CENTRE,
+      { numParcels: 30, seed: 4, attributeOverrides: { habitats } },
+      { templateFeatures: true }
+    )
+    expect(
+      site.layers.habitats.postIntervention.filter(
+        (f) =>
+          f.source.index < 30 &&
+          !f.worse &&
+          f.values['Delay in starting habitat creation/years'] === '30+'
+      )
+    ).toEqual([])
+  })
+
   it('leaves the row advance-delay-both-set pins as it is', () => {
     const file = site('both-set', {
       numParcels: 1,

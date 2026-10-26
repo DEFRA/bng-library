@@ -160,7 +160,7 @@ function finishSite(site, outPath, chooser, options) {
     addWorseHabitats(site, chooser, emptyLayers, worseHabitatCounts)
   }
   if (siteChanges) {
-    addSiteChanges(site, chooser, emptyLayers)
+    addSiteChanges(site, chooser, emptyLayers, overrides)
   }
   applyDegradeFlaws(site, degradeFlaws)
   if (comments) {

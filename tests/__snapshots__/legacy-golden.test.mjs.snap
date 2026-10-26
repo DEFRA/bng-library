@@ -1,60 +1,60 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`BNG Service output is pinned > a baseline-stage site 1`] = `"2bbb605100a6b91ec740bdc9560e20f6d82b273e1653a679facd129bc10ac074"`;
+exports[`BNG Service output is pinned > a baseline-stage site 1`] = `"eb7491638a4bc314f78248b810fc6e441441e27cde2f6f692a7e5f50293d3ca9"`;
 
-exports[`BNG Service output is pinned > a default site, seed 3 1`] = `"c1ec3de7d74d444ee804db30a5f4ed49bffe209682317b3e8cf0ff96f338fa83"`;
+exports[`BNG Service output is pinned > a default site, seed 3 1`] = `"3e4929094e5f901135cda4050d9f9e62dbf6cceddc88be1d9ad650cefc578f8d"`;
 
-exports[`BNG Service output is pinned > a default site, seed 7 1`] = `"41598c43794772e9bf10427d254657b282240d8b0949a2e57e7542adafc02e0a"`;
+exports[`BNG Service output is pinned > a default site, seed 7 1`] = `"d8d92fa87a38281028bd972f357212f956f6bb9981a8022b87f690f5ec979434"`;
 
-exports[`BNG Service output is pinned > a default site, seed 21 1`] = `"f4f31174199c7bfed1bb6dad8689ac7b5da7078b7e18110133be7f621e5dd6cb"`;
+exports[`BNG Service output is pinned > a default site, seed 21 1`] = `"1aacbba0ad4f32b68c8e09f2734a49412bf50eedd3a2c7fe6b2daf37916d51c1"`;
 
-exports[`BNG Service output is pinned > flaw advance-delay-both-set 1`] = `"8c26d6a85c7c776bbc36c6697c474bd9449bfeb87fc1f7a4d3d2ab1092e31445"`;
+exports[`BNG Service output is pinned > flaw advance-delay-both-set 1`] = `"c020c87dc41a8e96e9e6bc01a998654379309885f8486c2dc5564b185883c4f7"`;
 
 exports[`BNG Service output is pinned > flaw area-sum-mismatch 1`] = `"88c58757c68247a4d6e916b6b3876593b888e4f44c83d0e2ce7793b47aff2d6c"`;
 
 exports[`BNG Service output is pinned > flaw bowtie-parcel 1`] = `"6a690817b2e926e12b16097842ca5065fd1f3023bf6894a18329b89fcfb3a7d2"`;
 
-exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"61554e6cbce40b032348bda34da39643387fa0d7922a428cdb2aafd77f935391"`;
+exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"2fbb69df113456ddcc5deb8236e32db95c97608474e6f83652007745c4da2636"`;
 
-exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"079bbb964feee3e32436ac0fb43e917e4d4c1082cdd2c660398fd6e3e8e84c97"`;
+exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"ab318274168ff221c437f0ef380ca39a5e400c3e88b4f390baf3f03107ac40f3"`;
 
-exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"7bc1dc393331b70c41c8cf983a5468316044a5895ac1df8d84d39f408e9d2639"`;
+exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"7756dca58479b0fc05c3d366b1437c592fd8ebabd212a31db523dc19b57a55e6"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"0c892fb94745538a0680c2157f069881bf4a98fac5e30d091afe3f4f82ffa511"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"3ede7d98ff16517e665383691a63514288dee9cc61a49461a5517b3ad051c42d"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-encroachment-no-advance 1`] = `"0f5eb1357819d20520c2677fb26949f798170a9b36cf2d1af0f87d48b7570dfb"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-encroachment-no-advance 1`] = `"7f25583633d31ec0011c391a26d5a40c2839bb2e67cf908c403d594497481c8f"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-retained-and-created 1`] = `"44d527196e2dd2c9f332cf706a0b0ab3454e71409c3b434224a7459c9e0f3c21"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-retained-and-created 1`] = `"7eb8f5c5bc378918522bd877a61dc587f0c8649a34325222bc0af20b4f2436a9"`;
 
-exports[`BNG Service output is pinned > flaw distinctiveness-out-of-scope 1`] = `"f4488d1e80386b87335eac7de79722cc64609bc044d1ca79a2c38add9b9d7b90"`;
+exports[`BNG Service output is pinned > flaw distinctiveness-out-of-scope 1`] = `"b2f980e5d1b1edc086523d6da7e7e60cf1f274d259fb741e1fcc1d109aca6453"`;
 
-exports[`BNG Service output is pinned > flaw duplicate-habitat-ref 1`] = `"d4cebcbf932c08fa1d7c6c0ea2559314eeeca69a3cf58c43db94c9aa26e7e457"`;
+exports[`BNG Service output is pinned > flaw duplicate-habitat-ref 1`] = `"82f5c94e29dbfc3c59043eb3a59e4df30faa647df5e77f9bae810a58b96005f6"`;
 
-exports[`BNG Service output is pinned > flaw habitat-ref-invalid-characters 1`] = `"76cef11837416df9fef6d4f268555a8c81111968fa1854c959482bb636d0730c"`;
+exports[`BNG Service output is pinned > flaw habitat-ref-invalid-characters 1`] = `"05271c63c1901f74d1cca8bc8bca7578fa3f852310fae9a923dc41918e508696"`;
 
 exports[`BNG Service output is pinned > flaw hedgerow-outside 1`] = `"b74367649457803204110e98c42148a3576554dd1dda4b9cbbac704885f7f1d9"`;
 
 exports[`BNG Service output is pinned > flaw iggi-outside 1`] = `"816cb2e30835dea878774564aee4f1e8629019c039dd701375beaec6842cbbec"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-geom-mismatch 1`] = `"34788b2cc4d2ee1ad9c7a799d0945b6a4a7a09c3b216d21abec38241300a40b8"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-mismatch 1`] = `"bd96e43559b830695a1ba8bd9e63c041ff92eec26f0e0092031b94710b3d55fa"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-geom-missing 1`] = `"c68fd04c0af73d22911567da3d255d0f6f7df43312d514f442cced9003430627"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-missing 1`] = `"544843dd4e7832d81aad925fff31569962ded7e866706f5c111bfd17402f2d5b"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-missing 1`] = `"d9eb923053b9d428a6915688369efccad8795b4db44e8f1a055fbed3c76560bd"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-missing 1`] = `"62c8464022fa7e20b9957f75defd883490fdf2762c9b4d60c3044432d59c2bb8"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-unknown 1`] = `"cc0bf05264dae2e6e2e2bd6e4bef1f76ef779f5a371f2921307816f336211711"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-unknown 1`] = `"37c2e60475bb9f282cf0730bd33f091391606885b2c6b549ef1026acb8cfe96d"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-wrong 1`] = `"ae0749613be21092bffd780c7e8e79e452b07f23bef7cd34e1790c3549df4d1f"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-wrong 1`] = `"ce38c63aac59537874939fe6a8ea5e5f9c07dfa3b2c0a839e88ed69654088519"`;
 
-exports[`BNG Service output is pinned > flaw missing-habitat-ref 1`] = `"8b03e42da48a81d492179242dd8d185244497f670a2e3b3f4ac7091d01921049"`;
+exports[`BNG Service output is pinned > flaw missing-habitat-ref 1`] = `"179293400e8826afd6c0ee5a7ccd1c4e71bbdd6ed0b200eb6da309a2e6e328d7"`;
 
-exports[`BNG Service output is pinned > flaw no-habitats 1`] = `"212bc01ee9feed10b1e769a2dca1249d877ebf867555b8041e499c2278f911dd"`;
+exports[`BNG Service output is pinned > flaw no-habitats 1`] = `"133c520c09570cf5c8f0227c85d5ad181bc01837aa2a4ce646c8678be9ec0cd8"`;
 
-exports[`BNG Service output is pinned > flaw no-hedgerows 1`] = `"930b7264e122cd5ac5dca83daca80c34463eed1e5cee378b97005b690d1827dc"`;
+exports[`BNG Service output is pinned > flaw no-hedgerows 1`] = `"c32358f44ceaf12ee8a9add9dd04b02d79b5f27d02df85fd2ecbc0e814d5906d"`;
 
-exports[`BNG Service output is pinned > flaw no-rivers 1`] = `"7e103f7d6af7a929bdeeb77715e8afeb1292586be8b6b6c4fe6973cfeaf0913a"`;
+exports[`BNG Service output is pinned > flaw no-rivers 1`] = `"5995d73c3274fe3afc9608b8cdbcc67d9ac866f4cbe5468e40542d720f118adb"`;
 
-exports[`BNG Service output is pinned > flaw no-trees 1`] = `"60fa91a21ff813540882c6231e1d207fde88e5f1d904625477aa1441651370c6"`;
+exports[`BNG Service output is pinned > flaw no-trees 1`] = `"4ea183ffdb6e9facf0fb1248c6ba5c2789f0bbea0ced10565e5679efe1986271"`;
 
 exports[`BNG Service output is pinned > flaw overlapping-parcels 1`] = `"815bb8f4c3b760464d7fc112d8f540ee9e929c34ae5e88bce9d654fee146bdbc"`;
 
@@ -72,11 +72,11 @@ exports[`BNG Service output is pinned > flaw tiny-gap 1`] = `"4a055b98ff6f079081
 
 exports[`BNG Service output is pinned > flaw tree-outside 1`] = `"043b2f4c51f8bc4a0bf3509dc4e978555b8337f0b9f43606758de20ebd378e97"`;
 
-exports[`BNG Service output is pinned > flaw version-record-duplicated 1`] = `"f4b0ca7e1845548c4e4819a53011a83da55e04fd158f0fc1114bcba6cac6b2a1"`;
+exports[`BNG Service output is pinned > flaw version-record-duplicated 1`] = `"0ef272f501a9a64693971032a0d0f4587fef40ed18e45fbf3dc681d2636f6d58"`;
 
-exports[`BNG Service output is pinned > flaw version-record-missing 1`] = `"6df015da20d7be05d01b0489266cdaafb1c4f38199e40b9eb7e2632dbf34428c"`;
+exports[`BNG Service output is pinned > flaw version-record-missing 1`] = `"d22bdec0ba3acfed5a955f4c0d72a90ba1ad6440042fb2a418aae40feac5065f"`;
 
-exports[`BNG Service output is pinned > flaw version-unsupported 1`] = `"551e70cb594b91a8193b3d8baeb048824884181b0046fc9a26b8fe6e25880689"`;
+exports[`BNG Service output is pinned > flaw version-unsupported 1`] = `"aada3502bb05fa1b4b846d14b56368a7a8fb6fb06edb71fcde2c77cdec4c5c29"`;
 
 exports[`BNG Service output is pinned > flaw watercourse-outside 1`] = `"f613b1c438b21c31239ea05e8b90364c61689c92562811d6a27478930a62f1e7"`;
 

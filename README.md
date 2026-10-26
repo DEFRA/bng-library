@@ -115,6 +115,13 @@ shorter, its copied line shortened and kept `Retained`; and a Retained
 parcel split into two parts that keep its Habitat Ref, as a split leaves
 them until the refs are tidied, so Habitat Refs repeat.
 
+On each layer, one `Created` row (an `Enhanced` one where the layer has no
+`Created` row free) is **delayed by `30+` years**, the longest delay the
+template's lists offer, with its advance blank, as the template greys it out
+while the delay is above 0. The row is chosen, not drawn, so the rest of the
+site is drawn as before. It is never a habitat that gets worse, nor the row
+`advance-delay-both-set` pins.
+
 It also holds **habitats that get worse**, recorded as the template's guide
 asks: the copied row is kept, so it keeps its parent, and set to `Created` in
 its own type.

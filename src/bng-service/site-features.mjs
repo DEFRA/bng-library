@@ -58,7 +58,7 @@ const IGGI_HABITAT = {
 }
 const IGGI_CONDITION = 'Moderate'
 
-const TIMING_COLUMNS = {
+export const TIMING_COLUMNS = {
   default: [
     'Habitat created in advance/years',
     'Delay in starting habitat creation/years'

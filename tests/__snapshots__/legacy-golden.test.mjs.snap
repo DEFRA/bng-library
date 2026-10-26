@@ -87,7 +87,7 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "advance-delay-created-delay": "3bb4e2836ba799cc44ad53819fd6416a745d873b7d740a7cb564ffa6d6e839d5",
   "advance-delay-created-trees": "9a58bfd7ae24dfd6646c37fb56dbe7d96b47e684dc8f29c316a71b68159d4068",
   "advance-delay-thirty-plus": "fdf4a1c898f6d4b8e272eeb8918ceab6542b8ba6ffdb929ed1bc639492eaed76",
-  "area-coastal-saltmarsh": "886dbcf21e32cb9657839b9bb3e355119c205930bbead936d8be7e2907c91394",
+  "area-coastal-saltmarsh": "67ce541fb13c5e1a0de8b9a3bdc03d587fd7c532d3d732b43c70c7872f630217",
   "area-enhanced-intertidal": "7c95563ed0333df15f52b7e0849d83be77d03a95f0bc31e0239030b881146761",
   "area-enhanced-low-condition-na": "ad85914df5fb6b0f6e4b80dde2f8f923c2fdfcd62c8aac0d6096a87d8cf520de",
   "area-enhanced-medium-condition-na": "eccc1f93ba9258679f628cfaca9ced42056e410cc95a1aeece42abddb6b4f2c6",
@@ -221,8 +221,8 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "cc18ed2e846ea4116d4bbdcb8c42277c01c8b3a45de00da8e81d57ec495cedca",
   ],
   "area-coastal-saltmarsh": [
-    "0ad69f4222255562ba0fc76afc3445b62cd9e2483e02b208517478380ba02100",
-    "c30626768917a9f26596f35695ef497c14dcf4e7a1928ddca6fc8e601ab1481d",
+    "a5afa1d08dc3188b2e4f66f58584a26429c4f25772f01d5720e1773088b454a8",
+    "ad152b77813e0fac61100ae441fa140371936d89a85830cef23b6e1d3e79c98a",
   ],
   "area-enhanced-intertidal": [
     "f7489f926f0438d6a0f77e4c35efb15f6020b0138466e39f1a376c82e04d3d8f",

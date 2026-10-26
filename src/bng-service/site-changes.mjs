@@ -13,6 +13,10 @@
  * - Habitat Refs that repeat: a Retained parcel split into two parts that
  *   keep the parent's Habitat Ref, as a split leaves them until the refs are
  *   tidied (template guide, Part 6).
+ * - A delay of 30+ years: one Created or Enhanced row on each layer whose
+ *   work starts 30 or more years after the losses, the longest delay the
+ *   template's Delay lists offer. Its advance is blank, as the template greys it
+ *   out while the delay is above 0.
  *
  * Each is drawn with the site's chooser, so a seed gives the same site.
  */
@@ -25,6 +29,7 @@ import {
   enhancementPairs
 } from '../synthetic/valid-draws.mjs'
 import { COMMENT, HABITAT_REF } from './schema.mjs'
+import { TIMING_COLUMNS } from './site-features.mjs'
 import {
   ADVANCE,
   RETAINED,
@@ -39,6 +44,7 @@ import {
 import { LOW, NOT_APPLICABLE, YES, distinctiveness } from './vocabulary.mjs'
 
 const ENHANCED = 'Enhanced'
+const CREATED = 'Created'
 const REALIGNMENT = 'Enhanced by Realignment'
 const DELAY = 'Delay in starting habitat creation/years'
 const IRREPLACEABLE = 'Irreplaceable Habitat'
@@ -58,11 +64,15 @@ const MIN_SPLIT_SHARE = 0.35
 const MAX_SPLIT_SHARE = 0.65
 // The lineage flaws take the first Retained parcel, and one stays whole.
 const MIN_RETAINED_PARCELS = 3
+// The longest delay the template's Delay lists offer.
+const THIRTY_PLUS_DELAY = '30+'
 
 export const REALIGNED_WATERCOURSE_COMMENT =
   'Re-meandered: the channel moves onto a longer route'
 export const SHORTER_WATERCOURSE_COMMENT =
   'Shorter: part of the stretch is culverted or filled'
+export const THIRTY_PLUS_DELAY_COMMENT =
+  'Delayed: work starts 30 or more years after the losses'
 
 /**
  * What each change is, held on the feature as `change` and never written,
@@ -304,6 +314,65 @@ function repeatedRefs(site, chooser) {
   )
 }
 
+// The override keys that pin a row's timing: its years, or a row left
+// incomplete, whose blank timing stands for data not yet entered.
+const TIMING_OVERRIDES = ['advanceYears', 'delayYears', 'incomplete']
+
+/** Whether the caller's row override pins this feature's timing. */
+function timingPinned(feature, rows) {
+  const override = rows[feature.source?.index]
+  return TIMING_OVERRIDES.some((key) => override?.[key] !== undefined)
+}
+
+/**
+ * The row of a layer to delay: its last Created row, failing one its last
+ * Enhanced row, and failing either a row another change drew (on a site
+ * whose only Enhanced watercourse is the re-meandered one). Never a row
+ * that gets worse, nor one with an irreplaceable parent, nor one whose
+ * timing a row override pins, as a caller or a flaw such as
+ * advance-delay-both-set may.
+ *
+ * @param {object} layer
+ * @param {object[]} rows  the layer's row overrides
+ */
+function rowToDelay(layer, rows) {
+  const candidates = layer.postIntervention.filter(
+    (f) =>
+      !f.worse &&
+      f.parent?.values[IRREPLACEABLE] !== YES &&
+      !timingPinned(f, rows)
+  )
+  const last = (features, retention) =>
+    features.findLast((f) => f.values[RETENTION] === retention)
+  const unchanged = candidates.filter((f) => !f.change)
+  return (
+    last(unchanged, CREATED) ??
+    last(unchanged, ENHANCED) ??
+    last(candidates, CREATED) ??
+    last(candidates, ENHANCED)
+  )
+}
+
+/**
+ * Give one row of each layer a delay of 30+ years (see `rowToDelay`). The
+ * row is chosen, not drawn, so the chooser's draws, and so the rest of the
+ * site, are unchanged. A row another change drew keeps its comment.
+ */
+function thirtyPlusDelays(site, emptyLayers, overrides) {
+  for (const [layerKey, layer] of Object.entries(site.layers)) {
+    const feature = emptyLayers.has(layerKey)
+      ? null
+      : rowToDelay(layer, overrides[layerKey] ?? [])
+    if (feature) {
+      const [advance, delay] =
+        TIMING_COLUMNS[layerKey] ?? TIMING_COLUMNS.default
+      feature.values[advance] = null
+      feature.values[delay] = THIRTY_PLUS_DELAY
+      feature.values[COMMENT] ??= THIRTY_PLUS_DELAY_COMMENT
+    }
+  }
+}
+
 /**
  * Add the changes above. A layer in `emptyLayers`, which an empty-layer
  * flaw leaves with no rows, is left empty.
@@ -311,8 +380,15 @@ function repeatedRefs(site, chooser) {
  * @param {object} site
  * @param {ReturnType<import('./random.mjs').createChooser>} chooser
  * @param {Set<string>} [emptyLayers]
+ * @param {Record<string, object[]>} [overrides]  the generator's row
+ *   overrides, whose pinned timing the 30+ delay leaves as it is
  */
-export function addSiteChanges(site, chooser, emptyLayers = new Set()) {
+export function addSiteChanges(
+  site,
+  chooser,
+  emptyLayers = new Set(),
+  overrides = {}
+) {
   if (!emptyLayers.has('rivers')) {
     realignedWatercourse(site, chooser)
     shorterWatercourse(site, chooser)
@@ -320,4 +396,5 @@ export function addSiteChanges(site, chooser, emptyLayers = new Set()) {
   if (!emptyLayers.has('habitats')) {
     repeatedRefs(site, chooser)
   }
+  thirtyPlusDelays(site, emptyLayers, overrides)
 }

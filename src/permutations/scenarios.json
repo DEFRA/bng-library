@@ -544,7 +544,7 @@
       "id": "area-coastal-saltmarsh",
       "purpose": "intervention",
       "title": "Area habitat — the coastal saltmarsh habitat the service accepts, enhanced and created",
-      "description": "Artificial saltmarshes and saline reedbeds is the only Coastal saltmarsh habitat of a distinctiveness the service accepts (Low). H001, in Poor condition, is enhanced to Moderate (6 years). H002, Modified grassland, is replaced by it, created in Moderate condition (7 years). H003 is retained. Covers a broad habitat type no other scenario uses.",
+      "description": "Artificial saltmarshes and saline reedbeds is the only Coastal saltmarsh habitat of a distinctiveness the service accepts (Low). H001, in Poor condition, is enhanced to Moderate (6 years). H002, Artificial unvegetated, unsealed surface (Very Low), is replaced by it, created in Moderate condition (7 years): no Low units are lost, so the trading rules are met. H003 is retained. Covers a broad habitat type no other scenario uses.",
       "size": 3,
       "emptyLayers": ["hedgerows", "rivers", "trees"],
       "overrides": {
@@ -558,8 +558,8 @@
             "proposedCondition": "Moderate"
           },
           {
-            "habitatFullName": "Grassland - Modified grassland",
-            "baselineCondition": "Moderate",
+            "habitatFullName": "Urban - Artificial unvegetated, unsealed surface",
+            "baselineCondition": "N/A - Other",
             "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "retention": "Created",

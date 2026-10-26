@@ -541,6 +541,63 @@
       }
     },
     {
+      "id": "area-coastal-saltmarsh",
+      "purpose": "intervention",
+      "title": "Area habitat — the coastal saltmarsh habitat the service accepts, enhanced and created",
+      "description": "Artificial saltmarshes and saline reedbeds is the only Coastal saltmarsh habitat of a distinctiveness the service accepts (Low). H001, in Poor condition, is enhanced to Moderate (6 years). H002, Modified grassland, is replaced by it, created in Moderate condition (7 years). H003 is retained. Covers a broad habitat type no other scenario uses.",
+      "size": 3,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Coastal saltmarsh - Artificial saltmarshes and saline reedbeds",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedCondition": "Moderate"
+          },
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Coastal saltmarsh - Artificial saltmarshes and saline reedbeds",
+            "proposedCondition": "Moderate",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectTimeToTarget": [
+        {
+          "stage": "enhanced",
+          "references": ["H001"],
+          "years": 6,
+          "multiplier": 0.8075396961
+        },
+        {
+          "stage": "created",
+          "references": ["H002"],
+          "years": 7,
+          "multiplier": 0.7792758067
+        }
+      ],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "enhanced and created coastal saltmarsh"
+      }
+    },
+    {
       "id": "area-enhanced-very-low",
       "purpose": "intervention",
       "title": "Area habitat — enhancement of a Very Low habitat",

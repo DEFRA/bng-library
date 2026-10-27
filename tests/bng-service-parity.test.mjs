@@ -71,7 +71,8 @@ function converted(name, plan) {
   generateOne(legacyPath, CENTRE, {
     ...plan,
     habitatFilter: areaLayerOffers,
-    excludeOwnTypeCreation: true
+    excludeOwnTypeCreation: true,
+    loseOnlyCanalsAndDitches: true
   })
   writeBngServiceFromLegacy({ legacyPath }, outPath, {
     seed: plan.seed,
@@ -163,7 +164,8 @@ describe('a scenario’s workbook reads the same from either format', () => {
     generateOne(legacyPath, CENTRE, {
       ...plan,
       habitatFilter: areaLayerOffers,
-      excludeOwnTypeCreation: true
+      excludeOwnTypeCreation: true,
+      loseOnlyCanalsAndDitches: true
     })
     generateBngServiceSynthetic(outPath, CENTRE, plan, {
       templateFeatures: false

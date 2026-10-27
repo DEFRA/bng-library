@@ -8,21 +8,19 @@
  * well, remapped to its tables, bar `tree-count-not-whole`: the template has
  * no Count column, so the flaw cannot be expressed.
  *
- * The lineage flaws name the backend's lineage codes (the
- * spike/baseline-pi-lineage branch), bar `lineage-parent-geom-missing`: the
- * backend skips the shape check on a linked row with no parent_geom, as a
- * file made before the column, so it accepts that file without a warning.
- * The service does not check the version
- * record yet, so the version flaws name the outcome the template's design
- * asks for ("It refuses a file with no record, or with a version that it does
- * not support") rather than an error code that does not exist.
+ * Each flaw's `errorCode` is the code the backend refuses its file with
+ * (bng-metric-backend#541 for the lineage and degrade flaws), or, in
+ * parentheses, what the service does where it accepts the file:
+ * `lineage-parent-wrong`, whose parent link is sound, as the service compares
+ * the parent's shape with the copy the row recorded, not with the row's own;
+ * and the two degrade-watercourse flaws, saved Incomplete
+ * (bng-metric-backend#542).
  *
  * The degrade flaws break one rule of a habitat that gets worse (see
  * addWorseHabitats in template-features.mjs), as the Metric User Guide records
  * it: section 5 for an area habitat or hedgerow (Created in its own type, in a
  * lower condition, 30 plus years in advance), section 7 for a watercourse.
- * Asking for one adds the habitats that get worse, if the site has none. The
- * service does not check these rules yet, so the flaws name that outcome.
+ * Asking for one adds the habitats that get worse, if the site has none.
  */
 
 import { error } from '../log.mjs'
@@ -51,10 +49,12 @@ const CATEGORY_LABELS = {
   [CATEGORY_DEGRADE]: 'degraded-habitat'
 }
 
-const ACCEPTED_WITHOUT_SHAPE_CHECK =
-  '(accepted; the service skips the shape check without parent_geom)'
-const NOT_CHECKED_YET =
-  '(accepted; the service does not check habitats that get worse yet)'
+const ACCEPTED_PARENT_LINK_SOUND =
+  "(accepted; the service checks the parent's shape against the row's copy, not the row's own shape)"
+const SAVED_INCOMPLETE_ADVANCE_CLEARED =
+  '(accepted; saved Incomplete with the advance cleared)'
+const SAVED_INCOMPLETE_NO_ADVANCE =
+  '(accepted; saved Incomplete for want of an advance)'
 const WATERCOURSE_ADVANCE = '10'
 const UNKNOWN_REF = 'NOT-IN-BASELINE'
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
@@ -171,8 +171,8 @@ function nextMajorVersion(version) {
 export const BNG_SERVICE_FLAWS = {
   'lineage-parent-missing': {
     description:
-      'a Retained area habitat carries no Parent Ref, parent_uuid or parent_geom, so its parent must be inferred from its shape',
-    errorCode: 'STAGED_PARENT_INFERRED',
+      'a Retained area habitat carries no Parent Ref, parent_uuid or parent_geom, so it names no baseline habitat it continues',
+    errorCode: 'STAGED_PARENT_LINK_MISSING',
     category: CATEGORY_LINEAGE,
     applyToSite(site) {
       lineageSubject(site).lineage = { ref: null, uuid: null, geom: null }
@@ -195,7 +195,7 @@ export const BNG_SERVICE_FLAWS = {
   'lineage-parent-wrong': {
     description:
       'a Retained area habitat names another baseline parcel as its parent, so it lies outside the parent it names',
-    errorCode: 'STAGED_PI_OUTSIDE_PARENT',
+    errorCode: ACCEPTED_PARENT_LINK_SOUND,
     category: CATEGORY_LINEAGE,
     applyToSite(site) {
       const feature = lineageSubject(site)
@@ -230,7 +230,7 @@ export const BNG_SERVICE_FLAWS = {
   'lineage-parent-geom-missing': {
     description:
       "a Retained area habitat names its parent by Parent Ref and parent_uuid, but has no parent_geom, so the parent's shape cannot be compared",
-    errorCode: ACCEPTED_WITHOUT_SHAPE_CHECK,
+    errorCode: 'STAGED_BASELINE_DRIFTED',
     category: CATEGORY_LINEAGE,
     applyToSite(site) {
       const feature = lineageSubject(site)
@@ -244,7 +244,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-advance-missing': {
     description:
       'a hedgerow that gets worse (Created in its own type, linked to its parent, in a lower condition) has no years created in advance, where the Metric asks for 30 plus',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_DEGRADE_ADVANCE_NOT_30_PLUS',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
@@ -255,7 +255,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-not-worse': {
     description:
       'a same-type creation that is not worse: a hedgerow Created in its own type, linked to its parent, with 30+ years in advance, in its baseline condition (a 30+ on a row that does not get worse overstates its units)',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_DEGRADE_NOT_WORSE',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
     applyToSite(site) {
@@ -279,7 +279,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-advance-not-encroachment': {
     description:
       'a watercourse whose condition gets worse, with no change of encroachment, is created 10 years in advance, which the Metric allows only where encroachment increases with no other impact',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: SAVED_INCOMPLETE_ADVANCE_CLEARED,
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.worseWatercourse },
     applyToSite(site) {
@@ -293,7 +293,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-encroachment-no-advance': {
     description:
       'a watercourse whose only change is more encroachment has no years created in advance, though the Metric allows 10 or more for it',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: SAVED_INCOMPLETE_NO_ADVANCE,
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {
@@ -307,7 +307,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-retained-and-created': {
     description:
       'a baseline watercourse has both a Retained and a Created post-intervention part. The template records part of a stretch changing by splitting it at the baseline survey, as the service cannot measure part of a watercourse',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: 'STAGED_WATERCOURSE_RETAINED_AND_CREATED',
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {

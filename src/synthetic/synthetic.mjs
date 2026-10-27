@@ -445,6 +445,11 @@ function writeLayers(db, site) {
  *                        out of its parcel's own habitat type, which the BNG
  *                        Service template reads as a habitat that gets worse
  *                        (see `habitatPools`). Off by default.
+ *   loseOnlyCanalsAndDitches  optional boolean: draw Lost for no watercourse
+ *                        but a canal or a ditch, as the BNG Service template
+ *                        records a loss by absence and the service refuses a
+ *                        natural river left out (see `drawRivers`). Off by
+ *                        default.
  *   seed                 optional 32-bit integer. When set, every random draw
  *                        (geometry and attributes) is drawn from a deterministic
  *                        sequence, so the same seed + plan yields a
@@ -459,6 +464,7 @@ export function generateOne(outPath, centre, plan) {
     attributeOverrides = {},
     habitatFilter,
     excludeOwnTypeCreation = false,
+    loseOnlyCanalsAndDitches = false,
     seed
   } = plan
 
@@ -477,7 +483,8 @@ export function generateOne(outPath, centre, plan) {
       emptyLayers,
       attributeOverrides,
       habitatFilter,
-      excludeOwnTypeCreation
+      excludeOwnTypeCreation,
+      loseOnlyCanalsAndDitches
     })
   } finally {
     if (seeded) {
@@ -495,7 +502,8 @@ function generateOneInner(outPath, centre, plan) {
     emptyLayers,
     attributeOverrides,
     habitatFilter,
-    excludeOwnTypeCreation
+    excludeOwnTypeCreation,
+    loseOnlyCanalsAndDitches
   } = plan
 
   if (geometricFlawNames.length > 0) {
@@ -516,7 +524,8 @@ function generateOneInner(outPath, centre, plan) {
     emptyLayers,
     attributeOverrides,
     habitatFilter,
-    excludeOwnTypeCreation
+    excludeOwnTypeCreation,
+    loseOnlyCanalsAndDitches
   })
   const db = openGeoPackage(outPath)
   createAllTables(db)

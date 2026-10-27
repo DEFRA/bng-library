@@ -6,7 +6,9 @@ import {
   generatePermutations,
   PERMUTATION_PURPOSES,
   PERMUTATION_SCENARIOS,
-  derivePermutationSeed
+  FORMAT_LEGACY,
+  derivePermutationSeed,
+  scenarioInFormat
 } from '../index.mjs'
 
 describe('generatePermutations', () => {
@@ -23,12 +25,15 @@ describe('generatePermutations', () => {
     }
   })
 
-  it('covers the whole catalogue by default', () => {
+  it('covers the whole legacy catalogue by default', () => {
     // Selection coverage is independent of the (expensive) buffers, so enumerate
     // the catalogue as metadata only — the buffer shape is asserted separately.
     const { scenarios, manifest } = generatePermutations({ manifestOnly: true })
-    expect(scenarios.length).toBe(PERMUTATION_SCENARIOS.length)
-    expect(manifest.scenarios.length).toBe(PERMUTATION_SCENARIOS.length)
+    const legacy = PERMUTATION_SCENARIOS.filter((s) =>
+      scenarioInFormat(s, FORMAT_LEGACY)
+    )
+    expect(scenarios.length).toBe(legacy.length)
+    expect(manifest.scenarios.length).toBe(legacy.length)
     // Manifest carries metadata, never the buffers.
     expect(manifest.scenarios[0].baseline).toBeUndefined()
     expect(new Set(scenarios.map((s) => s.purpose))).toEqual(

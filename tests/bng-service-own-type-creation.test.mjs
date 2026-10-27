@@ -1,7 +1,6 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { generateBngServiceSynthetic, setMode } from '../index.mjs'
@@ -9,6 +8,7 @@ import { clearSeed, setSeed } from '../src/geometry.mjs'
 import { drawSite } from '../src/synthetic/draw/site.mjs'
 import { habitatPools } from '../src/synthetic/draw/rules.mjs'
 import { WORSE_HABITAT_COMMENT } from '../src/bng-service/template-features.mjs'
+import { ownTypeCreations } from './lineage-rules.mjs'
 
 const CENTRE = [530000, 180000]
 const SEEDS = [1, 2, 3, 6, 7, 21]
@@ -26,24 +26,6 @@ afterAll(() => {
   setMode('cli')
   rmSync(dir, { recursive: true, force: true })
 })
-
-/** The Created area rows in their parent's own type, by Habitat Ref. */
-function ownTypeCreations(file) {
-  const db = new Database(file, { readonly: true })
-  try {
-    return db
-      .prepare(
-        `SELECT p."Habitat Ref" AS ref, p."Comment" AS comment
-           FROM "Area Habitats Post-Intervention" p
-           JOIN "Area Habitats Baseline" b ON b.feature_uuid = p.parent_uuid
-          WHERE p."Retention Category" = 'Created'
-            AND p."Proposed Habitat Type" = b."Baseline Habitat Type"`
-      )
-      .all()
-  } finally {
-    db.close()
-  }
-}
 
 function synthetic(plan, options) {
   counter += 1

@@ -50,7 +50,10 @@ export function drawSyntheticSite(centre, plan, chooser) {
               habitatFilter: areaLayerOffers,
               // The template reads a creation in the parcel's own type as a
               // habitat that gets worse: only addWorseHabitats draws one.
-              excludeOwnTypeCreation: true
+              excludeOwnTypeCreation: true,
+              // It records a loss by absence, and the service refuses a
+              // natural river (any but a canal or a ditch) left out.
+              loseOnlyCanalsAndDitches: true
             })
           ),
           options

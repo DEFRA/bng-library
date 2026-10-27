@@ -64,10 +64,12 @@ export function computeLayerCounts(numParcels, emptyLayers, numTrees) {
 
 /**
  * Draw a site from a plan: `{ numParcels, numTrees, emptyLayers,
- * attributeOverrides, habitatFilter, excludeOwnTypeCreation }` (see
- * `generateOne`). `excludeOwnTypeCreation`, which the BNG Service format sets,
- * keeps an area creation out of its parcel's own habitat type (see
- * `habitatPools`). Draws read the geometry module's random source; seed it
+ * attributeOverrides, habitatFilter, excludeOwnTypeCreation,
+ * loseOnlyCanalsAndDitches }` (see `generateOne`). The BNG Service format sets
+ * the last two: `excludeOwnTypeCreation` keeps an area creation out of its
+ * parcel's own habitat type (see `habitatPools`), and
+ * `loseOnlyCanalsAndDitches` draws Lost for no other watercourse (see
+ * `drawRivers`). Draws read the geometry module's random source; seed it
  * first for a reproducible site.
  *
  * @returns {{ ring: number[][], counts: object, habitats: object[] | null,
@@ -81,7 +83,8 @@ export function drawSite(centre, plan) {
     emptyLayers = new Set(),
     attributeOverrides = {},
     habitatFilter,
-    excludeOwnTypeCreation = false
+    excludeOwnTypeCreation = false,
+    loseOnlyCanalsAndDitches = false
   } = plan
   const counts = computeLayerCounts(numParcels, emptyLayers, numTrees)
   const [cx, cy] = centre
@@ -96,7 +99,10 @@ export function drawSite(centre, plan) {
       ),
     hedgerows: () =>
       drawHedgerows(ring, counts.numHedgerows, attributeOverrides.hedgerows),
-    rivers: () => drawRivers(ring, counts.numRivers, attributeOverrides.rivers),
+    rivers: () =>
+      drawRivers(ring, counts.numRivers, attributeOverrides.rivers, {
+        loseOnlyCanalsAndDitches
+      }),
     trees: () => drawTrees(ring, counts.numTrees, attributeOverrides.trees)
   }
   const site = { ring, counts }

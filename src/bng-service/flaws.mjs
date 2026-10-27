@@ -53,8 +53,10 @@ const CATEGORY_LABELS = {
 
 const ACCEPTED_WITHOUT_SHAPE_CHECK =
   '(accepted; the service skips the shape check without parent_geom)'
-const NOT_CHECKED_YET =
-  '(accepted; the service does not check habitats that get worse yet)'
+const SAVED_INCOMPLETE_ADVANCE_CLEARED =
+  '(accepted; saved Incomplete with the advance cleared)'
+const SAVED_INCOMPLETE_NO_ADVANCE =
+  '(accepted; saved Incomplete for want of an advance)'
 const WATERCOURSE_ADVANCE = '10'
 const UNKNOWN_REF = 'NOT-IN-BASELINE'
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
@@ -279,7 +281,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-advance-not-encroachment': {
     description:
       'a watercourse whose condition gets worse, with no change of encroachment, is created 10 years in advance, which the Metric allows only where encroachment increases with no other impact',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: SAVED_INCOMPLETE_ADVANCE_CLEARED,
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.worseWatercourse },
     applyToSite(site) {
@@ -293,7 +295,7 @@ export const BNG_SERVICE_FLAWS = {
   'degrade-watercourse-encroachment-no-advance': {
     description:
       'a watercourse whose only change is more encroachment has no years created in advance, though the Metric allows 10 or more for it',
-    errorCode: NOT_CHECKED_YET,
+    errorCode: SAVED_INCOMPLETE_NO_ADVANCE,
     category: CATEGORY_DEGRADE,
     worse: { layerKey: 'rivers', kind: WORSE.encroachedWatercourse },
     applyToSite(site) {

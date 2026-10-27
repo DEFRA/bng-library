@@ -315,7 +315,7 @@ export function calculateCreatedHedgerowPostIntervention(
  * @param {{ advanceYears?: number, delayYears?: number, strategicSignificance?: string | null }} [options] - Advance and delay years, and the Proposed Strategic Significance (absent resolves to Low)
  * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
  * @throws {TypeError} If either length is invalid
- * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables
+ * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables, or G-6's allowed-moves table does not allow the baseline → proposed move
  */
 export function calculateEnhancedHedgerowPostIntervention(
   baselineLengthKm,

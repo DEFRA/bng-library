@@ -139,7 +139,8 @@ function drawHedgerow(coords, i, override) {
       enhance: canEnhance(HEDGEROW, hedgeType),
       create: canCreate(HEDGEROW, hedgeType)
     }),
-    proposedDiffers
+    proposedDiffers,
+    `hedgerows row ${i}`
   )
   const proposedType =
     override?.proposedHedgeType ??
@@ -383,7 +384,8 @@ function drawRiver(coords, i, override, { loseOnlyCanalsAndDitches = false }) {
       create: true,
       lose: !loseOnlyCanalsAndDitches || REMOVABLE_RIVER_TYPES.has(riverType)
     }),
-    proposedDiffers
+    proposedDiffers,
+    `rivers row ${i}`
   )
   const conditions = drawConditions(
     WATERCOURSE,

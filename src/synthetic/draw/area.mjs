@@ -49,7 +49,8 @@ function drawParcel(ring, i, override, pools) {
       create: creatableFor(pools, baseline.broad, baseline).length > 0,
       lose: creationBroadTypes(pools, baseline).length > 0
     }),
-    proposedDiffers
+    proposedDiffers,
+    `habitats row ${i}`
   )
   const proposed = resolveProposedHabitat(override, baseline, retention, pools)
   const conditions = drawConditions(

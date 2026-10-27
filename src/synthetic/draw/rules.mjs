@@ -282,13 +282,24 @@ export function validRetentionPool(pool, { enhance, create, lose = true }) {
 // baseline type, so an override pinning a proposed type that differs from the
 // baseline cannot share a row with a randomly drawn Retained. When a scenario
 // pins the proposed side without pinning retention, Retained drops out of the
-// draw; an explicit retention override always wins.
-export function resolveRetention(override, pool, proposedTypeDiffers) {
+// draw; an explicit retention override always wins. A row with nothing left to
+// draw (a culvert that changes type, with Lost and Enhanced out of its pool,
+// say) asks for a retention none can give, so fail loudly, naming the row by
+// `label`, rather than write it with none.
+export function resolveRetention(override, pool, proposedTypeDiffers, label) {
   if (override?.retention !== undefined) {
     return override.retention
   }
-  if (!proposedTypeDiffers) {
-    return pick(pool)
+  const drawable = proposedTypeDiffers
+    ? pool.filter((category) => category !== RETENTION_RETAINED)
+    : pool
+  if (drawable.length === 0) {
+    const why = proposedTypeDiffers
+      ? ` once "${RETENTION_RETAINED}" drops out for the pinned proposed type`
+      : ''
+    throw new Error(
+      `${label}: no retention category is left to draw${why}; pin \`retention\` in the override`
+    )
   }
-  return pick(pool.filter((category) => category !== RETENTION_RETAINED))
+  return pick(drawable)
 }

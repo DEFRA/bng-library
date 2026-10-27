@@ -74,3 +74,41 @@ describe('the natural river rule is its own option', () => {
     expect(lost.filter((type) => !REMOVABLE.has(type))).toEqual([])
   })
 })
+
+// With Lost kept from it, a culvert (row 0, which a culvert cannot enhance)
+// has only Retained to draw, and a pinned proposed type drops Retained too.
+describe('a culvert that changes type in a BNG Service draw', () => {
+  const ditchFromCulvert = { proposedRiverType: 'Ditches' }
+
+  function drawRivers(override, plan) {
+    setSeed(1)
+    try {
+      return drawSite(CENTRE, {
+        numParcels: 10,
+        attributeOverrides: { rivers: [override] },
+        ...plan
+      }).rivers
+    } finally {
+      clearSeed()
+    }
+  }
+
+  it('fails, naming the row, rather than write it with no retention', () => {
+    expect(() =>
+      drawRivers(ditchFromCulvert, { loseOnlyCanalsAndDitches: true })
+    ).toThrow(/^rivers row 0: no retention category is left to draw/)
+  })
+
+  it('is drawn with the retention the override pins', () => {
+    const [river] = drawRivers(
+      { ...ditchFromCulvert, retention: 'Created' },
+      { loseOnlyCanalsAndDitches: true }
+    )
+    expect(river).toMatchObject({ type: 'Culvert', retention: 'Created' })
+  })
+
+  it('is still drawn Lost in a legacy draw', () => {
+    const [river] = drawRivers(ditchFromCulvert, {})
+    expect(river).toMatchObject({ type: 'Culvert', retention: 'Lost' })
+  })
+})

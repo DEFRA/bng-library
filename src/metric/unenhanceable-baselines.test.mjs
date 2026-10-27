@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { ENHANCEMENT_KIND } from './enhancement-rules.mjs'
+import {
+  ENHANCEMENT_KIND,
+  ENHANCEMENT_NOT_CHECKED_REASON,
+  checkEnhancement
+} from './enhancement-rules.mjs'
+import {
+  CONDITION_SCORES,
+  HEDGEROW_CONDITION_SCORES,
+  WATERCOURSE_CONDITION_SCORES
+} from './reference-constants.mjs'
 import {
   MVS_ONLY_UNENHANCEABLE_BASELINES,
   UNENHANCEABLE_BASELINE,
@@ -15,6 +24,19 @@ const {
 
 function baseline(habitat, condition) {
   return { habitat, condition }
+}
+
+/**
+ * @param {Record<string, Record<string, unknown>>} conditionScores
+ * @returns {Array<{ habitat: string, condition: string }>} every habitat in
+ *   every condition the metric scores it in
+ */
+function sidesOf(conditionScores) {
+  return Object.entries(conditionScores).flatMap(([habitat, scores]) =>
+    Object.entries(scores)
+      .filter(([, score]) => typeof score === 'number')
+      .map(([condition]) => baseline(habitat, condition))
+  )
 }
 
 describe('unenhanceableBaseline', () => {
@@ -229,5 +251,46 @@ describe('unenhanceableBaseline', () => {
         (rule) => !MVS_ONLY_UNENHANCEABLE_BASELINES.includes(rule)
       )
     ).toEqual([UNENHANCEABLE_BASELINE.VERY_LOW_HEDGEROW])
+  })
+
+  /**
+   * The rules here hold only because of the enhancement rules' `allows`
+   * clauses, which are a separate table. This keeps the two in step: a
+   * baseline is unenhanceable exactly when `checkEnhancement` calls no
+   * proposed habitat valid for it.
+   */
+  describe.each([
+    { kind: AREA, sides: sidesOf(CONDITION_SCORES) },
+    { kind: HEDGEROW, sides: sidesOf(HEDGEROW_CONDITION_SCORES) },
+    { kind: WATERCOURSE, sides: sidesOf(WATERCOURSE_CONDITION_SCORES) }
+  ])('against checkEnhancement for $kind', ({ kind, sides }) => {
+    it('flags a baseline exactly when no enhancement of it is valid', () => {
+      const mismatches = []
+      let flagged = 0
+      for (const side of sides) {
+        const checks = sides.map((proposed) =>
+          checkEnhancement(kind, side, proposed)
+        )
+        const noRule = checks.some(
+          ({ reason }) => reason === ENHANCEMENT_NOT_CHECKED_REASON.noRule
+        )
+        const enhanceable = checks.some(({ valid }) => valid)
+        const unenhanceable = unenhanceableBaseline(kind, side)
+        if (unenhanceable) {
+          flagged++
+        }
+        if (noRule ? unenhanceable : Boolean(unenhanceable) === enhanceable) {
+          mismatches.push(
+            `${side.habitat} (${side.condition}): ${unenhanceable?.rule ?? 'not flagged'}, ${
+              noRule
+                ? 'no enhancement rule'
+                : `${enhanceable ? 'a' : 'no'} valid enhancement`
+            }`
+          )
+        }
+      }
+      expect(flagged).toBeGreaterThan(0)
+      expect(mismatches).toEqual([])
+    })
   })
 })

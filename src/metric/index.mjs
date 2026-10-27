@@ -80,6 +80,11 @@ export {
   ENHANCEMENT_NOT_CHECKED_REASON,
   ENHANCEMENT_RULE
 } from './enhancement-rules.mjs'
+export {
+  MVS_ONLY_UNENHANCEABLE_BASELINES,
+  UNENHANCEABLE_BASELINE,
+  unenhanceableBaseline
+} from './unenhanceable-baselines.mjs'
 export { calculateHedgerowTradingRules } from './hedgerow-trading-rules.mjs'
 export {
   MAX_YEARS,

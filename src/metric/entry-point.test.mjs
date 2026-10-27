@@ -37,6 +37,7 @@ const PUBLIC_EXPORTS = [
   'MAX_YEARS_PLUS',
   'MERGED_INTERTIDAL_BROAD_HABITAT',
   'MIN_YEARS',
+  'MVS_ONLY_UNENHANCEABLE_BASELINES',
   'OVER_MAX_YEARS',
   'STRATEGIC_SIGNIFICANCE_MULTIPLIER',
   'TIME_TO_TARGET_CREATION',
@@ -44,6 +45,7 @@ const PUBLIC_EXPORTS = [
   'TIME_TO_TARGET_MULTIPLIER',
   'TRADING_RULE_MET',
   'TRADING_RULE_NOT_MET',
+  'UNENHANCEABLE_BASELINE',
   'WATERCOURSE_CONDITION_SCORES',
   'WATERCOURSE_DISTINCTIVENESS_CATEGORIES',
   'WATERCOURSE_DISTINCTIVENESS_SCORES',
@@ -85,7 +87,8 @@ const PUBLIC_EXPORTS = [
   'sumDeficit',
   'sumNetChange',
   'sumSurplus',
-  'tradingRuleStatus'
+  'tradingRuleStatus',
+  'unenhanceableBaseline'
 ]
 
 describe("the 'bng-library/metric' subpath export", () => {

@@ -7,6 +7,7 @@ import POOR_THRESHOLD_EXEMPT_HABITATS from './reference/habitat-area-poor-thresh
 import HEDGEROW_CONDITION_SCORES from './reference/hedgerow-condition-scores.json' with { type: 'json' }
 import HEDGEROW_DISTINCTIVENESS_CATEGORIES from './reference/hedgerow-distinctiveness-categories.json' with { type: 'json' }
 import HEDGEROW_DIFFICULTY from './reference/hedgerow-difficulty.json' with { type: 'json' }
+import HEDGEROW_ENHANCEMENT_ALLOWED_MOVES from './reference/hedgerow-enhancement-allowed-moves.json' with { type: 'json' }
 import HEDGEROW_DISTINCTIVENESS_SCORES from './reference/hedgerow-distinctiveness-scores.json' with { type: 'json' }
 import HEDGEROW_TIME_TO_TARGET_CREATION from './reference/hedgerow-time-to-target-creation.json' with { type: 'json' }
 import HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT from './reference/hedgerow-time-to-target-distinctiveness-enhancement.json' with { type: 'json' }
@@ -34,6 +35,7 @@ export {
   HABITAT_DIFFICULTY,
   HEDGEROW_CONDITION_SCORES,
   HEDGEROW_DIFFICULTY,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_SCORES,
   HEDGEROW_TIME_TO_TARGET_CREATION,

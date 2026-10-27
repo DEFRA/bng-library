@@ -1,6 +1,7 @@
 import {
   DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES,
   HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   WATERCOURSE_DISTINCTIVENESS_CATEGORIES
 } from './reference-constants.mjs'
@@ -55,17 +56,20 @@ export const MVS_ONLY_UNENHANCEABLE_BASELINES = Object.freeze([
 
 /**
  * @param {string} hedgerow a Low hedgerow type
- * @returns {boolean} whether the metric's hedgerow enhancement data (G-6
- *   "Enhancement Through Distinctiveness") lets it become a Medium hedgerow
+ * @returns {boolean} whether the metric's hedgerow enhancement data (G-6)
+ *   lets it become a Medium hedgerow: the move must be one its "Enhancement
+ *   through Distinctiveness" table allows, and have a time to target
  */
 function hasMediumHedgerowTarget(hedgerow) {
-  const targets =
+  const moves = HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[hedgerow] ?? {}
+  const years =
     HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT[hedgerow] ?? {}
-  return Object.entries(targets).some(
-    ([target, years]) =>
+  return Object.entries(moves).some(
+    ([target, move]) =>
       HEDGEROW_DISTINCTIVENESS_CATEGORIES[target] === MEDIUM &&
-      years != null &&
-      years !== NOT_POSSIBLE
+      move !== NOT_POSSIBLE &&
+      years[target] != null &&
+      years[target] !== NOT_POSSIBLE
   )
 }
 

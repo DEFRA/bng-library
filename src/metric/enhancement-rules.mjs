@@ -3,6 +3,7 @@ import {
   DISTINCTIVENESS_SCORES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_SCORES,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES,
   HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
   HEDGEROW_TIME_TO_TARGET_ENHANCEMENT,
   TIME_TO_TARGET_ENHANCEMENT,
@@ -26,6 +27,14 @@ import { broadHabitatOf } from './area-trading-rules.mjs'
  * On top of its rule, every enhancement must have a time to target: one the
  * metric gives as "Not Possible" is not valid, whichever rule allows it. The
  * metric does not offer it, and the calculator cannot price it.
+ *
+ * A hedgerow enhancement must also be a move the metric allows from one
+ * hedgerow type to another: G-6's "Enhancement through Distinctiveness" table,
+ * which the metric's hedgerow enhancement sheet (B-3, column N) checks before
+ * it calculates anything. Its time-to-target tables give years for some moves
+ * this table does not allow (Line of trees - associated with bank or ditch to
+ * Native hedgerow with trees), and they do not say which type a hedgerow of the
+ * same distinctiveness may become, so the time to target alone is not enough.
  */
 
 const MEDIUM = 'Medium'
@@ -295,6 +304,27 @@ function isPossible(timeToTarget) {
 }
 
 /**
+ * @param {ResolvedSide} proposed
+ * @param {ResolvedSide} baseline
+ * @returns {boolean} whether the metric allows a hedgerow of the baseline's type
+ *   to be enhanced into one of the proposed type
+ */
+function isAllowedHedgerowMove(proposed, baseline) {
+  const move =
+    HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[baseline.habitat]?.[proposed.habitat]
+  return move !== undefined && move !== NOT_POSSIBLE
+}
+
+/**
+ * A kind with no table of allowed moves allows any move its rules do.
+ *
+ * @returns {boolean}
+ */
+function anyMove() {
+  return true
+}
+
+/**
  * @param {ResolvedSide} side
  * @returns {boolean}
  */
@@ -430,16 +460,19 @@ const RULES_BY_KIND = Object.freeze({
   [ENHANCEMENT_KIND.area]: {
     categories: DISTINCTIVENESS_CATEGORIES,
     rules: AREA_RULES,
+    allowsMove: anyMove,
     timeToTarget: areaTimeToTarget
   },
   [ENHANCEMENT_KIND.hedgerow]: {
     categories: HEDGEROW_DISTINCTIVENESS_CATEGORIES,
     rules: HEDGEROW_RULES,
+    allowsMove: isAllowedHedgerowMove,
     timeToTarget: hedgerowTimeToTarget
   },
   [ENHANCEMENT_KIND.watercourse]: {
     categories: WATERCOURSE_DISTINCTIVENESS_CATEGORIES,
     rules: WATERCOURSE_RULES,
+    allowsMove: anyMove,
     timeToTarget: watercourseTimeToTarget
   }
 })
@@ -479,10 +512,13 @@ export const ENHANCEMENT_NOT_CHECKED_REASON = Object.freeze({
  * @typedef {object} EnhancementChecked
  * @property {true} checked
  * @property {string} rule the ENHANCEMENT_RULE the baseline is checked against
- * @property {boolean} valid whether the proposed habitat satisfies it and has
- *   a time to target
+ * @property {boolean} valid whether the proposed habitat satisfies it, is a
+ *   move the metric allows, and has a time to target
  * @property {boolean} allowedByRule whether the proposed habitat satisfies the
  *   rule, whatever its time to target
+ * @property {boolean} allowedMove whether the metric allows the move from the
+ *   baseline's type to the proposed type (hedgerows; always true for the other
+ *   kinds)
  * @property {unknown} timeToTarget the metric's enhancement time-to-target
  *   entry: years, "30+", "Not Possible", or null when the table has none
  * @property {string} baselineDistinctiveness
@@ -504,8 +540,9 @@ function notChecked(reason) {
 }
 
 /**
- * Check an enhancement against the BNG service's rule for its baseline, and
- * that the metric gives it a time to target.
+ * Check an enhancement against the BNG service's rule for its baseline, that
+ * the metric allows the move (hedgerows), and that it gives it a time to
+ * target.
  *
  * Labels are matched exactly, as the reference tables key them, so a caller
  * reading user data normalises it first (trimming, case, a condition's list
@@ -535,13 +572,15 @@ export function checkEnhancement(kind, baseline, proposed) {
     return notChecked(ENHANCEMENT_NOT_CHECKED_REASON.noRule)
   }
   const allowedByRule = match.allows(resolvedProposed, resolvedBaseline)
+  const allowedMove = kindRules.allowsMove(resolvedProposed, resolvedBaseline)
   const timeToTarget =
     kindRules.timeToTarget(resolvedProposed, resolvedBaseline) ?? null
   return {
     checked: true,
     rule: match.rule,
-    valid: allowedByRule && isPossible(timeToTarget),
+    valid: allowedByRule && allowedMove && isPossible(timeToTarget),
     allowedByRule,
+    allowedMove,
     timeToTarget,
     baselineDistinctiveness: resolvedBaseline.distinctiveness,
     proposedDistinctiveness: resolvedProposed.distinctiveness

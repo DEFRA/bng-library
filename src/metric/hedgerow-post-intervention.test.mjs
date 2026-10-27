@@ -242,16 +242,17 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
   })
 
   it('keeps the condition table when the type changes but distinctiveness does not', () => {
-    // Native hedgerow → Line of trees are both Low distinctiveness, so this is
-    // a type change without a distinctiveness uplift. It must stay on the
-    // enhancement-through-condition table (Line of trees Moderate→Good = 10),
-    // not the flat/G-6 uplift path. The proposed condition still drives the
-    // year, unlike a distinctiveness uplift.
+    // Line of trees → Line of trees - associated with bank or ditch are both
+    // Low distinctiveness, and G-6's allowed-moves table allows the move
+    // (Low - Low), so this is a type change without a distinctiveness uplift.
+    // It must stay on the enhancement-through-condition table (Moderate→Good
+    // = 10), not the flat/G-6 uplift path. The proposed condition still drives
+    // the year, unlike a distinctiveness uplift.
     const result = calculateEnhancedHedgerowPostIntervention(
       1,
       1,
-      'Native hedgerow',
       'Line of trees',
+      'Line of trees - associated with bank or ditch',
       'Moderate',
       'Good',
       { advanceYears: 0, delayYears: 0 }
@@ -267,6 +268,48 @@ describe('calculateEnhancedHedgerowPostIntervention', () => {
     // ((1*2*3 - 1*2*2) * 0.7002822742 + 1*2*2) * 1
     expect(result.units).toBeCloseTo(5.4005645484)
   })
+
+  // The metric's hedgerow enhancement sheet (B-3, column N) checks G-6's
+  // allowed-moves table before it calculates anything, so a move it calls
+  // Error has no figures, even where a time-to-target table has years for it.
+  it.each([
+    [
+      'a move with years in the distinctiveness table (G-6 Y14 against AT14)',
+      'Line of trees - associated with bank or ditch',
+      'Native hedgerow with trees',
+      'Good',
+      'Good'
+    ],
+    [
+      'a change to another type of the same distinctiveness',
+      'Native hedgerow with trees',
+      'Species-rich native hedgerow',
+      'Moderate',
+      'Good'
+    ],
+    [
+      'a change to another Low type',
+      'Native hedgerow',
+      'Line of trees',
+      'Moderate',
+      'Good'
+    ]
+  ])(
+    'throws BaselineLookupError for %s, which the metric does not allow',
+    (_, baselineType, postType, baselineCondition, postCondition) => {
+      expect(() =>
+        calculateEnhancedHedgerowPostIntervention(
+          1,
+          1,
+          baselineType,
+          postType,
+          baselineCondition,
+          postCondition,
+          { advanceYears: 0, delayYears: 0 }
+        )
+      ).toThrow(BaselineLookupError)
+    }
+  )
 
   it('applies advance years to reduce time-to-target', () => {
     // Native hedgerow Moderate→Good has a reference time-to-target of 2 years.

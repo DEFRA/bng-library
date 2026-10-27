@@ -157,9 +157,8 @@ describe('unenhanceableBaseline', () => {
   })
 
   describe('AC5: a Low hedgerow in Good condition with no Medium target', () => {
-    // The metric's G-6 data gives every Low hedgerow a Medium target, so no
-    // real hedgerow breaks this rule; the data is replaced here to show it is
-    // read from the data, not from a list.
+    const LINE_OF_TREES_BANK = 'Line of trees - associated with bank or ditch'
+
     it.each(['Native hedgerow', 'Line of trees'])(
       'can enhance %s in Good condition, which can become a Medium hedgerow',
       (habitat) => {
@@ -169,21 +168,41 @@ describe('unenhanceableBaseline', () => {
       }
     )
 
-    describe('when the data gives a Low hedgerow no Medium target', () => {
-      const LINE_OF_TREES_BANK = 'Line of trees - associated with bank or ditch'
+    // G-6's allowed-moves table (AT14) does not let it become a Native
+    // hedgerow with trees, its only Medium target, though the time-to-target
+    // table (Y14) gives that move 12 years.
+    it(`cannot enhance ${LINE_OF_TREES_BANK} in Good condition`, () => {
+      expect(
+        unenhanceableBaseline(HEDGEROW, baseline(LINE_OF_TREES_BANK, 'Good'))
+      ).toEqual({
+        rule: UNENHANCEABLE_BASELINE.LOW_HEDGEROW_GOOD_NO_MEDIUM_TARGET,
+        mvsOnly: true,
+        distinctiveness: 'Low'
+      })
+    })
 
-      async function withHighTargetsOnly() {
+    it(`can enhance ${LINE_OF_TREES_BANK} in Moderate condition`, () => {
+      expect(
+        unenhanceableBaseline(
+          HEDGEROW,
+          baseline(LINE_OF_TREES_BANK, 'Moderate')
+        )
+      ).toBeNull()
+    })
+
+    describe('when the allowed-moves table lets it become a Medium hedgerow', () => {
+      async function withMoveAllowed() {
         vi.resetModules()
         vi.doMock('./reference-constants.mjs', async (importOriginal) => {
           const actual = await importOriginal()
+          const moves = actual.HEDGEROW_ENHANCEMENT_ALLOWED_MOVES
           return {
             ...actual,
-            HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT: {
-              ...actual.HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT,
+            HEDGEROW_ENHANCEMENT_ALLOWED_MOVES: {
+              ...moves,
               [LINE_OF_TREES_BANK]: {
-                'Native hedgerow with trees': 'Not Possible',
-                'Native hedgerow with trees - associated with bank or ditch': 12,
-                'Line of trees': 'Not Possible'
+                ...moves[LINE_OF_TREES_BANK],
+                'Native hedgerow with trees': 'Low - Medium'
               }
             }
           }
@@ -193,27 +212,12 @@ describe('unenhanceableBaseline', () => {
         return module
       }
 
-      it('cannot enhance it in Good condition', async () => {
-        const module = await withHighTargetsOnly()
+      it('can enhance it in Good condition', async () => {
+        const module = await withMoveAllowed()
         expect(
           module.unenhanceableBaseline(
             HEDGEROW,
             baseline(LINE_OF_TREES_BANK, 'Good')
-          )
-        ).toEqual({
-          rule: module.UNENHANCEABLE_BASELINE
-            .LOW_HEDGEROW_GOOD_NO_MEDIUM_TARGET,
-          mvsOnly: true,
-          distinctiveness: 'Low'
-        })
-      })
-
-      it('can enhance it in Moderate condition', async () => {
-        const module = await withHighTargetsOnly()
-        expect(
-          module.unenhanceableBaseline(
-            HEDGEROW,
-            baseline(LINE_OF_TREES_BANK, 'Moderate')
           )
         ).toBeNull()
       })

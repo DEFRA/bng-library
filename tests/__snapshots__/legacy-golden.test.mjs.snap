@@ -115,9 +115,12 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "invalid-area-trading-down": "fa297479efbf53cf3dea38936e9bdba2f6d8846c1441590a81d8ff1c93db9370",
   "invalid-area-very-low-not-possible": "159d6ff108534d22e82a00777255ab9c1e360698a101b483897d170e5debddee",
   "invalid-data-incomplete": "5cd8bc1948fe9ed5e7ed9b079267b4bd54e12ce178293eff3a49a3e98ba69d64",
+  "invalid-hedgerow-bank-or-ditch-dropped": "b5e1ac397fd0b81c0898231bbd460294705502c0bf80db380ea507da4ff32ef6",
   "invalid-hedgerow-condition-reduced": "70629436969d7fa9a33e8ff47f60344fd3f2ee37eab0cd665cb31dd57a2c5624",
+  "invalid-hedgerow-low-good-no-medium-target": "dfdb4967fb23c73e98fd1a3ea34fe743b49675928ca8c1d08f1f8c45dbd8d212",
   "invalid-hedgerow-low-not-possible": "55a5471492453d4dc920870231a617c360751fbaf17ad0a0ead0a04fec0a1647",
   "invalid-hedgerow-medium-trading-down": "54b7b37a189bcc1d60168fab2a5c9504364f521588843a69b22f6a1652c781d8",
+  "invalid-hedgerow-medium-type-change": "684d33a50c519cb3827ad47d0d7bb76b8683138ffe9fbb76ea48e2bad15da1e7",
   "invalid-hedgerow-very-low-enhanced": "b566735d859aced95be5da05135fbd58a531b688e6d341413622aaa0fe7e4792",
   "invalid-tree-advance-and-delay": "a2032640316725bc4155acb6a4c43e372bb1e8edb52af3f7495eaf0489180f36",
   "invalid-watercourse-culvert-enhanced": "0d6baa99d19a507cd8ff6e3fb261ce2a7275fd5224e69e816250f917328d64d1",
@@ -332,9 +335,17 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "5294280b0d61a14648486c116f5e878c2c3e43e7d90bc0b176691cbe4ce97e52",
     "a2796d81db089e67c44b3dc8245073039bb1e844c5e1f804e0a2feb45c22e130",
   ],
+  "invalid-hedgerow-bank-or-ditch-dropped": [
+    "a34004a4ea937327753cff42018b17e529b71bd66ced29bff82145c2dc54f10d",
+    "ebd8977db6afd03235fcbbb0a735f2a2c367791e7a459f8cd1f0662e21d6caef",
+  ],
   "invalid-hedgerow-condition-reduced": [
     "d19f2854e2db0232bdcf3d3b1d5ed1fe29c1a11f75f6ea7fe346bd0127892b67",
     "089f5405bad444f835d76571dd03c035a19312fffbd0b7952a71301bbb1cdfc6",
+  ],
+  "invalid-hedgerow-low-good-no-medium-target": [
+    "df5ad61830506b46021b68125625adf8e0b2abb7984c584228a9c0dd02e8dddc",
+    "f011eb88e5b3ec4616f01a5c63dc28bfed9510452fffd14a44d1131e372263d3",
   ],
   "invalid-hedgerow-low-not-possible": [
     "d85ba1a0362fbe2b60adfadc0767ebd6d87ea1e01d158e5a5771e8fe551f86fc",
@@ -343,6 +354,10 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
   "invalid-hedgerow-medium-trading-down": [
     "e9437797ead3c6d3f58170b1dc655b5fb04969b6804da7bbc7994a12813bb172",
     "c91b911c718c0e4e11329ee0ddceec1e63ebe83cc6f74a7010c4cc0247432270",
+  ],
+  "invalid-hedgerow-medium-type-change": [
+    "b593a24d9b4517359de39392bfa51773710e7c8eee1a0a9ad52e249056a3bf1f",
+    "1ef46b74ca9e2ca416f8c887fcdd8bb14065357ef71e87bacb19d5cd5d816efc",
   ],
   "invalid-hedgerow-very-low-enhanced": [
     "b64fea18458c6f24a2107b50fe57a53b9cc948ab912b3b8b86d1cc673a3bb56a",

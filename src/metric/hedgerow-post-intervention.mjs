@@ -19,6 +19,7 @@ import {
   HEDGEROW_CONDITION_SCORES,
   HEDGEROW_DISTINCTIVENESS_CATEGORIES,
   HEDGEROW_DISTINCTIVENESS_SCORES,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES,
   HEDGEROW_TIME_TO_TARGET_DISTINCTIVENESS_ENHANCEMENT
 } from './reference-constants.mjs'
 import {
@@ -158,6 +159,33 @@ function resolveEnhancementMetrics({
 }
 
 /**
+ * The metric's hedgerow enhancement sheet (B-3, column N) looks the move up in
+ * G-6's allowed-moves table ("Enhancement through Distinctiveness", AM2:AZ15)
+ * before it calculates anything, and gives a move it calls Error no figures.
+ * The time-to-target tables alone would price some of those moves: one has
+ * years in the distinctiveness table (Line of trees - associated with bank or
+ * ditch to Native hedgerow with trees, Y14 against AT14), and the condition
+ * table, used for a move to the same distinctiveness, does not look at the
+ * baseline's type at all.
+ * @param {string} baselineType
+ * @param {string} postType
+ * @throws {BaselineLookupError} If the metric does not allow the move
+ */
+function assertAllowedHedgerowMove(baselineType, postType) {
+  const move = HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[baselineType]?.[postType]
+  if (move === undefined || move === null) {
+    throw new BaselineLookupError(
+      `Allowed move not found for hedgerow enhancement: ${baselineType} -> ${postType}`
+    )
+  }
+  if (move === NOT_POSSIBLE) {
+    throw new BaselineLookupError(
+      `Hedgerow enhancement '${NOT_POSSIBLE}' in the metric's allowed moves: ${baselineType} -> ${postType}`
+    )
+  }
+}
+
+/**
  * Resolve time and difficulty multipliers for an enhanced hedgerow.
  * @param {{ baselineDistinctivenessScore: number, postInterventionDistinctivenessScore: number, baselineType: string, postType: string, baselineCondition: string, postCondition: string, advanceYears: number, delayYears: number }} enhancementContext
  * @returns {{ timeMultiplier: number, difficultyMultiplier: number, standardTimeToTargetCondition: string, difficulty: string }}
@@ -172,6 +200,7 @@ function resolveHedgerowEnhancementMultipliers({
   advanceYears,
   delayYears
 }) {
+  assertAllowedHedgerowMove(baselineType, postType)
   if (
     isDistinctivenessEnhancement(
       baselineDistinctivenessScore,
@@ -286,7 +315,7 @@ export function calculateCreatedHedgerowPostIntervention(
  * @param {{ advanceYears?: number, delayYears?: number, strategicSignificance?: string | null }} [options] - Advance and delay years, and the Proposed Strategic Significance (absent resolves to Low)
  * @returns {{ units: number, postInterventionDistinctiveness: string, postInterventionDistinctivenessScore: number, postInterventionConditionScore: number, strategicSignificanceCategory: string, strategicSignificanceScore: number, timeMultiplier: number, difficultyMultiplier: number }}
  * @throws {TypeError} If either length is invalid
- * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables
+ * @throws {BaselineLookupError} If hedgeType or condition is not found in the reference tables, or G-6's allowed-moves table does not allow the baseline → proposed move
  */
 export function calculateEnhancedHedgerowPostIntervention(
   baselineLengthKm,

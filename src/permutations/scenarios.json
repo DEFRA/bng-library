@@ -1321,6 +1321,114 @@
       }
     },
     {
+      "id": "invalid-hedgerow-medium-type-change",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — enhancement of a Medium hedgerow into another Medium type",
+      "description": "HG001, a Native hedgerow with trees in Moderate condition, is \"enhanced\" to a Species-rich native hedgerow in Good condition. The metric's G-6 allowed-moves table does not let a Native hedgerow with trees become a Species-rich native hedgerow, so it is not a valid enhancement (BMD-820 AC6, with every hedgerow enhancement needing a move G-6 allows).",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow with trees",
+            "proposedHedgeType": "Species-rich native hedgerow",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Enhancement not possible"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "enhanced Medium hedgerow changed to another Medium type"
+      }
+    },
+    {
+      "id": "invalid-hedgerow-bank-or-ditch-dropped",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — enhancement of a line of trees on a bank or ditch into a hedgerow without one",
+      "description": "HG001, a Line of trees - associated with bank or ditch in Moderate condition, is \"enhanced\" to a Native hedgerow with trees in Good condition. The metric's G-6 time-to-target table gives the move 12 years (Y14), but its allowed-moves table, which the metric checks first, does not allow it (AT14), so it is not a valid enhancement (BMD-820 AC7, with every hedgerow enhancement needing a move G-6 allows).",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Line of trees - associated with bank or ditch",
+            "proposedHedgeType": "Native hedgerow with trees",
+            "retention": "Enhanced",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Enhancement not possible"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "enhanced line of trees that loses its bank or ditch"
+      }
+    },
+    {
+      "id": "invalid-hedgerow-low-good-no-medium-target",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — an enhanced Low hedgerow in Good condition with no Medium target",
+      "description": "HG001, a Line of trees - associated with bank or ditch in Good condition, is \"enhanced\" to a Native hedgerow with trees in Good condition. Its condition cannot improve, and the metric's G-6 allowed-moves table lets it become no Medium hedgerow, so the service cannot enhance it at all and refuses the file (BMD-1182 AC5).",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Line of trees - associated with bank or ditch",
+            "proposedHedgeType": "Native hedgerow with trees",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Enhancement not possible"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "an enhanced Low hedgerow in Good condition with no Medium target"
+      }
+    },
+    {
       "id": "invalid-watercourse-medium-condition-reduced",
       "purpose": "invalid-interventions",
       "title": "Watercourse — enhancement of a Medium watercourse into a worse condition",

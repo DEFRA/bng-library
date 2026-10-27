@@ -7,6 +7,11 @@ import {
   checkEnhancement,
   enhancementRulesFor
 } from './enhancement-rules.mjs'
+import {
+  HEDGEROW_CONDITION_SCORES,
+  HEDGEROW_DISTINCTIVENESS_CATEGORIES,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES
+} from './reference-constants.mjs'
 
 const CA_NA = 'Condition Assessment N/A'
 
@@ -321,14 +326,20 @@ describe('checkEnhancement', () => {
       {
         valid: [
           [
-            'a medium hedgerow in better condition',
-            linear('Species-rich native hedgerow', 'Good')
+            'the same hedgerow in better condition',
+            linear('Native hedgerow with trees', 'Good')
           ]
         ],
         invalid: [
           [
             'the same condition',
-            linear('Species-rich native hedgerow', 'Moderate')
+            linear('Native hedgerow with trees', 'Moderate')
+          ],
+          // G-6 does not let a Native hedgerow with trees become another
+          // Medium hedgerow type, though the time to target has years for it.
+          [
+            'another medium hedgerow type the metric does not allow',
+            linear('Species-rich native hedgerow', 'Good')
           ],
           ['a low hedgerow', linear('Native hedgerow', 'Good')]
         ]
@@ -344,8 +355,8 @@ describe('checkEnhancement', () => {
       {
         valid: [
           [
-            'a low hedgerow in better condition',
-            linear('Line of trees', 'Good')
+            'the same hedgerow in better condition',
+            linear('Native hedgerow', 'Good')
           ],
           [
             'a medium hedgerow in the same condition',
@@ -356,6 +367,10 @@ describe('checkEnhancement', () => {
           [
             'a low hedgerow in the same condition',
             linear('Native hedgerow', 'Moderate')
+          ],
+          [
+            'another low hedgerow type the metric does not allow',
+            linear('Line of trees', 'Good')
           ],
           [
             'a medium hedgerow in worse condition',
@@ -535,10 +550,77 @@ describe('checkEnhancement', () => {
         rule: ENHANCEMENT_RULE.LOW_HEDGEROW,
         valid: false,
         allowedByRule: false,
+        allowedMove: true,
         timeToTarget: 5,
         baselineDistinctiveness: 'Low',
         proposedDistinctiveness: 'Medium'
       })
+    })
+  })
+
+  describe("hedgerow moves the metric's G-6 table does not allow", () => {
+    const LINE_OF_TREES_BANK = 'Line of trees - associated with bank or ditch'
+
+    // G-6 AT14 says Error, though Y14 gives the move 12 years: the metric's
+    // hedgerow enhancement sheet checks AT14 first, so never calculates it.
+    it(`refuses ${LINE_OF_TREES_BANK} to Native hedgerow with trees`, () => {
+      expect(
+        check(
+          HEDGEROW,
+          linear(LINE_OF_TREES_BANK, 'Good'),
+          linear('Native hedgerow with trees', 'Good')
+        )
+      ).toEqual({
+        checked: true,
+        rule: ENHANCEMENT_RULE.LOW_HEDGEROW,
+        valid: false,
+        allowedByRule: true,
+        allowedMove: false,
+        timeToTarget: 12,
+        baselineDistinctiveness: 'Low',
+        proposedDistinctiveness: 'Medium'
+      })
+    })
+
+    it('accepts no hedgerow move the table does not allow, in any condition', () => {
+      const hedgerows = Object.keys(HEDGEROW_DISTINCTIVENESS_CATEGORIES)
+      const conditions = Object.keys(
+        Object.values(HEDGEROW_CONDITION_SCORES)[0]
+      )
+      const accepted = []
+      for (const from of hedgerows) {
+        for (const to of hedgerows) {
+          for (const fromCondition of conditions) {
+            for (const toCondition of conditions) {
+              const result = check(
+                HEDGEROW,
+                linear(from, fromCondition),
+                linear(to, toCondition)
+              )
+              if (result.valid) {
+                accepted.push([from, to])
+              }
+            }
+          }
+        }
+      }
+      expect(accepted.length).toBeGreaterThan(0)
+      expect(
+        accepted.filter(
+          ([from, to]) =>
+            HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[from][to] === 'Not Possible'
+        )
+      ).toEqual([])
+    })
+
+    it('reads the table as the metric keys it, every hedgerow to every other', () => {
+      const hedgerows = Object.keys(HEDGEROW_DISTINCTIVENESS_CATEGORIES)
+      expect(Object.keys(HEDGEROW_ENHANCEMENT_ALLOWED_MOVES)).toEqual(hedgerows)
+      for (const from of hedgerows) {
+        expect(Object.keys(HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[from])).toEqual(
+          hedgerows
+        )
+      }
     })
   })
 

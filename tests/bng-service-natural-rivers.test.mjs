@@ -1,17 +1,19 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { generateBngServiceSynthetic, setMode } from '../index.mjs'
 import { clearSeed, setSeed } from '../src/geometry.mjs'
 import { drawSite } from '../src/synthetic/draw/site.mjs'
+import {
+  REMOVABLE_RIVER_TYPES as REMOVABLE,
+  lostRiverTypes
+} from './lineage-rules.mjs'
 
 const CENTRE = [530000, 180000]
 const SEEDS = [1, 2, 3, 6, 7, 21]
 const LARGE_SITE = 30
-const REMOVABLE = new Set(['Canals', 'Ditches'])
 
 let dir
 let counter = 0
@@ -25,25 +27,6 @@ afterAll(() => {
   setMode('cli')
   rmSync(dir, { recursive: true, force: true })
 })
-
-/** The baseline watercourses no post-intervention row names, by type. */
-function lostRiverTypes(file) {
-  const db = new Database(file, { readonly: true })
-  try {
-    return db
-      .prepare(
-        `SELECT b."Baseline River Type" AS type
-           FROM "Watercourses Baseline" b
-          WHERE NOT EXISTS (
-            SELECT 1 FROM "Watercourses Post-Intervention" p
-             WHERE p.parent_uuid = b.feature_uuid)`
-      )
-      .all()
-      .map((row) => row.type)
-  } finally {
-    db.close()
-  }
-}
 
 // The template records a lost watercourse by its absence from the
 // Post-Intervention table, and the service refuses any but a canal or a

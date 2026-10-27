@@ -6,6 +6,7 @@ import { calculateEnhancedAreaHabitatPostIntervention } from './post-interventio
 import {
   CONDITION_SCORES,
   HEDGEROW_CONDITION_SCORES,
+  HEDGEROW_ENHANCEMENT_ALLOWED_MOVES,
   WATERCOURSE_CONDITION_SCORES
 } from './reference-constants.mjs'
 import { calculateEnhancedWatercoursePostIntervention } from './watercourse-post-intervention.mjs'
@@ -115,4 +116,31 @@ describe('checkEnhancement against the calculator', () => {
       expect(unpriced).toEqual([])
     }
   )
+
+  // The other way round, for the one kind with a table of allowed moves: the
+  // metric gives a move G-6 calls Error no figures, so neither may the
+  // calculator, whatever its time-to-target tables hold.
+  it('the calculator prices no hedgerow move the metric does not allow', () => {
+    const { sides, calculate } = CALCULATORS.find(
+      ({ kind }) => kind === ENHANCEMENT_KIND.hedgerow
+    )
+    const priced = []
+    let refused = 0
+    for (const baseline of sides) {
+      for (const proposed of sides) {
+        const move =
+          HEDGEROW_ENHANCEMENT_ALLOWED_MOVES[baseline.habitat][proposed.habitat]
+        if (move === 'Not Possible') {
+          refused++
+          if (!calculationError(calculate, baseline, proposed)) {
+            priced.push(
+              `${baseline.habitat} (${baseline.condition}) → ${proposed.habitat} (${proposed.condition})`
+            )
+          }
+        }
+      }
+    }
+    expect(refused).toBeGreaterThan(0)
+    expect(priced).toEqual([])
+  })
 })

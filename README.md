@@ -237,7 +237,7 @@ Count column, and its own:
 | `lineage-parent-unknown`                       | a Retained area habitat whose parent is not in the baseline                                                                 |
 | `lineage-parent-wrong`                         | a Retained area habitat naming another baseline parcel, which it lies outside                                               |
 | `lineage-parent-geom-mismatch`                 | the right parent, with a parent_geom 5 m from the parent's shape                                                            |
-| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom; accepted, as the service skips the check                                             |
+| `lineage-parent-geom-missing`                  | the right parent, with no parent_geom, so its shape cannot be compared                                                      |
 | `version-record-missing`                       | no template version record                                                                                                  |
 | `version-record-duplicated`                    | two records                                                                                                                 |
 | `version-unsupported`                          | one record naming the next major version, which the service does not support yet                                            |
@@ -250,16 +250,27 @@ Count column, and its own:
 
 At most one lineage flaw and one degrade flaw at a time. A degrade flaw adds
 the habitats that get worse, if the site has none, and breaks one of them.
-The service does not check these yet, so a file with one is accepted, bar
-`degrade-habitat-ref-blank`, which it refuses as it refuses any blank
-Habitat Ref (`HABITAT_REF_MISSING`).
+The service gives each degrade flaw the outcome its `errorCode` records:
 
-There is no degrade flaw for a natural river left out, or for an
-irreplaceable tree that gets worse: the service refuses either file for
-another reason first, so the flaw could not be told apart. Natural rivers
-(Other rivers and streams, High; Priority habitat, V.High) are out of the
-service's scope, and only canals and ditches may be lost; and the service
-refuses any irreplaceable habitat, which `irreplaceableLayers` covers.
+- `degrade-advance-missing`: refused, `STAGED_DEGRADE_ADVANCE_NOT_30_PLUS`;
+- `degrade-not-worse`: refused, `STAGED_DEGRADE_NOT_WORSE`;
+- `degrade-watercourse-retained-and-created`: refused,
+  `STAGED_WATERCOURSE_RETAINED_AND_CREATED`;
+- `degrade-habitat-ref-blank`: refused, as any blank Habitat Ref is
+  (`HABITAT_REF_MISSING`);
+- `degrade-watercourse-advance-not-encroachment`: accepted, the watercourse
+  saved Incomplete with its advance cleared;
+- `degrade-watercourse-encroachment-no-advance`: accepted, the watercourse
+  saved Incomplete for want of an advance.
+
+There is no degrade flaw for a watercourse left out: a BNG Service draw
+loses none but a canal or a ditch (`loseOnlyCanalsAndDitches`), and the
+service refuses any other left out (`STAGED_NATURAL_WATERCOURSE_LOST`).
+Natural rivers (Other rivers and streams, High; Priority habitat, V.High) are
+out of the service's scope, so of the watercourses in scope the rule applies
+to a culvert. Nor is there one for an irreplaceable tree that gets worse: the
+service refuses any irreplaceable habitat, which `irreplaceableLayers`
+covers, whether or not it gets worse.
 
 **Checking a file.** `checkTemplateValues(path)` checks every value in a BNG
 Service file against the template's own drop-downs, applying each list's

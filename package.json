@@ -23,7 +23,7 @@
     "url": "git+https://github.com/DEFRA/bng-library.git"
   },
   "engines": {
-    "node": ">=22.11"
+    "node": ">=24.22.1"
   },
   "dependencies": {
     "wkx": "^0.5.0"

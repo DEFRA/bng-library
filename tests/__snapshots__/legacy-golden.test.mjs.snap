@@ -141,6 +141,7 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "trading-surplus-in-another-broad-habitat": "71264d0dc45cdd0f5178697917b750f40cbf55182036e77fad2666df8672173d",
   "trading-too-few-units": "b9fcdb07c84a2b90b30e7993dd3389cc96f2430ce29dc685b7f0c827654cb120",
   "trading-trade-down": "fe13d2d004389989bc45062f542ac3a6b742d56c8388cdffcf66d2bce7c51388",
+  "trading-trade-up-without-watercourse": "7dd46ee1d4d1d0064274ed8714440bfc7e4ad77a600457f077caaa02758b1961",
   "trading-wrong-habitat": "309df6b2221fed0e4f12b0fd8085f0e8952937913353c559c204748a0037fa48",
   "watercourse-enhanced-culvert": "aaae319413d795b4d706c0763f867b338c72789b307f032b8d6bbfe5730e41eb",
 }

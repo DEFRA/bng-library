@@ -2362,7 +2362,7 @@
     {
       "id": "trading-trade-up",
       "purpose": "trading-rules",
-      "$comment": "Legacy only: its watercourse trade-up loses a culvert, the one Low watercourse, and the BNG Service template cannot record that. It records a loss by absence, and the service refuses any watercourse but a canal or a ditch left out (BMD-1083; guide: natural rivers cannot be permanently lost).",
+      "$comment": "Legacy only: its watercourse trade-up loses a culvert, the one Low watercourse, and the BNG Service template cannot record that. It records a loss by absence, and the service refuses any watercourse but a canal or a ditch left out (BMD-1083; guide: natural rivers cannot be permanently lost). trading-trade-up-without-watercourse keeps its area and hedgerow trade-ups in the BNG Service format.",
       "formats": ["legacy"],
       "title": "Trading rules — replaced by a higher distinctiveness",
       "description": "Area: a Low grassland is replaced by a Medium one. Hedgerows: a Low hedgerow is replaced by two Medium hedgerows. Watercourses: a culvert (Low) is replaced by a ditch (Medium). Trading up is always allowed, so every rule is met.",
@@ -2452,6 +2452,82 @@
         "watercourse": {
           "Medium": "met",
           "Low": "met"
+        }
+      },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "the first area parcel; see the description for every layer"
+      }
+    },
+    {
+      "id": "trading-trade-up-without-watercourse",
+      "purpose": "trading-rules",
+      "$comment": "trading-trade-up for the BNG Service format, without its watercourse trade-up: a culvert is the one Low watercourse, and the template cannot record one lost (BMD-1083). The area and hedgerow halves are trading-trade-up's.",
+      "formats": ["bng-service"],
+      "title": "Trading rules — replaced by a higher distinctiveness, area and hedgerows",
+      "description": "Area: a Low grassland is replaced by a Medium one. Hedgerows: a Low hedgerow is replaced by two Medium hedgerows. Trading up is always allowed, so every rule is met.",
+      "size": 2,
+      "emptyLayers": ["trees", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Created",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Native hedgerow",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Lost"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "lengthRange": [300, 400],
+            "hedgeType": "Species-rich native hedgerow",
+            "retention": "Created",
+            "proposedCondition": "Good",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectTrading": {
+        "area": {
+          "Medium": "met",
+          "Low": "met"
+        },
+        "hedgerow": {
+          "Medium": "met",
+          "Low": "met",
+          "Very Low": "met"
         }
       },
       "subject": {

@@ -38,7 +38,9 @@ describe('a BNG Service scenario keeps the backend lineage rules', () => {
     ).toEqual([])
   })
 
-  it('leaves out the legacy-only trading-trade-up', () => {
-    expect(scenarios.map((s) => s.id)).not.toContain('trading-trade-up')
+  it('leaves out the legacy-only trading-trade-up, keeping its area and hedgerow halves in a twin', () => {
+    const ids = scenarios.map((s) => s.id)
+    expect(ids).not.toContain('trading-trade-up')
+    expect(ids).toContain('trading-trade-up-without-watercourse')
   })
 })

@@ -1290,7 +1290,7 @@
       "id": "invalid-hedgerow-very-low-enhanced",
       "purpose": "invalid-interventions",
       "title": "Hedgerow — an enhanced Very Low hedgerow",
-      "description": "HG001, a Non-native and ornamental hedgerow in Poor condition, is \"enhanced\" to a Native hedgerow in Good condition. A Very Low hedgerow cannot be enhanced at all, so it is not a valid enhancement (BMD-820 AC8).",
+      "description": "HG001, a Non-native and ornamental hedgerow in Poor condition, is \"enhanced\" to a Native hedgerow in Good condition. A Very Low hedgerow cannot be enhanced in any condition, so the service cannot enhance it at all and refuses the file (BMD-1182 AC4).",
       "size": 1,
       "emptyLayers": ["rivers", "trees"],
       "overrides": {
@@ -1468,6 +1468,169 @@
         "layer": "Rivers",
         "ref": "R001",
         "note": "enhanced watercourse in a worse condition"
+      }
+    },
+    {
+      "id": "invalid-area-medium-good-enhanced",
+      "purpose": "invalid-interventions",
+      "title": "Area habitat — an enhanced Medium habitat in Good condition",
+      "description": "H001, Other neutral grassland in Good condition, is \"enhanced\" in the same habitat and condition. Its condition cannot improve, and the service has no High habitat to enhance it into, so the service cannot enhance it at all and refuses the whole file (BMD-1182 AC1), though H002 beside it is a valid enhancement from Moderate to Good.",
+      "size": 3,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "$comment": "A valid enhancement: the file is refused for H001 all the same.",
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Enhanced",
+            "proposedHabitatFullName": "Grassland - Other neutral grassland",
+            "proposedCondition": "Good"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["No enhancement"],
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H001",
+        "note": "an enhanced Medium parcel in Good condition"
+      }
+    },
+    {
+      "id": "invalid-tree-good-enhanced",
+      "purpose": "invalid-interventions",
+      "$comment": "Legacy only: the BNG Service template offers no Enhanced retention for a tree in Good condition, so its generator writes such a tree as Retained. A hand-edited BNG Service file can still hold one; the backend refuses it the same way.",
+      "formats": ["legacy"],
+      "title": "Individual tree — an enhanced tree in Good condition",
+      "description": "T001, a Rural tree in Good condition, is \"enhanced\" in the same condition. An individual tree is a Medium area habitat, so in Good condition the service cannot enhance it at all and refuses the file (BMD-1182 AC1).",
+      "size": 1,
+      "treeCount": 1,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained",
+            "proposedCondition": "Moderate"
+          }
+        ],
+        "trees": [
+          {
+            "retention": "Enhanced",
+            "treeSize": "Medium",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedCondition": "Good",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["No enhancement"],
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "an enhanced tree in Good condition"
+      }
+    },
+    {
+      "id": "invalid-hedgerow-medium-good-enhanced",
+      "purpose": "invalid-interventions",
+      "title": "Hedgerow — an enhanced Medium hedgerow in Good condition",
+      "description": "HG001, a Native hedgerow with trees in Good condition, is \"enhanced\" in the same type and condition. Its condition cannot improve, and the service has no High hedgerow to enhance it into, so the service cannot enhance it at all and refuses the file (BMD-1182 AC2).",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow with trees",
+            "proposedHedgeType": "Native hedgerow with trees",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["No enhancement"],
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG001",
+        "note": "an enhanced Medium hedgerow in Good condition"
+      }
+    },
+    {
+      "id": "invalid-watercourse-medium-good-enhanced",
+      "purpose": "invalid-interventions",
+      "title": "Watercourse — an enhanced Medium watercourse in Good condition",
+      "description": "R001, a ditch in Good condition, is \"enhanced\" to a ditch in Moderate condition. The metric gives a lower condition as an error, and the service, which has no High watercourse to enhance a Good ditch into, cannot enhance it at all and refuses the whole file (BMD-1182 AC3). The same move from Moderate (invalid-watercourse-medium-condition-reduced) is nulled, not refused. A ditch kept in Good condition and marked Enhanced is refused just the same, but the metric gives no error for it, so it is not drawn.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "retention": "Retained"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "proposedRiverType": "Ditches",
+            "retention": "Enhanced",
+            "baselineCondition": "Good",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "baselineWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment"
+          }
+        ]
+      },
+      "expectMetricWarnings": ["Can not reduce condition"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R001",
+        "note": "an enhanced Medium watercourse in Good condition"
       }
     },
     {

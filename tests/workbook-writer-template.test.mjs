@@ -85,6 +85,12 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     write('invalid-area-condition-reduced')
     write('trading-higher-deficit-not-covered-from-below')
     write('trading-low-deficit-covered-beside-medium-deficit')
+    // BMD-1182: a baseline the service cannot enhance, each with the warning
+    // the metric gives its subject.
+    write('invalid-area-medium-good-enhanced')
+    write('invalid-tree-good-enhanced')
+    write('invalid-hedgerow-medium-good-enhanced')
+    write('invalid-watercourse-medium-good-enhanced')
   })
 
   afterAll(() => {

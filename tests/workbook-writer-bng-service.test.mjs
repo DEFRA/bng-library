@@ -108,13 +108,13 @@ describe('workbook rows from a BNG Service file', () => {
     expect(creation.size).toBeCloseTo(worse.Length / 1000, 9)
   })
 
-  it('places a vertical area habitat by its typed area', () => {
+  it('places a vertical area habitat by its typed area, in hectares', () => {
     const [vertical] = rows('Vertical Area Habitats Baseline')
     const { rows: sheets } = workbookRowsFromBngService(file)
     const row = sheets.habitatBaseline.find(
       (r) => r.reference === vertical['Habitat Ref']
     )
-    expect(row.size).toBe(vertical.Area)
+    expect(row.size).toBeCloseTo(vertical.Area / 10_000, 12)
   })
 })
 

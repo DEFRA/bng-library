@@ -36,6 +36,7 @@ import {
 } from './bng-service/generate.mjs'
 import {
   LEGACY_ONLY_FLAWS,
+  REMAPPED_LEGACY_FLAWS,
   listBngServiceFlaws,
   partitionFlaws
 } from './bng-service/flaws.mjs'
@@ -429,7 +430,9 @@ export function listFlaws({ format = FORMAT_LEGACY } = {}) {
     return legacy
   }
   return [
-    ...legacy.filter((f) => !LEGACY_ONLY_FLAWS.has(f.name)),
+    ...legacy
+      .filter((f) => !LEGACY_ONLY_FLAWS.has(f.name))
+      .map((f) => ({ ...f, ...REMAPPED_LEGACY_FLAWS[f.name] })),
     ...listBngServiceFlaws()
   ]
 }

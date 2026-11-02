@@ -514,7 +514,9 @@ describe('AC5: what only the new template records', () => {
           .get(row['Baseline Broad Habitat Type'])
           .has(row['Baseline Habitat Type'])
       ).toBe(true)
-      expect(row.Area).toBeGreaterThan(0)
+      // Square metres: a face of at least 8 m by 2.5 m.
+      expect(row.Area).toBeGreaterThanOrEqual(20)
+      expect(Number.isInteger(row.Area)).toBe(true)
     }
     const retention = rows(out, PI('Vertical Area Habitats')).map(
       (r) => r['Retention Category']
@@ -596,7 +598,7 @@ describe('AC5: what only the new template records', () => {
               retention: 'Enhanced',
               baselineCondition: 'Poor',
               proposedCondition: 'Good',
-              area: 0.0125
+              area: 125
             }
           ]
         }
@@ -613,7 +615,7 @@ describe('AC5: what only the new template records', () => {
         'Baseline Condition': 'Poor',
         'Retention Category': 'Enhanced',
         'Proposed Condition': 'Good',
-        Area: 0.0125
+        Area: 125
       })
     ])
   })
@@ -1049,6 +1051,14 @@ describe('AC6: flaws in the new format', () => {
     expect(names).toContain('parcel-too-small')
   })
 
+  it('names the code an IGGI outside the redline is refused with, as a vertical area habitat', () => {
+    const iggi = bngFlaws.find((f) => f.name === 'iggi-outside')
+    expect(iggi.errorCode).toBe('VERTICAL_HABITATS_OUTSIDE_REDLINE')
+    expect(listFlaws().find((f) => f.name === 'iggi-outside').errorCode).toBe(
+      'IGGIS_OUTSIDE_REDLINE'
+    )
+  })
+
   it.each(bngFlaws.map((f) => f.name))(
     '%s gives one new-format buffer',
     (name) => {
@@ -1334,7 +1344,15 @@ describe('AC6: flaws in the new format', () => {
     writeFileSync(out, buffer)
     const [iggi] = rows(out, BASELINE('Vertical Area Habitats'))
     expect(iggi['Baseline Habitat Type']).toMatch(/IGGI/)
-    expect(geometryOf(iggi).type).toBe('LineString')
+    const line = geometryOf(iggi)
+    expect(line.type).toBe('LineString')
+    // The line is the polygon's ring, and its Area the polygon's area in
+    // square metres, not hectares.
+    const polygon = {
+      type: 'Polygon',
+      coordinates: [[...line.coordinates, line.coordinates[0]]]
+    }
+    expect(iggi.Area).toBeCloseTo(areaSquareMetres(polygon), 6)
   })
 })
 
@@ -1427,7 +1445,8 @@ describe('AC6: scenarios and workbooks in the new format', () => {
         expect(ground['Baseline Habitat Type']).toBe(
           'Developed land; sealed surface'
         )
-        expect(wall.Area).toBeCloseTo(ground.Area, 9)
+        // The wall's area is in square metres, the ground's in hectares.
+        expect(wall.Area).toBeCloseTo(ground.Area * 10_000, 2)
       }
     })
 

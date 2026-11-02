@@ -24,7 +24,8 @@
  *
  * Area and vertical area habitats and trees go to the habitat sheets.
  * Sizes are measured from the shape as the service measures them, except a
- * vertical habitat's, whose face area is typed in. Strategic significance is
+ * vertical habitat's, whose face area is typed in, in square metres, and
+ * written to the sheet in hectares. Strategic significance is
  * Low or High in the template, and is written in the workbook's own words.
  */
 
@@ -77,7 +78,8 @@ function readTable(db, layerKey, stage) {
 // ------------------------------------------------------------ per layer
 
 const areaSize = (row) => areaSquareMetres(row.geometry) / SQ_METRES_PER_HECTARE
-const verticalSize = (row) => row.Area
+const verticalSize = (row) =>
+  typeof row.Area === 'number' ? row.Area / SQ_METRES_PER_HECTARE : row.Area
 const lineSize = (row) => lengthMetres(row.geometry) / METRES_PER_KM
 
 function habitatSide(size) {

@@ -1051,6 +1051,14 @@ describe('AC6: flaws in the new format', () => {
     expect(names).toContain('parcel-too-small')
   })
 
+  it('names the code an IGGI outside the redline is refused with, as a vertical area habitat', () => {
+    const iggi = bngFlaws.find((f) => f.name === 'iggi-outside')
+    expect(iggi.errorCode).toBe('VERTICAL_HABITATS_OUTSIDE_REDLINE')
+    expect(listFlaws().find((f) => f.name === 'iggi-outside').errorCode).toBe(
+      'IGGIS_OUTSIDE_REDLINE'
+    )
+  })
+
   it.each(bngFlaws.map((f) => f.name))(
     '%s gives one new-format buffer',
     (name) => {

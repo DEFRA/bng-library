@@ -65,6 +65,19 @@ const SHIFT_M = 5
 /** The legacy flaws the template cannot carry. */
 export const LEGACY_ONLY_FLAWS = new Set(['tree-count-not-whole'])
 
+/**
+ * The legacy flaws the template carries on another layer, so the backend
+ * refuses them with another code: the template draws an IGGI on the Vertical
+ * Area Habitats layers, as a line along its base (site-features.mjs).
+ */
+export const REMAPPED_LEGACY_FLAWS = Object.freeze({
+  'iggi-outside': Object.freeze({
+    description:
+      'an IGGI, a vertical area habitat, is placed outside the redline',
+    errorCode: 'VERTICAL_HABITATS_OUTSIDE_REDLINE'
+  })
+})
+
 const continuing = (feature) =>
   feature.parent &&
   ['Retained', 'Enhanced'].includes(feature.values['Retention Category'])

@@ -373,6 +373,18 @@ describe('figuresFromProject', () => {
     expect(valueOf(figures, 'totals|area|baseline')).toBe(10)
   })
 
+  // The template accepts a Habitat Ref repeated across layers. The workbook
+  // writer puts vertical area habitats before trees, so the shared reference
+  // is numbered the same way on both sides.
+  it('numbers a reference a vertical habitat and a tree share as the workbook does', () => {
+    const response = projectResponse()
+    response.project.baseline.trees = [{ ref: 'X1', units: 0.5 }]
+    response.project.baseline.verticalHabitats = [{ ref: 'X1', units: 0.02 }]
+    const figures = figuresFromProject(response)
+    expect(valueOf(figures, 'feature-units|area|baseline|X1')).toBe(0.02)
+    expect(valueOf(figures, 'feature-units|area|baseline|X1|#2')).toBe(0.5)
+  })
+
   it('counts trees as area habitats', () => {
     const response = projectResponse()
     response.project.baseline.trees = [{ ref: 'T1', units: 0.5 }]

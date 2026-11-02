@@ -24,9 +24,11 @@ const DISPLAY_DECIMAL_PLACES = 2
 
 // Which of a project's feature lists belong to each module. Individual trees
 // and vertical area habitats are area habitats in the metric, and sit on its
-// area sheets.
+// area sheets. In the order the workbook writer puts them on those sheets
+// (`workbookRowsFromBngServiceDb`): a reference two features share is
+// numbered in the order they arrive (FigureList), so both sides must agree.
 const FEATURE_LISTS = {
-  area: ['habitats', 'trees', 'verticalHabitats'],
+  area: ['habitats', 'verticalHabitats', 'trees'],
   hedgerow: ['hedgerows'],
   watercourse: ['watercourses']
 }

@@ -309,8 +309,6 @@ function wallLine(ring, chooser, lengthM) {
   return null
 }
 
-const roundArea = (value) => Number(value.toFixed(AREA_DECIMALS))
-
 function timingPair(retention, chooser) {
   if (retention === RETAINED || !chooser.chance(TIMING_SHARE)) {
     return [ZERO_YEARS, ZERO_YEARS]

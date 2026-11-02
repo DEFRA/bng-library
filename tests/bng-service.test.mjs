@@ -1344,9 +1344,15 @@ describe('AC6: flaws in the new format', () => {
     writeFileSync(out, buffer)
     const [iggi] = rows(out, BASELINE('Vertical Area Habitats'))
     expect(iggi['Baseline Habitat Type']).toMatch(/IGGI/)
-    expect(geometryOf(iggi).type).toBe('LineString')
-    // The polygon's area, in square metres.
-    expect(iggi.Area).toBeGreaterThan(1)
+    const line = geometryOf(iggi)
+    expect(line.type).toBe('LineString')
+    // The line is the polygon's ring, and its Area the polygon's area in
+    // square metres, not hectares.
+    const polygon = {
+      type: 'Polygon',
+      coordinates: [[...line.coordinates, line.coordinates[0]]]
+    }
+    expect(iggi.Area).toBeCloseTo(areaSquareMetres(polygon), 6)
   })
 })
 

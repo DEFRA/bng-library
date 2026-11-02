@@ -69,6 +69,8 @@ export const LEGACY_ONLY_FLAWS = new Set(['tree-count-not-whole'])
  * The legacy flaws the template carries on another layer, so the backend
  * refuses them with another code: the template draws an IGGI on the Vertical
  * Area Habitats layers, as a line along its base (site-features.mjs).
+ * VERTICAL_HABITATS_OUTSIDE_REDLINE comes with the backend's reading of
+ * vertical area habitats (bng-metric-backend#578).
  */
 export const REMAPPED_LEGACY_FLAWS = Object.freeze({
   'iggi-outside': Object.freeze({

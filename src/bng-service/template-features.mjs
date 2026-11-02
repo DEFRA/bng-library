@@ -63,10 +63,10 @@ const VERTICAL_PER_PARCELS = 25
 const MIN_VERTICAL_HABITATS = 2
 const MIN_WALL_LENGTH_M = 8
 const MAX_WALL_LENGTH_M = 30
+// The template has no height: the surveyor estimates the face area on site.
+// A height drawn between these only gives a generated wall a plausible area.
 const MIN_WALL_HEIGHT_M = 2.5
 const MAX_WALL_HEIGHT_M = 8
-const SQ_M_PER_HECTARE = 10_000
-const AREA_DECIMALS = 6
 const PLACEMENT_ATTEMPTS = 200
 const FULL_TURN = 2 * Math.PI
 // A vertical habitat's retention, by position, when a row does not pin it:
@@ -352,7 +352,7 @@ function proposedSide(baselineName, retention, override, chooser) {
   }
 }
 
-function verticalBaseline(index, line, name, condition, areaHa, chooser) {
+function verticalBaseline(index, line, name, condition, areaSqM, chooser) {
   const { broad, type } = split(name)
   const answers = irreplaceableAnswers(type)
   return {
@@ -367,7 +367,7 @@ function verticalBaseline(index, line, name, condition, areaHa, chooser) {
       'Baseline Condition': condition,
       'Baseline Strategic Significance': LOW,
       [IRREPLACEABLE]: answers.size === 1 ? [...answers][0] : NO,
-      Area: areaHa,
+      Area: areaSqM,
       [COMMENT]: null
     }
   }
@@ -425,8 +425,7 @@ function verticalFeature(ring, index, override, chooser) {
     return null
   }
   const heightM = chooser.between(MIN_WALL_HEIGHT_M, MAX_WALL_HEIGHT_M)
-  const areaHa =
-    override.area ?? roundArea((lengthM * heightM) / SQ_M_PER_HECTARE)
+  const areaSqM = override.area ?? Math.round(lengthM * heightM)
   const proposed = proposedSide(name, retention, override, chooser)
   if (proposed.name !== name) {
     assertVerticalName(proposed.name, `verticalHabitats row ${index}`)
@@ -440,7 +439,7 @@ function verticalFeature(ring, index, override, chooser) {
     line,
     name,
     condition,
-    areaHa,
+    areaSqM,
     chooser
   )
   if (override.comment !== undefined) {
@@ -463,12 +462,13 @@ export function defaultVerticalCount(numParcels) {
 
 /**
  * Add vertical area habitats: walls and structures, each drawn as a line
- * along its base inside the red line, with its face area typed in hectares.
+ * along its base inside the red line, with the face area the surveyor
+ * estimated typed in square metres.
  * Row `i` of `rows` pins vertical habitat `i`: `habitatFullName` (one of the
  * five the template offers), `retention` (Retained, Enhanced, Created, or
  * Lost: absent from the post-intervention table), `baselineCondition`,
  * `proposedCondition`, `proposedHabitatFullName` (for Created), `area`
- * (hectares), `comment` and `postInterventionComment`. Unpinned values are
+ * (square metres), `comment` and `postInterventionComment`. Unpinned values are
  * drawn as the Metric allows.
  *
  * @param {object} site

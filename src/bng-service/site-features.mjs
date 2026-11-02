@@ -449,15 +449,15 @@ export function redlineFeature(geometry, siteName, survey = {}) {
 
 /**
  * An IGGI polygon as the template maps it: a vertical area habitat drawn as
- * a line along its base, so the polygon's edge becomes the line and its area
- * the area typed in. Retained, in a fixed condition.
+ * a line along its base, so the polygon's edge becomes the line and its area,
+ * in square metres, the area typed in. Retained, in a fixed condition.
  */
 export function iggiVertical(polygon, ref, index, uuid) {
   const geometry = {
     type: 'LineString',
     coordinates: polygon.coordinates[0].slice(0, -1)
   }
-  const area = hectares(polygon)
+  const area = areaSquareMetres(polygon)
   const parent = {
     geometry,
     uuid,

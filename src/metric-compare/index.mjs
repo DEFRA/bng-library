@@ -59,4 +59,8 @@ export {
   UNITS_GUIDE,
   summariseComparison
 } from './report-data.mjs'
-export { findScenarios, readWorkbookAnswers } from './corpus.mjs'
+export {
+  findScenarios,
+  readWorkbookAnswers,
+  SCENARIO_FORMAT
+} from './corpus.mjs'

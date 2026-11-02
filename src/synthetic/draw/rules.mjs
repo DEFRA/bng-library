@@ -159,9 +159,9 @@ export function resolveProposedHabitat(override, baseline, retention, pools) {
 
 /**
  * Draw the advance/delay pair for a created feature. At most one of the two
- * is non-zero: the statutory metric (and the backend's
- * ADVANCE_AND_DELAY_BOTH_SET check) rejects a habitat carrying both, so a
- * random fixture must never produce the pair.
+ * is non-zero: the statutory metric does not allow a habitat carrying both,
+ * and the backend clears both and saves the habitat Incomplete, so a random
+ * fixture must never produce the pair.
  */
 function randomAdvanceDelay(maxAdvance, maxDelay) {
   if (randInt(0, 1) === 0) {

@@ -549,10 +549,10 @@ describe('synthetic generateOne — advance/delay exclusivity', () => {
     rmSync(outDir, { recursive: true, force: true })
   })
 
-  // The three layers the backend's ADVANCE_AND_DELAY_BOTH_SET check scans
-  // (areas, hedgerows, watercourses). Urban Trees is excluded there — its
-  // columns are spelled differently and never reach the engine — so it is not
-  // scanned here either.
+  // The three layers whose advance and delay the generator draws at random
+  // (areas, hedgerows, watercourses); the backend clears a pair set on one
+  // row. Urban Trees spells its columns differently, so it is not scanned
+  // here.
   const CASES = [
     ['Habitats', 'Habitat created in advance/years'],
     ['Hedgerows', 'Habitat created in advance/years'],

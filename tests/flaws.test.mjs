@@ -6,7 +6,10 @@ import {
   resolveFlawSelection
 } from '../index.mjs'
 import { polygonArea } from '../src/geometry.mjs'
-import { NO_SPECIFIC_ERROR } from '../src/synthetic/flaws.mjs'
+import {
+  NO_SPECIFIC_ERROR,
+  SAVED_INCOMPLETE_TIMING_CLEARED
+} from '../src/synthetic/flaws.mjs'
 import {
   BAD_REDLINE_HALF,
   TINY_GAP_DEPTH_M,
@@ -94,6 +97,9 @@ describe('resolveFlawSelection — happy paths', () => {
       flaws: ['advance-delay-both-set']
     })
     expect(sel.attributeFlawNames).toEqual(['advance-delay-both-set'])
+    expect(FLAWS['advance-delay-both-set'].errorCode).toBe(
+      SAVED_INCOMPLETE_TIMING_CLEARED
+    )
     expect(Object.keys(sel.attributeOverrides)).toEqual(['habitats'])
     expect(sel.attributeOverrides.habitats).toHaveLength(1)
     const row = sel.attributeOverrides.habitats[0]

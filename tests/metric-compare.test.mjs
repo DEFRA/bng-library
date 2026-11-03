@@ -14,6 +14,7 @@ import {
   findRegressions,
   knownDiscrepanciesFrom,
   findScenarios,
+  SCENARIO_FORMAT,
   readWorkbookAnswers,
   renderComparisonHtml,
   renderComparisonReport,
@@ -352,6 +353,36 @@ describe('figuresFromProject', () => {
     expect(
       valueOf(figuresFromProject(response), 'feature-units|area|created|H1')
     ).toBe(4)
+  })
+
+  it('counts vertical area habitats as area habitats, once', () => {
+    const response = projectResponse()
+    response.project.baseline.verticalHabitats = [
+      { ref: 'V1', units: 0.0236, sizeSquareMetres: 93 }
+    ]
+    response.project.postIntervention.verticalHabitats = [
+      { ref: 'V1', retentionCategory: 'Enhanced', units: 0.03 }
+    ]
+    const figures = figuresFromProject(response)
+    expect(valueOf(figures, 'feature-units|area|baseline|V1')).toBe(0.0236)
+    expect(valueOf(figures, 'feature-units|area|enhanced|V1')).toBe(0.03)
+    expect(
+      figures.find((f) => f.key === 'feature-units|area|baseline|V1')?.size
+    ).toBeCloseTo(0.0093, 12)
+    // habitatsTotal already holds them: the service adds them in.
+    expect(valueOf(figures, 'totals|area|baseline')).toBe(10)
+  })
+
+  // The template accepts a Habitat Ref repeated across layers. The workbook
+  // writer puts vertical area habitats before trees, so the shared reference
+  // is numbered the same way on both sides.
+  it('numbers a reference a vertical habitat and a tree share as the workbook does', () => {
+    const response = projectResponse()
+    response.project.baseline.trees = [{ ref: 'X1', units: 0.5 }]
+    response.project.baseline.verticalHabitats = [{ ref: 'X1', units: 0.02 }]
+    const figures = figuresFromProject(response)
+    expect(valueOf(figures, 'feature-units|area|baseline|X1')).toBe(0.02)
+    expect(valueOf(figures, 'feature-units|area|baseline|X1|#2')).toBe(0.5)
   })
 
   it('counts trees as area habitats', () => {
@@ -1238,6 +1269,57 @@ describe('findScenarios', () => {
 
   it('needs to be told where the scenarios are', () => {
     expect(() => findScenarios()).toThrow(/needs a folder/)
+  })
+
+  it('names the template a legacy scenario is in', () => {
+    expect(scenarios[1].format).toBe(SCENARIO_FORMAT.legacy)
+  })
+})
+
+describe('findScenarios, BNG Service template scenarios', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'scenarios-'))
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+  for (const file of [
+    'vertical/all-retention-baseline.gpkg',
+    'vertical/all-retention.gpkg',
+    'vertical/all-retention.xlsx',
+    'both/site-baseline.gpkg',
+    'both/site-post-intervention.gpkg',
+    'both/site.gpkg',
+    'both/site.xlsx',
+    'no-baseline/site.gpkg',
+    'no-baseline/site.xlsx'
+  ]) {
+    mkdirSync(path.dirname(path.join(dir, file)), { recursive: true })
+    writeFileSync(path.join(dir, file), '')
+  }
+  const { scenarios, unmatched } = findScenarios(dir)
+  const byId = (id) => scenarios.find((s) => s.id === id)
+
+  it('pairs a workbook with its baseline and the one file holding both stages', () => {
+    expect(byId('vertical/all-retention')).toMatchObject({
+      name: 'all-retention',
+      purpose: 'vertical',
+      format: SCENARIO_FORMAT.bngService,
+      files: {
+        baseline: path.join(dir, 'vertical/all-retention-baseline.gpkg'),
+        postIntervention: path.join(dir, 'vertical/all-retention.gpkg'),
+        workbook: path.join(dir, 'vertical/all-retention.xlsx')
+      }
+    })
+  })
+
+  it('uses the legacy post-intervention file where a folder holds both', () => {
+    expect(byId('both/site')).toMatchObject({
+      format: SCENARIO_FORMAT.legacy,
+      files: {
+        postIntervention: path.join(dir, 'both/site-post-intervention.gpkg')
+      }
+    })
+  })
+
+  it('still needs the baseline file beside it', () => {
+    expect(unmatched).toEqual([path.join('no-baseline', 'site.xlsx')])
   })
 })
 

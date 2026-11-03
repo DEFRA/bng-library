@@ -454,8 +454,8 @@ import {
   renderComparisonXlsx
 } from 'bng-library/metric-compare'
 
-// Each scenario: <name>-baseline.gpkg, <name>-post-intervention.gpkg and
-// <name>.xlsx, side by side
+// Each scenario: <name>-baseline.gpkg, <name>-post-intervention.gpkg (or a
+// BNG Service template <name>.gpkg) and <name>.xlsx, side by side
 const { scenarios } = findScenarios(folder)
 const answers = await readWorkbookAnswers(
   scenarios.map((s) => s.files.workbook)
@@ -534,9 +534,11 @@ outcome.
 
 **Input.** A folder of scenarios, each three files side by side:
 `<name>-baseline.gpkg`, `<name>-post-intervention.gpkg`, and `<name>.xlsx`,
-the metric workbook for the same site. `findScenarios(folder)` pairs them by
-name, so any folder named this way will do, hand-built test spreadsheets
-included. `readWorkbookAnswers` reads each workbook's answers from the values it
+the metric workbook for the same site. A BNG Service template scenario has
+`<name>.gpkg`, which holds both stages, in place of the post-intervention file;
+each scenario's `format` says which template it is in (`SCENARIO_FORMAT`).
+`findScenarios(folder)` pairs them by name, so any folder named this way will
+do, hand-built test spreadsheets included. `readWorkbookAnswers` reads each workbook's answers from the values it
 was saved with (as Excel saves them, and as `generate:scenarios` saves them
 after recalculating), with the library's own reader, so no spreadsheet
 dependency is needed. A workbook saved with formulas only is recalculated with

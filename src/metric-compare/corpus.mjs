@@ -9,6 +9,13 @@
  *   <name>-post-intervention.gpkg
  *   <name>.xlsx                     the metric workbook for the same site
  *
+ * A BNG Service template scenario holds both stages in one file, uploaded as
+ * the post-intervention half, so in place of the post-intervention file it has
+ *
+ *   <name>.gpkg
+ *
+ * Where a folder holds both, the legacy post-intervention file is used.
+ *
  * A workbook's answers are read from the values it was saved with — as Excel
  * saves them, or as `generate:scenarios` does after recalculating. One saved
  * without values (formulas only) is recalculated with LibreOffice first, when
@@ -28,6 +35,13 @@ import {
 const WORKBOOK = '.xlsx'
 const BASELINE = '-baseline.gpkg'
 const POST_INTERVENTION = '-post-intervention.gpkg'
+const BNG_SERVICE_FILE = '.gpkg'
+
+/** The template a scenario's files are in. */
+export const SCENARIO_FORMAT = Object.freeze({
+  legacy: 'legacy',
+  bngService: 'bng-service'
+})
 const NOT_RECALCULATED = /not been recalculated/
 
 /**
@@ -37,8 +51,28 @@ const NOT_RECALCULATED = /not been recalculated/
  * @property {string} name the file name the three files share, e.g. "met"
  * @property {string} purpose the sub-folder it is in ("" at the top level)
  * @property {boolean} invalidData its name says it holds invalid data
+ * @property {string} format a SCENARIO_FORMAT: whether its files are legacy
+ *   ones or BNG Service template ones
  * @property {{ baseline: string, postIntervention: string, workbook: string }} files
+ *   `postIntervention` is the file uploaded as the post-intervention half:
+ *   `<name>-post-intervention.gpkg`, or a BNG Service scenario's `<name>.gpkg`
  */
+
+/**
+ * The file a scenario uploads as its post-intervention half, and the template
+ * that makes it, or null when it has neither.
+ */
+function postInterventionOf(files, stem) {
+  const legacy = `${stem}${POST_INTERVENTION}`
+  if (files.has(legacy)) {
+    return { file: legacy, format: SCENARIO_FORMAT.legacy }
+  }
+  const bngService = `${stem}${BNG_SERVICE_FILE}`
+  if (files.has(bngService)) {
+    return { file: bngService, format: SCENARIO_FORMAT.bngService }
+  }
+  return null
+}
 
 function listFiles(dir) {
   return readdirSync(dir, { withFileTypes: true, recursive: true })
@@ -55,7 +89,8 @@ function listFiles(dir) {
 /**
  * @param {string} dir a folder of scenarios, e.g. a `generate:scenarios` output
  * @returns {{ scenarios: CorpusScenario[], unmatched: string[] }} `unmatched`
- *   lists workbooks without both GeoPackages beside them
+ *   lists workbooks without a baseline and a post-intervention GeoPackage
+ *   beside them
  */
 export function findScenarios(dir) {
   if (!dir) {
@@ -71,8 +106,8 @@ export function findScenarios(dir) {
     .sort()) {
     const stem = workbook.slice(0, -WORKBOOK.length)
     const baseline = `${stem}${BASELINE}`
-    const postIntervention = `${stem}${POST_INTERVENTION}`
-    if (!files.has(baseline) || !files.has(postIntervention)) {
+    const postIntervention = postInterventionOf(files, stem)
+    if (!files.has(baseline) || !postIntervention) {
       unmatched.push(path.relative(dir, workbook))
       continue
     }
@@ -83,7 +118,8 @@ export function findScenarios(dir) {
       name,
       purpose: path.dirname(id) === '.' ? '' : path.dirname(id),
       invalidData: name.startsWith(INVALID_PREFIX),
-      files: { baseline, postIntervention, workbook }
+      format: postIntervention.format,
+      files: { baseline, postIntervention: postIntervention.file, workbook }
     })
   }
   return { scenarios, unmatched }

@@ -14,7 +14,7 @@ import {
   PROPOSED_STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
-import { VALID_FORMATS } from '../bng-service/schema.mjs'
+import { FORMAT_BNG_SERVICE, VALID_FORMATS } from '../bng-service/schema.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -64,6 +64,27 @@ const OVERRIDE_FIELDS = {
     'sameLineAs'
   ],
   trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count']
+}
+// Vertical area habitats are drawn by the BNG Service generator alone
+// (`addVerticalHabitats`), which takes these fields and no others: its
+// strategic significance and timing are drawn, so none of the common fields
+// but the retention and conditions would be read.
+const VERTICAL_LAYER = 'verticalHabitats'
+const VERTICAL_FIELDS = [
+  'retention',
+  'baselineCondition',
+  'proposedCondition',
+  'habitatFullName',
+  'proposedHabitatFullName',
+  'area'
+]
+const OVERRIDE_LAYERS = [...Object.keys(OVERRIDE_FIELDS), VERTICAL_LAYER]
+
+/** Every field an override row on `layer` may pin. */
+function overrideFieldsFor(layer) {
+  return layer === VERTICAL_LAYER
+    ? VERTICAL_FIELDS
+    : [...COMMON_OVERRIDE_FIELDS, ...OVERRIDE_FIELDS[layer]]
 }
 
 /** A catalogue that cannot be read or does not check out; a CLI can report it plainly. */
@@ -160,6 +181,11 @@ function checkOverrideValue(field, value, where) {
   if (field === 'incomplete') {
     return typeof value === 'boolean' ? [] : [`${where}: must be true or false`]
   }
+  if (field === 'area') {
+    return typeof value === 'number' && value > 0
+      ? []
+      : [`${where}: must be a number of square metres above 0`]
+  }
   if (field === 'count') {
     return isPositiveInteger(value)
       ? []
@@ -172,11 +198,7 @@ function checkOverrideRow(layer, row, where) {
   if (!isObject(row)) {
     return [`${where}: must be an object`]
   }
-  const allowed = [
-    ...COMMON_OVERRIDE_FIELDS,
-    ...OVERRIDE_FIELDS[layer],
-    COMMENT
-  ]
+  const allowed = [...overrideFieldsFor(layer), COMMENT]
   return [
     ...unknownKeys(row, allowed, where),
     ...Object.entries(row)
@@ -191,7 +213,7 @@ function checkOverrides(overrides, where) {
   if (!isObject(overrides)) {
     return [`${where}: must be an object of layers`]
   }
-  const layers = Object.keys(OVERRIDE_FIELDS)
+  const layers = OVERRIDE_LAYERS
   return [
     ...unknownKeys(overrides, layers, where),
     ...Object.entries(overrides)
@@ -357,6 +379,24 @@ function checkEmptyLayers(value, where) {
   ]
 }
 
+/**
+ * The legacy template has no vertical area habitats layer, so a scenario
+ * that pins one is generated in the BNG Service format only, and must say so.
+ */
+function checkVerticalFormats(scenario, where) {
+  const pinsVertical =
+    isObject(scenario.overrides) && VERTICAL_LAYER in scenario.overrides
+  const bngServiceOnly =
+    Array.isArray(scenario.formats) &&
+    scenario.formats.length === 1 &&
+    scenario.formats[0] === FORMAT_BNG_SERVICE
+  return pinsVertical && !bngServiceOnly
+    ? [
+        `${where}.formats: a scenario pinning ${VERTICAL_LAYER} must list ["${FORMAT_BNG_SERVICE}"] only, as the legacy template has no vertical area habitats`
+      ]
+    : []
+}
+
 /** A non-empty list of output formats, each named once. */
 function checkFormats(value, where) {
   if (!Array.isArray(value) || value.length === 0) {
@@ -440,6 +480,7 @@ function checkScenario(scenario, where) {
       ),
     ...checkSubject(scenario.subject, `${where}.subject`),
     ...checkInvalidNaming(scenario, where),
+    ...checkVerticalFormats(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)
       .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))

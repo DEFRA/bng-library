@@ -110,6 +110,54 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts vertical area habitat rows, with only the fields their generator reads', () => {
+    const vertical = (row) =>
+      catalogue(
+        scenario({
+          formats: ['bng-service'],
+          overrides: { verticalHabitats: [row] }
+        })
+      )
+    expect(
+      problems(
+        vertical({
+          habitatFullName: 'Urban - Facade-bound green wall',
+          retention: 'Created',
+          baselineCondition: 'Moderate',
+          proposedHabitatFullName: 'Urban - Ground based green wall',
+          proposedCondition: 'Good',
+          area: 400
+        })
+      )
+    ).toEqual([])
+    expect(
+      problems(vertical({ proposedStrategicSignificance: 'High', area: 0 }))
+    ).toEqual([
+      expect.stringMatching(
+        /verticalHabitats\[0\]: unknown field "proposedStrategicSignificance"/
+      ),
+      expect.stringMatching(
+        /verticalHabitats\[0\]\.area: must be a number of square metres above 0/
+      )
+    ])
+  })
+
+  it('requires a scenario pinning vertical area habitats to be BNG Service only', () => {
+    const pinned = { verticalHabitats: [{ area: 400 }] }
+    const rule =
+      /formats: a scenario pinning verticalHabitats must list \["bng-service"\] only/
+    expect(problems(catalogue(scenario({ overrides: pinned })))).toEqual([
+      expect.stringMatching(rule)
+    ])
+    expect(
+      problems(
+        catalogue(
+          scenario({ formats: ['legacy', 'bng-service'], overrides: pinned })
+        )
+      )
+    ).toEqual([expect.stringMatching(rule)])
+  })
+
   it('accepts sameLineAs naming an earlier feature of the same layer', () => {
     const doc = catalogue(
       scenario({
@@ -494,6 +542,37 @@ describe('the formats a scenario is generated in', () => {
       }).scenarios.map((s) => s.id)
     expect(ids('legacy')).toContain('trees-count-above-one')
     expect(ids('bng-service')).not.toContain('trees-count-above-one')
+  })
+})
+
+describe('the vertical area habitat scenario (BMD-1084)', () => {
+  const [vertical] = generatePermutations({
+    format: 'bng-service',
+    only: 'vertical-area',
+    manifestOnly: true
+  }).scenarios
+
+  it('is generated in the BNG Service format only', () => {
+    expect(vertical.id).toBe('vertical-area-every-retention')
+    expect(
+      generatePermutations({
+        format: 'legacy',
+        only: 'vertical-area',
+        manifestOnly: true
+      }).scenarios
+    ).toEqual([])
+  })
+
+  it('pins a Retained 400 m² wall, and one wall at each other retention', () => {
+    const rows = SCENARIOS.find((s) => s.id === vertical.id).overrides
+      .verticalHabitats
+    expect(rows[0]).toMatchObject({ retention: 'Retained', area: 400 })
+    expect(rows.map((row) => row.retention)).toEqual([
+      'Retained',
+      'Enhanced',
+      'Created',
+      'Lost'
+    ])
   })
 })
 

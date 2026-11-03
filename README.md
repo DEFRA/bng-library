@@ -587,7 +587,7 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `size`                 |          | Habitat parcel count; also scales the hedgerow, river and tree counts                                                                                                                                                                             |
 | `treeCount`            |          | Individual tree count, in place of the one `size` derives                                                                                                                                                                                         |
 | `formats`              |          | The output formats the scenario is generated in (`legacy`, `bng-service`); every format when absent. Only a scenario holding what a format cannot express lists them                                                                              |
-| `overrides`            |          | Features to pin, as `{ habitats, hedgerows, rivers, trees }` lists of rows. The first row pins the first feature, and so on; anything a row leaves out, and every feature past the list, is drawn at random                                       |
+| `overrides`            |          | Features to pin, as `{ habitats, hedgerows, rivers, trees, verticalHabitats }` lists of rows. The first row pins the first feature, and so on; anything a row leaves out, and every feature past the list, is drawn at random                     |
 | `emptyLayers`          |          | Layers generated empty (`habitats`, `hedgerows`, `rivers`, `trees`), so random features cannot add warnings or trading breaches of their own                                                                                                      |
 | `expectGain`           |          | `met` or `unmet`: the area net gain against 10%, checked through the engine and, with workbooks, the metric                                                                                                                                       |
 | `expectTrading`        |          | `{ area \| hedgerow \| watercourse: { band: "met" \| "breached" } }`, checked against the metric's trading summaries                                                                                                                              |
@@ -613,6 +613,16 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 | `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                          |
 | `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                |
 | `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned)                                           |
+
+`verticalHabitats` rows pin the BNG Service template's vertical area
+habitats (green walls and intertidal hard structures), drawn as a line with
+the face area typed in. They take `retention`, `baselineCondition`,
+`proposedCondition`, `habitatFullName`, `proposedHabitatFullName` (for a
+Created wall) and `area` (the typed face area, in square metres, which the
+metric prices in hectares), and no others: their strategic significance and
+timing are drawn. The legacy template has no vertical layer, so a scenario
+that pins one must list `"formats": ["bng-service"]`; the catalogue refuses
+it otherwise.
 
 Values are the GeoPackage template's own spellings, such as
 `"Grassland - Other neutral grassland"` or `"Moderate"`. `lengthRange` is

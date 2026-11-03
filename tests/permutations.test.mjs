@@ -36,8 +36,10 @@ describe('generatePermutations', () => {
     expect(manifest.scenarios.length).toBe(legacy.length)
     // Manifest carries metadata, never the buffers.
     expect(manifest.scenarios[0].baseline).toBeUndefined()
+    // vertical-area is BNG Service only: the legacy template has no
+    // vertical area habitats.
     expect(new Set(scenarios.map((s) => s.purpose))).toEqual(
-      new Set(PERMUTATION_PURPOSES)
+      new Set(PERMUTATION_PURPOSES.filter((p) => p !== 'vertical-area'))
     )
   })
 

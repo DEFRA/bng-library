@@ -150,6 +150,24 @@ function sortedRows(file) {
   )
 }
 
+// The vertical area habitats a scenario pins are drawn on the BNG Service
+// template's own layers, which the legacy template does not have, so only
+// the rest of the site can read the same from either format. They are the
+// rows numbered V001 and on (see addVerticalHabitats).
+const VERTICAL_REF = /^V\d+$/
+
+function withoutVerticalRows(rows, scenario) {
+  if (!scenario.overrides?.verticalHabitats) {
+    return rows
+  }
+  return Object.fromEntries(
+    Object.entries(rows).map(([sheet, list]) => [
+      sheet,
+      list.filter((row) => !VERTICAL_REF.test(row.reference))
+    ])
+  )
+}
+
 describe('a scenario’s workbook reads the same from either format', () => {
   it.each(
     SCENARIOS.filter((s) => scenarioInFormat(s, 'bng-service')).map((s) => s.id)
@@ -171,7 +189,7 @@ describe('a scenario’s workbook reads the same from either format', () => {
       templateFeatures: false
     })
     const legacy = sortedRows(legacyPath)
-    const native = sortedRows(outPath)
+    const native = withoutVerticalRows(sortedRows(outPath), scenario)
     for (const sheet of Object.keys(legacy)) {
       expect(native[sheet], sheet).toHaveLength(legacy[sheet].length)
       legacy[sheet].forEach((row, i) => {

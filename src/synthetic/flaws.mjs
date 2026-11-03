@@ -73,7 +73,8 @@ export function badSquareRing(cx, cy, half = BAD_PARCEL_HALF) {
 /**
  * Registry of named flaws. Each entry has:
  *   description  short human-readable label, used in the banner
- *   errorCode    backend validation error this flaw is intended to trigger
+ *   errorCode    backend error code this flaw triggers or, in parentheses,
+ *                what the backend does where it accepts the file
  *   category     "geometric" (default) | "empty" | "attribute" — drives
  *                dispatch and selects which payload field is read
  *   standalone   true → cannot be combined with any other flaw

@@ -88,6 +88,26 @@ a habitat that can be assessed — so the V.Low band, not the condition row, was
 Distinctiveness bands feed the distinctiveness **score** (Medium 4, Low 2, V.Low 0), so
 this changes unit values for these two habitat types wherever they appear.
 
+### 2026-11-02 — the IGGI technical difficulty
+
+`habitat-area-difficulty.json`:
+
+| Habitat type                                                                                                     | Was       | Now             |
+| ---------------------------------------------------------------------------------------------------------------- | --------- | --------------- |
+| `Intertidal hard structures - Artificial hard structures with integrated greening of grey infrastructure (IGGI)` | Low / Low | Medium / Medium |
+
+(Creation / Enhancement.) The Statutory Metric 1.0.4 calculation tool, sheet
+`G-1 All Habitats` row 134, gives this habitat Medium technical difficulty for
+both creation and enhancement (columns N and P, multiplier 0.67).
+
+Raised by the metric comparison's vertical area habitat scenario in
+bng-metric-harness (BMD-1084), where a vertical habitat created as an IGGI was
+priced 1 ÷ 0.67 times the metric's units. Every other habitat's creation and
+enhancement difficulty in this file matches 1.0.4's `G-1 All Habitats`.
+
+Difficulty bands feed the difficulty multiplier (Low 1, Medium 0.67), so this
+lowers the units of an IGGI created or enhanced wherever it appears.
+
 ## Known issues
 
 ### `Coastal lagoons` difficulty row is keyed by the short name

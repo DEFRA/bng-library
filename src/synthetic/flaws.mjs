@@ -38,6 +38,16 @@ import {
 
 export const NO_SPECIFIC_ERROR = '(no specific backend error)'
 
+/**
+ * What the backend does with a Created or Enhanced habitat carrying both
+ * advance and delay years, since it stopped refusing the file
+ * (bng-metric-backend#498, BMD-1060 AC3 and BMD-1070): it clears both, as it
+ * cannot tell which was meant, and saves the habitat Incomplete, with no
+ * units, for the user to correct on screen.
+ */
+export const SAVED_INCOMPLETE_TIMING_CLEARED =
+  '(accepted; saved Incomplete with both advance and delay cleared)'
+
 // Categories drive dispatch in resolveFlawSelection. Each flaw belongs to
 // exactly one. "geometric" is the default for flaws that mutate the bad-
 // fixture state directly.
@@ -63,7 +73,8 @@ export function badSquareRing(cx, cy, half = BAD_PARCEL_HALF) {
 /**
  * Registry of named flaws. Each entry has:
  *   description  short human-readable label, used in the banner
- *   errorCode    backend validation error this flaw is intended to trigger
+ *   errorCode    backend error code this flaw triggers or, in parentheses,
+ *                what the backend does where it accepts the file
  *   category     "geometric" (default) | "empty" | "attribute" — drives
  *                dispatch and selects which payload field is read
  *   standalone   true → cannot be combined with any other flaw
@@ -299,12 +310,12 @@ export const FLAWS = {
   'advance-delay-both-set': {
     description:
       'a created habitat carries both advance and delayed creation years',
-    errorCode: 'ADVANCE_AND_DELAY_BOTH_SET',
+    errorCode: SAVED_INCOMPLETE_TIMING_CLEARED,
     category: CATEGORY_ATTRIBUTE,
-    // The statutory metric rejects the pair outright: staggered creation is
+    // The statutory metric does not allow the pair: staggered creation is
     // modelled as two rows, never one row carrying both. Retention is pinned
     // to Created because advance/delay only apply to created habitats; the
-    // years are pinned non-zero so exactly this validator fires.
+    // years are pinned non-zero so the backend clears both.
     attributeOverride: {
       layer: 'habitats',
       perRow: [{ retention: 'Created', advanceYears: '2', delayYears: '3' }]

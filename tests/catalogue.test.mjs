@@ -480,6 +480,35 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('names the subject layer by its legacy name, or the vertical layer in a BNG Service only scenario', () => {
+    const vertical = {
+      layer: 'Vertical Area Habitats',
+      ref: 'V001',
+      note: 'a wall'
+    }
+    expect(
+      problems(
+        catalogue(scenario({ formats: ['bng-service'], subject: vertical }))
+      )
+    ).toEqual([])
+    expect(problems(catalogue(scenario({ subject: vertical })))).toEqual([
+      expect.stringMatching(
+        /subject\.layer: "Vertical Area Habitats" is a BNG Service template layer, so only a scenario listing \["bng-service"\] only may name it/
+      )
+    ])
+    expect(
+      problems(
+        catalogue(
+          scenario({
+            subject: { layer: 'Area Habitats', ref: 'H001', note: 'a parcel' }
+          })
+        )
+      )
+    ).toEqual([
+      expect.stringMatching(/subject\.layer: "Area Habitats" is not one of/)
+    ])
+  })
+
   it('requires an invalid- scenario to declare its errors, and no other to', () => {
     const doc = catalogue(
       scenario({ id: 'invalid-quiet' }),

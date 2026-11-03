@@ -355,7 +355,30 @@ function checkTimeToTarget(value, where) {
   ]
 }
 
-function checkSubject(subject, where) {
+// The layer a subject is on, by the legacy template's name for it, which a
+// consumer maps to its own (the harness to a BNG Service table). Vertical
+// area habitats have no legacy layer, so a BNG Service only scenario names
+// theirs by the BNG Service template's name.
+const SUBJECT_LAYERS = ['Habitats', 'Hedgerows', 'Rivers', 'Urban Trees']
+const VERTICAL_SUBJECT_LAYER = 'Vertical Area Habitats'
+
+function checkSubjectLayer(layer, scenario, where) {
+  if (!isText(layer) || SUBJECT_LAYERS.includes(layer)) {
+    return []
+  }
+  if (layer === VERTICAL_SUBJECT_LAYER) {
+    return isBngServiceOnly(scenario)
+      ? []
+      : [
+          `${where}: "${VERTICAL_SUBJECT_LAYER}" is a BNG Service template layer, so only a scenario listing ["${FORMAT_BNG_SERVICE}"] only may name it`
+        ]
+  }
+  return [
+    `${where}: ${JSON.stringify(layer)} is not one of ${list([...SUBJECT_LAYERS, VERTICAL_SUBJECT_LAYER])}`
+  ]
+}
+
+function checkSubject(subject, scenario, where) {
   if (!isObject(subject)) {
     return [`${where}: must be an object with layer, ref and note`]
   }
@@ -364,7 +387,8 @@ function checkSubject(subject, where) {
     ...unknownKeys(subject, fields, where),
     ...fields
       .filter((field) => !isText(subject[field]))
-      .map((field) => `${where}.${field}: is required text`)
+      .map((field) => `${where}.${field}: is required text`),
+    ...checkSubjectLayer(subject.layer, scenario, `${where}.layer`)
   ]
 }
 
@@ -383,14 +407,18 @@ function checkEmptyLayers(value, where) {
  * The legacy template has no vertical area habitats layer, so a scenario
  * that pins one is generated in the BNG Service format only, and must say so.
  */
-function checkVerticalFormats(scenario, where) {
-  const pinsVertical =
-    isObject(scenario.overrides) && VERTICAL_LAYER in scenario.overrides
-  const bngServiceOnly =
+function isBngServiceOnly(scenario) {
+  return (
     Array.isArray(scenario.formats) &&
     scenario.formats.length === 1 &&
     scenario.formats[0] === FORMAT_BNG_SERVICE
-  return pinsVertical && !bngServiceOnly
+  )
+}
+
+function checkVerticalFormats(scenario, where) {
+  const pinsVertical =
+    isObject(scenario.overrides) && VERTICAL_LAYER in scenario.overrides
+  return pinsVertical && !isBngServiceOnly(scenario)
     ? [
         `${where}.formats: a scenario pinning ${VERTICAL_LAYER} must list ["${FORMAT_BNG_SERVICE}"] only, as the legacy template has no vertical area habitats`
       ]
@@ -478,7 +506,7 @@ function checkScenario(scenario, where) {
       .map(
         (field) => `${where}.${field}: must be kebab-case, like "net-gain-met"`
       ),
-    ...checkSubject(scenario.subject, `${where}.subject`),
+    ...checkSubject(scenario.subject, scenario, `${where}.subject`),
     ...checkInvalidNaming(scenario, where),
     ...checkVerticalFormats(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)

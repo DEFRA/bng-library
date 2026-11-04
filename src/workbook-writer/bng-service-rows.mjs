@@ -8,7 +8,8 @@
  *
  * - Retained or Enhanced: a baseline row retained or enhanced, as the legacy
  *   reader places it (`gpkg-rows.mjs`), except that a watercourse Enhanced
- *   whole counts its length as drawn.
+ *   whole counts its length as drawn: a longer line has no loss, a shorter
+ *   one loses the rest.
  * - Created with a parent: an area habitat that cannot be kept is lost and
  *   created in its place (a baseline loss plus a creation row).
  * - Split into parts (a hedge that gets worse in part): each part placed by
@@ -187,6 +188,31 @@ function retentionOf(child, context) {
   return retention
 }
 
+/**
+ * A baseline feature Enhanced whole, and its enhancement row. Most are
+ * enhanced by their surveyed size; a watercourse by its line as drawn, so a
+ * longer line has no loss and a shorter one loses the rest. A watercourse
+ * line with no length (an empty or missing shape) is noted, and it and its
+ * enhancement row take the surveyed length, as that row is still written and
+ * must pair with an enhanced baseline row.
+ */
+function enhancedWhole(layer, baseline, proposed, context) {
+  if (!layer.enhancedAsDrawn) {
+    return { ...baseline, enhanced: baseline.size, enhancement: proposed }
+  }
+  if (proposed.size > 0) {
+    return { ...baseline, enhanced: proposed.size, enhancement: proposed }
+  }
+  context.notes.push(
+    `${context.table} ${proposed.reference}: Enhanced watercourse with no length drawn; read as enhanced by its baseline length`
+  )
+  return {
+    ...baseline,
+    enhanced: baseline.size,
+    enhancement: { ...proposed, size: baseline.size }
+  }
+}
+
 /** Where a baseline feature goes when it becomes one feature, whole. */
 function placeWhole(layer, baseline, child, context) {
   const proposed = proposedRow(layer, child)
@@ -195,11 +221,7 @@ function placeWhole(layer, baseline, child, context) {
       return { baseline: { ...baseline, retained: baseline.size } }
     case ENHANCED:
       return {
-        baseline: {
-          ...baseline,
-          enhanced: layer.enhancedAsDrawn ? proposed.size : baseline.size,
-          enhancement: proposed
-        },
+        baseline: enhancedWhole(layer, baseline, proposed, context),
         creations: []
       }
     case CREATED:
@@ -265,7 +287,9 @@ function placeParts(layer, baseline, parts, context) {
  * Retained whole keeps its surveyed length however its line changes, as the
  * service cannot measure a watercourse's part loss from the map. One Enhanced
  * whole counts its length as drawn, as the metric records a re-meandered
- * channel's total enhanced length, with no loss (user guide, Watercourses).
+ * channel's total enhanced length, with no loss (user guide, Watercourses);
+ * so a shorter Enhanced line counts the rest as lost, as the backend's
+ * lineage outcomes do.
  */
 function placeBaseline(layer, parent, parts, context) {
   const baseline = baselineRow(layer, parent)

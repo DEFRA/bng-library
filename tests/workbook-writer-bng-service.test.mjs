@@ -216,6 +216,60 @@ describe('the edge cases a user’s file can hold', () => {
     }
   })
 
+  it('counts the rest of a shorter Enhanced watercourse as lost', () => {
+    const [realigned] = rows(
+      WATERCOURSES,
+      `"Enhancement Type" = 'Enhanced by Realignment'`
+    )
+    const [short] = rows(
+      WATERCOURSES,
+      `Length < ${realigned['Baseline Length']} AND Length > 0`
+    )
+    const shorter = edited(
+      'shorter-watercourse',
+      `UPDATE "${WATERCOURSES}" SET geom =
+         (SELECT geom FROM "${WATERCOURSES}" WHERE "Habitat Ref" = '${short['Habitat Ref']}')
+         WHERE "Habitat Ref" = '${realigned['Habitat Ref']}'`
+    )
+    const { rows: sheets } = workbookRowsFromBngService(shorter)
+    const baseline = sheets.watercourseBaseline.find(
+      (r) => r.reference === realigned['Parent Ref']
+    )
+    expect(baseline.enhanced).toBeCloseTo(short.Length / 1000, 9)
+    expect(baseline.enhanced).toBeLessThan(baseline.size)
+  })
+
+  it('enhances a watercourse drawn with no line by its baseline length, and notes it', () => {
+    const [realigned] = rows(
+      WATERCOURSES,
+      `"Enhancement Type" = 'Enhanced by Realignment'`
+    )
+    const unmapped = edited(
+      'no-watercourse-line',
+      `UPDATE "${WATERCOURSES}" SET geom = NULL
+         WHERE "Habitat Ref" = '${realigned['Habitat Ref']}'`
+    )
+    const { rows: sheets, notes } = workbookRowsFromBngService(unmapped)
+    const baseline = sheets.watercourseBaseline.find(
+      (r) => r.reference === realigned['Parent Ref']
+    )
+    expect(baseline.enhanced).toBeCloseTo(baseline.size, 9)
+    expect(
+      sheets.watercourseBaseline.filter((r) => r.enhanced > 0)
+    ).toHaveLength(sheets.watercourseEnhancement.length)
+    const enhancement = sheets.watercourseEnhancement.find(
+      (r) => r.reference === realigned['Habitat Ref']
+    )
+    expect(enhancement.size).toBeCloseTo(baseline.size, 9)
+    expect(notes).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `${realigned['Habitat Ref']}: Enhanced watercourse with no length drawn`
+        )
+      )
+    ])
+  })
+
   it('reads a hedge enhanced in two stretches as one enhancement, sizes summed', () => {
     const [kept] = rows(HEDGES, `"Habitat Ref" LIKE '%a'`)
     const parentRef = kept['Parent Ref']

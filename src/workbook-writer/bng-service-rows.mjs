@@ -7,7 +7,8 @@
  * its parent (by parent_uuid):
  *
  * - Retained or Enhanced: a baseline row retained or enhanced, as the legacy
- *   reader places it (`gpkg-rows.mjs`).
+ *   reader places it (`gpkg-rows.mjs`), except that a watercourse Enhanced
+ *   whole counts its length as drawn.
  * - Created with a parent: an area habitat that cannot be kept is lost and
  *   created in its place (a baseline loss plus a creation row).
  * - Split into parts (a hedge that gets worse in part): each part placed by
@@ -146,7 +147,7 @@ const LAYERS = {
   habitats: habitatSide(areaSize),
   verticalHabitats: habitatSide(verticalSize),
   hedgerows: { ...linear('Hedge Type', () => ({})), byParts: true },
-  rivers: linear('River Type', encroachment),
+  rivers: { ...linear('River Type', encroachment), enhancedAsDrawn: true },
   trees: TREES
 }
 
@@ -196,7 +197,7 @@ function placeWhole(layer, baseline, child, context) {
       return {
         baseline: {
           ...baseline,
-          enhanced: baseline.size,
+          enhanced: layer.enhancedAsDrawn ? proposed.size : baseline.size,
           enhancement: proposed
         },
         creations: []
@@ -261,8 +262,10 @@ function placeParts(layer, baseline, parts, context) {
  * Where a baseline feature goes, by the features it becomes. A split is
  * placed by its parts' sizes. A hedgerow always is, as the service counts
  * a shorter hedge's lost length (template guide, Hedgerows). A watercourse
- * kept whole keeps its surveyed length however its line changes, as the
- * service cannot measure a watercourse's part loss from the map.
+ * Retained whole keeps its surveyed length however its line changes, as the
+ * service cannot measure a watercourse's part loss from the map. One Enhanced
+ * whole counts its length as drawn, as the metric records a re-meandered
+ * channel's total enhanced length, with no loss (user guide, Watercourses).
  */
 function placeBaseline(layer, parent, parts, context) {
   const baseline = baselineRow(layer, parent)

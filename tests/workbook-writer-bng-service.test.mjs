@@ -132,6 +132,7 @@ function edited(name, sql) {
 }
 
 const HEDGES = 'Hedgerows Post-Intervention'
+const WATERCOURSES = 'Watercourses Post-Intervention'
 
 describe('the edge cases a user’s file can hold', () => {
   it('opens the file once, whichever reader is called', () => {
@@ -192,6 +193,27 @@ describe('the edge cases a user’s file can hold', () => {
         )
       )
     ])
+  })
+
+  it('counts a watercourse Enhanced whole as drawn, whatever its Enhancement Type', () => {
+    const [realigned] = rows(
+      WATERCOURSES,
+      `"Enhancement Type" = 'Enhanced by Realignment'`
+    )
+    expect(realigned.Length).toBeGreaterThan(realigned['Baseline Length'])
+    const standard = edited(
+      'standard-enhancement',
+      `UPDATE "${WATERCOURSES}" SET "Enhancement Type" = 'Standard Enhancement'
+         WHERE "Habitat Ref" = '${realigned['Habitat Ref']}'`
+    )
+    for (const source of [file, standard]) {
+      const { rows: sheets } = workbookRowsFromBngService(source)
+      const baseline = sheets.watercourseBaseline.find(
+        (r) => r.reference === realigned['Parent Ref']
+      )
+      expect(baseline.size).toBeCloseTo(realigned['Baseline Length'] / 1000, 9)
+      expect(baseline.enhanced).toBeCloseTo(realigned.Length / 1000, 9)
+    }
   })
 
   it('reads a hedge enhanced in two stretches as one enhancement, sizes summed', () => {

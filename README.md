@@ -367,6 +367,11 @@ that name it as their parent (retained, enhanced, created in its place, or
 lost when none does), a hedge split into parts by each part, and strategic
 significance is written in the workbook's own words.
 `workbookRowsFromBngService` reads one directly.
+A vertical area habitat's Area is read as hectares, as the template records
+it. A file whose vertical Area was typed in square metres, under the
+template's short-lived square-metres version (DEFRA/bng-metric-template#10,
+never released), is not supported: divide its Area by 10,000 first, or it is
+priced 10,000 times too large.
 
 Only input cells are written, and the formulas are left as Defra wrote them,
 so the results are the metric's, not ours. The exception is the metric's known

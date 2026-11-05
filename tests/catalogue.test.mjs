@@ -126,7 +126,7 @@ describe('parseScenarioCatalogue', () => {
           baselineCondition: 'Moderate',
           proposedHabitatFullName: 'Urban - Ground based green wall',
           proposedCondition: 'Good',
-          area: 400
+          area: 0.04
         })
       )
     ).toEqual([])
@@ -137,7 +137,7 @@ describe('parseScenarioCatalogue', () => {
         /verticalHabitats\[0\]: unknown field "proposedStrategicSignificance"/
       ),
       expect.stringMatching(
-        /verticalHabitats\[0\]\.area: must be a number of square metres above 0/
+        /verticalHabitats\[0\]\.area: must be a number of hectares above 0/
       )
     ])
   })
@@ -592,10 +592,10 @@ describe('the vertical area habitat scenario (BMD-1084)', () => {
     ).toEqual([])
   })
 
-  it('pins a Retained 400 m² wall, and one wall at each other retention', () => {
+  it('pins a Retained 0.04 ha (400 m²) wall, and one wall at each other retention', () => {
     const rows = SCENARIOS.find((s) => s.id === vertical.id).overrides
       .verticalHabitats
-    expect(rows[0]).toMatchObject({ retention: 'Retained', area: 400 })
+    expect(rows[0]).toMatchObject({ retention: 'Retained', area: 0.04 })
     expect(rows.map((row) => row.retention)).toEqual([
       'Retained',
       'Enhanced',

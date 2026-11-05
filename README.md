@@ -93,7 +93,7 @@ layout as the template does:
   "Lost" area row is a creation in the parcel's place, `Created` with the
   parcel as its parent. A created hedgerow, watercourse or tree has no parent.
 - Areas are hectares and lengths metres, measured from the shape. A vertical
-  area habitat's area is typed in, in square metres, as in the template: the
+  area habitat's area is typed in, in hectares, as in the template: the
   surveyor's estimate of the face.
 - Values carry no list numbers, strategic significance is `Low` or `High`
   (`Low` at baseline and on a `Retained` row), spatial risk is `N/A`, and
@@ -224,7 +224,7 @@ point is one tree (how several trees at one point are recorded is still
 being decided); an unknown field is refused rather than ignored, and `$comment` fields document a row. A `verticalHabitats` layer
 takes rows of `habitatFullName`, `retention` (`Retained`, `Enhanced`,
 `Created`, or `Lost`: absent post-intervention), `baselineCondition`,
-`proposedCondition`, `proposedHabitatFullName`, `area` (square metres) and the two
+`proposedCondition`, `proposedHabitatFullName`, `area` (hectares) and the two
 comments.
 
 **Flaws.** `listFlaws({ format: 'bng-service' })` lists the flaws the format

@@ -184,7 +184,7 @@ function checkOverrideValue(field, value, where) {
   if (field === 'area') {
     return typeof value === 'number' && value > 0
       ? []
-      : [`${where}: must be a number of square metres above 0`]
+      : [`${where}: must be a number of hectares above 0`]
   }
   if (field === 'count') {
     return isPositiveInteger(value)

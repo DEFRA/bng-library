@@ -514,9 +514,9 @@ describe('AC5: what only the new template records', () => {
           .get(row['Baseline Broad Habitat Type'])
           .has(row['Baseline Habitat Type'])
       ).toBe(true)
-      // Square metres: a face of at least 8 m by 2.5 m.
-      expect(row.Area).toBeGreaterThanOrEqual(20)
-      expect(Number.isInteger(row.Area)).toBe(true)
+      // Hectares: a face of at least 8 m by 2.5 m, in whole square metres.
+      expect(row.Area).toBeGreaterThanOrEqual(0.002)
+      expect(Number.isInteger(Math.round(row.Area * 1e8) / 1e4)).toBe(true)
     }
     const retention = rows(out, PI('Vertical Area Habitats')).map(
       (r) => r['Retention Category']
@@ -598,7 +598,7 @@ describe('AC5: what only the new template records', () => {
               retention: 'Enhanced',
               baselineCondition: 'Poor',
               proposedCondition: 'Good',
-              area: 125
+              area: 0.0125
             }
           ]
         }
@@ -615,7 +615,7 @@ describe('AC5: what only the new template records', () => {
         'Baseline Condition': 'Poor',
         'Retention Category': 'Enhanced',
         'Proposed Condition': 'Good',
-        Area: 125
+        Area: 0.0125
       })
     ])
   })
@@ -1347,12 +1347,12 @@ describe('AC6: flaws in the new format', () => {
     const line = geometryOf(iggi)
     expect(line.type).toBe('LineString')
     // The line is the polygon's ring, and its Area the polygon's area in
-    // square metres, not hectares.
+    // hectares, as an area habitat's is.
     const polygon = {
       type: 'Polygon',
       coordinates: [[...line.coordinates, line.coordinates[0]]]
     }
-    expect(iggi.Area).toBeCloseTo(areaSquareMetres(polygon), 6)
+    expect(iggi.Area).toBeCloseTo(areaSquareMetres(polygon) / SQ_M_PER_HECTARE, 10)
   })
 })
 
@@ -1445,8 +1445,8 @@ describe('AC6: scenarios and workbooks in the new format', () => {
         expect(ground['Baseline Habitat Type']).toBe(
           'Developed land; sealed surface'
         )
-        // The wall's area is in square metres, the ground's in hectares.
-        expect(wall.Area).toBeCloseTo(ground.Area * 10_000, 2)
+        // Both areas are in hectares.
+        expect(wall.Area).toBeCloseTo(ground.Area, 9)
       }
     })
 

@@ -618,8 +618,8 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 habitats (green walls and intertidal hard structures), drawn as a line with
 the face area typed in. They take `retention`, `baselineCondition`,
 `proposedCondition`, `habitatFullName`, `proposedHabitatFullName` (for a
-Created wall) and `area` (the typed face area, in square metres, which the
-metric prices in hectares), and no others: their strategic significance and
+Created wall) and `area` (the typed face area, in hectares, as the metric
+prices it), and no others: their strategic significance and
 timing are drawn. The legacy template has no vertical layer, so a scenario
 that pins one must list `"formats": ["bng-service"]`; the catalogue refuses
 it otherwise.

@@ -50,7 +50,7 @@ function rows(table) {
 }
 
 describe(`${ID} as drawn`, () => {
-  it('holds the four pinned walls and structures, with their typed Area in square metres', () => {
+  it('holds the four pinned walls and structures, with their typed Area in hectares', () => {
     expect(
       rows('Vertical Area Habitats Baseline').map((row) => [
         row['Habitat Ref'],
@@ -59,19 +59,19 @@ describe(`${ID} as drawn`, () => {
         row.Area
       ])
     ).toEqual([
-      ['V001', 'Urban - Facade-bound green wall', 'Moderate', 400],
-      ['V002', 'Urban - Ground based green wall', 'Poor', 250],
+      ['V001', 'Urban - Facade-bound green wall', 'Moderate', 0.04],
+      ['V002', 'Urban - Ground based green wall', 'Poor', 0.025],
       [
         'V003',
         'Intertidal hard structures - Artificial hard structures',
         'Moderate',
-        150
+        0.015
       ],
       [
         'V004',
         'Intertidal hard structures - Artificial features of hard structures',
         'Fairly Poor',
-        60
+        0.006
       ]
     ])
   })
@@ -86,19 +86,19 @@ describe(`${ID} as drawn`, () => {
         row.Area
       ])
     ).toEqual([
-      ['V001', 'Retained', 'Facade-bound green wall', 'Moderate', 400],
-      ['V002', 'Enhanced', 'Ground based green wall', 'Moderate', 250],
+      ['V001', 'Retained', 'Facade-bound green wall', 'Moderate', 0.04],
+      ['V002', 'Enhanced', 'Ground based green wall', 'Moderate', 0.025],
       [
         'V003',
         'Created',
         'Artificial hard structures with integrated greening of grey infrastructure (IGGI)',
         'Moderate',
-        150
+        0.015
       ]
     ])
   })
 
-  it('gives the metric workbook V001 at 0.04 ha, its 400 m² in hectares (AC9)', () => {
+  it('gives the metric workbook V001 at 0.04 ha, as typed (AC9)', () => {
     const { habitatBaseline } = workbookRowsFromGeoPackage(file).rows
     const v001 = habitatBaseline.find((row) => row.reference === 'V001')
     expect(v001.size).toBe(0.04)

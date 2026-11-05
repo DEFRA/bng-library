@@ -13,9 +13,8 @@
  * - on Area Habitats, the ground under it: Developed land; sealed surface,
  *   at the same ref, so the area habitats still tile the red line; and
  * - on Vertical Area Habitats, the structure: a line along the polygon's
- *   longest edge, with the polygon's area, in square metres, as its typed
- *   area. An area habitat's Area is in hectares; a vertical one's is in
- *   square metres.
+ *   longest edge, with the polygon's area as its typed area. Both layers'
+ *   Area is in hectares.
  *
  * A post-intervention polygon follows its parent: a structure kept, enhanced
  * or replaced by another structure stays on the vertical layer, and one
@@ -44,18 +43,6 @@ const CREATED = 'Created'
 const KEPT_GROUND_TIMING = {
   'Habitat created in advance/years': '0',
   'Delay in starting habitat creation/years': '0'
-}
-
-const SQ_M_PER_HECTARE = 10_000
-// Two decimals keep a converted area free of floating-point noise.
-const SQ_M_DECIMALS = 2
-
-/** An area habitat's Area (hectares) as a vertical one's (square metres). */
-function squareMetres(hectares) {
-  if (typeof hectares !== 'number') {
-    return hectares
-  }
-  return Number((hectares * SQ_M_PER_HECTARE).toFixed(SQ_M_DECIMALS))
 }
 
 const areaName = (values, side) =>
@@ -122,7 +109,7 @@ function verticalBaseline(feature, uuid) {
       'Baseline Condition': feature.values['Baseline Condition'],
       'Baseline Strategic Significance': LOW,
       'Irreplaceable Habitat': singleIrreplaceable(type),
-      Area: squareMetres(feature.values.Area),
+      Area: feature.values.Area,
       [COMMENT]: feature.values[COMMENT]
     }
   }
@@ -136,7 +123,6 @@ function verticalPostIntervention(feature, parent) {
     source: feature.source,
     values: {
       ...feature.values,
-      Area: squareMetres(feature.values.Area),
       'Proposed Distinctiveness': distinctiveness(
         'verticalHabitats',
         type,

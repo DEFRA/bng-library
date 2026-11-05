@@ -3965,10 +3965,10 @@
     {
       "id": "vertical-area-every-retention",
       "purpose": "vertical-area",
-      "$comment": "BMD-1084 AC7 and AC9. The legacy template maps a green wall as a polygon on the area habitat layer, so only the BNG Service template can hold this scenario. V001's 400 m² is AC9's: the service must price it at 0.04 ha, as the metric does.",
+      "$comment": "BMD-1084 AC7 and AC9. The legacy template maps a green wall as a polygon on the area habitat layer, so only the BNG Service template can hold this scenario. V001's 0.04 ha (400 m²) is AC9's: the service must price it at 0.04 ha, as the metric does.",
       "formats": ["bng-service"],
       "title": "Vertical area habitats — Retained, Enhanced, Created and Lost",
-      "description": "Four walls and structures on the Vertical Area Habitats layers, each sized by the Area the surveyor typed in square metres, which the metric prices in hectares. V001, a facade-bound green wall of 400 m² in Moderate condition, is Retained, priced at 0.04 ha. V002, a ground based green wall of 250 m², is Enhanced from Poor to Moderate. V003, an artificial hard structure of 150 m², is replaced by an IGGI (Medium distinctiveness, Medium difficulty) in Moderate condition. V004, an artificial feature of a hard structure of 60 m², is Lost. The two area parcels are retained, and the other layers are empty, so every difference from the metric is a vertical habitat's.",
+      "description": "Four walls and structures on the Vertical Area Habitats layers, each sized by the Area the surveyor typed in hectares, as the metric prices it. V001, a facade-bound green wall of 0.04 ha (400 m²) in Moderate condition, is Retained. V002, a ground based green wall of 0.025 ha (250 m²), is Enhanced from Poor to Moderate. V003, an artificial hard structure of 0.015 ha (150 m²), is replaced by an IGGI (Medium distinctiveness, Medium difficulty) in Moderate condition. V004, an artificial feature of a hard structure of 0.006 ha (60 m²), is Lost. The two area parcels are retained, and the other layers are empty, so every difference from the metric is a vertical habitat's.",
       "size": 2,
       "emptyLayers": ["hedgerows", "rivers", "trees"],
       "overrides": {
@@ -3993,14 +3993,14 @@
             "habitatFullName": "Urban - Facade-bound green wall",
             "retention": "Retained",
             "baselineCondition": "Moderate",
-            "area": 400
+            "area": 0.04
           },
           {
             "habitatFullName": "Urban - Ground based green wall",
             "retention": "Enhanced",
             "baselineCondition": "Poor",
             "proposedCondition": "Moderate",
-            "area": 250
+            "area": 0.025
           },
           {
             "habitatFullName": "Intertidal hard structures - Artificial hard structures",
@@ -4008,20 +4008,20 @@
             "baselineCondition": "Moderate",
             "proposedHabitatFullName": "Intertidal hard structures - Artificial hard structures with integrated greening of grey infrastructure (IGGI)",
             "proposedCondition": "Moderate",
-            "area": 150
+            "area": 0.015
           },
           {
             "habitatFullName": "Intertidal hard structures - Artificial features of hard structures",
             "retention": "Lost",
             "baselineCondition": "Fairly Poor",
-            "area": 60
+            "area": 0.006
           }
         ]
       },
       "subject": {
         "layer": "Vertical Area Habitats",
         "ref": "V001",
-        "note": "a retained 400 m² green wall, priced at 0.04 ha; V002 to V004 are enhanced, created and lost"
+        "note": "a retained green wall of 0.04 ha (400 m²); V002 to V004 are enhanced, created and lost"
       }
     }
   ]

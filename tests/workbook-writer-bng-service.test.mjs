@@ -114,7 +114,7 @@ describe('workbook rows from a BNG Service file', () => {
     const row = sheets.habitatBaseline.find(
       (r) => r.reference === vertical['Habitat Ref']
     )
-    expect(row.size).toBeCloseTo(vertical.Area / 10_000, 12)
+    expect(row.size).toBe(vertical.Area)
   })
 })
 

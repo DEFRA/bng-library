@@ -93,7 +93,7 @@ layout as the template does:
   "Lost" area row is a creation in the parcel's place, `Created` with the
   parcel as its parent. A created hedgerow, watercourse or tree has no parent.
 - Areas are hectares and lengths metres, measured from the shape. A vertical
-  area habitat's area is typed in, in square metres, as in the template: the
+  area habitat's area is typed in, in hectares, as in the template: the
   surveyor's estimate of the face.
 - Values carry no list numbers, strategic significance is `Low` or `High`
   (`Low` at baseline and on a `Retained` row), spatial risk is `N/A`, and
@@ -224,7 +224,7 @@ point is one tree (how several trees at one point are recorded is still
 being decided); an unknown field is refused rather than ignored, and `$comment` fields document a row. A `verticalHabitats` layer
 takes rows of `habitatFullName`, `retention` (`Retained`, `Enhanced`,
 `Created`, or `Lost`: absent post-intervention), `baselineCondition`,
-`proposedCondition`, `proposedHabitatFullName`, `area` (square metres) and the two
+`proposedCondition`, `proposedHabitatFullName`, `area` (hectares) and the two
 comments.
 
 **Flaws.** `listFlaws({ format: 'bng-service' })` lists the flaws the format
@@ -367,6 +367,11 @@ that name it as their parent (retained, enhanced, created in its place, or
 lost when none does), a hedge split into parts by each part, and strategic
 significance is written in the workbook's own words.
 `workbookRowsFromBngService` reads one directly.
+A vertical area habitat's Area is read as hectares, as the template records
+it. A file whose vertical Area was typed in square metres, under the
+template's short-lived square-metres version (DEFRA/bng-metric-template#10,
+never released), is not supported: divide its Area by 10,000 first, or it is
+priced 10,000 times too large.
 
 Only input cells are written, and the formulas are left as Defra wrote them,
 so the results are the metric's, not ours. The exception is the metric's known
@@ -618,8 +623,8 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 habitats (green walls and intertidal hard structures), drawn as a line with
 the face area typed in. They take `retention`, `baselineCondition`,
 `proposedCondition`, `habitatFullName`, `proposedHabitatFullName` (for a
-Created wall) and `area` (the typed face area, in square metres, which the
-metric prices in hectares), and no others: their strategic significance and
+Created wall) and `area` (the typed face area, in hectares, as the metric
+prices it), and no others: their strategic significance and
 timing are drawn. The legacy template has no vertical layer, so a scenario
 that pins one must list `"formats": ["bng-service"]`; the catalogue refuses
 it otherwise.

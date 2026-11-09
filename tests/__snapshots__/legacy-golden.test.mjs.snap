@@ -1,58 +1,58 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`BNG Service output is pinned > a baseline-stage site 1`] = `"7d4bdd17703a8f1b890957c10c21c2890971b22a919ef865b1b727b3757ed4c3"`;
+exports[`BNG Service output is pinned > a baseline-stage site 1`] = `"c790978006909b7d6581aa334dbb159457400e1665f0eb152c1adc0a27c8b40d"`;
 
-exports[`BNG Service output is pinned > a default site, seed 3 1`] = `"35ad2e28c7bee4221800df586b4ab9dac1d44a00c31c8d02f69f31481dade4bb"`;
+exports[`BNG Service output is pinned > a default site, seed 3 1`] = `"7ca78b28433d8fbfa63ce0ed3a8b5869b3919d5dd0a4c021a4454078ee163b16"`;
 
-exports[`BNG Service output is pinned > a default site, seed 7 1`] = `"223c1dd7fc29fcb5a07bdcbc732f516a00ebd04881d85fc72d1f0dec33225bfa"`;
+exports[`BNG Service output is pinned > a default site, seed 7 1`] = `"a31fc28e82760ee159e1f28405620f01947df8b6235dcf7b23d936e8f4bd8fec"`;
 
-exports[`BNG Service output is pinned > a default site, seed 21 1`] = `"19e5b3a7bac2c787dba773f579f189b5a5190e8bdf44f1b7be072a51fc7f290d"`;
+exports[`BNG Service output is pinned > a default site, seed 21 1`] = `"f7ee5ba292f2ff37f50729e683c350aafc64cdd56d8dd111a506f7ac6d58a13f"`;
 
-exports[`BNG Service output is pinned > flaw advance-delay-both-set 1`] = `"5aae3cd0efea0147b102d55e71a96c1e349cec91d4f56f576bd20a6bb21fc19d"`;
+exports[`BNG Service output is pinned > flaw advance-delay-both-set 1`] = `"41c2549215d53a0fa2e268e4882f5daccb88f3e9d6483742eeb5306db575b940"`;
 
 exports[`BNG Service output is pinned > flaw area-sum-mismatch 1`] = `"88c58757c68247a4d6e916b6b3876593b888e4f44c83d0e2ce7793b47aff2d6c"`;
 
 exports[`BNG Service output is pinned > flaw bowtie-parcel 1`] = `"6a690817b2e926e12b16097842ca5065fd1f3023bf6894a18329b89fcfb3a7d2"`;
 
-exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"f385c4821e8ab349678ac9317fd13c1241295f38e0f737ff814b72e6298a2a4f"`;
+exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"1f8d9c1a801e46e10eba6a4c359c9cc96ef2badd1e9017c34a7467964fe77562"`;
 
-exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"57f1b89e396fa771ec073d6c5549aa1bd494dc5d44ffd8a21080db02c1ad24b9"`;
+exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"b81417ad77bfb813e8bc6f07bd25860a329445e5578b3d2b1308c74b39a4903e"`;
 
-exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"37646942f58ce0121c828966d4c8e166b3d75452a2932ba866f4c6c5f80b3094"`;
+exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"ee7beb8a8af071240c366cb1b9d5b5cdc9d530099616e5133826234f6748d1e9"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"a049f2201ea8aa63b06827f71c843724f5760a2a82bfd6349dd7a6b130ebcb73"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"3efcd1bd49292b4cc2e4bd2399c999c1bde6da7f27123a1bd81bfa17937aea54"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-encroachment-no-advance 1`] = `"deb3077e531245dc87ca879e19e316a62d1daca83fe45332a9c6b1dd08f4ae8f"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-encroachment-no-advance 1`] = `"66cd417fa566b26354120612816ac69657911c69cc548b64b2d4ffd24bc7a99c"`;
 
-exports[`BNG Service output is pinned > flaw degrade-watercourse-retained-and-created 1`] = `"c5dab520334139db0bfcaf10ff0abea8dd906be195a7acdc2f10916b6eceb3e2"`;
+exports[`BNG Service output is pinned > flaw degrade-watercourse-retained-and-created 1`] = `"3e978d0998096672d973d192ef5d24e8ffc709065ed6b403168a8cfcd8f20fcf"`;
 
-exports[`BNG Service output is pinned > flaw distinctiveness-out-of-scope 1`] = `"fa3f90be727ec39de61e1d3309ff788f1558c6b3cc44439e43955bfc7541f7a7"`;
+exports[`BNG Service output is pinned > flaw distinctiveness-out-of-scope 1`] = `"b81269dd5619bd85f7de720bf6db4500ae7d970f0d3049386a93248adcef2330"`;
 
-exports[`BNG Service output is pinned > flaw duplicate-habitat-ref 1`] = `"36394d8cd70468e0890f6d07ee88b7c6156483816e591cfb4529fbaa09c00c2d"`;
+exports[`BNG Service output is pinned > flaw duplicate-habitat-ref 1`] = `"4bffafdea344fbe0ddd20d4d5624b76dbee363a436bba03666645ea10a53b462"`;
 
-exports[`BNG Service output is pinned > flaw habitat-ref-invalid-characters 1`] = `"e8443521a22376faf2864676ab15c891f82a8cb8fdc1b76e7ff22a77befd2a93"`;
+exports[`BNG Service output is pinned > flaw habitat-ref-invalid-characters 1`] = `"cf41823ee9a142b46dfcbdc6201879eedfbc7225b4a8e1db7d070e6be275f69a"`;
 
 exports[`BNG Service output is pinned > flaw hedgerow-outside 1`] = `"b74367649457803204110e98c42148a3576554dd1dda4b9cbbac704885f7f1d9"`;
 
 exports[`BNG Service output is pinned > flaw iggi-outside 1`] = `"816cb2e30835dea878774564aee4f1e8629019c039dd701375beaec6842cbbec"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-geom-mismatch 1`] = `"8e00f41d3b0b3ebcf2be14d24fef7ae545c06aac0232ec795aea14dd24120c2c"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-mismatch 1`] = `"c9ed39c29dc1457a88d19a4e8852044f20c823b419d58233aca2a6724a69d295"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-geom-missing 1`] = `"50c9c94f32a9b912bd34d442469ee02186d2b665477abe2d518007d06a96da97"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-geom-missing 1`] = `"229915e3160b9dc086f388787b9a2feadf64660c538a09d0e7dfb3a031e2744b"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-missing 1`] = `"6705c029f4bfe8d27ba8ece785fc6fa860c52b4353ea19ac8aa12e13f173d201"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-missing 1`] = `"5907919780341283fad1c8f971136ab99a0f03df4cf1dc794971a212739afc53"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-unknown 1`] = `"817a7b955642cdee685b22b47d6f01a836a57fca8c31d8639d223e6f4c5bcb30"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-unknown 1`] = `"4436313ba948c0ce8417c6ac24c4a59a4bbb2ebae92b95fa954a128324813ece"`;
 
-exports[`BNG Service output is pinned > flaw lineage-parent-wrong 1`] = `"2edc6833922bb433767ac7fc4016bcdc5ee997e527ec1e126755eb6de21259cf"`;
+exports[`BNG Service output is pinned > flaw lineage-parent-wrong 1`] = `"2c69440bd8e490afe9188a02c456958e072d2f51cb6d42ac821922224688f873"`;
 
-exports[`BNG Service output is pinned > flaw missing-habitat-ref 1`] = `"ee7b7eb881329bf76b2c9ef84b6794ae2906ab9235931704b59b93c1a5d71604"`;
+exports[`BNG Service output is pinned > flaw missing-habitat-ref 1`] = `"231666148caac2eab2bb18a58b122bf71c4ac8dc921b3597d0c0e2f69b7474c1"`;
 
-exports[`BNG Service output is pinned > flaw no-habitats 1`] = `"48d5acf6ebfdc72a3a619d7631ce8de962f5a6aa3024e184f98a25bb74d125ed"`;
+exports[`BNG Service output is pinned > flaw no-habitats 1`] = `"f6ef66acbc143503c7e3c6e05b455e0e259774325987734c0d3ba9ef4e9853f2"`;
 
-exports[`BNG Service output is pinned > flaw no-hedgerows 1`] = `"7d800d76341387f066f4ecd3f8187715321a7b2dbc90aafab125fc0c169a302b"`;
+exports[`BNG Service output is pinned > flaw no-hedgerows 1`] = `"cd0cd95742161d514ff4a00e4fb0a1efa57d23b58edc81fa3388df6b20120cdd"`;
 
-exports[`BNG Service output is pinned > flaw no-rivers 1`] = `"6f20314f0c367d1a09c65eafbb4b0f2a2ae45f84eef6bffd906164ca9566eb1b"`;
+exports[`BNG Service output is pinned > flaw no-rivers 1`] = `"178e65e81fa12dbe32e3193301dd2a74959000209d3fa3eb41baa5754e4265e8"`;
 
 exports[`BNG Service output is pinned > flaw no-trees 1`] = `"43fdd2e72daa90488e11baecbfd4719f1a31ea6d5206d3672edfec11f95bdf9f"`;
 
@@ -72,11 +72,11 @@ exports[`BNG Service output is pinned > flaw tiny-gap 1`] = `"4a055b98ff6f079081
 
 exports[`BNG Service output is pinned > flaw tree-outside 1`] = `"043b2f4c51f8bc4a0bf3509dc4e978555b8337f0b9f43606758de20ebd378e97"`;
 
-exports[`BNG Service output is pinned > flaw version-record-duplicated 1`] = `"2b1dbae2335bae93cb31d3f5f86d991dd489ff45a33f51a210ebbdac31bc2e55"`;
+exports[`BNG Service output is pinned > flaw version-record-duplicated 1`] = `"3b507938023d3a3f4f3936934b3560eb391c8c32dc31c11774785a2369a5e300"`;
 
-exports[`BNG Service output is pinned > flaw version-record-missing 1`] = `"b0c896ac6d4c8c27ab236fa98879d6608d7385440c039d26f21960586d1437b5"`;
+exports[`BNG Service output is pinned > flaw version-record-missing 1`] = `"ff674d2a9e239346009c46bffc09a8a0ef16f2417f80b4976e52c6b729486239"`;
 
-exports[`BNG Service output is pinned > flaw version-unsupported 1`] = `"70d8f91ed119875d1815aedcb2370136f3d5fd6207d2c46fb256138cc33f1373"`;
+exports[`BNG Service output is pinned > flaw version-unsupported 1`] = `"dd70292362befc0418adb05dabf73ec6e26c8feb8e77dee8339b41b13b27c9b5"`;
 
 exports[`BNG Service output is pinned > flaw watercourse-outside 1`] = `"f613b1c438b21c31239ea05e8b90364c61689c92562811d6a27478930a62f1e7"`;
 
@@ -84,26 +84,26 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
 {
   "advance-delay-created-advance": "7dabd973f878c275ffd46d7c9ba2991dde9640ff960709859135b749d8baf4b8",
   "advance-delay-created-advance-difficulty": "a0a814f2c93719255bdb49fceed35e31acf57b06e66de6af9a5b5c32af04dbd8",
-  "advance-delay-created-delay": "1d02b3934aa39a9d0b016da8f079363f6ca1724a61ece299db65d86df6cd0a83",
-  "advance-delay-created-trees": "9a58bfd7ae24dfd6646c37fb56dbe7d96b47e684dc8f29c316a71b68159d4068",
-  "advance-delay-thirty-plus": "fdf4a1c898f6d4b8e272eeb8918ceab6542b8ba6ffdb929ed1bc639492eaed76",
+  "advance-delay-created-delay": "59373041ea1d241936ab73a0d1d3ca88c7d157a28051111e092e9148830c6236",
+  "advance-delay-created-trees": "69d71f106026903698af21c6e7577cb7086adbf60124ac038808d28fad998723",
+  "advance-delay-thirty-plus": "4fa28cd53e496977422d70ca7a1a8e6b1f9028f08d4dd3b0ab8d5b1a93ed2b15",
   "area-coastal-saltmarsh": "67ce541fb13c5e1a0de8b9a3bdc03d587fd7c532d3d732b43c70c7872f630217",
   "area-enhanced-intertidal": "7c95563ed0333df15f52b7e0849d83be77d03a95f0bc31e0239030b881146761",
   "area-enhanced-low-condition-na": "ad85914df5fb6b0f6e4b80dde2f8f923c2fdfcd62c8aac0d6096a87d8cf520de",
   "area-enhanced-medium-condition-na": "eccc1f93ba9258679f628cfaca9ced42056e410cc95a1aeece42abddb6b4f2c6",
   "area-enhanced-very-low": "989900e6dafc49d79db76a0c6d89f7d32c24d289f64eb231d653189252c22430",
-  "conditions-area-spread": "9268f37c78d518be2f66b9ec082ff6f8bf0e7b6292abe01d29f58fd4321d8571",
-  "data-complete": "41be7aaba3db65b1656d08536c545f40ff7f21578fe7fd9fd54d293b3a488159",
-  "intervention-area-created": "a64ee5202822fc2f50be4efb99066b18111e8e01dd7daa889dfa104e08a3b1bb",
-  "intervention-area-enhanced": "967b8529e242e08ea2d8d6c6ba3b50317a6a7239cf44eac21d14e852f8610c16",
-  "intervention-area-retained": "dff99e417414441cbc28f1826d4428ce1dc764e84bb8ac0d3dabf3adbf77dd28",
+  "conditions-area-spread": "ed2dec9fcb809ffb3ea9724c4eb79f9e4a3213590a4c3d2d12dd54cd1966bcd8",
+  "data-complete": "e3d463aa2e38efaa417748b8ded5a3b699f60ea64cc0b92d274f232378d3417a",
+  "intervention-area-created": "b49988cf3b0284b5ddcf59b43393f1c8232c13d9d77c6156fe3502d9f1198a8b",
+  "intervention-area-enhanced": "97b2af8e9da332037fc81261eab9d92635efb0229711700414b72e67c48fc5b3",
+  "intervention-area-retained": "c5b206cdf693c2add42b36c99d14975da8f7db99e80b836c4ff29bab06f650df",
   "intervention-hedgerow-condition-lowered": "195ebabe5c283c30ae586c0c3c9fb5ca6b992ed61243993a972a77c69cfb22fe",
-  "intervention-hedgerow-created": "71e524661111c16fa0c37fc2f7d43680174da56a97801889e81492408653803e",
-  "intervention-hedgerow-enhanced": "0c777a30fce727406573a14a2d9427aa0534030bbf1fd7f2cddc04d8872abd78",
-  "intervention-hedgerow-retained": "cf78e11e301631f4535a4cd072f7a3ceb05f9b48186d256b7cbb34587b385b89",
-  "intervention-watercourse-created": "602521633397bca98bff194ca33b5f39908135995c06b19746c306baca0fdfed",
-  "intervention-watercourse-enhanced": "876b0e3841d133ca77efb44b8c7b1a22039bbcca552c7872ae4132faa5508838",
-  "intervention-watercourse-retained": "fed6ef917b12ac7a5dff14406e86523b76428c325eaa31f95e5dfa4618f5eff7",
+  "intervention-hedgerow-created": "f0914423b26bfcd84881043c076ce1335456ce5260ebb5f4eddf4e6b4a7e6e93",
+  "intervention-hedgerow-enhanced": "dd05044acea63d31babfb2ffc4f021cc8f66caae964a53001912e2bd3cddca4f",
+  "intervention-hedgerow-retained": "bf51bdbc5f25169c45144958edfe4aa93677453536c7e0fc45652761b29c40a6",
+  "intervention-watercourse-created": "582c553e05ede086fd72b9f9aa928b694c08fb9a84ae537eb971c722386dfc05",
+  "intervention-watercourse-enhanced": "23cadb143683f620e7a11fcc13819890f7e9a3783bb04081f25979f6eb629a28",
+  "intervention-watercourse-retained": "de922edbec26ef9baafc773124a7b62ba32ee354e177bcfaa50a021fdebf47a6",
   "invalid-area-advance-and-delay": "fa92549d4928bdb69abf12f0851515af38d562c96f52528b3d2ed0113e9255fd",
   "invalid-area-condition-reduced": "56e8d63406f0769c5ec38171f1a7b7220826fa0ba260fc2fc6a89f0de1cfd4c9",
   "invalid-area-intertidal-no-enhancement": "936ae804d70b4bb4cfc6413cb338c315e0f2d629acbc069719c5b68eaf9328e1",
@@ -115,7 +115,7 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "invalid-area-no-enhancement": "1a334b5de6c8bafd0fd6c0354d503ef9b53609094952aac273226358ba7bd841",
   "invalid-area-trading-down": "fa297479efbf53cf3dea38936e9bdba2f6d8846c1441590a81d8ff1c93db9370",
   "invalid-area-very-low-not-possible": "159d6ff108534d22e82a00777255ab9c1e360698a101b483897d170e5debddee",
-  "invalid-data-incomplete": "5cd8bc1948fe9ed5e7ed9b079267b4bd54e12ce178293eff3a49a3e98ba69d64",
+  "invalid-data-incomplete": "7399bc531488be25749dee8112110afadd07db6b7036ae40782dd2a6a8960358",
   "invalid-hedgerow-bank-or-ditch-dropped": "b5e1ac397fd0b81c0898231bbd460294705502c0bf80db380ea507da4ff32ef6",
   "invalid-hedgerow-condition-reduced": "70629436969d7fa9a33e8ff47f60344fd3f2ee37eab0cd665cb31dd57a2c5624",
   "invalid-hedgerow-low-good-no-medium-target": "dfdb4967fb23c73e98fd1a3ea34fe743b49675928ca8c1d08f1f8c45dbd8d212",
@@ -129,17 +129,17 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "invalid-watercourse-encroachment-worsened": "0073c509a1ba7acc84bddfee94d2865ba5c1fee6ab78d219a41dc127276482ef",
   "invalid-watercourse-medium-condition-reduced": "a9f354a959cb01fce24ae7e4c4a97de0479dc56744624666c6facac2ec06e8fb",
   "invalid-watercourse-medium-good-enhanced": "43b2eb217f3ccde1d0a6dc2d581cfca5f24cc64d0be38632b788baf15e819019",
-  "net-gain-met": "0ab479d317eca9c61806c96cb65b156149492d55acce719013a7fee240e78a96",
+  "net-gain-met": "06a955a6d140649a9ec3affda932f5e4d207ab347274d294431a97f3af6b6de2",
   "net-gain-unmet": "e656e90bb16f0fcee51dfdb887a45100ed9bae6c6ca5adff1b76d87cc416caf0",
-  "strategic-significance-spread": "9b5ff8fad1544e28a52fcc640558412842352be7aca55c118089dfd7c5c0aee8",
+  "strategic-significance-spread": "34c624363c9a9b59eeb7c73bc3cf7f56504128843d0809dc5602cbdaaf29461f",
   "trading-all-met": "0487144392b5cbaddd65250f19e9dd608e75f635ac8a6fc92deebc850b0fc085",
   "trading-higher-deficit-not-covered-from-below": "4f0a94b9bb24c5528a24836691818c81c71aa80bc197df998972dcdde1cc423c",
   "trading-like-for-like": "042d77a31781273c83d8caea3a19707a689b58ee4f791287c13e670a88b33d3c",
   "trading-lost-to-development": "26a97aee04c2bed55c9d611dec872b5f21ed7e1c1ea7b169a86742162c391f89",
-  "trading-lost-trees": "7c2e11031e70e8b9af03a1435e8019f841afa80eff40563990abfbed573ef069",
+  "trading-lost-trees": "0b77267e6a96e832d3243973901ad353ce18630a09c02738381be67e7320743c",
   "trading-low-deficit-covered-beside-medium-deficit": "079d3b06b60a32494f349494805831e88c88b7c27afb9be2745bb489255a1502",
   "trading-low-for-low": "934b64c14488819213771ddcf4c0cde31a3c0f8a4cd64fdcf0d0af1be74c4655",
-  "trading-low-to-medium": "f7ce25a8fd2b7fc0b792161d0f2619cf0592d66e00a6f612274449c3208a767f",
+  "trading-low-to-medium": "ae39a3367f3080ecabdf83030faf6fee34e102c0b66df53bdfe86ad8d6a60d59",
   "trading-lower-deficit-covered-from-above": "8e586ee4548973470d576b29d9533784e5d5751e9159874b7e8212701da2261f",
   "trading-surplus-in-another-broad-habitat": "71264d0dc45cdd0f5178697917b750f40cbf55182036e77fad2666df8672173d",
   "trading-too-few-units": "b9fcdb07c84a2b90b30e7993dd3389cc96f2430ce29dc685b7f0c827654cb120",
@@ -151,81 +151,81 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
 }
 `;
 
-exports[`legacy output is pinned > --bad 1`] = `"0a54ecdc877f358160ba5f6a1e6af19361261b82772b0c7da45c1025d49920d7"`;
+exports[`legacy output is pinned > --bad 1`] = `"261147ea0dcd740e3a01e8867700cc1ddd333d904de387b28ea0896cc5343071"`;
 
-exports[`legacy output is pinned > default size 1`] = `"98ac64bb77d4238bb05ca6602b7b8c55c5b515cccf877941ccfa2ba28cb8b75d"`;
+exports[`legacy output is pinned > default size 1`] = `"9dd112e13573995a6b709cd466819d470190cf27962f8b6228c82f6f7d58d8d3"`;
 
-exports[`legacy output is pinned > explicit trees 1`] = `"0a73330d2856a9bf465b22c74a2f8b996882f1c9769178640e28214d5eb92e52"`;
+exports[`legacy output is pinned > explicit trees 1`] = `"ac117e879dc6663a8fc529b27e08f22fc03236823242563349842b852aedfcfd"`;
 
-exports[`legacy output is pinned > flaw advance-delay-both-set 1`] = `"9ed1da6ed7731edebf5823ce89938792aa49b31d85bc51252cecb59462446b06"`;
+exports[`legacy output is pinned > flaw advance-delay-both-set 1`] = `"5bb5b42be3a39db8e33dcfd2a09f61392de23a5bc3b0662e35f7c7897c2dc087"`;
 
-exports[`legacy output is pinned > flaw area-sum-mismatch 1`] = `"7a5044a0971bb0bef1be04d942fe33037c4fe885617b49cd266b6739660993f1"`;
+exports[`legacy output is pinned > flaw area-sum-mismatch 1`] = `"b0b2c7173443974f430bb97d0aaae7dbed2abcb68d2f36e7d7e7c5a4478d4669"`;
 
-exports[`legacy output is pinned > flaw bowtie-parcel 1`] = `"9446cf946c35ea1100105f58f5e65132e7ffe4e67aeb0cd6863e7cd32728fd69"`;
+exports[`legacy output is pinned > flaw bowtie-parcel 1`] = `"a2beebee6ce49cc5299dfaedad8fc3fb40e15308128a1180aaaccf78958f8d3e"`;
 
-exports[`legacy output is pinned > flaw distinctiveness-out-of-scope 1`] = `"2eb6690293635c1095b20a4d4a2e46b1b42d0d2306f4a9a4ae453b2181be4949"`;
+exports[`legacy output is pinned > flaw distinctiveness-out-of-scope 1`] = `"ab0ca5d8ee316a19940031b482ada329296c83ebb46815f4c83a6a687bd3e283"`;
 
-exports[`legacy output is pinned > flaw duplicate-habitat-ref 1`] = `"6cbb12c7c4828b7d02009a14cf1502b723584b4e4d94a91172447fa7e23f39a4"`;
+exports[`legacy output is pinned > flaw duplicate-habitat-ref 1`] = `"52a6dd9ec175e527ae8e05c678ce034b717b0e91fb9c14749d9535cc653116ea"`;
 
-exports[`legacy output is pinned > flaw habitat-ref-invalid-characters 1`] = `"3a450c8b7063dfc433cc0d03bb06067e08b785da5fe0fd493a0abd437e7a9ff9"`;
+exports[`legacy output is pinned > flaw habitat-ref-invalid-characters 1`] = `"a1b78ea9ab8dc3fb762cfb6f5b393db4520ee5bafa74b271fd2d5472be4841ce"`;
 
-exports[`legacy output is pinned > flaw hedgerow-outside 1`] = `"79eba2524960f329cd1e7db86f24f2df834ec068b1046ba365b06aeec509c62f"`;
+exports[`legacy output is pinned > flaw hedgerow-outside 1`] = `"a4c7e1fbc36c3f111ce78cb4008ff1fa567c0372d598592641ada6032431b6e7"`;
 
-exports[`legacy output is pinned > flaw iggi-outside 1`] = `"ea204fa71367c8a4096822c1e189ff12834bfec8d8db9cc8ff2d16986cb1e5e8"`;
+exports[`legacy output is pinned > flaw iggi-outside 1`] = `"aa198df044bb00a7f1d6d7439d53347834ecf4e6839404b1c4f9c1fc9dcae745"`;
 
-exports[`legacy output is pinned > flaw missing-habitat-ref 1`] = `"26137d5ebea01c3a0610427dbf1854ff22608295d2c01de10757bcdff6bb6b67"`;
+exports[`legacy output is pinned > flaw missing-habitat-ref 1`] = `"d3661282390526e489a88c4c69f845d01b8bc94e7992f10abb8200cc8ff27455"`;
 
-exports[`legacy output is pinned > flaw no-habitats 1`] = `"c23a9097692e8f73e1e44a60d360638fc8281b357cbd61ce6fc4ed911ced058f"`;
+exports[`legacy output is pinned > flaw no-habitats 1`] = `"dc5df3260d7ca81f8f40207c7bcf80e5aa95145165b14140f3e786597e3b882a"`;
 
-exports[`legacy output is pinned > flaw no-hedgerows 1`] = `"4478161016c8d5b28a69ffd44ab6c8d4d3c19914312292d01dc6800be36a418e"`;
+exports[`legacy output is pinned > flaw no-hedgerows 1`] = `"543ad91ccdf51fd96d380287792e7d7677ac4b2df317cdc38e80c4cdce9ea6a7"`;
 
-exports[`legacy output is pinned > flaw no-rivers 1`] = `"2a223acdd98398374a5bd970eabceea7b047ca0ccf70eca450a996d602047e9f"`;
+exports[`legacy output is pinned > flaw no-rivers 1`] = `"514c56c92b2e9be930b39b06c8162354da36f4de131462edc8f67a5021ebc5fa"`;
 
 exports[`legacy output is pinned > flaw no-trees 1`] = `"39aa4c08c4268ff077bb765fbd42295d0c571ba6a706dc5dd8236d16fa4b188a"`;
 
-exports[`legacy output is pinned > flaw overlapping-parcels 1`] = `"0f6fc6aa721e3709ac1c11952b8b153ec0b489f8542116ac609cd7975a9674b9"`;
+exports[`legacy output is pinned > flaw overlapping-parcels 1`] = `"a36f5603c09b5c1f671c2fdf9b1dabfce21c4af0dca2c73a972fa47dcd7f152e"`;
 
-exports[`legacy output is pinned > flaw parcel-outside-redline 1`] = `"cf26d82c2d66c3490fa611ac58dd4e103952bc440d3a9503c752e8eecac7bf3d"`;
+exports[`legacy output is pinned > flaw parcel-outside-redline 1`] = `"df63068a1a327c255632fb0466ceb1f88a23cca14a0e75b2a8295b636ee00710"`;
 
-exports[`legacy output is pinned > flaw parcel-too-small 1`] = `"3e3eaa4a4593e6dd547bdb0032e5df9d1297647af46a6bc5933938231fbc8943"`;
+exports[`legacy output is pinned > flaw parcel-too-small 1`] = `"fc918946bb4f17f649f8eff145111bf124fbd022ba96afe1598d620b06d3b776"`;
 
-exports[`legacy output is pinned > flaw redline-not-in-england 1`] = `"1bfdd3e7b1bf8cfe20dcaeacd76606f7ba29749b915c1e1266b4c9408f812119"`;
+exports[`legacy output is pinned > flaw redline-not-in-england 1`] = `"541d86578730ecc869b307d975e6b88ec24df92c7d0cdb0fc6dd022f7da37dc7"`;
 
-exports[`legacy output is pinned > flaw redline-too-large 1`] = `"c7ccba108a5f010b5de50baafa6edb9f3fea84d770c35ec41c915126b223e17a"`;
+exports[`legacy output is pinned > flaw redline-too-large 1`] = `"bb128cfc0e79500f207679d287f74938984befdb711d3883b6e6c646cb81ba63"`;
 
-exports[`legacy output is pinned > flaw self-intersecting-redline 1`] = `"860dc206b765a78a4c6cf4c06bc78e15fb4b1985043c455542968e485965ef0a"`;
+exports[`legacy output is pinned > flaw self-intersecting-redline 1`] = `"66cb55f3726b35486031c1bc39c2eab6eb3e1823e4c81ef112c4add0f6347804"`;
 
-exports[`legacy output is pinned > flaw tiny-gap 1`] = `"fbf30fb74811f5e98a1073c066691e289a15bd374b47635ea0b37f2c1154ea05"`;
+exports[`legacy output is pinned > flaw tiny-gap 1`] = `"5e9deb5208472ddeb52ee9089d43bfbf7be2bc1763ad3d0664a46c6abbbe599c"`;
 
-exports[`legacy output is pinned > flaw tree-count-not-whole 1`] = `"b730c509160a25356baeb2bf2ea91ada190b9bb7261dc63adfe38bb4f51fafec"`;
+exports[`legacy output is pinned > flaw tree-count-not-whole 1`] = `"4389b0501028e33ba030b87858d08a0053edaa254a4240e09221b7b64a1105e2"`;
 
-exports[`legacy output is pinned > flaw tree-outside 1`] = `"9902bb55e2ac81b5f1b335c4dcadd2daf6156fe01417d864908da2060ae77281"`;
+exports[`legacy output is pinned > flaw tree-outside 1`] = `"0b2205e0cf5c8bc068aa8613c7953f5a50098d99248124b2175c5152338b3d1c"`;
 
-exports[`legacy output is pinned > flaw watercourse-outside 1`] = `"fd85ae5f496fba06c6388a92f0553f2c95423ed2e55335cb0dba96ab84f647c2"`;
+exports[`legacy output is pinned > flaw watercourse-outside 1`] = `"ab4b72c502087e78b413cd51be3907b0830df434f00fba64d6cdce69c7ba68d2"`;
 
-exports[`legacy output is pinned > small 1`] = `"d02bc229c3334581b91e80ba5f361145ed1cda6f8dbaa757d3be0e2e2d71694c"`;
+exports[`legacy output is pinned > small 1`] = `"e49bf9a7004dd0a509a4f4d9969962e31d3b315a3535f8d65f7afb0464a5abe3"`;
 
 exports[`legacy output is pinned > the scenario catalogue 1`] = `
 {
   "advance-delay-created-advance": [
-    "d55013c466425a2ba3c3b34f5017224157f2f35b89cf6d1e66e7ddaf4ce46d19",
-    "20772286d0375d89bd98227e3e843f9872e3f00efa99305be60a408c57330470",
+    "0ac9aa753fa5987ba632d049c3743b24c184ee48974ec0df05341905f79d3735",
+    "ed696add6c5a3e124e8c7f6b55dffb48b867c071ef166d7f53f799004e0cbd1f",
   ],
   "advance-delay-created-advance-difficulty": [
     "bf5f5aad914c5243cd1b1cdad45041d7a9ae8093d874296beba266126819d752",
     "0f7d9dcef9ce227104ef0c2eb023e6e2d81e9f862e5338e592ff531b7c1a1aa1",
   ],
   "advance-delay-created-delay": [
-    "e75f1561d2c7bccc83e3d5f516fc72dac955ec263101cedec24321cd62649fe7",
-    "3f7c5f5da1e9d79b536f86f8cdbd1bd895d5ae46b2d158b5ad27bfdb08043727",
+    "7d66eb385dc9b06e9b767c3adbf1d0dac04d976fe8fb20d568f52fe3e23566b4",
+    "a8b3cb7a6cf8ca825fb57387e87066abb13c0802edb67faa06f81160cd74a831",
   ],
   "advance-delay-created-trees": [
     "da732d82b505fa9959b0780fdb6ac7b72d26f19cec097d592c0a0de3ed60200b",
-    "1a153183eb78e317aa16eb4cf747fd7b740f5f182041f9f210cb22d99346d7a8",
+    "a4bb52b416136981a622390d139763424cbbce78348dadda95061a0ad9afac8f",
   ],
   "advance-delay-thirty-plus": [
-    "a8f93f2f945e785a3b106c2473de2fcbbbf9e535889ec21b1e766f71564acd70",
-    "cc18ed2e846ea4116d4bbdcb8c42277c01c8b3a45de00da8e81d57ec495cedca",
+    "f6081fff05753087ab181bb4ab0f5c4efb76c3728a9ac1869f610e952b0977b3",
+    "ffc9bb86eb6fdc60e483515ef587c11f25b9ef3fe8c77968fe297033e7650125",
   ],
   "area-coastal-saltmarsh": [
     "a5afa1d08dc3188b2e4f66f58584a26429c4f25772f01d5720e1773088b454a8",
@@ -248,52 +248,52 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "d6d1a6e865f4af638c0b63616cc09bcda1f1cd52b59ad7b8e786a58772f1ca53",
   ],
   "conditions-area-spread": [
-    "2e0f0a4fe09681c6a423351f36fdfadbe1055b77d4033b2a718d7b4c72cc2025",
-    "6a91d15a7305c79ee3dd533ef53c950ad001c204d2cb5302e50fa5d1293103ff",
+    "70b18feb1b5de46892d973ea5b86be111e12fa04c9535801a22d94c5969e5867",
+    "00dd9fd5b1578ee77618c34127238d7a2942d052b69748434035974bfdc5fa81",
   ],
   "data-complete": [
-    "9ce025a64314907c1c647b69d1a39c2f711da9a89581947dd845cfb3e6aa1893",
-    "768b85c6b53619a37f6bcd41bc574c2a3bfe7f7d62cb51d70e2e8e45b7a5e176",
+    "a7b07507dfac1f38097c321b74bdf3fd655c15836afc5e07b511f2189a62b767",
+    "1e48330b3da4151c8563f6ff67ddca9ca6b27fd103767956b26e36870eb65e75",
   ],
   "intervention-area-created": [
-    "bde0ecd210788c0b0f228111850f4a8b6ad412c9b8683c4acae62030807fbee9",
-    "5b781d13869d74e48e1ef47c9f663ca75cf8e7a727422ac73fbf74dee80be01c",
+    "3153344002edb30856fd03fb521ee6250110f3aa5f67bcc247e435f5e548c063",
+    "00b2ae2cdf8b3c81d3143a6c59f682b55c5d215e84749c463815258fa8ac97de",
   ],
   "intervention-area-enhanced": [
-    "b985441fc7d979e486e48124c257fb11715af9cd984193ca471a8402bf427ef3",
-    "5245cd437c95c1ca21e0c1fee2b057e9864a47200beae083cb59bec6bdfc0d25",
+    "e11823f0c92ac5bc58a85a72c7e7123d5bd5fb01a003ef3d7d61c773856304de",
+    "07a4fc73d1c2fbbd2b3d5deb4045eb4f673b7a3c0aebe4b7cf293a93e5abcbab",
   ],
   "intervention-area-retained": [
-    "b0abce10bf4018cbcad53c4415d3ab0f028ecf4db018d788f72b38b2abec695d",
-    "6f1a54785eb70604cbdcdd281257b0452cae93b48bc592312020a7d117349b1e",
+    "9cc5d25666e5fa5780406b9dfb29db13358b4785dee2eae95fd570a46ea5b235",
+    "144585c2af0bea898a2ee9597847aaa21bc038b2a8769bbaed27257e3364f689",
   ],
   "intervention-hedgerow-condition-lowered": [
     "77b46d774db801208e64f7f03f0d66868da12c271ca5bc9a5e19ed3433d4874b",
     "9f74455a2da45f95536126e189669c4061b482839a294875a2707d7116c2f083",
   ],
   "intervention-hedgerow-created": [
-    "e996168c81fce90a086c3ce2e34123b541958dd5ae6a648dff24c01389eb9fd9",
-    "8259b683ec7766d57e6f9c743365c2b4f0c8ab78536a91d96efefd5e8ce194e8",
+    "89c798726d6c8774b40a2f49d94725e0cdc77b8cd69f38bb377bba1ddc57b1e2",
+    "6b986402f84d4ebc3315bd4db213a0e93d4373867981225efd8a7b44f6e90258",
   ],
   "intervention-hedgerow-enhanced": [
-    "1bb490ab8ad8826548ae26d83ed7a5625a1235b73cfc133201e34f6bbf68ea1d",
-    "38d51aa7d5fa29a116fb8b91b4c31acacf18b79b5b3495b7c305cca103875e53",
+    "3b7b398ea922baf0de282e8117c4b9916dc35845a4f9b624af0d7242e5888348",
+    "ca498efd9269a0a8c9b7269caee69b9c65c5a3b9311997676da636cdb6da3d2e",
   ],
   "intervention-hedgerow-retained": [
-    "cf4e721a016e20b4b90fa2c695ffc9bfaae3423ecc9fed710901c11ff08ec2e0",
-    "6be5dadafb241ba353e340d14d339cffeaa4e43ade173e718f3f55890c5bf543",
+    "cbdcff1d44eaf6c01a33d7b1fb55ef85fa14adf6febe5eca0827adbb192e2c2f",
+    "11da4477c611834024cd34e4616e4511e453a660cc0d9c247ba0ebb88d997b29",
   ],
   "intervention-watercourse-created": [
-    "223b2e6a7fffea6490a7c5a0b1ef92916219e75298deacfbca968f3a544cf00d",
-    "11bf6ece13b04774e7c874cf2d33dfa50a98b73fd1dab9002be05a7691d6a9ca",
+    "6a6947551141e45dbc9d543ff12e885d2096093669ffa9ac470f1f26ee0c1104",
+    "1d2832b802b57a5ab1fbd37bd6d1afd0d90d1d4091805da3eb2c551e14f107d3",
   ],
   "intervention-watercourse-enhanced": [
-    "33aa6b537162127079e24ae6803f71e94efe13c67ce14519ff77854f3bc60ab3",
-    "09eae999c2e56a0e2d4c1abce1d9da980e08d17d785153a3dca4e5c779d4776c",
+    "747747491bb63ecca6aab3fa769873ee18ab7684be9d2730367ca92bc788f94f",
+    "07db5abe7e14c6eeffcf7d26c279a7202aa3d4ac7a9bb48c4a9f5cd23fab07e6",
   ],
   "intervention-watercourse-retained": [
-    "d273df0622c34e88f9ce681295692e93f20474a204ae59d324c46ce7cff7cd05",
-    "b7fe9a3d7486c6b46a5272489bfe91609e9653360440e41a640401a04f37c5a6",
+    "6c7dbd7f4ad251f7d912efc0a1b0a0c9200eb779b780e7c2615c352a3f57af82",
+    "59d9b2be135779bf8add89160ec3eb74b923fc97240df29a49ed98f95e55ef99",
   ],
   "invalid-area-advance-and-delay": [
     "20039b8884a83289dfe9c41ebdf126f5efeb5daa4318092b3e310fe5d365de7d",
@@ -340,8 +340,8 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "a600f02f0f90da0b7c2e7eb000d90a16e77f80ee8d13880534185d5747a58393",
   ],
   "invalid-data-incomplete": [
-    "5294280b0d61a14648486c116f5e878c2c3e43e7d90bc0b176691cbe4ce97e52",
-    "a2796d81db089e67c44b3dc8245073039bb1e844c5e1f804e0a2feb45c22e130",
+    "6a144170ca04900d1407414d82623815dbcbee765bfa02c0cd9929d196e80e0f",
+    "0a928cc563d422062a8d29b3c08ed23235bd688ae0b534cf62f937f7ded232ce",
   ],
   "invalid-hedgerow-bank-or-ditch-dropped": [
     "a34004a4ea937327753cff42018b17e529b71bd66ced29bff82145c2dc54f10d",
@@ -377,11 +377,11 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
   ],
   "invalid-tree-advance-and-delay": [
     "73d7e266a0bfaa1cd720b6df5ca4d021cdca3f0a6206a5da1f001cd967180e69",
-    "cfd72c5fc1ea9fe0227f5e6e42e309d32e6829484d0cbaf646cb5106c37300e5",
+    "841c1899c1e6188da55900eb3431476c6b9dd28e2c8153f15920c77935fb4fa5",
   ],
   "invalid-tree-good-enhanced": [
-    "f4c937ad1af67022336652a81288bdf198901f36f26624317db726637246b991",
-    "4860f18eeb5855797179ec5f18917a68b609e36688dc8602f897fce1c5e6757e",
+    "811b9be49ee41c82e8366e8cfd64b20acb5375c524d5dc4300c37e783b645685",
+    "8252f7f3be41da6cd6df6efa8ae064d905c3360b70f7b5a4e225350e21258be8",
   ],
   "invalid-watercourse-culvert-enhanced": [
     "11af413d70bf0c42b5506ae759f054c48a58789566b5ea8e8818a9d593f9070f",
@@ -400,16 +400,16 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "01fbefb5f2be9595f3e96e0bb6806e2e8e4e2bf1d325d82ee239e0b0ce8bb023",
   ],
   "net-gain-met": [
-    "66dfead2c735460b039f09fee9bd5fb3c08bb427cb447a8b1293987fea7d150c",
-    "b156eded98b83cf5439b211a6e9d8e4e831a41abbd9b834eeb8e4a226a2137d5",
+    "fee8131b6aa3faa1468c599a1602be5596abf302b83995fb83ac7bd03cf733e8",
+    "e314495979bbb64c8328d1dea75025bb3006df3035ae06bf3471340d59acaf4c",
   ],
   "net-gain-unmet": [
     "053246a14ce2fd26dd0a10ad8e5e2d93e4d35d323926e16146b78a53deb1b660",
     "19b2897a6fab85ce3acb3cee6207890e9d5eba9f044e9cefbf02bb8a54307c42",
   ],
   "strategic-significance-spread": [
-    "465dc672fb33d7861d683625204e05d0f46946a826dca2b7cb082560dbfab2fa",
-    "e4306f6d0e413242b3715bacc23f2f8aa9c7bc5da287bfe2e112b4948ae0999a",
+    "ec40306b26a970ca82e7a2343e27a739c65c86087a1b3fa2e8c07255f669a3d2",
+    "95dffd8b375fa09877589bc95a0ed5b00dd6422ad1c409d829f78df7373b1d28",
   ],
   "trading-all-met": [
     "61284edcbd745974a7a688c0cc0f72e04c25e5ef8736f17b100ec076dd597bcb",
@@ -428,8 +428,8 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "7d4f72c4f7980a6d5ff609e5eb647b52a455d2b8aa5f66ddceb11096e13f47c2",
   ],
   "trading-lost-trees": [
-    "669562f09004db7609aa56e8e8562aade23872068f412b6318cb7f044cbbffbd",
-    "4867c8482209ade5fee703ec9f9c4bdaffb0065f80d4cec7cee7c90bdedacb58",
+    "6ae01458de8f82420af4a4a2c90069047604c6e8855a37bed91b2859d7feb492",
+    "160d2a9c11db25a16604f948aaf75c056358a32b941f9cbec73fcfa84f23c24d",
   ],
   "trading-low-deficit-covered-beside-medium-deficit": [
     "63e3de118959b7c6b868adf946ca8930d49aaa2b912049d7bdf7f7fd58f74e73",
@@ -440,8 +440,8 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "39f848e55345854a62a13226c751073e1e33bc2413446b4ef074d2f6e513d4e6",
   ],
   "trading-low-to-medium": [
-    "93581119cc4a88b31751d42e93133d7eff4d7502bfafb71f7b68adfe21876f82",
-    "7e57d894962ff739c37052c3b9cbe7ab418164e0942470361cf4d3185928db55",
+    "034f860120f3e37619025d1fe248c361abdf014dfe86c0c891cdb33a644d10e0",
+    "4491e8cb5b3d73dce271b71df8bb29d65b15b12ce2f6be11a4e29731e4f9984d",
   ],
   "trading-lower-deficit-covered-from-above": [
     "f9ecaf1a65742604f7cbe281456a848cf279cb641d6d23b28e50c687a32fa2a9",
@@ -468,8 +468,8 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
     "d176d947c0442bcd2a717e74fdec8698a0d1beee9c3d314c2218d5f7ab515278",
   ],
   "trees-count-above-one": [
-    "eeeb66eaa07a8ef680d356f2d94aa5b579b000f037a71b4a815b6651be9ebcd9",
-    "8f57dbf1d3a45b027fb6fc0950d5818262153788a94f68e7237547ea7c8a76df",
+    "29884f32b893b9a92e2ac007d4ff32d4b00acc98061196cc8b17a27e00ba1e30",
+    "d54fba3a172767bfa6b9584bbaf28fd7a3a4128c5cf45ece71d94127695d5ecd",
   ],
   "watercourse-enhanced-culvert": [
     "0c5b896fd0aa34d5e4c46c8e1bff975f6ab8b82519881f2b894a1ba0ac9bf4b9",
@@ -478,61 +478,61 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
 }
 `;
 
-exports[`workbook output is pinned > BNG Service file from advance-delay/created-trees 1`] = `"ea45c2101c05390e1ef8f4ab9d46b12878cefba24a476242a25c14c2c9e1b392"`;
+exports[`workbook output is pinned > BNG Service file from advance-delay/created-trees 1`] = `"af4d27a3735e653991d4350b4631646d712ae1e09307c64ef7c13b8492e75c2f"`;
 
-exports[`workbook output is pinned > BNG Service file from conditions/area-spread 1`] = `"20b0b80dc277a35b67f819d1e9b5b85d01f1f25ae03111a4b1b8da376cadab88"`;
+exports[`workbook output is pinned > BNG Service file from conditions/area-spread 1`] = `"df329a837c19f9749c207bbb0c6c74a4661c3e446cef946d156cce217df05093"`;
 
-exports[`workbook output is pinned > BNG Service file from hedgerow-created 1`] = `"6e11080727c5b694dcb447865464baded2163f6025f401fe785f3dd80babdfdd"`;
+exports[`workbook output is pinned > BNG Service file from hedgerow-created 1`] = `"50ba1f72581c90f6b57448df4da978edb58ec47ddfbf3dc691fc56c9a9366ad6"`;
 
-exports[`workbook output is pinned > BNG Service file from intervention/area-created 1`] = `"fbab29a1f3a227f55cba8909419a6100d0dfdf6b520a0c960c739a95ab0fedd9"`;
+exports[`workbook output is pinned > BNG Service file from intervention/area-created 1`] = `"7e5f5f761875ad61dcd32b7e285b8268e34939cfd49558840f338cf368272f2a"`;
 
 exports[`workbook output is pinned > BNG Service file from intervention/area-enhanced-intertidal 1`] = `"7054fa8709b3763aeed8d545976a69992457946add98501934a183ad6ae4b635"`;
 
 exports[`workbook output is pinned > BNG Service file from intervention/hedgerow-condition-lowered 1`] = `"993c995ca4c2d8a0eb326df51aeb6cb2b90f0bf20e0c7d7e37a0ca6fcff836c8"`;
 
-exports[`workbook output is pinned > BNG Service file from intervention/watercourse-enhanced 1`] = `"95fdec7b9c184b0327232f553ddf606d14e9a287c2e9dcd8864421b4732cfa85"`;
+exports[`workbook output is pinned > BNG Service file from intervention/watercourse-enhanced 1`] = `"daf4539e7c3a7a8e0f6e93f353d42f16d520e388f0840ff70b58dc82e29949b6"`;
 
 exports[`workbook output is pinned > BNG Service file from intervention/watercourse-enhanced-culvert 1`] = `"5ff433689f6c3c90e0314ffcc26232aff4fe940402ccb741df72af004346feb3"`;
 
-exports[`workbook output is pinned > BNG Service file from net-gain/met 1`] = `"5b80e17c55c2926c6c8af76cce83b5d9d48c469fa13933d2d0d884320699bd48"`;
+exports[`workbook output is pinned > BNG Service file from net-gain/met 1`] = `"a546cbd3ac65838bcc9f7d734b0f2de25bfba3d7b2f2d014eb7eb981427ddf33"`;
 
-exports[`workbook output is pinned > BNG Service file from strategic-significance/spread 1`] = `"a2f7d940edaf6f9446325af004e11f50d534fa3f5875c7aff62b7a12c18131fa"`;
+exports[`workbook output is pinned > BNG Service file from strategic-significance/spread 1`] = `"738897f455f2e4e4219684ac6c37a6650a0a301acd1a140ceb93673e04f9bca3"`;
 
 exports[`workbook output is pinned > BNG Service file from trading-rules/trading-lost-to-development 1`] = `"bdd970ef81a02de54a4a917013e1b459512f3202e3f66f607f42cf7121e59e34"`;
 
-exports[`workbook output is pinned > BNG Service file from trading-rules/trading-lost-trees 1`] = `"8be5158e4db194e7dec0b3f0f85076a62ddf34e83d6ecb80c92b5add54d5953b"`;
+exports[`workbook output is pinned > BNG Service file from trading-rules/trading-lost-trees 1`] = `"e374c0920d2983b757c67cf415252c0ec1e6a392ef7d7b2607b8be4215d31454"`;
 
-exports[`workbook output is pinned > BNG Service file from trees/count-above-one 1`] = `"1ed93bf5e929447a30d94fa179709c68bdcf6082d613b5ba0a73e1182f1fb83d"`;
+exports[`workbook output is pinned > BNG Service file from trees/count-above-one 1`] = `"b3edf43856932ee8c29dbffec16e917c4cb43da1f26b682b64196897df70aa65"`;
 
-exports[`workbook output is pinned > a BNG Service baseline-stage file from a workbook 1`] = `"97ffa26baafa61b0529d73f78ba1aab9e686b6585663fa1b1869023bdcc93130"`;
+exports[`workbook output is pinned > a BNG Service baseline-stage file from a workbook 1`] = `"346ea57b0b7caf8833c942ce72c23837e870b0dfd785266b6fa126aad8f318b7"`;
 
-exports[`workbook output is pinned > a legacy baseline file alone 1`] = `"81e76511c225e95bc6197d6c10d2abf7b1479c91f2bbf4625bafcf5032efeae2"`;
+exports[`workbook output is pinned > a legacy baseline file alone 1`] = `"aaad9bfddaaa6c1ea75aa5eeb430d34bb7c76549f5b322d4440c7ef9a036635f"`;
 
 exports[`workbook output is pinned > legacy pair from advance-delay/created-trees 1`] = `
 [
   "84965226654f5836ed22043c4497b96326311469e0dacade9f171123ecee4f10",
-  "7e2f94c2a0e9502b32f7997e74455255cfd672878c0bdd77623923d2098420e5",
+  "cd01a7ac80c463bdbaf7686ff7fdbcf05be098a2fdd90988e715dc1735b28a68",
 ]
 `;
 
 exports[`workbook output is pinned > legacy pair from conditions/area-spread 1`] = `
 [
-  "e9f98da0cf57c452cb0a95e3866976d92e581069aabcc0047ca8f8251d64dfd8",
-  "72d281329cf81818d198e76c1507ed9e800a6c270cfbd66751cdb5b26cc6123a",
+  "65ef1b895dd6934aa7c389e798b2e1dc6e9fa970a9c53ef63e15cbe86d381aa2",
+  "fca74115f1f6a8de36bcca780f5fd4add460fd48e284259424f814e6b56cc96b",
 ]
 `;
 
 exports[`workbook output is pinned > legacy pair from hedgerow-created 1`] = `
 [
-  "9daf3ca7f1fd51ce089332c1f98666c57852478daa0fd477c6670c5db14725e5",
-  "ab5e9813bfd73105ce31aa28e16441de8c3fb3b00dbfb49dc52aa7b21f561c5c",
+  "d44dd527a71c743d93398ef7adaf733504394331be0cb035a21ca99991f42e81",
+  "b24269fba37ea39b04382ad866d009888feb8049be53de3cf826437b7922787d",
 ]
 `;
 
 exports[`workbook output is pinned > legacy pair from intervention/area-created 1`] = `
 [
-  "a435b18de31e1eb218a238f482a5d7aa4b44d5f83141ea26663ddbc7d5c1821a",
-  "58395f4b855511ff94d3e940efe7c7d8a8b9cb664f8b901007e6d5859492e7e3",
+  "0c74d4d01c381fc4ed3e76ad630ca1226ec3999e254bbcd703e97bedf9d40a37",
+  "a405e6ef5e3056ba1d3e8176cf25907e433eb59160786a539c9320602a0a54f9",
 ]
 `;
 
@@ -552,8 +552,8 @@ exports[`workbook output is pinned > legacy pair from intervention/hedgerow-cond
 
 exports[`workbook output is pinned > legacy pair from intervention/watercourse-enhanced 1`] = `
 [
-  "2c68ab687c828d66c54f17eb28d4fdf04de67c7ebeda4c75fc888fd766c4214c",
-  "325bc1e98a181bac94d03af2665332fbafa60adf59570167ca474f7a8bae2a1d",
+  "2f07f44fda9a47a37ba633291ac72d982ff203fcef0486f1424f62d356640ef8",
+  "3e34a6e443bbfd16cf2d097edaefa34048a9c604cf04c2485d40c4f2eb3b1aec",
 ]
 `;
 
@@ -566,15 +566,15 @@ exports[`workbook output is pinned > legacy pair from intervention/watercourse-e
 
 exports[`workbook output is pinned > legacy pair from net-gain/met 1`] = `
 [
-  "2c158bcae73dc2eb56fe80252db0b17431bbbfa52a3929ee02078e00e28f99a1",
-  "698aaa1cf4d81d3326a8ba45846916b5ec0ea50b9fb010f554ca1f1af1549c86",
+  "c19d0b1b170f2f6742e5eabc76c8bfe91a54bfdb7b8087071fa81a44b9d931b4",
+  "4f5968b4707a546e6862ec5e9e66bf2c39f5ea7a9ea69a5f99f44fa2bc58f962",
 ]
 `;
 
 exports[`workbook output is pinned > legacy pair from strategic-significance/spread 1`] = `
 [
-  "b6d7989b77c3b9345086903b865c5c5b04ba51387fd52579651c0c994533225f",
-  "6c27718ff8f654b7d86a034560fb8e8be10c510bed840e449ca3e40dfae879e4",
+  "f70c8a0831c296a2f299e774edf6d15fa5f0ac837c06ebe30087ca496c3fb44d",
+  "40f9e3def8d481cf6f0c2ff700e2a05158196ef946fcf44779e5747c3ac1fcac",
 ]
 `;
 
@@ -587,14 +587,14 @@ exports[`workbook output is pinned > legacy pair from trading-rules/trading-lost
 
 exports[`workbook output is pinned > legacy pair from trading-rules/trading-lost-trees 1`] = `
 [
-  "81e76511c225e95bc6197d6c10d2abf7b1479c91f2bbf4625bafcf5032efeae2",
-  "c0d504b6748b34b1c2f5a1f77cbeed245c4a25e6dee367795c8015b277b51db9",
+  "aaad9bfddaaa6c1ea75aa5eeb430d34bb7c76549f5b322d4440c7ef9a036635f",
+  "729201e9f42beb988f2eace915a55e075518f8f839faea9edc0c23d8b8533b06",
 ]
 `;
 
 exports[`workbook output is pinned > legacy pair from trees/count-above-one 1`] = `
 [
-  "55590865a0d155092c81500a19365cefd550f9d43dc7da85d32b9342627b1adc",
-  "29f6eb48ea9089813a934226dc75cb3fef381039c3fdf4134b733cd7118c4188",
+  "00697deafa4316864324aeddfe4454d1f68deac0e2f17848ba279156573b7ccb",
+  "c60d6841177e825ebd073e1de063651e43aeceae3440f6d9d44d9ec6de22ce4b",
 ]
 `;

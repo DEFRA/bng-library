@@ -76,8 +76,17 @@ function readLayer(db, table) {
     }))
 }
 
+const TREE_SUFFIX = / tree$/i
+
+/**
+ * A tree's metric habitat type from its "Rural or Urban Tree" value, which
+ * the template spells "Urban tree" and older generators spelt "Urban".
+ */
 function treeType(ruralOrUrban) {
-  return ruralOrUrban ? `${ruralOrUrban} tree` : null
+  if (!ruralOrUrban) {
+    return null
+  }
+  return `${String(ruralOrUrban).trim().replace(TREE_SUFFIX, '')} tree`
 }
 
 function treeAreaHectares(size, count) {

@@ -27,7 +27,16 @@ export const WORKBOOK_SURVEY_DETAILS = 'From metric workbook'
 // constants so any rename / pick-list change happens in one place.
 export const LOCATION_ON_SITE = 'On-site'
 export const TREE_SIZE_DEFAULT = 'Medium'
-export const RURAL_OR_URBAN_TREE_URBAN = 'Urban'
+// Spelt as the template's "Rural or Urban Tree" list spells it.
+export const RURAL_OR_URBAN_TREE_URBAN = 'Urban tree'
+// A metric workbook names a tree's habitat (urban or rural), not its origin,
+// so a tree written from one takes the template's first Tree Type.
+export const TREE_TYPE_DEFAULT = 'Native'
+
+/** The Tree Type a workbook tree is written with, or null for none. */
+export function treeTypeOf(type) {
+  return type ? TREE_TYPE_DEFAULT : null
+}
 export const SPATIAL_RISK_INSIDE_LPA =
   'Compensation inside LPA boundary or NCA of impact site'
 

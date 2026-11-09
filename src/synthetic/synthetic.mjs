@@ -26,6 +26,7 @@ import {
   URBAN_TREES_INSERT_COLUMNS,
   createAllTables,
   createLayerStyles,
+  legacyTreeSetting,
   openGeoPackage,
   registerLayer
 } from '../bng-schema.mjs'
@@ -294,8 +295,8 @@ function treeRow(tree) {
     SURVEY_COMPANY,
     BASE_MAP,
     tree.count,
-    baselineLinearAttribute(retention, tree.ruralOrUrban),
-    tree.ruralOrUrban
+    baselineLinearAttribute(retention, legacyTreeSetting(tree.ruralOrUrban)),
+    legacyTreeSetting(tree.ruralOrUrban)
   ]
 }
 

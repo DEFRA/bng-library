@@ -151,8 +151,8 @@ describe('synthetic generateOne — rural and urban trees', () => {
         )
         .all()
         .map((r) => r.t)
-      expect(types).toContain('Urban')
-      expect(types).toContain('Rural')
+      expect(types).toContain('Urban tree')
+      expect(types).toContain('Rural tree')
     } finally {
       db.close()
     }

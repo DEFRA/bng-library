@@ -24,7 +24,8 @@ import {
   SITE_NAME,
   SURVEY_DATE,
   WORKBOOK_IMPORT_LABEL,
-  WORKBOOK_SURVEY_DETAILS
+  WORKBOOK_SURVEY_DETAILS,
+  treeTypeOf
 } from '../../workbook/workbook-layers-shared.mjs'
 import { pairedLayer } from '../pair.mjs'
 import { redlineFeature, text } from '../site-features.mjs'
@@ -112,7 +113,7 @@ function lineBaselines(rows, coordsList, withEncroachment) {
   )
 }
 
-// Every tree is set Urban, as treeBaselineBindings and treePostBindings
+// Every tree is set Urban, and takes the default Tree Type, as treeBaselineBindings and treePostBindings
 // (workbook-layers-trees.mjs) write it.
 function treeBaselines(rows, instances) {
   return placed(
@@ -124,7 +125,7 @@ function treeBaselines(rows, instances) {
         retention: null,
         baseline: {
           size: instance.band,
-          type: rows[instance.rowIndex].type,
+          type: treeTypeOf(rows[instance.rowIndex].type),
           setting: RURAL_OR_URBAN_TREE_URBAN,
           condition: withoutListNumber(rows[instance.rowIndex].condition)
         }
@@ -190,7 +191,7 @@ function treePosts(rows, instances) {
         retention: row.retention,
         proposed: {
           size: instance.proposedBand,
-          type: row.proposed.type,
+          type: treeTypeOf(row.proposed.type),
           setting: RURAL_OR_URBAN_TREE_URBAN,
           ...proposedSide(row.proposed)
         }

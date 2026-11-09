@@ -303,8 +303,11 @@ problem for a file made with a lineage flaw.
 `src/bng-service/template/` from a checkout of
 [bng-metric-template](https://github.com/DEFRA/bng-metric-template): the
 GeoPackage's tables and columns, each column's drop-down from the QGIS
-project, and the CSV reference lists, byte for byte. `source.json` names the
-template commit. When the template changes, run
+project, and the CSV reference lists, byte for byte. `allowed-values.json`
+holds every value that each drop-down or filled-in column offers, in this
+template and the Natural England template together (`TEMPLATE_ALLOWED_VALUES`):
+the service refuses an uploaded value that none of them offers.
+`source.json` names the template commit. When the template changes, run
 `npm run sync:template -- ../bng-metric-template` and review the diff. With
 `BNG_METRIC_TEMPLATE` pointing at a checkout, the tests also compare the copy
 with the template's own GeoPackage.

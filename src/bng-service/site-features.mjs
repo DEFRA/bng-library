@@ -131,14 +131,18 @@ function riverBaseline(source) {
 }
 
 /**
- * A tree's Native or Non-native type. A source that does not say (a legacy
- * file holds a tree's setting, not its origin) draws one, 80% native.
+ * A tree's Native or Non-native type. A source that does not say (a metric
+ * workbook names a tree's setting, not its origin, and an older legacy file
+ * may hold a word such as "Street tree") draws one, 80% native. The draw is
+ * made whatever the source says, so a source that says does not change what
+ * the rest of the site draws.
  */
 function treeType(value, choose) {
+  const drawn = choose() < NATIVE_SHARE ? NATIVE : NON_NATIVE
   if (value === NATIVE || value === NON_NATIVE) {
     return value
   }
-  return choose() < NATIVE_SHARE ? NATIVE : NON_NATIVE
+  return drawn
 }
 
 // baseline: { size, type, setting, condition }

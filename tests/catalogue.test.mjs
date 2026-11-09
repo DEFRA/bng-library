@@ -211,7 +211,7 @@ describe('parseScenarioCatalogue', () => {
   })
 
   it('accepts the tree fields on trees only', () => {
-    const tree = { treeSize: 'Medium', treeType: 'Street tree' }
+    const tree = { treeSize: 'Medium', treeType: 'Native' }
     expect(
       problems(catalogue(scenario({ overrides: { trees: [tree] } })))
     ).toEqual([])

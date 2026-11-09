@@ -46,6 +46,20 @@ export const HEDGEROWS_INSERT_COLUMNS = 23
 export const RIVERS_INSERT_COLUMNS = 28
 export const URBAN_TREES_INSERT_COLUMNS = 26
 
+const TREE_SETTING_SUFFIX = ' tree'
+
+/**
+ * A tree's setting as the Natural England template's "Rural or Urban Tree"
+ * lists spell it: "Urban" → "Urban tree". A value already spelt that way, a
+ * placeholder such as "N/A", and a blank are written as they are.
+ */
+export function legacyTreeSetting(setting) {
+  if (setting !== 'Urban' && setting !== 'Rural') {
+    return setting ?? null
+  }
+  return `${setting}${TREE_SETTING_SUFFIX}`
+}
+
 /**
  * Initialise an existing better-sqlite3 handle as a BNG-flavoured
  * GeoPackage: standard gpkg_* tables, mandatory OGC SRSes, and the BNG

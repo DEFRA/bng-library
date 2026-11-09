@@ -25,6 +25,9 @@
  * against drop-downs.json and the reference lists, so a change to the template
  * reaches the library by running this again and reviewing the diff. Nothing
  * here is edited by hand.
+ *
+ * Importing this module runs nothing: `readAllowedValues` is exported for
+ * its tests.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -298,7 +301,7 @@ function listCsvFiles(dir) {
  * a value that no list offers (BMD-1175): a check that the value is one of
  * the template's words at all, not that it fits the rest of its row.
  */
-function readAllowedValues(templates) {
+export function readAllowedValues(templates) {
   const allowed = new Map()
   for (const { projectFile, referenceDir } of templates) {
     for (const [column, dropDown] of everyDropDown(
@@ -444,4 +447,7 @@ function main() {
   )
 }
 
-main()
+// Run only as a command, so that a test can import what it reads.
+if (import.meta.main) {
+  main()
+}

@@ -63,7 +63,7 @@ const OVERRIDE_FIELDS = {
     'lengthRange',
     'sameLineAs'
   ],
-  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count']
+  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count', 'replants']
 }
 // Vertical area habitats are drawn by the BNG Service generator alone
 // (`addVerticalHabitats`), which takes these fields and no others: its
@@ -164,6 +164,27 @@ function checkSameLineAs(layer, row, index, where) {
   return problems
 }
 
+// `replants` names an earlier tree, by its ref, that a Created tree is
+// planted in place of: the earlier tree must be lost, and the row takes its
+// point.
+function checkReplants(layer, rows, row, index, where) {
+  if (layer !== 'trees' || !isObject(row) || !('replants' in row)) {
+    return []
+  }
+  const problems =
+    row.retention === 'Created'
+      ? []
+      : [`${where}.replants: only a Created tree is planted in another's place`]
+  const match = /^T(\d+)$/.exec(row.replants)
+  const target = match ? Number(match[1]) : 0
+  if (target < 1 || target > index || rows[target - 1]?.retention !== 'Lost') {
+    problems.push(
+      `${where}.replants: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
+    )
+  }
+  return problems
+}
+
 // The strategic significance a scenario may pin, per Defra's LNRS guidance:
 // Low at baseline, and Low or High for a proposed feature.
 const ALLOWED_STRATEGIC_SIGNIFICANCE = {
@@ -222,7 +243,8 @@ function checkOverrides(overrides, where) {
         Array.isArray(rows)
           ? rows.flatMap((row, i) => [
               ...checkOverrideRow(layer, row, `${where}.${layer}[${i}]`),
-              ...checkSameLineAs(layer, row, i, `${where}.${layer}[${i}]`)
+              ...checkSameLineAs(layer, row, i, `${where}.${layer}[${i}]`),
+              ...checkReplants(layer, rows, row, i, `${where}.${layer}[${i}]`)
             ])
           : [`${where}.${layer}: must be a list of rows`]
       )

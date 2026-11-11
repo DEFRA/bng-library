@@ -131,8 +131,22 @@ function drawTree(point, i, override) {
 }
 
 /**
+ * The index of the earlier tree a row's `replants` names ("T001" is the
+ * first), or null when the row is not planted in another's place. The
+ * catalogue checks the ref names an earlier, lost tree.
+ */
+function replantedIndex(override) {
+  const match = /(\d+)$/.exec(override?.replants ?? '')
+  return match ? Number(match[1]) - 1 : null
+}
+
+/**
  * `count` trees inside `boundaryRing`, fewer if no interior point can be
- * found. `perRowOverrides[i]`, if provided, pins values on tree i.
+ * found. `perRowOverrides[i]`, if provided, pins values on tree i. A tree
+ * pinned with `replants` stands on the point of the earlier tree it names,
+ * planted where that one is felled, and records which it replaces. Its own
+ * point is still drawn, so the rest of the site draws as it would without
+ * the pin.
  */
 export function drawTrees(boundaryRing, count, perRowOverrides) {
   const trees = []
@@ -141,7 +155,10 @@ export function drawTrees(boundaryRing, count, perRowOverrides) {
     if (!point) {
       break
     }
-    trees.push(drawTree(point, trees.length, perRowOverrides?.[trees.length]))
+    const override = perRowOverrides?.[trees.length]
+    const replaced = trees[replantedIndex(override)]
+    const tree = drawTree(replaced?.point ?? point, trees.length, override)
+    trees.push(replaced ? { ...tree, replants: replaced.ref } : tree)
   }
   return trees
 }

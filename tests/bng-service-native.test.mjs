@@ -11,6 +11,7 @@ import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import {
+  checkLineage,
   checkTemplateValues,
   generateBngServiceFromWorkbook,
   generateBaselineFile,
@@ -261,5 +262,81 @@ describe('the row overrides a native site takes', () => {
     expect(normaliseOverrides({ trees: [{ count: 1 }] })).toEqual({
       trees: [{ count: 1 }]
     })
+  })
+})
+
+describe("a tree planted in a felled one's place", () => {
+  const TREES = [
+    { retention: 'Lost' },
+    { retention: 'Created', replants: 'T001' },
+    { retention: 'Created' }
+  ]
+
+  function trees(overrides, name) {
+    const file = path.join(dir, name)
+    generateBngServiceSynthetic(
+      file,
+      CENTRE,
+      {
+        numParcels: 1,
+        numTrees: TREES.length,
+        seed: 3,
+        attributeOverrides: { trees: overrides }
+      },
+      { templateFeatures: false }
+    )
+    const db = new Database(file, { readonly: true })
+    try {
+      const read = (stage) =>
+        db
+          .prepare(
+            `SELECT * FROM "Individual Trees ${stage}" ORDER BY "Habitat Ref"`
+          )
+          .all()
+      return {
+        file,
+        baseline: read('Baseline'),
+        post: read('Post-Intervention')
+      }
+    } finally {
+      db.close()
+    }
+  }
+
+  it('stands on its point, linked to it, and is still a newly planted creation', () => {
+    const { file, baseline, post } = trees(TREES, 'replanted.gpkg')
+    const [felled] = baseline
+    expect(felled['Habitat Ref']).toBe('T001')
+    const planted = post.find((row) => row['Habitat Ref'] === 'T002')
+    expect(planted).toMatchObject({
+      'Parent Ref': 'T001',
+      parent_uuid: felled.feature_uuid,
+      'Retention Category': 'Created',
+      Category: 'Newly Planted',
+      'Baseline Tree Size': 'N/A',
+      'Baseline Condition': 'N/A'
+    })
+    expect(planted.geom.equals(felled.geom)).toBe(true)
+    expect(
+      post.find((row) => row['Habitat Ref'] === 'T003')['Parent Ref']
+    ).toBeNull()
+    expect(checkLineage(file)).toEqual([])
+    expect(checkTemplateValues(file)).toEqual([])
+  })
+
+  it('leaves the rest of the site drawn as without the pin', () => {
+    const plain = trees(
+      TREES.map(({ replants, ...row }) => row),
+      'plain.gpkg'
+    )
+    const pinned = trees(TREES, 'pinned.gpkg')
+    const point = (rows, ref) =>
+      rows.find((row) => row['Habitat Ref'] === ref).geom
+    expect(point(pinned.post, 'T003').equals(point(plain.post, 'T003'))).toBe(
+      true
+    )
+    expect(point(pinned.post, 'T002').equals(point(plain.post, 'T002'))).toBe(
+      false
+    )
   })
 })

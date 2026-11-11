@@ -7,6 +7,8 @@
  * - Strategic significance is `Low` or `High`, or the legacy wording.
  * - An area habitat's `Lost` is a creation in a new broad type, written as
  *   Created; a hedgerow, watercourse or tree that is `Lost` is removed.
+ * - A Created tree that `replants` an earlier, felled one stands on its point
+ *   and is linked to it as its parent.
  * - A tree's `count` is ignored, with a warning: the template has no Count
  *   column, so each tree point is one tree. How the service should record
  *   several trees at one point is still being decided; until it is, this is
@@ -49,7 +51,14 @@ const KEYS = {
     'proposedWaterEncroachment',
     'proposedRiparianEncroachment'
   ]),
-  trees: new Set([...COMMON, 'treeSize', 'treeType', 'ruralOrUrban', 'count']),
+  trees: new Set([
+    ...COMMON,
+    'treeSize',
+    'treeType',
+    'ruralOrUrban',
+    'count',
+    'replants'
+  ]),
   verticalHabitats: new Set([
     'habitatFullName',
     'retention',

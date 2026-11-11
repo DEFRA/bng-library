@@ -425,6 +425,11 @@ function writeLayers(db, site) {
  *                                      baseline stays "N/A"); count — the
  *                                      "Count" column, the number of trees
  *                                      the point stands for (default 1)
+ *                          trees       replants — on a Created tree, the
+ *                                      ref of an earlier Lost tree ("T001"),
+ *                                      whose point the row takes: a tree
+ *                                      planted where another is felled,
+ *                                      linked to it in the BNG Service format
  *                        `incomplete: true` blanks the row's proposed-side
  *                        condition, strategic-significance and encroachment
  *                        cells to model unfinished post-intervention data;

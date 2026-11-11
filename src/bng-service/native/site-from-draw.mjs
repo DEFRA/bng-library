@@ -5,6 +5,8 @@
  */
 
 import { significance } from '../vocabulary.mjs'
+import { HABITAT_REF } from '../schema.mjs'
+import { geometryWkt } from '../site.mjs'
 import { layerFromSources, redlineFeature, text } from '../site-features.mjs'
 import {
   BASE_MAP,
@@ -101,6 +103,36 @@ function drawnSource(layerKey, feature, index) {
   }
 }
 
+/**
+ * Link each tree planted in a felled one's place (`replants`) to that tree,
+ * as a surveyor links a new planting to the tree it replaces: by its Parent
+ * Ref, parent_uuid and parent_geom. It stays a creation, its Baseline columns
+ * "N/A", and the felled tree is still lost, as the Metric counts it.
+ */
+function linkReplantedTrees(drawnTrees, layer) {
+  drawnTrees.forEach((tree, index) => {
+    if (!tree.replants) {
+      return
+    }
+    const felled = layer.baseline.find(
+      (feature) => feature.values[HABITAT_REF] === tree.replants
+    )
+    const planted = layer.postIntervention.find(
+      (feature) => feature.source.index === index
+    )
+    if (!felled || !planted) {
+      throw new Error(
+        `tree ${tree.ref} replants ${tree.replants}, which is not a felled tree of the site`
+      )
+    }
+    planted.lineage = {
+      ref: tree.replants,
+      uuid: felled.uuid,
+      geom: geometryWkt(felled.geometry)
+    }
+  })
+}
+
 /** The survey details, from the first layer that has a feature. */
 function survey(drawn) {
   const layerKey = LAYER_KEYS.find((key) => drawn[key]?.length > 0)
@@ -129,6 +161,7 @@ export function siteFromDraw(drawn, options) {
     )
     layers[layerKey] = layerFromSources(layerKey, sources, options)
   }
+  linkReplantedTrees(drawn.trees ?? [], layers.trees)
   layers.verticalHabitats = { baseline: [], postIntervention: [] }
   return {
     redline: redlineFeature(polygon(drawn.ring), SITE_NAME, survey(drawn)),

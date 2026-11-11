@@ -10,7 +10,7 @@ import {
   LOCATIONS,
   PROPOSED_STRATEGIC_SIGNIFICANCE,
   SPATIAL_RISK_HABITAT,
-  TREE_TYPE_STREET
+  TREE_TYPES
 } from '../synthetic-constants.mjs'
 import { AREA } from '../valid-draws.mjs'
 import {
@@ -26,14 +26,9 @@ const MAX_TREE_DELAY_YEARS = 2
 const TREE_COUNT_DEFAULT = 1
 
 export const TREE_SIZES = ['Small', 'Medium', 'Large', 'Very large']
-// The two individual-tree habitat types: each tree is Urban or Rural.
+// The two individual-tree habitat types: each tree is Urban or Rural. The
+// legacy writer spells them as the template's list does ("Urban tree").
 const TREE_RURAL_URBAN = ['Urban', 'Rural']
-const TREE_TYPES = [
-  TREE_TYPE_STREET,
-  'Park/garden tree',
-  'Woodland tree',
-  'Hedgerow tree'
-]
 
 // An individual tree's retention values that carry a real baseline, so the
 // seeded non-created trees draw from these only.

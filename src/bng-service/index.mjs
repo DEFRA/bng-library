@@ -33,6 +33,7 @@ export {
   versionRecordText
 } from './schema.mjs'
 export {
+  TEMPLATE_ALLOWED_VALUES,
   TEMPLATE_DROP_DOWNS,
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE

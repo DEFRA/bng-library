@@ -34,7 +34,9 @@ export const MAPPED_BY = 'J. Smith'
 export const SURVEY_COMPANY = 'Ecological Consultants Ltd'
 export const BASE_MAP = 'OS MasterMap'
 export const BAD_FIXTURE_SURVEY_DETAILS = 'Bad-mode fixture'
-export const TREE_TYPE_STREET = 'Street tree'
+// A tree's type, as the Natural England template's list offers it.
+export const TREE_TYPE_NATIVE = 'Native'
+export const TREE_TYPES = [TREE_TYPE_NATIVE, 'Non-native']
 
 // Synthetic-mode sizing rules. Scale linear features / trees off the parcel
 // count with sensible floors so a small `--size` still produces a fixture

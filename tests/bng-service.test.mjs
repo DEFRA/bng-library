@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   BNG_SERVICE_FLAW_NAMES,
   CURRENT_TEMPLATE_VERSION,
+  TEMPLATE_ALLOWED_VALUES,
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE,
   captureMessages,
@@ -150,6 +151,33 @@ describe('the copy of the BNG Service template', () => {
       })
     }
   )
+})
+
+describe('the values each drop-down or filled-in column allows', () => {
+  it('holds the BNG Service template words and the Natural England ones', () => {
+    expect(TEMPLATE_ALLOWED_VALUES['Baseline Condition']).toEqual(
+      expect.arrayContaining(['Fairly Poor', '4. Fairly Poor'])
+    )
+    expect(TEMPLATE_ALLOWED_VALUES['Proposed Strategic Significance']).toEqual(
+      expect.arrayContaining(['Low', 'Formally identified in local strategy'])
+    )
+  })
+
+  it('holds the vertical area habitats, whose IGGI type is the longest habitat type', () => {
+    const iggi =
+      'Artificial hard structures with integrated greening of grey infrastructure (IGGI)'
+    const types = TEMPLATE_ALLOWED_VALUES['Baseline Habitat Type']
+    expect(types).toContain(iggi)
+    expect(Math.max(...types.map((type) => Array.from(type).length))).toBe(
+      Array.from(iggi).length
+    )
+  })
+
+  it('holds the bands that the template fills in itself', () => {
+    expect(TEMPLATE_ALLOWED_VALUES['Baseline Distinctiveness']).toEqual(
+      expect.arrayContaining(['V.Low', 'Low', 'Medium', 'High', 'V.High'])
+    )
+  })
 })
 
 describe('AC1: a synthetic site in the new format', () => {
@@ -1352,7 +1380,10 @@ describe('AC6: flaws in the new format', () => {
       type: 'Polygon',
       coordinates: [[...line.coordinates, line.coordinates[0]]]
     }
-    expect(iggi.Area).toBeCloseTo(areaSquareMetres(polygon) / SQ_M_PER_HECTARE, 10)
+    expect(iggi.Area).toBeCloseTo(
+      areaSquareMetres(polygon) / SQ_M_PER_HECTARE,
+      10
+    )
   })
 })
 

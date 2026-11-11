@@ -13,6 +13,10 @@
  *   drop-downs.json  each column's drop-down, read from the QGIS project: a
  *                    fixed list, or a reference list with its key column and
  *                    the filter that narrows it by an earlier choice
+ *   allowed-values.json
+ *                    each drop-down or filled-in column's every value, in
+ *                    this template and the Natural England template together,
+ *                    which the service checks an upload's values against
  *   source.json      the template commit these came from, and the format and
  *                    version its GeoPackage records
  *   reference/       the template's CSV References, copied byte for byte
@@ -21,6 +25,9 @@
  * against drop-downs.json and the reference lists, so a change to the template
  * reaches the library by running this again and reviewing the diff. Nothing
  * here is edited by hand.
+ *
+ * Importing this module runs nothing: `readAllowedValues` is exported for
+ * its tests.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -29,17 +36,27 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync
 } from 'node:fs'
 import path from 'node:path'
 import Database from 'better-sqlite3'
+import { parseCsv } from '../src/bng-service/reference.mjs'
 import { readZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const TEMPLATE_DIR = path.join('templates', 'bng-service')
 const PROJECT_FILE = 'BNG Service Habitat Mapping.qgz'
 const LAYERS_FILE = path.join('Layers', 'BNG Service Layers.gpkg')
 const REFERENCE_DIR = 'CSV References'
+const LEGACY_DIR = path.join('templates', 'legacy-ne')
+const LEGACY_PROJECT_FILE = 'Net Gain Habitat Mapping.qgz'
+const DISTINCTIVENESS_COLUMNS = [
+  'Baseline Distinctiveness',
+  'Proposed Distinctiveness'
+]
+const BASELINE_SIGNIFICANCE = 'Baseline Strategic Significance'
+const PROPOSED_SIGNIFICANCE = 'Proposed Strategic Significance'
 const OUT_DIR = path.resolve(
   import.meta.dirname,
   '..',
@@ -161,6 +178,162 @@ function readDropDowns(projectXml) {
   return dropDowns
 }
 
+/**
+ * Layers by id and, where a drop-down's layer id is stale, by the layer name
+ * the drop-down also records: the Natural England project holds such links.
+ */
+function layersByIdOrName(layers, projectXml) {
+  const byId = new Map(layers.map((layer) => [layer.id, layer]))
+  const byName = new Map(
+    layers.map((layer) => [
+      decodeXml(/<layername>([^<]*)<\/layername>/.exec(layer.xml)?.[1] ?? ''),
+      layer
+    ])
+  )
+  for (const [widget] of projectXml.matchAll(
+    /<editWidget type="ValueRelation">[\s\S]*?<\/editWidget>/g
+  )) {
+    const config = Object.fromEntries(
+      options(widget).map((o) => [o.name, o.value])
+    )
+    if (!byId.has(config.Layer) && byName.has(config.LayerName)) {
+      byId.set(config.Layer, byName.get(config.LayerName))
+    }
+  }
+  return byId
+}
+
+/**
+ * Whether a value relation reads one of the template's reference lists. The
+ * Natural England project also has some that read another of its own
+ * layers, such as a tree's, which offer no list of words.
+ */
+function listsReference(widget, layersById) {
+  const layer = options(widget).find((o) => o.name === 'Layer')?.value
+  return decodeURIComponent(layersById.get(layer)?.datasource ?? '').includes(
+    `${REFERENCE_DIR}/`
+  )
+}
+
+/** Every drop-down of every layer in a project, layer by layer. */
+function everyDropDown(projectXml) {
+  const layers = readLayers(projectXml)
+  const layersById = layersByIdOrName(layers, projectXml)
+  const dropDowns = []
+  for (const layer of layers) {
+    const fields = /<fieldConfiguration>([\s\S]*?)<\/fieldConfiguration>/.exec(
+      layer.xml
+    )
+    for (const [, name, body] of fields?.[1].matchAll(
+      /<field name="([^"]*)"[^>]*>([\s\S]*?)<\/field>/g
+    ) ?? []) {
+      const type = /<editWidget type="([^"]*)"/.exec(body)?.[1]
+      if (type === 'ValueMap') {
+        dropDowns.push([decodeXml(name), fixedList(body)])
+      } else if (type === 'ValueRelation' && listsReference(body, layersById)) {
+        dropDowns.push([decodeXml(name), referenceList(body, layersById)])
+      }
+    }
+  }
+  return dropDowns
+}
+
+function readCsvRecords(file) {
+  const [header, ...rows] = parseCsv(readFileSync(file, 'utf8'))
+  return rows.map((row) =>
+    Object.fromEntries(header.map((h, i) => [h, row[i] ?? '']))
+  )
+}
+
+function readProjectXml(projectFile) {
+  const project = readZip(readFileSync(projectFile))
+  const qgs = project.names.find((n) => n.endsWith('.qgs'))
+  return project.read(qgs).toString('utf8')
+}
+
+/** Add `value` to the set for `column`, unless it is blank. */
+function addAllowed(allowed, column, value) {
+  const text = (value ?? '').trim()
+  if (text === '') {
+    return
+  }
+  if (!allowed.has(column)) {
+    allowed.set(column, new Set())
+  }
+  allowed.get(column).add(text)
+}
+
+/**
+ * The distinctiveness bands, which the BNG Service template fills in from a
+ * list rather than offering in a drop-down: every value of every
+ * distinctiveness column of every distinctiveness list.
+ */
+function addDistinctiveness(allowed, referenceDir) {
+  for (const file of listCsvFiles(referenceDir)) {
+    if (!path.basename(file).includes('Distinctiveness')) {
+      continue
+    }
+    for (const record of readCsvRecords(file)) {
+      for (const [header, value] of Object.entries(record)) {
+        if (/distinctiv/i.test(header)) {
+          for (const column of DISTINCTIVENESS_COLUMNS) {
+            addAllowed(allowed, column, value)
+          }
+        }
+      }
+    }
+  }
+}
+
+function listCsvFiles(dir) {
+  return readdirSync(dir, { recursive: true })
+    .filter((name) => name.endsWith('.csv'))
+    .map((name) => path.join(dir, name))
+    .sort()
+}
+
+/**
+ * column → every value a drop-down or a filled-in column offers, in either
+ * template: the BNG Service template, and the Natural England template that
+ * legacy uploads follow. A list may differ from layer to layer, and the
+ * Natural England template has several layers for one table, so a column's
+ * values are those of all of them together. The service uses this to refuse
+ * a value that no list offers (BMD-1175): a check that the value is one of
+ * the template's words at all, not that it fits the rest of its row.
+ */
+export function readAllowedValues(templates) {
+  const allowed = new Map()
+  for (const { projectFile, referenceDir } of templates) {
+    for (const [column, dropDown] of everyDropDown(
+      readProjectXml(projectFile)
+    )) {
+      const values =
+        dropDown.kind === 'list'
+          ? dropDown.values
+          : readCsvRecords(path.join(referenceDir, dropDown.list)).map(
+              (record) => record[dropDown.key]
+            )
+      for (const value of values) {
+        addAllowed(allowed, column, value)
+      }
+    }
+    addDistinctiveness(allowed, referenceDir)
+  }
+  // The template fills in baseline strategic significance; the post-
+  // intervention column's lists hold the same words.
+  for (const value of allowed.get(PROPOSED_SIGNIFICANCE) ?? []) {
+    addAllowed(allowed, BASELINE_SIGNIFICANCE, value)
+  }
+  return Object.fromEntries(
+    [...allowed]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([column, values]) => [
+        column,
+        [...values].sort((a, b) => a.localeCompare(b))
+      ])
+  )
+}
+
 function readSchema(gpkgPath) {
   const db = new Database(gpkgPath, { readonly: true })
   try {
@@ -230,9 +403,23 @@ function main() {
   }
   console.log(`Reading the BNG Service template at ${template}`)
 
-  const project = readZip(readFileSync(path.join(template, PROJECT_FILE)))
-  const qgs = project.names.find((n) => n.endsWith('.qgs'))
-  const dropDowns = readDropDowns(project.read(qgs).toString('utf8'))
+  const dropDowns = readDropDowns(
+    readProjectXml(path.join(template, PROJECT_FILE))
+  )
+  const legacy = path.resolve(checkout, LEGACY_DIR)
+  if (!existsSync(path.join(legacy, LEGACY_PROJECT_FILE))) {
+    fail(`no Natural England template at ${legacy}`)
+  }
+  const allowedValues = readAllowedValues([
+    {
+      projectFile: path.join(template, PROJECT_FILE),
+      referenceDir: path.join(template, REFERENCE_DIR)
+    },
+    {
+      projectFile: path.join(legacy, LEGACY_PROJECT_FILE),
+      referenceDir: path.join(legacy, REFERENCE_DIR)
+    }
+  ])
   const { tables, metadata } = readSchema(path.join(template, LAYERS_FILE))
   if (metadata.length !== 1) {
     fail(`expected one template version record, found ${metadata.length}`)
@@ -246,6 +433,7 @@ function main() {
   })
   writeJson('schema.json', { tables })
   writeJson('drop-downs.json', dropDowns)
+  writeJson('allowed-values.json', allowedValues)
   writeJson('source.json', {
     repository: REPOSITORY,
     commit: templateCommit(checkout),
@@ -259,4 +447,7 @@ function main() {
   )
 }
 
-main()
+// Run only as a command, so that a test can import what it reads.
+if (import.meta.main) {
+  main()
+}

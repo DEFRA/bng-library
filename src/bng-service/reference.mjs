@@ -21,6 +21,15 @@ export const TEMPLATE_SCHEMA = Object.freeze(readJson('schema.json'))
 /** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
 export const TEMPLATE_DROP_DOWNS = Object.freeze(readJson('drop-downs.json'))
 
+/**
+ * column → every value that a drop-down or filled-in column offers, in this
+ * template or the Natural England template, as each list spells it (with or
+ * without a list number).
+ */
+export const TEMPLATE_ALLOWED_VALUES = Object.freeze(
+  readJson('allowed-values.json')
+)
+
 const BOM = '﻿'
 
 /**

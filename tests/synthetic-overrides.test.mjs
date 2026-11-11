@@ -475,7 +475,7 @@ describe('attributeOverrides — trees', () => {
           {
             retention: 'Created',
             treeSize: 'Large',
-            treeType: 'Street tree',
+            treeType: 'Non-native',
             ruralOrUrban: 'Urban',
             proposedCondition: 'Poor',
             proposedStrategicSignificance: SS_OTHER,
@@ -518,8 +518,8 @@ describe('attributeOverrides — trees', () => {
     expect(row['Retention Category']).toBe('Created')
     expect(row.Category).toBe('Newly Planted')
     expect(row['Proposed Tree Size']).toBe('Large')
-    expect(row['Proposed Tree Type']).toBe('Street tree')
-    expect(row['Proposed Rural or Urban Tree']).toBe('Urban')
+    expect(row['Proposed Tree Type']).toBe('Non-native')
+    expect(row['Proposed Rural or Urban Tree']).toBe('Urban tree')
     expect(row['Proposed Condition']).toBe('Poor')
     expect(row['Proposed Strategic Significance']).toBe(SS_OTHER)
     expect(row['Baseline Tree Size']).toBe('N/A')
@@ -544,8 +544,8 @@ describe('attributeOverrides — trees', () => {
     expect(row['Retention Category']).toBe('Enhanced')
     expect(row['Baseline Tree Size']).toBe('Small')
     expect(row['Proposed Tree Size']).toBe('Small')
-    expect(row['Baseline Rural or Urban Tree']).toBe('Rural')
-    expect(row['Proposed Rural or Urban Tree']).toBe('Rural')
+    expect(row['Baseline Rural or Urban Tree']).toBe('Rural tree')
+    expect(row['Proposed Rural or Urban Tree']).toBe('Rural tree')
     expect(row['Baseline Condition']).toBe('Poor')
     expect(row['Proposed Condition']).toBe('Good')
     expect(row['Baseline Strategic Significance']).toBe(SS_LOCAL)

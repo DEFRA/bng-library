@@ -22,10 +22,12 @@ import {
   URBAN_TREES_INSERT_COLUMNS,
   createAllTables,
   createLayerStyles,
+  legacyTreeSetting,
   openGeoPackage,
   registerLayer
 } from '../bng-schema.mjs'
 import { linestringLength, polygonArea } from '../geometry.mjs'
+import { TREE_CATEGORY_EXISTING } from '../retention.mjs'
 import {
   FEATURE_REF_PAD,
   FEATURE_REF_PAD_CHAR
@@ -51,7 +53,7 @@ import {
   STRATEGIC_SIGNIFICANCE,
   SURVEY_COMPANY,
   SURVEY_DATE,
-  TREE_TYPE_STREET,
+  TREE_TYPE_NATIVE,
   WATERCOURSE_DISTINCTIVENESS
 } from './synthetic-constants.mjs'
 import { FLAWS, badSquareRing } from './flaws.mjs'
@@ -78,12 +80,13 @@ export const BAD_VALUES = Object.freeze({
   waterEncroachment: ENCROACHMENT_WATERCOURSE[0],
   riparianEncroachment: ENCROACHMENT_RIPARIAN[0],
   treeSize: TREE_SIZE_DEFAULT,
-  treeType: TREE_TYPE_STREET,
+  treeType: TREE_TYPE_NATIVE,
   siteName: `${SITE_NAME} (BAD)`
 })
 const BAD_HEDGE_DISTINCTIVENESS = HEDGEROW_DISTINCTIVENESS[BAD_HEDGE_TYPE]
 const BAD_RIVER_DISTINCTIVENESS = WATERCOURSE_DISTINCTIVENESS[BAD_RIVER_TYPE]
 const TREE_COUNT_DEFAULT = 1
+const BAD_TREE_SETTING = legacyTreeSetting('Urban')
 
 function badRef(prefix, i) {
   return `${prefix}${String(i + 1).padStart(FEATURE_REF_PAD, FEATURE_REF_PAD_CHAR)}`
@@ -310,13 +313,13 @@ function insertBadTrees(db, points) {
       TREE_SIZE_DEFAULT,
       CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
-      TREE_TYPE_STREET,
+      TREE_TYPE_NATIVE,
       'Retained',
-      'Retained',
+      TREE_CATEGORY_EXISTING,
       TREE_SIZE_DEFAULT,
       CONDITIONS[0],
       STRATEGIC_SIGNIFICANCE[0],
-      TREE_TYPE_STREET,
+      TREE_TYPE_NATIVE,
       LOCATION_ON_SITE,
       ZERO_YEARS,
       ZERO_YEARS,
@@ -329,8 +332,8 @@ function insertBadTrees(db, points) {
       SURVEY_COMPANY,
       BASE_MAP,
       TREE_COUNT_DEFAULT,
-      'Urban',
-      'Urban'
+      BAD_TREE_SETTING,
+      BAD_TREE_SETTING
     )
   })
   registerLayer(db, 'Urban Trees', 'POINT', env)

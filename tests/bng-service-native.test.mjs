@@ -324,6 +324,34 @@ describe("a tree planted in a felled one's place", () => {
     expect(checkTemplateValues(file)).toEqual([])
   })
 
+  it.each([
+    [
+      'a tree that is not Created',
+      [{ retention: 'Lost' }, { retention: 'Retained', replants: 'T001' }],
+      /trees row 1: replants "T001": only a Created tree/
+    ],
+    [
+      'a tree that is not Lost',
+      [{ retention: 'Retained' }, { retention: 'Created', replants: 'T001' }],
+      /trees row 1: replants "T001": must name an earlier tree that is Lost/
+    ],
+    [
+      'the tree itself or a later one',
+      [{ retention: 'Lost' }, { retention: 'Created', replants: 'T002' }],
+      /trees row 1: replants "T002": must name an earlier tree that is Lost/
+    ],
+    [
+      'a ref of another layer',
+      [{ retention: 'Lost' }, { retention: 'Created', replants: 'HG001' }],
+      /trees row 1: replants "HG001": must name an earlier tree that is Lost/
+    ]
+  ])(
+    'refuses a direct caller that replants %s, as the catalogue does',
+    (_, overrides, message) => {
+      expect(() => trees(overrides, 'refused.gpkg')).toThrow(message)
+    }
+  )
+
   it('leaves the rest of the site drawn as without the pin', () => {
     const plain = trees(
       TREES.map(({ replants, ...row }) => row),

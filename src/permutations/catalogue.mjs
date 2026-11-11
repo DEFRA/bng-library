@@ -14,6 +14,7 @@ import {
   PROPOSED_STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
+import { replantedTreeIndex } from '../synthetic/draw/trees.mjs'
 import { FORMAT_BNG_SERVICE, VALID_FORMATS } from '../bng-service/schema.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
@@ -175,9 +176,8 @@ function checkReplants(layer, rows, row, index, where) {
     row.retention === 'Created'
       ? []
       : [`${where}.replants: only a Created tree is planted in another's place`]
-  const match = /^T(\d+)$/.exec(row.replants)
-  const target = match ? Number(match[1]) : 0
-  if (target < 1 || target > index || rows[target - 1]?.retention !== 'Lost') {
+  const target = replantedTreeIndex(row.replants) ?? -1
+  if (target < 0 || target >= index || rows[target]?.retention !== 'Lost') {
     problems.push(
       `${where}.replants: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
     )

@@ -4,7 +4,7 @@
  */
 
 import { pick, pickInteriorPoint } from '../../geometry.mjs'
-import { RETENTION_CREATED } from '../../retention.mjs'
+import { RETENTION_CREATED, RETENTION_LOST } from '../../retention.mjs'
 import {
   BASELINE_STRATEGIC_SIGNIFICANCE,
   LOCATIONS,
@@ -131,13 +131,34 @@ function drawTree(point, i, override) {
 }
 
 /**
- * The index of the earlier tree a row's `replants` names ("T001" is the
- * first), or null when the row is not planted in another's place. The
- * catalogue checks the ref names an earlier, lost tree.
+ * The index of the tree a `replants` ref names ("T001" is the first), or
+ * null when it is not a tree ref. The catalogue reads refs with it too.
  */
-function replantedIndex(override) {
-  const match = /(\d+)$/.exec(override?.replants ?? '')
+export function replantedTreeIndex(ref) {
+  const match = /^T(\d+)$/.exec(ref ?? '')
   return match ? Number(match[1]) - 1 : null
+}
+
+/**
+ * The earlier, felled tree a row's `replants` names, or null when the row
+ * has none. Throws where the pin cannot mean a tree planted in a felled
+ * one's place, so a direct caller is held to the catalogue's rules.
+ */
+function replacedTree(trees, tree, override) {
+  if (override?.replants === undefined) {
+    return null
+  }
+  const where = `trees row ${trees.length}: replants ${JSON.stringify(override.replants)}`
+  if (tree.retention !== RETENTION_CREATED) {
+    throw new Error(
+      `${where}: only a Created tree is planted in another's place`
+    )
+  }
+  const replaced = trees[replantedTreeIndex(override.replants)]
+  if (replaced?.retention !== RETENTION_LOST) {
+    throw new Error(`${where}: must name an earlier tree that is Lost`)
+  }
+  return replaced
 }
 
 /**
@@ -156,9 +177,13 @@ export function drawTrees(boundaryRing, count, perRowOverrides) {
       break
     }
     const override = perRowOverrides?.[trees.length]
-    const replaced = trees[replantedIndex(override)]
-    const tree = drawTree(replaced?.point ?? point, trees.length, override)
-    trees.push(replaced ? { ...tree, replants: replaced.ref } : tree)
+    const tree = drawTree(point, trees.length, override)
+    const replaced = replacedTree(trees, tree, override)
+    trees.push(
+      replaced
+        ? { ...tree, point: replaced.point, replants: replaced.ref }
+        : tree
+    )
   }
   return trees
 }

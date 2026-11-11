@@ -104,7 +104,8 @@ function drawnSource(layerKey, feature, index) {
 }
 
 /**
- * Link each tree planted in a felled one's place (`replants`) to that tree,
+ * Link each tree planted in a felled one's place (`replants`, which
+ * `drawTrees` has checked names an earlier Lost tree) to that tree,
  * as a surveyor links a new planting to the tree it replaces: by its Parent
  * Ref, parent_uuid and parent_geom. It stays a creation, its Baseline columns
  * "N/A", and the felled tree is still lost, as the Metric counts it.
@@ -122,7 +123,7 @@ function linkReplantedTrees(drawnTrees, layer) {
     )
     if (!felled || !planted) {
       throw new Error(
-        `tree ${tree.ref} replants ${tree.replants}, which is not a felled tree of the site`
+        `tree ${tree.ref} replants ${tree.replants}, but the site has no felled tree ${tree.replants} or no planted tree ${tree.ref}`
       )
     }
     planted.lineage = {

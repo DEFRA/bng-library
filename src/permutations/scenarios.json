@@ -419,6 +419,70 @@
       }
     },
     {
+      "id": "intervention-tree-replanted",
+      "purpose": "intervention",
+      "title": "Individual tree — felled and replanted in its place",
+      "description": "Area: one Low grassland retained. Trees: T001, a medium rural tree, is felled, and T002, a small rural tree, is newly planted on its spot; T003, the same small rural tree, is planted elsewhere. The metric records a lost tree and two created ones, whatever stands where: T001's units are lost in full and T002 and T003 have the same units. In the BNG Service file T002 is linked to T001 as its parent (Parent Ref, parent_uuid and parent_geom) and T003 has none, so this checks the service still prices a newly planted tree with a parent as a creation, and still loses the tree it replaces.",
+      "size": 1,
+      "treeCount": 3,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Felled: the metric keeps its baseline row and nothing post-intervention.",
+            "retention": "Lost",
+            "treeSize": "Medium",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Planted where T001 is felled, and linked to it in the BNG Service file: still a creation.",
+            "replants": "T001",
+            "retention": "Created",
+            "treeSize": "Small",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "The control: the same tree planted elsewhere, with no parent.",
+            "retention": "Created",
+            "treeSize": "Small",
+            "treeType": "Park/garden tree",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "expectUnitsEqual": {
+        "stage": "created",
+        "references": ["T002", "T003"]
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T002",
+        "note": "T001 felled, T002 planted in its place and linked to it, T003 the same tree planted with no parent"
+      }
+    },
+    {
       "id": "area-enhanced-medium-condition-na",
       "purpose": "intervention",
       "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A",

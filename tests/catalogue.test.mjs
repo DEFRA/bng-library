@@ -210,6 +210,51 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('accepts replants on a Created tree, naming an earlier Lost one', () => {
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          trees: [
+            { retention: 'Lost' },
+            { retention: 'Created', replants: 'T001' }
+          ]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([])
+  })
+
+  it('rejects replants on a tree that is not Created, or naming a tree that is not an earlier Lost one', () => {
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          trees: [
+            { retention: 'Lost' },
+            { retention: 'Retained', replants: 'T001' },
+            { retention: 'Created', replants: 'T002' },
+            { retention: 'Created', replants: 'T004' },
+            { retention: 'Created', replants: 'HG001' }
+          ]
+        }
+      })
+    )
+    const earlierLost = /must be the ref of an earlier trees row that is Lost/
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /trees\[1\]\.replants: only a Created tree is planted in another's place/
+      ),
+      expect.stringMatching(
+        new RegExp(`trees\\[2\\]\\.replants: ${earlierLost.source}`)
+      ),
+      expect.stringMatching(
+        new RegExp(`trees\\[3\\]\\.replants: ${earlierLost.source}`)
+      ),
+      expect.stringMatching(
+        new RegExp(`trees\\[4\\]\\.replants: ${earlierLost.source}`)
+      )
+    ])
+  })
+
   it('accepts the tree fields on trees only', () => {
     const tree = { treeSize: 'Medium', treeType: 'Street tree' }
     expect(

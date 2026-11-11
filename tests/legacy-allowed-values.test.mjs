@@ -119,6 +119,42 @@ function flawPlan(selection) {
   }
 }
 
+// The checks above, and the service's, skip a column the catalogue has no
+// list for, so a column dropped from it would pass unseen. Every drop-down the
+// QGIS project declares (drop-downs.json, read from its widgets), and every
+// filled-in column named here, must have a list of its own.
+const FILLED_IN_COLUMNS = Object.freeze([
+  'Baseline Distinctiveness',
+  'Proposed Distinctiveness',
+  'Baseline Strategic Significance',
+  'Location',
+  // The Natural England template's spelling, with its trailing space.
+  'Habitat created in advance/years '
+])
+
+describe('the allowed-values catalogue', () => {
+  const dropDowns = JSON.parse(
+    readFileSync(
+      new URL('../src/bng-service/template/drop-downs.json', import.meta.url),
+      'utf8'
+    )
+  )
+  const dropDownColumns = [
+    ...new Set(Object.values(dropDowns).flatMap((table) => Object.keys(table)))
+  ]
+
+  it('finds the template drop-downs', () => {
+    expect(dropDownColumns.length).toBeGreaterThan(25)
+  })
+
+  it.each([...dropDownColumns, ...FILLED_IN_COLUMNS])(
+    'has a list for %j',
+    (column) => {
+      expect(TEMPLATE_ALLOWED_VALUES[column]?.length ?? 0).toBeGreaterThan(0)
+    }
+  )
+})
+
 describe('the legacy generators write only values the template offers', () => {
   it.each([
     ['small', { numParcels: 6 }],

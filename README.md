@@ -620,7 +620,7 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 | `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
 | `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                          |
 | `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                |
-| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned)                                           |
+| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned); `replants`                               |
 
 `verticalHabitats` rows pin the BNG Service template's vertical area
 habitats (green walls and intertidal hard structures), drawn as a line with
@@ -639,6 +639,12 @@ Values are the GeoPackage template's own spellings, such as
 the row takes that feature's line, so the two are the same length. It is how
 a scenario records a feature lost and recreated in place. A row with it cannot
 also pin `lengthRange`.
+`replants`, on a Created tree, is the ref of an earlier Lost tree (`"T001"`):
+the new tree stands on the felled one's point, and in the BNG Service format
+it is linked to it as its parent (Parent Ref, `parent_uuid` and
+`parent_geom`), as a surveyor links a planting to the tree it replaces. It is
+still a creation, its Baseline columns "N/A", and the felled tree is still
+lost.
 
 Things worth knowing when writing a scenario:
 

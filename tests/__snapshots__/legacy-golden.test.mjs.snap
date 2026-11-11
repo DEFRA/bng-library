@@ -101,6 +101,7 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "intervention-hedgerow-created": "f0914423b26bfcd84881043c076ce1335456ce5260ebb5f4eddf4e6b4a7e6e93",
   "intervention-hedgerow-enhanced": "dd05044acea63d31babfb2ffc4f021cc8f66caae964a53001912e2bd3cddca4f",
   "intervention-hedgerow-retained": "bf51bdbc5f25169c45144958edfe4aa93677453536c7e0fc45652761b29c40a6",
+  "intervention-tree-replanted": "c8f14c810b5a63092d7750ea46b437b1660ed5d9151af1e380a3ce26940508b1",
   "intervention-watercourse-created": "582c553e05ede086fd72b9f9aa928b694c08fb9a84ae537eb971c722386dfc05",
   "intervention-watercourse-enhanced": "23cadb143683f620e7a11fcc13819890f7e9a3783bb04081f25979f6eb629a28",
   "intervention-watercourse-retained": "de922edbec26ef9baafc773124a7b62ba32ee354e177bcfaa50a021fdebf47a6",
@@ -282,6 +283,10 @@ exports[`legacy output is pinned > the scenario catalogue 1`] = `
   "intervention-hedgerow-retained": [
     "cbdcff1d44eaf6c01a33d7b1fb55ef85fa14adf6febe5eca0827adbb192e2c2f",
     "11da4477c611834024cd34e4616e4511e453a660cc0d9c247ba0ebb88d997b29",
+  ],
+  "intervention-tree-replanted": [
+    "6d7cc0f30845e22fffebeba1a0fbdd7f36ee5942c66aefdc70ec80ca6bf20bff",
+    "6c8f785536fa836b1260af6ce041dff8112062df6762ddbd9fbc15576f839f35",
   ],
   "intervention-watercourse-created": [
     "6a6947551141e45dbc9d543ff12e885d2096093669ffa9ac470f1f26ee0c1104",

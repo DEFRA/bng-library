@@ -15,7 +15,11 @@ import {
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
 import { replantedTreeIndex } from '../synthetic/draw/trees.mjs'
-import { FORMAT_BNG_SERVICE, VALID_FORMATS } from '../bng-service/schema.mjs'
+import {
+  FORMAT_BNG_SERVICE,
+  FORMAT_LEGACY,
+  VALID_FORMATS
+} from '../bng-service/schema.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -447,6 +451,22 @@ function checkVerticalFormats(scenario, where) {
     : []
 }
 
+/**
+ * The BNG Service template has no Count column, and the service reads each
+ * tree point as one tree, so a scenario that gives a tree a count is
+ * generated in the legacy format only, and must say so.
+ */
+function checkTreeCountFormats(scenario, where) {
+  const trees = isObject(scenario.overrides) ? scenario.overrides.trees : null
+  const countsTrees =
+    Array.isArray(trees) && trees.some((row) => isObject(row) && 'count' in row)
+  return countsTrees && scenarioInFormat(scenario, FORMAT_BNG_SERVICE)
+    ? [
+        `${where}.formats: a scenario giving a tree a count must list ["${FORMAT_LEGACY}"] only, as the BNG Service template reads each tree point as one tree`
+      ]
+    : []
+}
+
 /** A non-empty list of output formats, each named once. */
 function checkFormats(value, where) {
   if (!Array.isArray(value) || value.length === 0) {
@@ -531,6 +551,7 @@ function checkScenario(scenario, where) {
     ...checkSubject(scenario.subject, scenario, `${where}.subject`),
     ...checkInvalidNaming(scenario, where),
     ...checkVerticalFormats(scenario, where),
+    ...checkTreeCountFormats(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)
       .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))

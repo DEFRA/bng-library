@@ -9,14 +9,10 @@
  *   Created; a hedgerow, watercourse or tree that is `Lost` is removed.
  * - A Created tree that `replants` an earlier, felled one stands on its point
  *   and is linked to it as its parent.
- * - A tree's `count` is ignored, with a warning: the template has no Count
- *   column, so each tree point is one tree. How the service should record
- *   several trees at one point is still being decided; until it is, this is
- *   what the format has always done with a count.
+ * - A tree's `count` is refused: the template has no Count column, and the
+ *   service reads each tree point as one tree, so a count cannot be written.
  * - `$comment` keys document a row and are ignored.
  */
-
-import { warn } from '../../log.mjs'
 
 const COMMON = [
   'retention',
@@ -56,7 +52,6 @@ const KEYS = {
     'treeSize',
     'treeType',
     'ruralOrUrban',
-    'count',
     'replants'
   ]),
   verticalHabitats: new Set([
@@ -71,20 +66,20 @@ const KEYS = {
   ])
 }
 const DOC_KEY = '$comment'
-const ONE_TREE = 1
+const TREE_COUNT = 'count'
 
 function checkRow(layer, row, index) {
+  if (layer === 'trees' && TREE_COUNT in row) {
+    throw new Error(
+      `trees row ${index}: a tree's count cannot be written in the BNG Service format: it has no Count column, so each tree point is one tree`
+    )
+  }
   for (const key of Object.keys(row)) {
     if (key !== DOC_KEY && !KEYS[layer].has(key)) {
       throw new Error(
         `${layer} row ${index}: unknown override "${key}" for the BNG Service format`
       )
     }
-  }
-  if (layer === 'trees' && row.count !== undefined && row.count !== ONE_TREE) {
-    warn(
-      `  trees row ${index}: count ${row.count} ignored: the BNG Service template has no Count column, so each tree point is one tree`
-    )
   }
 }
 

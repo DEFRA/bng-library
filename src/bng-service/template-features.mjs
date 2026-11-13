@@ -618,12 +618,6 @@ function worseParcel(site, chooser) {
   if (retained.length < 2) {
     return
   }
-  const conditionsOf = (f) =>
-    worseCreationConditions(
-      AREA,
-      `${f.parent.values['Baseline Broad Habitat Type']} - ${f.parent.values['Baseline Habitat Type']}`,
-      f.parent.values['Baseline Condition']
-    )
   const feature = retained.findLast((f) => worseParcelConditions(f).length > 0)
   if (!feature) {
     return
@@ -1262,6 +1256,10 @@ export function resolveWorseCounts(counts = {}) {
  *   both sides, 10 years in advance (Metric User Guide, section 7). Another
  *   keeps its encroachment, and its condition gets worse, with no years in
  *   advance. Neither is a culvert.
+ * - Only when `counts` asks for one, an area parcel gets worse in part: it
+ *   is split into a Retained part a and a worse Created part b, as the
+ *   second hedgerow is (see `partlyWorseParcel`). A site draws none by
+ *   default, and draws them last, so a default site keeps its bytes.
  *
  * The area habitat is the last Retained parcel that can get worse, clear of
  * the lineage flaws, which take the first, and only when another Retained
@@ -1271,8 +1269,8 @@ export function resolveWorseCounts(counts = {}) {
  * in `emptyLayers`, which an empty-layer flaw leaves with no rows, is left
  * empty.
  *
- * `counts` asks for more or fewer of a kind than the one each (see
- * `resolveWorseCounts`). Each further feature is drawn as the first was,
+ * `counts` asks for more or fewer of a kind than the one each, or the none
+ * of a part-worse parcel (see `resolveWorseCounts`). Each further feature is drawn as the first was,
  * with its own identity. An area parcel is set worse only while another
  * Retained parcel stays, so a site may give fewer than it asks for; so may
  * a red line too small for every line drawn.

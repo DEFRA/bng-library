@@ -161,12 +161,15 @@ Limestone pavement, Blanket bog): it stays `Yes`, with a warning, as the
 template offers nothing else. None is in the service's scope, so only a plan
 that pins one can draw it, and the service refuses that file anyway.
 
-There is one of each by default. **`worseHabitatCounts`** asks for more or
+There is one of each by default, but for `partly-worse-parcel`: an area
+parcel split into a Retained part a and a worse Created part b, of which a
+site draws none unless asked. **`worseHabitatCounts`** asks for more or
 fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,
 `hedge`, `partly-worse-hedge`, `encroached-watercourse`,
-`worse-watercourse`), 0 to `MAX_WORSE_COUNT` each:
+`worse-watercourse`, `partly-worse-parcel`), 0 to `MAX_WORSE_COUNT` each:
 `{ hedge: 4, 'partly-worse-hedge': 3 }` draws a site that shows hedgerows
-getting worse. Each further feature is drawn as the first is, with its own
+getting worse, and `{ 'partly-worse-parcel': 3 }` one that shows area
+habitats only partly retained. Each further feature is drawn as the first is, with its own
 identity, and a default site keeps its bytes. Area parcels get worse only
 while another Retained parcel stays, so a site may give fewer than it asks
 for. It is refused for a site that draws no habitats that get worse

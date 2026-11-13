@@ -3769,7 +3769,7 @@
     {
       "id": "trees-count-above-one",
       "purpose": "trees",
-      "$comment": "Legacy only for now: the BNG Service template has no Count column, so each tree point is one tree, and this scenario's ratios cannot hold. It returns to the BNG Service format once the service decides how several trees at one point are recorded (BMD-1171, BMD-1172).",
+      "$comment": "Legacy only: the BNG Service template has no Count column, and the service reads each tree point as one tree (BMD-1172), so this scenario's ratios cannot hold in that format.",
       "formats": ["legacy"],
       "title": "Individual trees — a point that stands for several trees",
       "description": "Each tree point carries a \"Count\": the number of trees it stands for. The metric sizes the point as its size band's area times that count, so a Medium point with a count of 3 is three Medium trees (0.0489 ha, not 0.0163 ha). Three pairs of trees are identical but for their count, one pair on each pricing path: T001 and T002 are retained Medium urban trees with counts of 3 and 1, T003 and T005 created Large urban trees with counts of 2 and 1, and T004 and T006 Small rural trees enhanced from Poor to Good with counts of 4 and 1. Each pair's units must stand in exactly the ratio of its counts, so a service that prices every point as one tree, or scales by the wrong amount, fails on every path.",
@@ -3888,6 +3888,203 @@
         "layer": "Urban Trees",
         "ref": "T001",
         "note": "a count of 3; T002 is the same tree with a count of 1. T003/T005 (created) and T004/T006 (enhanced) pair up the same way"
+      }
+    },
+    {
+      "id": "trees-size-and-setting",
+      "purpose": "trees",
+      "title": "Individual trees — every size class, urban and rural",
+      "description": "Each of the tree helper's four size classes (Small 0.0041 ha, Medium 0.0163 ha, Large 0.0366 ha, Very large 0.0765 ha), urban and rural, at baseline and newly planted. T001 to T008 are the baseline trees, one of each size in each setting, kept: Retained, or Enhanced to a better condition. T009 to T016 are newly planted, one of each size in each setting. A service that prices a size class at the wrong area, or a tree in the wrong setting, differs from the metric on that tree.",
+      "size": 1,
+      "treeCount": 16,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "Retained: 0.0041 ha, urban.",
+            "retention": "Retained",
+            "treeSize": "Small",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Retained: 0.0041 ha, rural.",
+            "retention": "Retained",
+            "treeSize": "Small",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Enhanced: 0.0163 ha, urban.",
+            "retention": "Enhanced",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Enhanced: 0.0163 ha, rural.",
+            "retention": "Enhanced",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Poor",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Retained: 0.0366 ha, urban.",
+            "retention": "Retained",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Enhanced: 0.0366 ha, rural.",
+            "retention": "Enhanced",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Enhanced: 0.0765 ha, urban.",
+            "retention": "Enhanced",
+            "treeSize": "Very large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "Retained: 0.0765 ha, rural.",
+            "retention": "Retained",
+            "treeSize": "Very large",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Good",
+            "proposedCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Small",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0",
+            "$comment": "T009 to T016: newly planted, each size class in each setting."
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Small",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          },
+          {
+            "retention": "Created",
+            "treeSize": "Very large",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "0"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T001",
+        "note": "T001 to T008 kept, T009 to T016 planted: each size class, urban and rural"
       }
     },
     {

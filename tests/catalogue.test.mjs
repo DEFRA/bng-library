@@ -268,24 +268,45 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
-  it('accepts a whole-number tree count on trees only', () => {
+  it('accepts a whole-number tree count on trees only, in a legacy-only scenario', () => {
     const tree = { count: 3 }
-    expect(
-      problems(catalogue(scenario({ overrides: { trees: [tree] } })))
-    ).toEqual([])
-    expect(
-      problems(catalogue(scenario({ overrides: { habitats: [tree] } })))
-    ).toEqual([expect.stringMatching(/habitats\[0\]: unknown field "count"/)])
+    const legacy = (overrides) => scenario({ formats: ['legacy'], overrides })
+    expect(problems(catalogue(legacy({ trees: [tree] })))).toEqual([])
+    expect(problems(catalogue(legacy({ habitats: [tree] })))).toEqual([
+      expect.stringMatching(/habitats\[0\]: unknown field "count"/)
+    ])
     for (const count of ['3', 0, 2.5]) {
-      expect(
-        problems(catalogue(scenario({ overrides: { trees: [{ count }] } })))
-      ).toEqual([
+      expect(problems(catalogue(legacy({ trees: [{ count }] })))).toEqual([
         expect.stringMatching(
           /trees\[0\]\.count: must be a whole number above 0/
         )
       ])
     }
   })
+
+  it.each([
+    ['in every format', undefined],
+    ['in the BNG Service format', ['bng-service']],
+    ['in both formats', ['legacy', 'bng-service']]
+  ])(
+    'refuses a tree count in a scenario generated %s: each BNG Service tree point is one tree',
+    (_, formats) => {
+      expect(
+        problems(
+          catalogue(
+            scenario({
+              ...(formats && { formats }),
+              overrides: { trees: [{ count: 1 }] }
+            })
+          )
+        )
+      ).toEqual([
+        expect.stringMatching(
+          /formats: a scenario giving a tree a count must list \["legacy"\] only/
+        )
+      ])
+    }
+  )
 
   it('checks override values', () => {
     const doc = catalogue(

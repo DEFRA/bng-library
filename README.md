@@ -219,9 +219,9 @@ and `trees`), `comment` and `postInterventionComment`. `habitatRef` names an
 area habitat's Habitat Ref (as `parcelRef` does), strategic significance is
 `Low` or `High` (or the legacy wording), and an area habitat's `Lost` is a
 creation in another broad type, written as Created. A tree's `count` is
-ignored with a warning, as the template has no Count column and each tree
-point is one tree (how several trees at one point are recorded is still
-being decided); an unknown field is refused rather than ignored, and `$comment` fields document a row. A `verticalHabitats` layer
+refused, as the template has no Count column and the service reads each tree
+point as one tree, so a scenario that gives a tree a count must list
+`["legacy"]` only; an unknown field is refused rather than ignored, and `$comment` fields document a row. A `verticalHabitats` layer
 takes rows of `habitatFullName`, `retention` (`Retained`, `Enhanced`,
 `Created`, or `Lost`: absent post-intervention), `baselineCondition`,
 `proposedCondition`, `proposedHabitatFullName`, `area` (hectares) and the two
@@ -620,7 +620,7 @@ Override rows take the fields of `generateOne`'s `attributeOverrides`:
 | `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
 | `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                          |
 | `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                |
-| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the `Count` column; 1 unless pinned); `replants`                               |
+| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the legacy `Count` column; 1 unless pinned; legacy-only scenarios); `replants` |
 
 `verticalHabitats` rows pin the BNG Service template's vertical area
 habitats (green walls and intertidal hard structures), drawn as a line with

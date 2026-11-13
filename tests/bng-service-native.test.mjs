@@ -252,17 +252,14 @@ describe('the row overrides a native site takes', () => {
     expect(() => normaliseOverrides(overrides)).toThrow(message)
   })
 
-  it('ignores a tree count, as the format always has: each point is one tree', () => {
-    expect(normaliseOverrides({ trees: [{ count: 3 }] })).toEqual({
-      trees: [{ count: 3 }]
-    })
-  })
-
-  it('keeps a tree count of 1, which is what a tree point is', () => {
-    expect(normaliseOverrides({ trees: [{ count: 1 }] })).toEqual({
-      trees: [{ count: 1 }]
-    })
-  })
+  it.each([3, 1])(
+    'refuses a tree count (%s): the format has no Count, each point is one tree',
+    (count) => {
+      expect(() => normaliseOverrides({ trees: [{ count }] })).toThrow(
+        /trees row 0: a tree's count cannot be written in the BNG Service format/
+      )
+    }
+  )
 })
 
 describe("a tree planted in a felled one's place", () => {

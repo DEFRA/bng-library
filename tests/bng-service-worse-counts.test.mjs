@@ -89,15 +89,22 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
       'hedge',
       'partly-worse-hedge',
       'encroached-watercourse',
-      'worse-watercourse'
+      'worse-watercourse',
+      'partly-worse-parcel'
     ])
   })
 
-  it('draws one of each by default, so a default site keeps its bytes', () => {
+  it('draws one of each by default, but no part-worse parcel, so a default site keeps its bytes', () => {
     const plain = readFileSync(synthetic())
-    const ones = Object.fromEntries(WORSE_KINDS.map((k) => [k, 1]))
+    const defaults = resolveWorseCounts()
+    expect(defaults).toEqual({
+      ...Object.fromEntries(WORSE_KINDS.map((k) => [k, 1])),
+      'partly-worse-parcel': 0
+    })
     expect(readFileSync(synthetic({ worseHabitatCounts: {} }))).toEqual(plain)
-    expect(readFileSync(synthetic({ worseHabitatCounts: ones }))).toEqual(plain)
+    expect(readFileSync(synthetic({ worseHabitatCounts: defaults }))).toEqual(
+      plain
+    )
   })
 
   it('draws more hedgerows that get worse, as a whole and in part, each linked to its own parent', () => {
@@ -178,6 +185,46 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     expect(parcels(all).filter(isWorse).length).toBeLessThan(MAX_WORSE_COUNT)
     expect(retained(all).length).toBeGreaterThanOrEqual(1)
     expect(checkLineage(all)).toEqual([])
+  })
+
+  it('splits area parcels into a Retained part a and a worse part b, both linked to the parent', () => {
+    const large = { seed: 1, numParcels: 30 }
+    const parcels = (file) => rows(file, 'Area Habitats Post-Intervention')
+    const baseline = (file) => rows(file, 'Area Habitats Baseline')
+    const file = synthetic(
+      { worseHabitatCounts: { 'partly-worse-parcel': 3 } },
+      large
+    )
+    const worseParts = parcels(file).filter(
+      (r) => isWorse(r) && r['Habitat Ref'] === `${r['Parent Ref']}b`
+    )
+    expect(worseParts).toHaveLength(3)
+    for (const part of worseParts) {
+      const kept = parcels(file).find(
+        (r) => r['Habitat Ref'] === `${part['Parent Ref']}a`
+      )
+      const parent = baseline(file).find(
+        (r) => r.feature_uuid === part.parent_uuid
+      )
+      expect(kept?.['Retention Category'], part['Habitat Ref']).toBe('Retained')
+      expect(kept.parent_uuid).toBe(part.parent_uuid)
+      expect(part['Retention Category']).toBe('Created')
+      expect(part['Proposed Habitat Type']).toBe(
+        parent['Baseline Habitat Type']
+      )
+      expect(part['Habitat created in advance/years']).toBe('30+')
+      expect(kept.Area).toBeLessThan(parent.Area)
+      expect(kept.Area + part.Area).toBeCloseTo(parent.Area, 6)
+    }
+    expect(
+      parcels(file).filter(
+        (r) =>
+          r['Retention Category'] === 'Retained' &&
+          !/[ab]$/.test(r['Habitat Ref'])
+      ).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(checkLineage(file)).toEqual([])
+    expect(checkTemplateValues(file)).toEqual([])
   })
 
   it('is byte-identical for the same seed and counts', () => {

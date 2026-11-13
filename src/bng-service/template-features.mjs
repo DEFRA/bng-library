@@ -18,9 +18,9 @@
  * the legacy generator writes only as a loss and a separate creation.
  */
 
-import { pointInRing } from '../geometry.mjs'
+import { carveAtAngle, pointInRing } from '../geometry.mjs'
 import { envelopeFromCoords } from '../gpkg-io/index.mjs'
-import { lengthMetres } from '../measure/index.mjs'
+import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
 import {
   AREA,
   HEDGEROW,
@@ -520,6 +520,13 @@ const MAX_RIVER_LENGTH_M = 150
 // Where a hedge that gets worse in part is split, as a share of its length.
 const MIN_SPLIT_SHARE = 0.3
 const MAX_SPLIT_SHARE = 0.7
+// Where a parcel that gets worse in part is split: its Retained part's share.
+const MIN_PARCEL_KEPT_SHARE = 0.35
+const MAX_PARCEL_KEPT_SHARE = 0.65
+// Chord angles tried before a parcel is left whole, as carveTargetArea tries.
+const CARVE_TRIES = 8
+// The lineage flaws take the first Retained parcel, and one stays whole.
+const MIN_RETAINED_PARCELS = 3
 const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
 /**
  * What each habitat that gets worse is, held on the feature as `worse` and
@@ -527,6 +534,8 @@ const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
  */
 export const WORSE = Object.freeze({
   parcel: 'parcel',
+  partlyKeptParcel: 'partly-kept-parcel',
+  partlyWorseParcel: 'partly-worse-parcel',
   vertical: 'vertical',
   hedge: 'hedge',
   partlyKeptHedge: 'partly-kept-hedge',
@@ -609,16 +618,26 @@ function worseParcel(site, chooser) {
   if (retained.length < 2) {
     return
   }
-  const conditionsOf = (f) =>
-    worseCreationConditions(
-      AREA,
-      `${f.parent.values['Baseline Broad Habitat Type']} - ${f.parent.values['Baseline Habitat Type']}`,
-      f.parent.values['Baseline Condition']
-    )
-  const feature = retained.findLast((f) => conditionsOf(f).length > 0)
+  const feature = retained.findLast((f) => worseParcelConditions(f).length > 0)
   if (!feature) {
     return
   }
+  setParcelWorse(feature, chooser)
+  feature.worse = WORSE.parcel
+}
+
+/** The conditions a Retained parcel's baseline habitat can get worse to. */
+function worseParcelConditions(feature) {
+  const base = feature.parent.values
+  return worseCreationConditions(
+    AREA,
+    `${base['Baseline Broad Habitat Type']} - ${base['Baseline Habitat Type']}`,
+    base['Baseline Condition']
+  )
+}
+
+/** Set a parcel's row to Created in its own type, worse, 30+ years in advance. */
+function setParcelWorse(feature, chooser) {
   const base = feature.parent.values
   const type = base['Baseline Habitat Type']
   Object.assign(feature.values, {
@@ -626,13 +645,87 @@ function worseParcel(site, chooser) {
     'Proposed Broad Habitat Type': base['Baseline Broad Habitat Type'],
     'Proposed Habitat Type': type,
     'Proposed Distinctiveness': distinctiveness('habitats', type, true),
-    'Proposed Condition': chooser.pick(conditionsOf(feature)),
+    'Proposed Condition': chooser.pick(worseParcelConditions(feature)),
     'Proposed Strategic Significance': LOW,
     [ADVANCE]: DEGRADED_ADVANCE,
     [DELAY]: null
   })
   feature.values[COMMENT] ??= WORSE_HABITAT_COMMENT
-  feature.worse = WORSE.parcel
+}
+
+const hectares = (ring) =>
+  areaSquareMetres({ type: 'Polygon', coordinates: [ring] }) / SQ_M_PER_HECTARE
+
+/**
+ * A parcel's two parts, at a share of its area the chooser picks between
+ * `minShare` and `maxShare`, and the first of up to CARVE_TRIES chord angles
+ * that splits it; null if none does. The first angle is drawn before the
+ * share, as it always was.
+ */
+export function carvedParts(ring, chooser, minShare, maxShare) {
+  let angle = chooser.between(0, Math.PI)
+  const target =
+    hectares(ring) * SQ_M_PER_HECTARE * chooser.between(minShare, maxShare)
+  for (let attempt = 0; attempt < CARVE_TRIES; attempt += 1) {
+    const parts = carveAtAngle(ring, angle, target)
+    if (parts) {
+      return parts
+    }
+    angle = chooser.between(0, Math.PI)
+  }
+  return null
+}
+
+/** A part of a split parcel's row, its own shape and area. */
+export function parcelPart(feature, ring, ref) {
+  return {
+    ...feature,
+    geometry: { type: 'Polygon', coordinates: [ring] },
+    values: { ...feature.values, [HABITAT_REF]: ref, Area: hectares(ring) }
+  }
+}
+
+/**
+ * An area parcel of which part gets worse: the surveyor splits the copied
+ * row, keeps one part Retained and sets the other to Created in a worse
+ * condition, as a hedge that gets worse in part. Both parts keep the parent
+ * and take the template's tidied refs, "H006a" and "H006b". The last
+ * Retained parcel that can get worse and is whole, never the first, which
+ * the lineage flaws take; only while another Retained parcel stays whole.
+ */
+function partlyWorseParcel(site, chooser) {
+  const rows = site.layers.habitats.postIntervention
+  const retained = rows.filter(
+    (f) =>
+      f.parent &&
+      !f.worse &&
+      f.values[RETENTION] === RETAINED &&
+      f.parent.values[IRREPLACEABLE] !== YES
+  )
+  if (retained.length < MIN_RETAINED_PARCELS) {
+    return
+  }
+  const feature = retained
+    .slice(1)
+    .findLast((f) => worseParcelConditions(f).length > 0)
+  const parts =
+    feature &&
+    carvedParts(
+      feature.geometry.coordinates[0],
+      chooser,
+      MIN_PARCEL_KEPT_SHARE,
+      MAX_PARCEL_KEPT_SHARE
+    )
+  if (!parts) {
+    return
+  }
+  const ref = feature.values[HABITAT_REF]
+  const keptPart = parcelPart(feature, parts.piece, `${ref}a`)
+  keptPart.worse = WORSE.partlyKeptParcel
+  const worsePart = parcelPart(feature, parts.rest, `${ref}b`)
+  setParcelWorse(worsePart, chooser)
+  worsePart.worse = WORSE.partlyWorseParcel
+  rows.splice(rows.indexOf(feature), 1, keptPart, worsePart)
 }
 
 /**
@@ -1099,19 +1192,32 @@ const WORSE_DRAWS = [
     kind: WORSE.worseWatercourse,
     layerKey: 'rivers',
     draw: worseConditionWatercourse
+  },
+  // Drawn last and none by default, so a site that does not ask for one
+  // keeps its bytes.
+  {
+    kind: WORSE.partlyWorseParcel,
+    layerKey: 'habitats',
+    draw: partlyWorseParcel,
+    defaultCount: 0
   }
 ]
 
 /** The kinds a count can name: each kind of habitat that gets worse. */
 export const WORSE_KINDS = Object.freeze(WORSE_DRAWS.map((d) => d.kind))
 
+/** How many of a kind a site draws when it does not ask: one, or the draw's own. */
+function defaultCountOf(kind) {
+  return WORSE_DRAWS.find((d) => d.kind === kind).defaultCount ?? 1
+}
+
 // How many of a kind one site may ask for: well past any demonstration or
 // test, short of a site whose red line cannot fit the lines drawn.
 export const MAX_WORSE_COUNT = 50
 
 /**
- * How many of each kind of habitat that gets worse to draw: one of each,
- * but for the kinds `counts` names. Refuses a kind it does not know, and a
+ * How many of each kind of habitat that gets worse to draw: one of each
+ * (none of a part-worse parcel), but for the kinds `counts` names. Refuses a kind it does not know, and a
  * count that is not a whole number from 0 to MAX_WORSE_COUNT.
  *
  * @param {Record<string, number>} [counts]  by kind, as WORSE_KINDS names them
@@ -1126,7 +1232,7 @@ export function resolveWorseCounts(counts = {}) {
   }
   const resolved = {}
   for (const kind of WORSE_KINDS) {
-    const count = counts[kind] ?? 1
+    const count = counts[kind] ?? defaultCountOf(kind)
     if (!Number.isInteger(count) || count < 0 || count > MAX_WORSE_COUNT) {
       throw new Error(
         `${kind}: the count must be a whole number from 0 to ${MAX_WORSE_COUNT} (got: ${count})`
@@ -1150,6 +1256,10 @@ export function resolveWorseCounts(counts = {}) {
  *   both sides, 10 years in advance (Metric User Guide, section 7). Another
  *   keeps its encroachment, and its condition gets worse, with no years in
  *   advance. Neither is a culvert.
+ * - Only when `counts` asks for one, an area parcel gets worse in part: it
+ *   is split into a Retained part a and a worse Created part b, as the
+ *   second hedgerow is (see `partlyWorseParcel`). A site draws none by
+ *   default, and draws them last, so a default site keeps its bytes.
  *
  * The area habitat is the last Retained parcel that can get worse, clear of
  * the lineage flaws, which take the first, and only when another Retained
@@ -1159,8 +1269,8 @@ export function resolveWorseCounts(counts = {}) {
  * in `emptyLayers`, which an empty-layer flaw leaves with no rows, is left
  * empty.
  *
- * `counts` asks for more or fewer of a kind than the one each (see
- * `resolveWorseCounts`). Each further feature is drawn as the first was,
+ * `counts` asks for more or fewer of a kind than the one each, or the none
+ * of a part-worse parcel (see `resolveWorseCounts`). Each further feature is drawn as the first was,
  * with its own identity. An area parcel is set worse only while another
  * Retained parcel stays, so a site may give fewer than it asks for; so may
  * a red line too small for every line drawn.

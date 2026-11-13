@@ -21,8 +21,8 @@
  * Each is drawn with the site's chooser, so a seed gives the same site.
  */
 
-import { carveAtAngle, pointInRing } from '../geometry.mjs'
-import { areaSquareMetres, lengthMetres } from '../measure/index.mjs'
+import { pointInRing } from '../geometry.mjs'
+import { lengthMetres } from '../measure/index.mjs'
 import {
   WATERCOURSE,
   baselineConditions,
@@ -35,8 +35,10 @@ import {
   RETAINED,
   RETENTION,
   ZERO_YEARS,
+  carvedParts,
   drawnWatercourseBaseline,
   encroachmentOf,
+  parcelPart,
   retainedPart,
   riverTypes,
   splitLine
@@ -48,14 +50,11 @@ const CREATED = 'Created'
 const REALIGNMENT = 'Enhanced by Realignment'
 const DELAY = 'Delay in starting habitat creation/years'
 const IRREPLACEABLE = 'Irreplaceable Habitat'
-const SQ_M_PER_HECTARE = 10_000
 // A meander's bend sits off the straight line by this share of its length.
 const MIN_BEND_SHARE = 0.25
 const MAX_BEND_SHARE = 0.45
 const BEND_TRIES = 6
 const BEND_SHRINK = 0.7
-// Chord angles tried before a parcel is left whole, as carveTargetArea tries.
-const CARVE_TRIES = 8
 // A shorter watercourse keeps this share of its surveyed length.
 const MIN_KEPT_SHARE = 0.5
 const MAX_KEPT_SHARE = 0.8
@@ -83,9 +82,6 @@ export const CHANGE = Object.freeze({
   shorterWatercourse: 'shorter-watercourse',
   repeatedRef: 'repeated-ref'
 })
-
-const hectares = (ring) =>
-  areaSquareMetres({ type: 'Polygon', coordinates: [ring] }) / SQ_M_PER_HECTARE
 
 /** A watercourse type that can be enhanced and has encroachment options. */
 function enhanceableRiverTypes() {
@@ -256,27 +252,6 @@ function shorterWatercourse(site, chooser) {
 }
 
 /**
- * A parcel's two parts, at a share of its area the chooser picks and the
- * first of up to CARVE_TRIES chord angles that splits it; null if none
- * does. The first angle is drawn before the share, as it always was.
- */
-function carvedParts(ring, chooser) {
-  let angle = chooser.between(0, Math.PI)
-  const target =
-    hectares(ring) *
-    SQ_M_PER_HECTARE *
-    chooser.between(MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
-  for (let attempt = 0; attempt < CARVE_TRIES; attempt += 1) {
-    const parts = carveAtAngle(ring, angle, target)
-    if (parts) {
-      return parts
-    }
-    angle = chooser.between(0, Math.PI)
-  }
-  return null
-}
-
-/**
  * A Retained parcel split into two parts that keep its Habitat Ref, as a
  * split leaves them until the refs are tidied. Not the first Retained
  * parcel, which the lineage flaws take, nor an irreplaceable one, nor one
@@ -296,15 +271,14 @@ function repeatedRefs(site, chooser) {
   }
   const [, feature] = retained
   const ring = feature.geometry.coordinates[0]
-  const parts = carvedParts(ring, chooser)
+  const parts = carvedParts(ring, chooser, MIN_SPLIT_SHARE, MAX_SPLIT_SHARE)
   if (!parts) {
     return
   }
+  const ref = feature.values[HABITAT_REF]
   const part = (piece) => ({
-    ...feature,
-    geometry: { type: 'Polygon', coordinates: [piece] },
-    change: CHANGE.repeatedRef,
-    values: { ...feature.values, Area: hectares(piece) }
+    ...parcelPart(feature, piece, ref),
+    change: CHANGE.repeatedRef
   })
   layer.postIntervention.splice(
     layer.postIntervention.indexOf(feature),

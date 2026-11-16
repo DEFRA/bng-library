@@ -4,7 +4,6 @@
  * `site-features.mjs`, which applies the template's rules.
  */
 
-import { significance } from '../vocabulary.mjs'
 import { HABITAT_REF } from '../schema.mjs'
 import { geometryWkt } from '../site.mjs'
 import { layerFromSources, redlineFeature, text } from '../site-features.mjs'
@@ -36,7 +35,7 @@ function timing(feature) {
 function proposedSide(feature) {
   return {
     condition: feature.proposedCondition,
-    significance: significance(feature.proposedSignificance),
+    significance: feature.proposedSignificance,
     ...timing(feature)
   }
 }

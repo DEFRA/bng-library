@@ -19,8 +19,9 @@ export const NO = 'No'
 
 // The legacy wordings of strategic significance, as the plugin translates
 // them (the template's plugin/README.md). "Location ecologically desirable
-// but not in local strategy" has no place in the template: it applies only
-// before a Local Nature Recovery Strategy is published.
+// but not in local strategy" (Medium) has no place in the template: it applies
+// only before a Local Nature Recovery Strategy is published. On a proposed row
+// it is written as Low (see proposedSignificanceOf).
 const SIGNIFICANCE = new Map([
   ['Area/compensation not in local strategy/ no local strategy', LOW],
   ['Formally identified in local strategy', HIGH],
@@ -50,6 +51,18 @@ export function significance(value) {
     return null
   }
   return SIGNIFICANCE.get(withoutListNumber(value)) ?? null
+}
+
+/**
+ * A proposed strategic significance as the template stores it, and whether it
+ * was substituted: the Metric's Medium becomes Low, since a blank
+ * significance prices the feature at zero.
+ */
+export function proposedSignificanceOf(value) {
+  if (withoutListNumber(value) === MEDIUM_SIGNIFICANCE) {
+    return { value: LOW, substituted: true }
+  }
+  return { value: significance(value), substituted: false }
 }
 
 const TREE_SETTING = { Urban: 'Urban tree', Rural: 'Rural tree' }

@@ -10,7 +10,10 @@ import { describe, expect, it } from 'vitest'
 import { captureMessages } from '../src/log.mjs'
 import { HABITAT_REF } from '../src/bng-service/schema.mjs'
 import { layerFromSources } from '../src/bng-service/site-features.mjs'
-import { MEDIUM_SIGNIFICANCE } from '../src/bng-service/vocabulary.mjs'
+import {
+  MEDIUM_SIGNIFICANCE,
+  proposedSignificanceOf
+} from '../src/bng-service/vocabulary.mjs'
 
 const SQUARE = {
   type: 'Polygon',
@@ -73,7 +76,7 @@ describe('a proposed Medium strategic significance', () => {
     expect(byRef).toEqual({ P0: 'Low', P1: 'Low', P2: 'High', P3: 'Low' })
   })
 
-  it('warns once for each row it changes, naming the row', () => {
+  it('warns once for each row it changes, naming the layer and the row', () => {
     const { messages } = proposedSignificances([
       parcel(0, MEDIUM_SIGNIFICANCE),
       parcel(1, 'Formally identified in local strategy')
@@ -82,6 +85,22 @@ describe('a proposed Medium strategic significance', () => {
       (m) => m.level === 'warn' && m.message.includes(MEDIUM_SIGNIFICANCE)
     )
     expect(warnings).toHaveLength(1)
-    expect(warnings[0].message).toMatch(/P0: .*written as Low/)
+    expect(warnings[0].message).toMatch(/^\s*habitats P0: .*written as Low/)
+  })
+})
+
+describe('proposedSignificanceOf', () => {
+  it('substitutes Low for Medium, and keeps the other wordings', () => {
+    expect(proposedSignificanceOf(`2. ${MEDIUM_SIGNIFICANCE}`)).toEqual({
+      value: 'Low',
+      substituted: true
+    })
+    expect(
+      proposedSignificanceOf('Formally identified in local strategy')
+    ).toEqual({ value: 'High', substituted: false })
+    expect(proposedSignificanceOf(null)).toEqual({
+      value: null,
+      substituted: false
+    })
   })
 })

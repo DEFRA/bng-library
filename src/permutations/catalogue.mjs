@@ -572,7 +572,10 @@ const TREE_CONDITION_ORDER = [
   'Fairly Good',
   'Good'
 ]
-const THIRTY_PLUS_YEARS = '30+'
+
+/** A delay above 0 years, "30+" included: a tree put back after a delay. */
+const isDelayed = (delayYears) =>
+  delayYears === THIRTY_PLUS || Number(delayYears ?? 0) > 0
 
 const isLowerTreeCondition = (proposed, baseline) =>
   TREE_CONDITION_ORDER.includes(proposed) &&
@@ -601,7 +604,7 @@ function checkWorsenedTrees(scenario, where) {
       return []
     }
     const at = `${where}.overrides.trees[${i}]`
-    if (Number(row.delayYears ?? 0) > 0) {
+    if (isDelayed(row.delayYears)) {
       return []
     }
     return [
@@ -610,10 +613,10 @@ function checkWorsenedTrees(scenario, where) {
         : [
             `${at}.proposedCondition: a tree that worsens is in a lower condition than the tree it is (${JSON.stringify(target.baselineCondition ?? null)}), unless it is put back after a delay`
           ]),
-      ...(row.advanceYears === THIRTY_PLUS_YEARS
+      ...(row.advanceYears === THIRTY_PLUS
         ? []
         : [
-            `${at}.advanceYears: a tree that worsens is created "${THIRTY_PLUS_YEARS}" years in advance, unless it is put back after a delay`
+            `${at}.advanceYears: a tree that worsens is created "${THIRTY_PLUS}" years in advance, unless it is put back after a delay`
           ])
     ]
   })

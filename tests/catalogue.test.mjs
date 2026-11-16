@@ -286,6 +286,20 @@ describe('parseScenarioCatalogue', () => {
     expect(withTrees([lostTree, worse])).toEqual([])
   })
 
+  it('accepts worsens on a tree put back after a "30+" year delay', () => {
+    expect(
+      withTrees([
+        lostTree,
+        {
+          ...worse,
+          proposedCondition: 'Good',
+          advanceYears: '0',
+          delayYears: '30+'
+        }
+      ])
+    ).toEqual([])
+  })
+
   it('accepts worsens on a tree put back after a delay, in any condition and with no years in advance', () => {
     expect(
       withTrees([

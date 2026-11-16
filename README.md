@@ -617,13 +617,13 @@ exported from the package, says whether it does.
 
 Override rows take the fields of `generateOne`'s `attributeOverrides`:
 
-| Layer       | Fields                                                                                                                                                                                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| all         | `retention`, `baselineCondition`, `proposedCondition`, `baselineStrategicSignificance`, `proposedStrategicSignificance`, `advanceYears`, `delayYears`, `incomplete` (true blanks the proposed-side condition, strategic significance and encroachment) |
-| `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                              |
-| `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                          |
-| `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                |
-| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the legacy `Count` column; 1 unless pinned; legacy-only scenarios); `replants` |
+| Layer       | Fields                                                                                                                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| all         | `retention`, `baselineCondition`, `proposedCondition`, `baselineStrategicSignificance`, `proposedStrategicSignificance`, `advanceYears`, `delayYears`, `incomplete` (true blanks the proposed-side condition, strategic significance and encroachment)            |
+| `habitats`  | `habitatFullName`, `proposedHabitatFullName`, `parcelRef`                                                                                                                                                                                                         |
+| `hedgerows` | `hedgeType`, `proposedHedgeType`, `lengthRange`, `sameLineAs`                                                                                                                                                                                                     |
+| `rivers`    | `riverType`, `proposedRiverType`, `baselineWaterEncroachment`, `proposedWaterEncroachment`, `baselineRiparianEncroachment`, `proposedRiparianEncroachment`, `lengthRange`, `sameLineAs`                                                                           |
+| `trees`     | `treeSize`, `treeType`, `ruralOrUrban`, each pinning both sides of the tree (a created tree's baseline stays "N/A"); `count`, the number of trees the point stands for (the legacy `Count` column; 1 unless pinned; legacy-only scenarios); `replants`; `worsens` |
 
 `verticalHabitats` rows pin the BNG Service template's vertical area
 habitats (green walls and intertidal hard structures), drawn as a line with
@@ -648,6 +648,15 @@ it is linked to it as its parent (Parent Ref, `parent_uuid` and
 `parent_geom`), as a surveyor links a planting to the tree it replaces. It is
 still a creation, its Baseline columns "N/A", and the felled tree is still
 lost.
+`worsens`, on a Created tree, is the ref of an earlier Lost tree that it is:
+the tree recorded as lost and created again in a lower condition (metric user
+guide, "Habitat retention"). It stands on that tree's point and takes its size,
+type and setting, and in the BNG Service format it is Category Existing,
+linked to it as its parent, with the copied row's Baseline columns. A row takes
+`replants` or `worsens`, not both. The catalogue holds it to a degrade, as the
+service does: a pinned `proposedCondition` lower than the tree's
+`baselineCondition`, and `advanceYears` `"30+"`, unless it is put back after a
+delay (`delayYears` above 0). An `invalid-` scenario may break them.
 
 Things worth knowing when writing a scenario:
 

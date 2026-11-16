@@ -103,33 +103,51 @@ function drawnSource(layerKey, feature, index) {
   }
 }
 
+/** A tree's Category when it is the baseline tree, not new planting. */
+const EXISTING_TREE = 'Existing'
+
 /**
- * Link each tree planted in a felled one's place (`replants`, which
- * `drawTrees` has checked names an earlier Lost tree) to that tree,
- * as a surveyor links a new planting to the tree it replaces: by its Parent
- * Ref, parent_uuid and parent_geom. It stays a creation, its Baseline columns
- * "N/A", and the felled tree is still lost, as the Metric counts it.
+ * Link each Created tree that takes a Lost one's place (`replants` or
+ * `worsens`, which `drawTrees` has checked names an earlier Lost tree) to
+ * that tree, as a surveyor links it: by its Parent Ref, parent_uuid and
+ * parent_geom. The Lost tree is still lost, as the Metric counts it.
+ *
+ * - A tree planted in a felled one's place (`replants`) stays new planting,
+ *   its Baseline columns "N/A".
+ * - A tree that `worsens` is the baseline tree itself, recorded as lost and
+ *   created again in a lower condition (guide, "Habitat retention"): it is
+ *   Category Existing, and keeps the copied row's Baseline columns, as the
+ *   template writes them when a baseline tree is copied.
  */
 function linkReplantedTrees(drawnTrees, layer) {
   drawnTrees.forEach((tree, index) => {
-    if (!tree.replants) {
+    const named = tree.replants ?? tree.worsens
+    if (!named) {
       return
     }
-    const felled = layer.baseline.find(
-      (feature) => feature.values[HABITAT_REF] === tree.replants
+    const lost = layer.baseline.find(
+      (feature) => feature.values[HABITAT_REF] === named
     )
-    const planted = layer.postIntervention.find(
+    const created = layer.postIntervention.find(
       (feature) => feature.source.index === index
     )
-    if (!felled || !planted) {
+    if (!lost || !created) {
       throw new Error(
-        `tree ${tree.ref} replants ${tree.replants}, but the site has no felled tree ${tree.replants} or no planted tree ${tree.ref}`
+        `tree ${tree.ref} takes the place of ${named}, but the site has no Lost tree ${named} or no Created tree ${tree.ref}`
       )
     }
-    planted.lineage = {
-      ref: tree.replants,
-      uuid: felled.uuid,
-      geom: geometryWkt(felled.geometry)
+    created.lineage = {
+      ref: named,
+      uuid: lost.uuid,
+      geom: geometryWkt(lost.geometry)
+    }
+    if (tree.worsens) {
+      for (const [column, value] of Object.entries(lost.values)) {
+        if (column.startsWith('Baseline ')) {
+          created.values[column] = value
+        }
+      }
+      created.values.Category = EXISTING_TREE
     }
   })
 }

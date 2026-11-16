@@ -9,6 +9,9 @@
  *   Created; a hedgerow, watercourse or tree that is `Lost` is removed.
  * - A Created tree that `replants` an earlier, felled one stands on its point
  *   and is linked to it as its parent.
+ * - A Created tree that `worsens` an earlier Lost one is that tree recorded
+ *   as lost and created again in a lower condition: it stands on its point,
+ *   is linked to it as its parent, and is Category Existing.
  * - A tree's `count` is refused: the template has no Count column, and the
  *   service reads each tree point as one tree, so a count cannot be written.
  * - `$comment` keys document a row and are ignored.
@@ -52,7 +55,8 @@ const KEYS = {
     'treeSize',
     'treeType',
     'ruralOrUrban',
-    'replants'
+    'replants',
+    'worsens'
   ]),
   verticalHabitats: new Set([
     'habitatFullName',

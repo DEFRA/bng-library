@@ -247,7 +247,7 @@ describe('parseScenarioCatalogue', () => {
     const earlierLost = /must be the ref of an earlier trees row that is Lost/
     expect(problems(doc)).toEqual([
       expect.stringMatching(
-        /trees\[1\]\.replants: only a Created tree is planted in another's place/
+        /trees\[1\]\.replants: only a Created tree takes another's place/
       ),
       expect.stringMatching(
         new RegExp(`trees\\[2\\]\\.replants: ${earlierLost.source}`)
@@ -259,6 +259,118 @@ describe('parseScenarioCatalogue', () => {
         new RegExp(`trees\\[4\\]\\.replants: ${earlierLost.source}`)
       )
     ])
+  })
+
+  const WORSENED = {
+    treeSize: 'Medium',
+    treeType: 'Native',
+    ruralOrUrban: 'Rural'
+  }
+  const lostTree = {
+    retention: 'Lost',
+    ...WORSENED,
+    baselineCondition: 'Moderate'
+  }
+  const worse = {
+    retention: 'Created',
+    worsens: 'T001',
+    ...WORSENED,
+    proposedCondition: 'Poor',
+    advanceYears: '30+',
+    delayYears: '0'
+  }
+  const withTrees = (trees, fields = {}) =>
+    problems(catalogue(scenario({ ...fields, overrides: { trees } })))
+
+  it('accepts worsens on a Created tree that is the earlier Lost tree, lower and 30+ years in advance', () => {
+    expect(withTrees([lostTree, worse])).toEqual([])
+  })
+
+  it('accepts worsens on a tree put back after a "30+" year delay', () => {
+    expect(
+      withTrees([
+        lostTree,
+        {
+          ...worse,
+          proposedCondition: 'Good',
+          advanceYears: '0',
+          delayYears: '30+'
+        }
+      ])
+    ).toEqual([])
+  })
+
+  it('accepts worsens on a tree put back after a delay, in any condition and with no years in advance', () => {
+    expect(
+      withTrees([
+        lostTree,
+        {
+          ...worse,
+          proposedCondition: 'Good',
+          advanceYears: '0',
+          delayYears: '5'
+        }
+      ])
+    ).toEqual([])
+  })
+
+  it('rejects worsens that changes the tree, names no earlier Lost tree, or comes with replants', () => {
+    expect(
+      withTrees([
+        lostTree,
+        { ...worse, treeSize: 'Large' },
+        { ...worse, worsens: 'T002' },
+        { ...worse, replants: 'T001' },
+        { ...worse, retention: 'Retained' }
+      ])
+    ).toEqual([
+      expect.stringMatching(
+        /trees\[1\]\.treeSize: a tree that worsens keeps the treeSize of the tree it is \("Medium"\)/
+      ),
+      expect.stringMatching(
+        /trees\[2\]\.worsens: must be the ref of an earlier trees row that is Lost/
+      ),
+      expect.stringMatching(/trees\[3\]: takes replants or worsens, not both/),
+      expect.stringMatching(
+        /trees\[4\]\.worsens: only a Created tree takes another's place/
+      )
+    ])
+  })
+
+  it.each([
+    [
+      'no lower than the tree it is',
+      { proposedCondition: 'Moderate' },
+      /trees\[1\]\.proposedCondition: a tree that worsens is in a lower condition than the tree it is \("Moderate"\)/
+    ],
+
+    [
+      'not created 30+ years in advance',
+      { advanceYears: '5' },
+      /trees\[1\]\.advanceYears: a tree that worsens is created "30\+" years in advance/
+    ]
+  ])('rejects a tree that worsens %s, with no delay', (_, change, message) => {
+    expect(withTrees([lostTree, { ...worse, ...change }])).toEqual([
+      expect.stringMatching(message)
+    ])
+  })
+
+  it('rejects a tree that worsens with no condition pinned, as a drawn one is rarely lower', () => {
+    const { proposedCondition, ...unpinned } = worse
+    expect(withTrees([lostTree, unpinned])).toEqual([
+      expect.stringMatching(
+        /trees\[1\]\.proposedCondition: a tree that worsens is in a lower condition/
+      )
+    ])
+  })
+
+  it('lets an invalid- scenario write a tree that worsens and is not a degrade, for the service to refuse', () => {
+    expect(
+      withTrees([lostTree, { ...worse, proposedCondition: 'Good' }], {
+        id: 'invalid-tree-not-worse',
+        expectMetricWarnings: ['No enhancement']
+      })
+    ).toEqual([])
   })
 
   it('accepts the tree fields on trees only', () => {

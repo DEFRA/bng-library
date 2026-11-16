@@ -14,7 +14,7 @@ import {
   PROPOSED_STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
-import { replantedTreeIndex } from '../synthetic/draw/trees.mjs'
+import { TREE_LINKS, replantedTreeIndex } from '../synthetic/draw/trees.mjs'
 import {
   FORMAT_BNG_SERVICE,
   FORMAT_LEGACY,
@@ -68,7 +68,14 @@ const OVERRIDE_FIELDS = {
     'lengthRange',
     'sameLineAs'
   ],
-  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count', 'replants']
+  trees: [
+    'treeSize',
+    'treeType',
+    'ruralOrUrban',
+    'count',
+    'replants',
+    'worsens'
+  ]
 }
 // Vertical area habitats are drawn by the BNG Service generator alone
 // (`addVerticalHabitats`), which takes these fields and no others: its
@@ -169,22 +176,47 @@ function checkSameLineAs(layer, row, index, where) {
   return problems
 }
 
+// What a tree that `worsens` keeps of the tree it is: the Metric prices its
+// created row at its own size, type and setting, and the service at the
+// baseline tree's, so the two agree only when they are the same.
+const WORSENED_TREE_KEEPS = ['treeSize', 'treeType', 'ruralOrUrban']
+
 // `replants` names an earlier tree, by its ref, that a Created tree is
-// planted in place of: the earlier tree must be lost, and the row takes its
-// point.
+// planted in place of; `worsens` one it is, recorded as lost and created
+// again in a lower condition. Either way the earlier tree must be lost, and
+// the row takes its point; a tree that worsens also keeps its size, type and
+// setting, and is a degrade (checkWorsenedTrees).
 function checkReplants(layer, rows, row, index, where) {
-  if (layer !== 'trees' || !isObject(row) || !('replants' in row)) {
+  if (layer !== 'trees' || !isObject(row)) {
+    return []
+  }
+  const links = TREE_LINKS.filter((link) => link in row)
+  if (links.length > 1) {
+    return [`${where}: takes replants or worsens, not both`]
+  }
+  const [link] = links
+  if (!link) {
     return []
   }
   const problems =
     row.retention === 'Created'
       ? []
-      : [`${where}.replants: only a Created tree is planted in another's place`]
-  const target = replantedTreeIndex(row.replants) ?? -1
+      : [`${where}.${link}: only a Created tree takes another's place`]
+  const target = replantedTreeIndex(row[link]) ?? -1
   if (target < 0 || target >= index || rows[target]?.retention !== 'Lost') {
     problems.push(
-      `${where}.replants: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
+      `${where}.${link}: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
     )
+    return problems
+  }
+  if (link === 'worsens') {
+    for (const field of WORSENED_TREE_KEEPS) {
+      if (row[field] !== rows[target][field]) {
+        problems.push(
+          `${where}.${field}: a tree that worsens keeps the ${field} of the tree it is (${JSON.stringify(rows[target][field])})`
+        )
+      }
+    }
   }
   return problems
 }
@@ -532,6 +564,64 @@ function checkInvalidNaming(scenario, where) {
   )
 }
 
+/** A tree's conditions, worst first: one is lower than another by this order. */
+const TREE_CONDITION_ORDER = [
+  'Poor',
+  'Fairly Poor',
+  'Moderate',
+  'Fairly Good',
+  'Good'
+]
+
+/** A delay above 0 years, "30+" included: a tree put back after a delay. */
+const isDelayed = (delayYears) =>
+  delayYears === THIRTY_PLUS || Number(delayYears ?? 0) > 0
+
+const isLowerTreeCondition = (proposed, baseline) =>
+  TREE_CONDITION_ORDER.includes(proposed) &&
+  TREE_CONDITION_ORDER.indexOf(proposed) <
+    TREE_CONDITION_ORDER.indexOf(baseline)
+
+/**
+ * A tree that `worsens` is a degrade, as the service reads it
+ * (bng-metric-backend, lineage-rules.js, checkDegradedRow): in a lower
+ * condition than the tree it is, and created 30+ years in advance, unless it
+ * is put back after a delay, when it may be in any condition. Each is pinned,
+ * as a drawn condition or advance would rarely make one. An `invalid-`
+ * scenario may break them, to show the service refusing it.
+ */
+function checkWorsenedTrees(scenario, where) {
+  const rows = isObject(scenario.overrides) ? scenario.overrides.trees : null
+  if (
+    !Array.isArray(rows) ||
+    (isText(scenario.id) && scenario.id.startsWith(INVALID_PREFIX))
+  ) {
+    return []
+  }
+  return rows.flatMap((row, i) => {
+    const target = isObject(row) ? rows[replantedTreeIndex(row.worsens)] : null
+    if (!isObject(target) || target.retention !== 'Lost') {
+      return []
+    }
+    const at = `${where}.overrides.trees[${i}]`
+    if (isDelayed(row.delayYears)) {
+      return []
+    }
+    return [
+      ...(isLowerTreeCondition(row.proposedCondition, target.baselineCondition)
+        ? []
+        : [
+            `${at}.proposedCondition: a tree that worsens is in a lower condition than the tree it is (${JSON.stringify(target.baselineCondition ?? null)}), unless it is put back after a delay`
+          ]),
+      ...(row.advanceYears === THIRTY_PLUS
+        ? []
+        : [
+            `${at}.advanceYears: a tree that worsens is created "${THIRTY_PLUS}" years in advance, unless it is put back after a delay`
+          ])
+    ]
+  })
+}
+
 function checkScenario(scenario, where) {
   if (!isObject(scenario)) {
     return [`${where}: must be an object`]
@@ -552,6 +642,7 @@ function checkScenario(scenario, where) {
     ...checkInvalidNaming(scenario, where),
     ...checkVerticalFormats(scenario, where),
     ...checkTreeCountFormats(scenario, where),
+    ...checkWorsenedTrees(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)
       .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))

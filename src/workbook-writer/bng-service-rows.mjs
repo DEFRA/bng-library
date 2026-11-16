@@ -147,7 +147,7 @@ const LAYERS = {
   habitats: habitatSide(areaSize),
   verticalHabitats: habitatSide(verticalSize),
   hedgerows: { ...linear('Hedge Type', () => ({})), byParts: true },
-  rivers: { ...linear('River Type', encroachment), enhancedAsDrawn: true },
+  rivers: { ...linear('River Type', encroachment), sizedAsDrawn: true },
   trees: TREES
 }
 
@@ -196,7 +196,7 @@ function retentionOf(child, context) {
  * must pair with an enhanced baseline row.
  */
 function enhancedWhole(layer, baseline, proposed, context) {
-  if (!layer.enhancedAsDrawn) {
+  if (!layer.sizedAsDrawn) {
     return { ...baseline, enhanced: baseline.size, enhancement: proposed }
   }
   if (proposed.size > 0) {
@@ -212,12 +212,32 @@ function enhancedWhole(layer, baseline, proposed, context) {
   }
 }
 
+/**
+ * A baseline feature Retained whole. Most are retained by their surveyed
+ * size; a watercourse by its line as drawn, as the backend's lineage
+ * outcomes price it, so a shorter line loses the rest (user guide,
+ * Watercourses), but never more than it had. A watercourse line with no
+ * length is noted, and retained by its surveyed length.
+ */
+function retainedWhole(layer, baseline, proposed, context) {
+  if (!layer.sizedAsDrawn) {
+    return { ...baseline, retained: baseline.size }
+  }
+  if (proposed.size > 0) {
+    return { ...baseline, retained: Math.min(proposed.size, baseline.size) }
+  }
+  context.notes.push(
+    `${context.table} ${proposed.reference}: Retained watercourse with no length drawn; read as retained by its baseline length`
+  )
+  return { ...baseline, retained: baseline.size }
+}
+
 /** Where a baseline feature goes when it becomes one feature, whole. */
 function placeWhole(layer, baseline, child, context) {
   const proposed = proposedRow(layer, child)
   switch (retentionOf(child, context)) {
     case RETAINED:
-      return { baseline: { ...baseline, retained: baseline.size } }
+      return { baseline: retainedWhole(layer, baseline, proposed, context) }
     case ENHANCED:
       return {
         baseline: enhancedWhole(layer, baseline, proposed, context),
@@ -283,12 +303,11 @@ function placeParts(layer, baseline, parts, context) {
  * Where a baseline feature goes, by the features it becomes. A split is
  * placed by its parts' sizes. A hedgerow always is, as the service counts
  * a shorter hedge's lost length (template guide, Hedgerows). A watercourse
- * Retained whole keeps its surveyed length however its line changes, as the
- * service cannot measure a watercourse's part loss from the map. One Enhanced
- * whole counts its length as drawn, as the metric records a re-meandered
- * channel's total enhanced length, with no loss (user guide, Watercourses);
- * so a shorter Enhanced line counts the rest as lost, as the backend's
- * lineage outcomes do.
+ * Retained whole counts its length as drawn, up to its surveyed length, so
+ * a shorter line counts the rest as lost, as the backend's lineage outcomes
+ * do. One Enhanced whole counts its length as drawn, as the metric records
+ * a re-meandered channel's total enhanced length, with no loss (user guide,
+ * Watercourses); so a shorter Enhanced line counts the rest as lost too.
  */
 function placeBaseline(layer, parent, parts, context) {
   const baseline = baselineRow(layer, parent)

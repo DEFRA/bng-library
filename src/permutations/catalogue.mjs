@@ -20,6 +20,11 @@ import {
   FORMAT_LEGACY,
   VALID_FORMATS
 } from '../bng-service/schema.mjs'
+import {
+  MAX_WORSE_COUNT,
+  WORSE_KINDS
+} from '../bng-service/template-features.mjs'
+import { NAMED_SITE_CHANGES } from '../bng-service/site-changes.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -499,6 +504,53 @@ function checkTreeCountFormats(scenario, where) {
     : []
 }
 
+/**
+ * Habitats that get worse and watercourse changes are recorded only as the
+ * BNG Service template records them, linked to the baseline feature, so a
+ * scenario that asks for them is generated in that format only, and must
+ * say so.
+ */
+const BNG_SERVICE_CHANGES = ['worseHabitats', 'siteChanges']
+
+function checkChangeFormats(scenario, where) {
+  return BNG_SERVICE_CHANGES.filter(
+    (field) => field in scenario && !isBngServiceOnly(scenario)
+  ).map(
+    (field) =>
+      `${where}.formats: a scenario giving ${field} must list ["${FORMAT_BNG_SERVICE}"] only, as the legacy template does not link a post-intervention feature to its baseline one`
+  )
+}
+
+/** How many of each kind of habitat that gets worse: at least one kind. */
+function checkWorseHabitats(value, where) {
+  if (!isObject(value) || Object.keys(value).length === 0) {
+    return [`${where}: must name at least one kind, as { "hedge": 1 }`]
+  }
+  return Object.entries(value).flatMap(([kind, count]) => [
+    ...checkOneOf(kind, WORSE_KINDS, `${where}.${kind}`),
+    ...(isPositiveInteger(count) && count <= MAX_WORSE_COUNT
+      ? []
+      : [
+          `${where}.${kind}: must be a whole number from 1 to ${MAX_WORSE_COUNT}`
+        ])
+  ])
+}
+
+/** A non-empty list of watercourse changes, each named once. */
+function checkSiteChanges(value, where) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [`${where}: must be a non-empty list of site changes`]
+  }
+  return [
+    ...value.flatMap((c, i) =>
+      checkOneOf(c, NAMED_SITE_CHANGES, `${where}[${i}]`)
+    ),
+    ...value
+      .filter((c, i) => value.indexOf(c) !== i)
+      .map((c) => `${where}: "${c}" is listed twice`)
+  ]
+}
+
 /** A non-empty list of output formats, each named once. */
 function checkFormats(value, where) {
   if (!Array.isArray(value) || value.length === 0) {
@@ -522,6 +574,8 @@ const OPTIONAL_FIELDS = {
     isPositiveInteger(v) ? [] : [`${where}: must be a whole number above 0`],
   emptyLayers: checkEmptyLayers,
   overrides: checkOverrides,
+  worseHabitats: checkWorseHabitats,
+  siteChanges: checkSiteChanges,
   expectGain: (v, where) => checkOneOf(v, GAIN_VERDICTS, where),
   expectTrading: checkTrading,
   expectUnitOrder: checkStageReferences,
@@ -642,6 +696,7 @@ function checkScenario(scenario, where) {
     ...checkInvalidNaming(scenario, where),
     ...checkVerticalFormats(scenario, where),
     ...checkTreeCountFormats(scenario, where),
+    ...checkChangeFormats(scenario, where),
     ...checkWorsenedTrees(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)

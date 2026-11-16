@@ -564,6 +564,220 @@
       }
     },
     {
+      "id": "intervention-area-degraded",
+      "purpose": "intervention",
+      "$comment": "The BNG Service template records a habitat that gets worse by keeping the copied row, linked to its baseline parcel, and setting it to Created in its own type: the legacy template cannot link it, so the scenario is BNG Service only.",
+      "formats": ["bng-service"],
+      "title": "Area habitats — condition gets worse, whole and in part, and a vertical area habitat",
+      "description": "Four parcels of Other neutral grassland in Moderate condition. H004 cannot be kept in that condition, so, as the metric user guide says, it is recorded as lost and created again in its own type in a lower condition, 30+ years in advance: in the BNG Service file its row is Created, linked to its baseline parcel. H003 gets worse in part: it is split into H003a, Retained, and H003b, Created in a lower condition, both linked to H003. V001, a vertical area habitat, gets worse the same way. H001 and H002 are retained as they are. This checks the service prices a habitat that gets worse as the metric does: the baseline lost and the worse habitat created.",
+      "size": 4,
+      "emptyLayers": ["hedgerows", "rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "worseHabitats": { "parcel": 1, "partly-worse-parcel": 1, "vertical": 1 },
+      "subject": {
+        "layer": "Habitats",
+        "ref": "H004",
+        "note": "the parcel created again in its own type in a lower condition, 30+ years in advance, linked to its baseline parcel; H003b gets worse in part, V001 is a vertical area habitat that gets worse"
+      }
+    },
+    {
+      "id": "intervention-hedgerow-degraded",
+      "purpose": "intervention",
+      "$comment": "As intervention-area-degraded, for hedgerows. intervention-hedgerow-condition-lowered records the same change as a new hedgerow, unlinked; this one links it, as the template does.",
+      "formats": ["bng-service"],
+      "title": "Hedgerows — condition gets worse, whole and in part",
+      "description": "HG001 to HG003, native hedgerows in Moderate condition, are retained as they are. HG004 cannot be kept in its condition, so it is recorded as lost and created again in its own type in a lower condition, 30+ years in advance: in the BNG Service file its row is Created, linked to its baseline hedgerow. HG005 gets worse in part: it is split into HG005a, Retained, and HG005b, Created in a lower condition, both linked to HG005. This checks the service prices a hedgerow that gets worse, whole or in part, as the metric does.",
+      "size": 1,
+      "emptyLayers": ["rivers", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "hedgerows": [
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "hedgeType": "Native hedgerow",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "worseHabitats": { "hedge": 1, "partly-worse-hedge": 1 },
+      "subject": {
+        "layer": "Hedgerows",
+        "ref": "HG004",
+        "note": "the hedgerow created again in its own type in a lower condition, linked to its baseline one; HG005b is the part of HG005 that gets worse"
+      }
+    },
+    {
+      "id": "intervention-watercourse-degraded",
+      "purpose": "intervention",
+      "$comment": "As intervention-area-degraded, for watercourses.",
+      "formats": ["bng-service"],
+      "title": "Watercourses — encroachment gets worse, and condition gets worse",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003's encroachment gets worse with no other impact, so it is created again in its own type and condition, 10 years in advance, as the metric user guide allows for more encroachment alone. R004's condition gets worse with no change of encroachment, so it is created again in its own type in a lower condition, with 0 years in advance. In the BNG Service file both are Created, linked to their baseline watercourse. This checks the service prices a watercourse that gets worse as the metric does.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "worseHabitats": { "encroached-watercourse": 1, "worse-watercourse": 1 },
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003",
+        "note": "the watercourse whose encroachment gets worse, created again 10 years in advance; R004's condition gets worse"
+      }
+    },
+    {
+      "id": "intervention-watercourse-realigned-and-shorter",
+      "purpose": "intervention",
+      "$comment": "Changes only the BNG Service template records on the map: the copied line moved or shortened, linked to its baseline watercourse.",
+      "formats": ["bng-service"],
+      "title": "Watercourses — re-meandered, and shorter",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003 is re-meandered: its channel moves onto a longer route, Enhanced by Realignment, and, as the metric user guide says, no length is lost and the whole new length is enhanced. R004 is kept Retained but shorter: part of the stretch is culverted or filled. In the BNG Service file both keep their link to the baseline watercourse. This checks the service prices a re-meandered and a shorter watercourse as the metric does.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "siteChanges": ["realigned-watercourse", "shorter-watercourse"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003",
+        "note": "the re-meandered watercourse, Enhanced by Realignment onto a longer route; R004 is kept but shorter"
+      }
+    },
+    {
       "id": "area-enhanced-medium-condition-na",
       "purpose": "intervention",
       "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A",

@@ -243,6 +243,49 @@ describe('figuresFromProject', () => {
     expect(comparison.discrepancies).toEqual([])
   })
 
+  it('compares the Retained parts of a split baseline feature under its ref, summed', () => {
+    const feature = (featureId, ref, retentionCategory, units, extra = {}) => ({
+      featureId,
+      ref,
+      retentionCategory,
+      units,
+      sizeMetres: units * 100,
+      ...extra
+    })
+    const response = {
+      project: {
+        baseline: {
+          hedgerows: [
+            feature('p5', 'HG005', null, 3),
+            feature('p6', 'HG006', null, 1)
+          ]
+        },
+        postIntervention: {
+          hedgerows: [
+            feature('c1', 'HG005a', 'Retained', 1, { parentFeatureId: 'p5' }),
+            feature('c2', 'HG005b', 'Created', 0.5, { parentFeatureId: 'p5' }),
+            feature('c3', 'HG005c', 'Retained', 0.25, {
+              parentFeatureId: 'p5'
+            }),
+            feature('c4', 'HG006', 'Retained', 1, { parentFeatureId: 'p6' })
+          ]
+        }
+      }
+    }
+    const units = Object.fromEntries(
+      figuresFromProject(response)
+        .filter((f) => f.category === 'feature-units')
+        .map((f) => [f.key, [f.value, f.size]])
+    )
+    expect(units).toEqual({
+      'feature-units|hedgerow|baseline|HG005': [3, 0.3],
+      'feature-units|hedgerow|baseline|HG006': [1, 0.1],
+      'feature-units|hedgerow|retained|HG005': [1.25, 0.125],
+      'feature-units|hedgerow|created|HG005b': [0.5, 0.05],
+      'feature-units|hedgerow|retained|HG006': [1, 0.1]
+    })
+  })
+
   // From the corpus: the metric's trading summary spells the habitat
   // "Ruderal/ephemeral"; the template and the service, "Ruderal/Ephemeral".
   it('matches a trading habitat the metric spells in a different case', () => {

@@ -372,3 +372,33 @@ export function addSiteChanges(
   }
   thirtyPlusDelays(site, emptyLayers, overrides)
 }
+
+/** The watercourse changes a scenario can ask for by name, and their draws. */
+const NAMED_CHANGE_DRAWS = {
+  [CHANGE.realignedWatercourse]: realignedWatercourse,
+  [CHANGE.shorterWatercourse]: shorterWatercourse
+}
+
+/** The changes `addNamedSiteChanges` draws. */
+export const NAMED_SITE_CHANGES = Object.freeze(Object.keys(NAMED_CHANGE_DRAWS))
+
+/**
+ * Add only the watercourse changes `names` asks for, each drawn as
+ * `addSiteChanges` draws it, in the order named: a scenario that pins what
+ * it holds asks for them so. Refuses a name it does not know.
+ *
+ * @param {object} site
+ * @param {ReturnType<import('./random.mjs').createChooser>} chooser
+ * @param {string[]} names  of NAMED_SITE_CHANGES
+ */
+export function addNamedSiteChanges(site, chooser, names) {
+  for (const name of names) {
+    const draw = NAMED_CHANGE_DRAWS[name]
+    if (!draw) {
+      throw new Error(
+        `unknown site change: ${name} (known: ${NAMED_SITE_CHANGES.join(', ')})`
+      )
+    }
+    draw(site, chooser)
+  }
+}

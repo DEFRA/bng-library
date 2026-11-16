@@ -30,6 +30,7 @@ import { listIndex } from './reference.mjs'
 import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   LOW,
+  MEDIUM_SIGNIFICANCE,
   NO,
   NOT_APPLICABLE,
   TO_BE_CREATED,
@@ -37,7 +38,8 @@ import {
   irreplaceableAnswers,
   riparianEncroachment,
   significance,
-  treeSetting
+  treeSetting,
+  withoutListNumber
 } from './vocabulary.mjs'
 
 const SQ_M_PER_HECTARE = 10_000
@@ -173,8 +175,23 @@ function templateRetention(layerKey, retention) {
   return layerKey === 'habitats' && retention === LOST ? CREATED : retention
 }
 
-function proposedSignificance(retention, value) {
-  return retention === RETAINED ? LOW : significance(value)
+/**
+ * Low on a Retained row. Elsewhere Low or High as the source says; the
+ * Metric's Medium, which the template has no place for, becomes Low with a
+ * warning, since a blank significance prices the feature at zero.
+ */
+function proposedSignificance(source, retention) {
+  if (retention === RETAINED) {
+    return LOW
+  }
+  const value = source.proposed.significance
+  if (withoutListNumber(value) === MEDIUM_SIGNIFICANCE) {
+    warn(
+      `  ${source.ref ?? `feature ${source.index}`}: Proposed Strategic Significance "${MEDIUM_SIGNIFICANCE}" has no place in the template; written as Low`
+    )
+    return LOW
+  }
+  return significance(value)
 }
 
 const aboveZero = (value) => value !== null && value !== '0'
@@ -211,10 +228,7 @@ function areaProposed(source, retention) {
       true
     ),
     'Proposed Condition': proposed.condition,
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      proposed.significance
-    ),
+    'Proposed Strategic Significance': proposedSignificance(source, retention),
     ...timing('habitats', proposed),
     'Spatial risk category': ON_SITE_RISK,
     Area: hectares(source.geometry)
@@ -233,10 +247,7 @@ function hedgerowProposed(source, retention) {
       true
     ),
     'Proposed Condition': proposed.condition,
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      proposed.significance
-    ),
+    'Proposed Strategic Significance': proposedSignificance(source, retention),
     ...timing('hedgerows', proposed),
     'Spatial risk category': ON_SITE_RISK,
     Length: lengthMetres(source.geometry)
@@ -251,10 +262,7 @@ function riverProposed(source, retention) {
     'Proposed River Type': proposed.type,
     'Proposed Distinctiveness': distinctiveness('rivers', proposed.type, true),
     'Proposed Condition': proposed.condition,
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      proposed.significance
-    ),
+    'Proposed Strategic Significance': proposedSignificance(source, retention),
     'Proposed Encroachment into Watercourse': proposed.water,
     'Proposed Encroachment into riparian zone': riparianEncroachment(
       proposed.type,
@@ -276,10 +284,7 @@ function treeProposed(source, retention) {
     'Proposed Tree Size': proposed.size,
     'Proposed Rural or Urban Tree': treeSetting(proposed.setting),
     'Proposed Condition': proposed.condition,
-    'Proposed Strategic Significance': proposedSignificance(
-      retention,
-      proposed.significance
-    ),
+    'Proposed Strategic Significance': proposedSignificance(source, retention),
     Category: retention === CREATED ? NEWLY_PLANTED : EXISTING,
     ...timing('trees', proposed),
     'Spatial risk category': ON_SITE_RISK

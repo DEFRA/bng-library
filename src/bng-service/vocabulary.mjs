@@ -29,6 +29,11 @@ const SIGNIFICANCE = new Map([
   [HIGH, HIGH]
 ])
 
+// The Metric's middle strategic significance (Medium), which the template has
+// no place for.
+export const MEDIUM_SIGNIFICANCE =
+  'Location ecologically desirable but not in local strategy'
+
 const LIST_NUMBER = /^\d+\.\s+/
 
 /** A value without the legacy list number: "4. Fairly Poor" → "Fairly Poor". */

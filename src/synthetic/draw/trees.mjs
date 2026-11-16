@@ -144,7 +144,9 @@ export const TREE_LINKS = Object.freeze(['replants', 'worsens'])
 /**
  * The earlier, Lost tree a row's `replants` or `worsens` names, and which of
  * the two it is, or null when the row has neither. Throws where the pin
- * cannot mean either, so a direct caller is held to the catalogue's rules.
+ * cannot mean either. A tree that worsens takes the Lost tree's size, type
+ * and setting (`linkedTree`); its condition and timing are the caller's, which
+ * the catalogue holds to a degrade's (checkWorsenedTrees).
  */
 function replacedTree(trees, tree, override) {
   const links = TREE_LINKS.filter((link) => override?.[link] !== undefined)
@@ -168,6 +170,27 @@ function replacedTree(trees, tree, override) {
 }
 
 /**
+ * A Created tree that takes a Lost one's point. One that `worsens` is that
+ * tree, so it also takes its size, type and setting, whatever the row drew:
+ * taken after the draw, so the rest of the site draws as it would without
+ * the pin.
+ */
+function linkedTree(tree, { link, replaced }) {
+  const placed = { ...tree, point: replaced.point, [link]: replaced.ref }
+  if (link !== 'worsens') {
+    return placed
+  }
+  return {
+    ...placed,
+    size: replaced.size,
+    proposedSize: replaced.size,
+    type: replaced.type,
+    proposedType: replaced.type,
+    ruralOrUrban: replaced.ruralOrUrban
+  }
+}
+
+/**
  * `count` trees inside `boundaryRing`, fewer if no interior point can be
  * found. `perRowOverrides[i]`, if provided, pins values on tree i. A tree
  * pinned with `replants` or `worsens` stands on the point of the earlier tree
@@ -184,15 +207,7 @@ export function drawTrees(boundaryRing, count, perRowOverrides) {
     const override = perRowOverrides?.[trees.length]
     const tree = drawTree(point, trees.length, override)
     const linked = replacedTree(trees, tree, override)
-    trees.push(
-      linked
-        ? {
-            ...tree,
-            point: linked.replaced.point,
-            [linked.link]: linked.replaced.ref
-          }
-        : tree
-    )
+    trees.push(linked ? linkedTree(tree, linked) : tree)
   }
   return trees
 }

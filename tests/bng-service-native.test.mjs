@@ -426,4 +426,51 @@ describe('a tree recorded as lost and created again in a lower condition', () =>
     expect(checkLineage(file)).toEqual([])
     expect(checkTemplateValues(file)).toEqual([])
   })
+
+  // drawTree gives each tree its own size and setting by index, so an
+  // unpinned row would otherwise be another size and setting from the tree it
+  // is, which the service would not read as that tree.
+  it('takes the size, type and setting of the tree it is when the row pins none', () => {
+    const file = path.join(dir, 'worsened-unpinned.gpkg')
+    generateBngServiceSynthetic(
+      file,
+      CENTRE,
+      {
+        numParcels: 1,
+        numTrees: 2,
+        seed: 3,
+        attributeOverrides: {
+          trees: [
+            { retention: 'Lost' },
+            {
+              retention: 'Created',
+              worsens: 'T001',
+              proposedCondition: 'Poor',
+              advanceYears: '30+',
+              delayYears: '0'
+            }
+          ]
+        }
+      },
+      { templateFeatures: false }
+    )
+    const db = new Database(file, { readonly: true })
+    let lost
+    let created
+    try {
+      lost = db.prepare('SELECT * FROM "Individual Trees Baseline"').get()
+      created = db
+        .prepare(
+          `SELECT * FROM "Individual Trees Post-Intervention" WHERE "Habitat Ref" = 'T002'`
+        )
+        .get()
+    } finally {
+      db.close()
+    }
+    expect(created['Proposed Tree Size']).toBe(lost['Baseline Tree Size'])
+    expect(created['Proposed Tree Type']).toBe(lost['Baseline Tree Type'])
+    expect(created['Proposed Rural or Urban Tree']).toBe(
+      lost['Baseline Rural or Urban Tree']
+    )
+  })
 })

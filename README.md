@@ -650,10 +650,13 @@ still a creation, its Baseline columns "N/A", and the felled tree is still
 lost.
 `worsens`, on a Created tree, is the ref of an earlier Lost tree that it is:
 the tree recorded as lost and created again in a lower condition (metric user
-guide, "Habitat retention"). It stands on that tree's point and keeps its size,
+guide, "Habitat retention"). It stands on that tree's point and takes its size,
 type and setting, and in the BNG Service format it is Category Existing,
 linked to it as its parent, with the copied row's Baseline columns. A row takes
-`replants` or `worsens`, not both.
+`replants` or `worsens`, not both. The catalogue holds it to a degrade, as the
+service does: a pinned `proposedCondition` lower than the tree's
+`baselineCondition`, and `advanceYears` `"30+"`, unless it is put back after a
+delay (`delayYears` above 0). An `invalid-` scenario may break them.
 
 Things worth knowing when writing a scenario:
 

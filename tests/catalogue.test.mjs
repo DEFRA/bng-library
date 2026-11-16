@@ -261,55 +261,55 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
-  it('accepts worsens on a Created tree that keeps the size, type and setting of the earlier Lost tree it is', () => {
-    const tree = {
-      treeSize: 'Medium',
-      treeType: 'Native',
-      ruralOrUrban: 'Rural'
-    }
-    const doc = catalogue(
-      scenario({
-        overrides: {
-          trees: [
-            { retention: 'Lost', ...tree },
-            { retention: 'Created', worsens: 'T001', ...tree }
-          ]
+  const WORSENED = {
+    treeSize: 'Medium',
+    treeType: 'Native',
+    ruralOrUrban: 'Rural'
+  }
+  const lostTree = {
+    retention: 'Lost',
+    ...WORSENED,
+    baselineCondition: 'Moderate'
+  }
+  const worse = {
+    retention: 'Created',
+    worsens: 'T001',
+    ...WORSENED,
+    proposedCondition: 'Poor',
+    advanceYears: '30+',
+    delayYears: '0'
+  }
+  const withTrees = (trees, fields = {}) =>
+    problems(catalogue(scenario({ ...fields, overrides: { trees } })))
+
+  it('accepts worsens on a Created tree that is the earlier Lost tree, lower and 30+ years in advance', () => {
+    expect(withTrees([lostTree, worse])).toEqual([])
+  })
+
+  it('accepts worsens on a tree put back after a delay, in any condition and with no years in advance', () => {
+    expect(
+      withTrees([
+        lostTree,
+        {
+          ...worse,
+          proposedCondition: 'Good',
+          advanceYears: '0',
+          delayYears: '5'
         }
-      })
-    )
-    expect(problems(doc)).toEqual([])
+      ])
+    ).toEqual([])
   })
 
   it('rejects worsens that changes the tree, names no earlier Lost tree, or comes with replants', () => {
-    const tree = {
-      treeSize: 'Medium',
-      treeType: 'Native',
-      ruralOrUrban: 'Rural'
-    }
-    const doc = catalogue(
-      scenario({
-        overrides: {
-          trees: [
-            { retention: 'Lost', ...tree },
-            {
-              retention: 'Created',
-              worsens: 'T001',
-              ...tree,
-              treeSize: 'Large'
-            },
-            { retention: 'Created', worsens: 'T002', ...tree },
-            {
-              retention: 'Created',
-              worsens: 'T001',
-              replants: 'T001',
-              ...tree
-            },
-            { retention: 'Retained', worsens: 'T001', ...tree }
-          ]
-        }
-      })
-    )
-    expect(problems(doc)).toEqual([
+    expect(
+      withTrees([
+        lostTree,
+        { ...worse, treeSize: 'Large' },
+        { ...worse, worsens: 'T002' },
+        { ...worse, replants: 'T001' },
+        { ...worse, retention: 'Retained' }
+      ])
+    ).toEqual([
       expect.stringMatching(
         /trees\[1\]\.treeSize: a tree that worsens keeps the treeSize of the tree it is \("Medium"\)/
       ),
@@ -321,6 +321,42 @@ describe('parseScenarioCatalogue', () => {
         /trees\[4\]\.worsens: only a Created tree takes another's place/
       )
     ])
+  })
+
+  it.each([
+    [
+      'no lower than the tree it is',
+      { proposedCondition: 'Moderate' },
+      /trees\[1\]\.proposedCondition: a tree that worsens is in a lower condition than the tree it is \("Moderate"\)/
+    ],
+
+    [
+      'not created 30+ years in advance',
+      { advanceYears: '5' },
+      /trees\[1\]\.advanceYears: a tree that worsens is created "30\+" years in advance/
+    ]
+  ])('rejects a tree that worsens %s, with no delay', (_, change, message) => {
+    expect(withTrees([lostTree, { ...worse, ...change }])).toEqual([
+      expect.stringMatching(message)
+    ])
+  })
+
+  it('rejects a tree that worsens with no condition pinned, as a drawn one is rarely lower', () => {
+    const { proposedCondition, ...unpinned } = worse
+    expect(withTrees([lostTree, unpinned])).toEqual([
+      expect.stringMatching(
+        /trees\[1\]\.proposedCondition: a tree that worsens is in a lower condition/
+      )
+    ])
+  })
+
+  it('lets an invalid- scenario write a tree that worsens and is not a degrade, for the service to refuse', () => {
+    expect(
+      withTrees([lostTree, { ...worse, proposedCondition: 'Good' }], {
+        id: 'invalid-tree-not-worse',
+        expectMetricWarnings: ['No enhancement']
+      })
+    ).toEqual([])
   })
 
   it('accepts the tree fields on trees only', () => {

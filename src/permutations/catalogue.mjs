@@ -185,7 +185,7 @@ const WORSENED_TREE_KEEPS = ['treeSize', 'treeType', 'ruralOrUrban']
 // planted in place of; `worsens` one it is, recorded as lost and created
 // again in a lower condition. Either way the earlier tree must be lost, and
 // the row takes its point; a tree that worsens also keeps its size, type and
-// setting.
+// setting, and is a degrade (checkWorsenedTrees).
 function checkReplants(layer, rows, row, index, where) {
   if (layer !== 'trees' || !isObject(row)) {
     return []
@@ -564,6 +564,61 @@ function checkInvalidNaming(scenario, where) {
   )
 }
 
+/** A tree's conditions, worst first: one is lower than another by this order. */
+const TREE_CONDITION_ORDER = [
+  'Poor',
+  'Fairly Poor',
+  'Moderate',
+  'Fairly Good',
+  'Good'
+]
+const THIRTY_PLUS_YEARS = '30+'
+
+const isLowerTreeCondition = (proposed, baseline) =>
+  TREE_CONDITION_ORDER.includes(proposed) &&
+  TREE_CONDITION_ORDER.indexOf(proposed) <
+    TREE_CONDITION_ORDER.indexOf(baseline)
+
+/**
+ * A tree that `worsens` is a degrade, as the service reads it
+ * (bng-metric-backend, lineage-rules.js, checkDegradedRow): in a lower
+ * condition than the tree it is, and created 30+ years in advance, unless it
+ * is put back after a delay, when it may be in any condition. Each is pinned,
+ * as a drawn condition or advance would rarely make one. An `invalid-`
+ * scenario may break them, to show the service refusing it.
+ */
+function checkWorsenedTrees(scenario, where) {
+  const rows = isObject(scenario.overrides) ? scenario.overrides.trees : null
+  if (
+    !Array.isArray(rows) ||
+    (isText(scenario.id) && scenario.id.startsWith(INVALID_PREFIX))
+  ) {
+    return []
+  }
+  return rows.flatMap((row, i) => {
+    const target = isObject(row) ? rows[replantedTreeIndex(row.worsens)] : null
+    if (!isObject(target) || target.retention !== 'Lost') {
+      return []
+    }
+    const at = `${where}.overrides.trees[${i}]`
+    if (Number(row.delayYears ?? 0) > 0) {
+      return []
+    }
+    return [
+      ...(isLowerTreeCondition(row.proposedCondition, target.baselineCondition)
+        ? []
+        : [
+            `${at}.proposedCondition: a tree that worsens is in a lower condition than the tree it is (${JSON.stringify(target.baselineCondition ?? null)}), unless it is put back after a delay`
+          ]),
+      ...(row.advanceYears === THIRTY_PLUS_YEARS
+        ? []
+        : [
+            `${at}.advanceYears: a tree that worsens is created "${THIRTY_PLUS_YEARS}" years in advance, unless it is put back after a delay`
+          ])
+    ]
+  })
+}
+
 function checkScenario(scenario, where) {
   if (!isObject(scenario)) {
     return [`${where}: must be an object`]
@@ -584,6 +639,7 @@ function checkScenario(scenario, where) {
     ...checkInvalidNaming(scenario, where),
     ...checkVerticalFormats(scenario, where),
     ...checkTreeCountFormats(scenario, where),
+    ...checkWorsenedTrees(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)
       .flatMap(([field, check]) => check(scenario[field], `${where}.${field}`))

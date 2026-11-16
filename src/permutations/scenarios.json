@@ -483,6 +483,87 @@
       }
     },
     {
+      "id": "intervention-tree-condition-lowered",
+      "purpose": "intervention",
+      "title": "Individual tree — condition lowered, recorded as lost and recreated",
+      "description": "T001, a Medium rural tree in Moderate condition, cannot be kept in that condition, so, as the metric user guide says, it is recorded as lost and T002 is created on its spot, the same size, type and setting, in Poor condition, with \"created in advance\" set to 30+ years. T003, a Large urban tree in Good condition, is lost for a time and put back as T004 after a 5-year delay, in Moderate condition. T005 is retained as it is. The metric loses T001 and T003 in full and prices T002 and T004 as creations. In the BNG Service file T002 and T004 are each Category Existing and linked to the tree they are, so this checks the service reads an existing tree created again as that tree lost and recreated, priced as the metric prices it.",
+      "size": 1,
+      "treeCount": 5,
+      "emptyLayers": ["hedgerows", "rivers"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Modified grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "trees": [
+          {
+            "$comment": "The baseline tree, whose condition cannot be kept: recorded as lost.",
+            "retention": "Lost",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "baselineCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "T001 itself, created again in Poor condition with created in advance set to 30+ years (guide, \"Habitat retention\"): in the BNG Service file it is Category Existing, linked to T001.",
+            "worsens": "T001",
+            "retention": "Created",
+            "treeSize": "Medium",
+            "treeType": "Native",
+            "ruralOrUrban": "Rural",
+            "proposedCondition": "Poor",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "30+",
+            "delayYears": "0"
+          },
+          {
+            "$comment": "A baseline tree lost for a time and put back (guide, \"Accounting for temporary losses\").",
+            "retention": "Lost",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Good",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "$comment": "T003 itself, put back after a 5-year delay, in a lower condition with no years in advance.",
+            "worsens": "T003",
+            "retention": "Created",
+            "treeSize": "Large",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "proposedCondition": "Moderate",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "advanceYears": "0",
+            "delayYears": "5"
+          },
+          {
+            "$comment": "The control: kept as it is.",
+            "retention": "Retained",
+            "treeSize": "Small",
+            "treeType": "Native",
+            "ruralOrUrban": "Urban",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "subject": {
+        "layer": "Urban Trees",
+        "ref": "T002",
+        "note": "T001 recreated in a lower condition, 30+ years in advance; T004 is T003 put back after a delay"
+      }
+    },
+    {
       "id": "area-enhanced-medium-condition-na",
       "purpose": "intervention",
       "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A",

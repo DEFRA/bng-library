@@ -14,7 +14,7 @@ import {
   PROPOSED_STRATEGIC_SIGNIFICANCE
 } from '../synthetic/synthetic-constants.mjs'
 import { INVALID_PREFIX } from './invalid-data.mjs'
-import { replantedTreeIndex } from '../synthetic/draw/trees.mjs'
+import { TREE_LINKS, replantedTreeIndex } from '../synthetic/draw/trees.mjs'
 import {
   FORMAT_BNG_SERVICE,
   FORMAT_LEGACY,
@@ -68,7 +68,14 @@ const OVERRIDE_FIELDS = {
     'lengthRange',
     'sameLineAs'
   ],
-  trees: ['treeSize', 'treeType', 'ruralOrUrban', 'count', 'replants']
+  trees: [
+    'treeSize',
+    'treeType',
+    'ruralOrUrban',
+    'count',
+    'replants',
+    'worsens'
+  ]
 }
 // Vertical area habitats are drawn by the BNG Service generator alone
 // (`addVerticalHabitats`), which takes these fields and no others: its
@@ -169,22 +176,47 @@ function checkSameLineAs(layer, row, index, where) {
   return problems
 }
 
+// What a tree that `worsens` keeps of the tree it is: the Metric prices its
+// created row at its own size, type and setting, and the service at the
+// baseline tree's, so the two agree only when they are the same.
+const WORSENED_TREE_KEEPS = ['treeSize', 'treeType', 'ruralOrUrban']
+
 // `replants` names an earlier tree, by its ref, that a Created tree is
-// planted in place of: the earlier tree must be lost, and the row takes its
-// point.
+// planted in place of; `worsens` one it is, recorded as lost and created
+// again in a lower condition. Either way the earlier tree must be lost, and
+// the row takes its point; a tree that worsens also keeps its size, type and
+// setting.
 function checkReplants(layer, rows, row, index, where) {
-  if (layer !== 'trees' || !isObject(row) || !('replants' in row)) {
+  if (layer !== 'trees' || !isObject(row)) {
+    return []
+  }
+  const links = TREE_LINKS.filter((link) => link in row)
+  if (links.length > 1) {
+    return [`${where}: takes replants or worsens, not both`]
+  }
+  const [link] = links
+  if (!link) {
     return []
   }
   const problems =
     row.retention === 'Created'
       ? []
-      : [`${where}.replants: only a Created tree is planted in another's place`]
-  const target = replantedTreeIndex(row.replants) ?? -1
+      : [`${where}.${link}: only a Created tree takes another's place`]
+  const target = replantedTreeIndex(row[link]) ?? -1
   if (target < 0 || target >= index || rows[target]?.retention !== 'Lost') {
     problems.push(
-      `${where}.replants: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
+      `${where}.${link}: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
     )
+    return problems
+  }
+  if (link === 'worsens') {
+    for (const field of WORSENED_TREE_KEEPS) {
+      if (row[field] !== rows[target][field]) {
+        problems.push(
+          `${where}.${field}: a tree that worsens keeps the ${field} of the tree it is (${JSON.stringify(rows[target][field])})`
+        )
+      }
+    }
   }
   return problems
 }

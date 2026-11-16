@@ -135,34 +135,44 @@ export function replantedTreeIndex(ref) {
 }
 
 /**
- * The earlier, felled tree a row's `replants` names, or null when the row
- * has none. Throws where the pin cannot mean a tree planted in a felled
- * one's place, so a direct caller is held to the catalogue's rules.
+ * The two ways a Created tree takes an earlier, Lost tree's point: planted in
+ * its place (`replants`), or the same tree recorded as lost and created again
+ * in a lower condition (`worsens`, guide, "Habitat retention").
+ */
+export const TREE_LINKS = Object.freeze(['replants', 'worsens'])
+
+/**
+ * The earlier, Lost tree a row's `replants` or `worsens` names, and which of
+ * the two it is, or null when the row has neither. Throws where the pin
+ * cannot mean either, so a direct caller is held to the catalogue's rules.
  */
 function replacedTree(trees, tree, override) {
-  if (override?.replants === undefined) {
+  const links = TREE_LINKS.filter((link) => override?.[link] !== undefined)
+  if (links.length === 0) {
     return null
   }
-  const where = `trees row ${trees.length}: replants ${JSON.stringify(override.replants)}`
+  const where = `trees row ${trees.length}`
+  if (links.length > 1) {
+    throw new Error(`${where}: takes replants or worsens, not both`)
+  }
+  const [link] = links
+  const pin = `${where}: ${link} ${JSON.stringify(override[link])}`
   if (tree.retention !== RETENTION_CREATED) {
-    throw new Error(
-      `${where}: only a Created tree is planted in another's place`
-    )
+    throw new Error(`${pin}: only a Created tree takes another's place`)
   }
-  const replaced = trees[replantedTreeIndex(override.replants)]
+  const replaced = trees[replantedTreeIndex(override[link])]
   if (replaced?.retention !== RETENTION_LOST) {
-    throw new Error(`${where}: must name an earlier tree that is Lost`)
+    throw new Error(`${pin}: must name an earlier tree that is Lost`)
   }
-  return replaced
+  return { link, replaced }
 }
 
 /**
  * `count` trees inside `boundaryRing`, fewer if no interior point can be
  * found. `perRowOverrides[i]`, if provided, pins values on tree i. A tree
- * pinned with `replants` stands on the point of the earlier tree it names,
- * planted where that one is felled, and records which it replaces. Its own
- * point is still drawn, so the rest of the site draws as it would without
- * the pin.
+ * pinned with `replants` or `worsens` stands on the point of the earlier tree
+ * it names, and records which it is and which tree it names. Its own point is
+ * still drawn, so the rest of the site draws as it would without the pin.
  */
 export function drawTrees(boundaryRing, count, perRowOverrides) {
   const trees = []
@@ -173,10 +183,14 @@ export function drawTrees(boundaryRing, count, perRowOverrides) {
     }
     const override = perRowOverrides?.[trees.length]
     const tree = drawTree(point, trees.length, override)
-    const replaced = replacedTree(trees, tree, override)
+    const linked = replacedTree(trees, tree, override)
     trees.push(
-      replaced
-        ? { ...tree, point: replaced.point, replants: replaced.ref }
+      linked
+        ? {
+            ...tree,
+            point: linked.replaced.point,
+            [linked.link]: linked.replaced.ref
+          }
         : tree
     )
   }

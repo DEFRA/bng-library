@@ -247,7 +247,7 @@ describe('parseScenarioCatalogue', () => {
     const earlierLost = /must be the ref of an earlier trees row that is Lost/
     expect(problems(doc)).toEqual([
       expect.stringMatching(
-        /trees\[1\]\.replants: only a Created tree is planted in another's place/
+        /trees\[1\]\.replants: only a Created tree takes another's place/
       ),
       expect.stringMatching(
         new RegExp(`trees\\[2\\]\\.replants: ${earlierLost.source}`)
@@ -257,6 +257,68 @@ describe('parseScenarioCatalogue', () => {
       ),
       expect.stringMatching(
         new RegExp(`trees\\[4\\]\\.replants: ${earlierLost.source}`)
+      )
+    ])
+  })
+
+  it('accepts worsens on a Created tree that keeps the size, type and setting of the earlier Lost tree it is', () => {
+    const tree = {
+      treeSize: 'Medium',
+      treeType: 'Native',
+      ruralOrUrban: 'Rural'
+    }
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          trees: [
+            { retention: 'Lost', ...tree },
+            { retention: 'Created', worsens: 'T001', ...tree }
+          ]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([])
+  })
+
+  it('rejects worsens that changes the tree, names no earlier Lost tree, or comes with replants', () => {
+    const tree = {
+      treeSize: 'Medium',
+      treeType: 'Native',
+      ruralOrUrban: 'Rural'
+    }
+    const doc = catalogue(
+      scenario({
+        overrides: {
+          trees: [
+            { retention: 'Lost', ...tree },
+            {
+              retention: 'Created',
+              worsens: 'T001',
+              ...tree,
+              treeSize: 'Large'
+            },
+            { retention: 'Created', worsens: 'T002', ...tree },
+            {
+              retention: 'Created',
+              worsens: 'T001',
+              replants: 'T001',
+              ...tree
+            },
+            { retention: 'Retained', worsens: 'T001', ...tree }
+          ]
+        }
+      })
+    )
+    expect(problems(doc)).toEqual([
+      expect.stringMatching(
+        /trees\[1\]\.treeSize: a tree that worsens keeps the treeSize of the tree it is \("Medium"\)/
+      ),
+      expect.stringMatching(
+        /trees\[2\]\.worsens: must be the ref of an earlier trees row that is Lost/
+      ),
+      expect.stringMatching(/trees\[3\]: takes replants or worsens, not both/),
+      expect.stringMatching(
+        /trees\[4\]\.worsens: only a Created tree takes another's place/
       )
     ])
   })

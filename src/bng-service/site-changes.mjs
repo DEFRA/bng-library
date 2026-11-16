@@ -382,16 +382,27 @@ const NAMED_CHANGE_DRAWS = {
 /** The changes `addNamedSiteChanges` draws. */
 export const NAMED_SITE_CHANGES = Object.freeze(Object.keys(NAMED_CHANGE_DRAWS))
 
+/** The layer each named change is drawn on: both are watercourses. */
+export const NAMED_SITE_CHANGE_LAYER = 'rivers'
+
 /**
  * Add only the watercourse changes `names` asks for, each drawn as
  * `addSiteChanges` draws it, in the order named: a scenario that pins what
- * it holds asks for them so. Refuses a name it does not know.
+ * it holds asks for them so. Refuses a name it does not know, a change on a
+ * layer in `emptyLayers`, which `addSiteChanges` leaves empty, and one the
+ * red line has no room for, so a site never holds less than it asked for.
  *
  * @param {object} site
  * @param {ReturnType<import('./random.mjs').createChooser>} chooser
  * @param {string[]} names  of NAMED_SITE_CHANGES
+ * @param {Set<string>} [emptyLayers]
  */
-export function addNamedSiteChanges(site, chooser, names) {
+export function addNamedSiteChanges(
+  site,
+  chooser,
+  names,
+  emptyLayers = new Set()
+) {
   for (const name of names) {
     const draw = NAMED_CHANGE_DRAWS[name]
     if (!draw) {
@@ -399,6 +410,16 @@ export function addNamedSiteChanges(site, chooser, names) {
         `unknown site change: ${name} (known: ${NAMED_SITE_CHANGES.join(', ')})`
       )
     }
+    if (emptyLayers.has(NAMED_SITE_CHANGE_LAYER)) {
+      throw new Error(
+        `site change ${name} is drawn on ${NAMED_SITE_CHANGE_LAYER}, which the site leaves empty`
+      )
+    }
+    const rows = site.layers[NAMED_SITE_CHANGE_LAYER].postIntervention
+    const before = rows.filter((f) => f.change === name).length
     draw(site, chooser)
+    if (rows.filter((f) => f.change === name).length === before) {
+      throw new Error(`site change ${name}: the red line has no room for it`)
+    }
   }
 }

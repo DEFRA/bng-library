@@ -1206,6 +1206,11 @@ const WORSE_DRAWS = [
 /** The kinds a count can name: each kind of habitat that gets worse. */
 export const WORSE_KINDS = Object.freeze(WORSE_DRAWS.map((d) => d.kind))
 
+/** The layer each kind of habitat that gets worse is drawn on, by kind. */
+export const WORSE_KIND_LAYERS = Object.freeze(
+  Object.fromEntries(WORSE_DRAWS.map((d) => [d.kind, d.layerKey]))
+)
+
 /** How many of a kind a site draws when it does not ask: one, or the draw's own. */
 function defaultCountOf(kind) {
   return WORSE_DRAWS.find((d) => d.kind === kind).defaultCount ?? 1

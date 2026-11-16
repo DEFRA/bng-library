@@ -22,9 +22,13 @@ import {
 } from '../bng-service/schema.mjs'
 import {
   MAX_WORSE_COUNT,
-  WORSE_KINDS
+  WORSE_KINDS,
+  WORSE_KIND_LAYERS
 } from '../bng-service/template-features.mjs'
-import { NAMED_SITE_CHANGES } from '../bng-service/site-changes.mjs'
+import {
+  NAMED_SITE_CHANGES,
+  NAMED_SITE_CHANGE_LAYER
+} from '../bng-service/site-changes.mjs'
 
 const CATALOGUE_FILE = new URL('./scenarios.json', import.meta.url)
 
@@ -512,6 +516,33 @@ function checkTreeCountFormats(scenario, where) {
  */
 const BNG_SERVICE_CHANGES = ['worseHabitats', 'siteChanges']
 
+/**
+ * A habitat that gets worse or a watercourse change is drawn on its layer,
+ * so a scenario cannot ask for one on a layer it leaves empty.
+ */
+function checkChangeLayers(scenario, where) {
+  const empty = new Set(
+    Array.isArray(scenario.emptyLayers) ? scenario.emptyLayers : []
+  )
+  const worse = isObject(scenario.worseHabitats)
+    ? Object.keys(scenario.worseHabitats)
+        .filter((kind) => empty.has(WORSE_KIND_LAYERS[kind]))
+        .map(
+          (kind) =>
+            `${where}.worseHabitats.${kind}: is drawn on ${WORSE_KIND_LAYERS[kind]}, which emptyLayers leaves empty`
+        )
+    : []
+  const changes =
+    Array.isArray(scenario.siteChanges) &&
+    scenario.siteChanges.length > 0 &&
+    empty.has(NAMED_SITE_CHANGE_LAYER)
+      ? [
+          `${where}.siteChanges: is drawn on ${NAMED_SITE_CHANGE_LAYER}, which emptyLayers leaves empty`
+        ]
+      : []
+  return [...worse, ...changes]
+}
+
 function checkChangeFormats(scenario, where) {
   return BNG_SERVICE_CHANGES.filter(
     (field) => field in scenario && !isBngServiceOnly(scenario)
@@ -697,6 +728,7 @@ function checkScenario(scenario, where) {
     ...checkVerticalFormats(scenario, where),
     ...checkTreeCountFormats(scenario, where),
     ...checkChangeFormats(scenario, where),
+    ...checkChangeLayers(scenario, where),
     ...checkWorsenedTrees(scenario, where),
     ...Object.entries(OPTIONAL_FIELDS)
       .filter(([field]) => field in scenario)

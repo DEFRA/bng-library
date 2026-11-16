@@ -156,15 +156,16 @@ function stageOf(retentionCategory) {
 }
 
 /**
- * The ref a feature's units are compared under. A Retained part of a split
- * baseline feature (H003a, Retained, of H003) is the metric's retained share
- * of that feature's own row, so it goes under its parent's ref; one that
- * keeps its parent's ref, as a whole feature does, goes under its own.
+ * The baseline parent's ref a Retained part of it is compared under, or
+ * null. Every Retained part of one baseline feature (H003a, Retained, of
+ * H003, or a part that keeps the ref H003) is the metric's retained share of
+ * that feature's own row, so they go under its ref, summed. A legacy
+ * feature names no parent, so goes under its own ref.
  */
-function comparedRef(feature, stage, parentRefs) {
-  const parentRef =
-    stage === 'retained' ? parentRefs.get(feature.parentFeatureId) : undefined
-  return parentRef ?? String(feature.ref)
+function retainedParentRef(feature, stage, parentRefs) {
+  return stage === 'retained'
+    ? (parentRefs.get(feature.parentFeatureId) ?? null)
+    : null
 }
 
 /** Each baseline feature's ref, by its featureId, for one feature list. */
@@ -177,8 +178,8 @@ function refsById(baseline, listName) {
 /**
  * Only features the service gave units to are figures. A feature it priced
  * at nothing where the metric prices it is caught as missing from the
- * service; one neither side prices is not a figure at all. Retained parts
- * of one split baseline feature are one figure, under its ref, their units
+ * service; one neither side prices is not a figure at all. The Retained
+ * parts of one baseline feature are one figure, under its ref, their units
  * and sizes summed, as the metric has them on the baseline row.
  */
 function addFeatures(list, document, stageFor, baseline) {
@@ -197,16 +198,16 @@ function addFeatures(list, document, stageFor, baseline) {
 /** One feature list's figures, in order, split parts merged (addFeatures). */
 function listFigures(module, features = [], { stageFor, parentRefs }) {
   const figures = []
-  const splits = new Map()
+  const byParent = new Map()
   for (const feature of features) {
     const stage = stageFor(feature)
     if (!stage || !isNumber(feature.units)) {
       continue
     }
-    const ref = comparedRef(feature, stage, parentRefs)
+    const parentRef = retainedParentRef(feature, stage, parentRefs)
+    const ref = parentRef ?? String(feature.ref)
     const size = pricedSize(module, feature)
-    const isPart = ref !== String(feature.ref)
-    const merged = isPart ? splits.get(ref) : undefined
+    const merged = parentRef === null ? undefined : byParent.get(parentRef)
     if (merged) {
       merged.value += feature.units
       merged.size =
@@ -221,8 +222,8 @@ function listFigures(module, features = [], { stageFor, parentRefs }) {
       value: feature.units,
       size
     }
-    if (isPart) {
-      splits.set(ref, figure)
+    if (parentRef !== null) {
+      byParent.set(parentRef, figure)
     }
     figures.push(figure)
   }

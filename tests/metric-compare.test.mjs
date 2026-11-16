@@ -243,7 +243,7 @@ describe('figuresFromProject', () => {
     expect(comparison.discrepancies).toEqual([])
   })
 
-  it('compares the Retained parts of a split baseline feature under its ref, summed', () => {
+  it('compares every Retained part of a split baseline feature under its ref, summed, whatever its own ref', () => {
     const feature = (featureId, ref, retentionCategory, units, extra = {}) => ({
       featureId,
       ref,
@@ -267,7 +267,8 @@ describe('figuresFromProject', () => {
             feature('c3', 'HG005c', 'Retained', 0.25, {
               parentFeatureId: 'p5'
             }),
-            feature('c4', 'HG006', 'Retained', 1, { parentFeatureId: 'p6' })
+            feature('c4', 'HG006', 'Retained', 1, { parentFeatureId: 'p6' }),
+            feature('c5', 'HG006b', 'Retained', 0.5, { parentFeatureId: 'p6' })
           ]
         }
       }
@@ -275,14 +276,14 @@ describe('figuresFromProject', () => {
     const units = Object.fromEntries(
       figuresFromProject(response)
         .filter((f) => f.category === 'feature-units')
-        .map((f) => [f.key, [f.value, f.size]])
+        .map((f) => [f.key, [f.value, f.size].map((n) => Number(n.toFixed(9)))])
     )
     expect(units).toEqual({
       'feature-units|hedgerow|baseline|HG005': [3, 0.3],
       'feature-units|hedgerow|baseline|HG006': [1, 0.1],
       'feature-units|hedgerow|retained|HG005': [1.25, 0.125],
       'feature-units|hedgerow|created|HG005b': [0.5, 0.05],
-      'feature-units|hedgerow|retained|HG006': [1, 0.1]
+      'feature-units|hedgerow|retained|HG006': [1.5, 0.15]
     })
   })
 

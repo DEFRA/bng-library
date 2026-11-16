@@ -34,6 +34,7 @@ import {
   clearIrreplaceable,
   WORSE,
   WORSE_KINDS,
+  WORSE_KIND_LAYERS,
   ZERO_YEARS,
   defaultVerticalCount,
   resolveWorseCounts
@@ -202,7 +203,15 @@ function addScenarioChanges(site, chooser, emptyLayers, changes) {
   const counts = Object.fromEntries(
     WORSE_KINDS.map((kind) => [kind, worseHabitats[kind] ?? 0])
   )
+  for (const kind of Object.keys(worseHabitats)) {
+    if (emptyLayers.has(WORSE_KIND_LAYERS[kind])) {
+      throw new Error(
+        `worseHabitats ${kind} is drawn on ${WORSE_KIND_LAYERS[kind]}, which the site leaves empty`
+      )
+    }
+  }
   addWorseHabitats(site, chooser, emptyLayers, counts)
+  assertWorseDrawn(site, worseHabitats)
   const timing = TIMING_COLUMNS.rivers ?? TIMING_COLUMNS.default
   for (const feature of site.layers.rivers.postIntervention) {
     if (feature.worse === WORSE.worseWatercourse) {
@@ -211,7 +220,26 @@ function addScenarioChanges(site, chooser, emptyLayers, changes) {
       }
     }
   }
-  addNamedSiteChanges(site, chooser, siteChanges)
+  addNamedSiteChanges(site, chooser, siteChanges, emptyLayers)
+}
+
+/**
+ * Refuse a site that drew fewer habitats that get worse of a kind than it
+ * asked for: `addWorseHabitats` draws fewer where a site has too few
+ * Retained parcels, or a red line no room for a line, and says nothing.
+ * A part-worse feature is counted by its worse part.
+ */
+function assertWorseDrawn(site, asked) {
+  for (const [kind, count] of Object.entries(asked)) {
+    const drawn = site.layers[WORSE_KIND_LAYERS[kind]].postIntervention.filter(
+      (f) => f.worse === kind
+    ).length
+    if (drawn < count) {
+      throw new Error(
+        `worseHabitats ${kind}: asked for ${count}, the site drew ${drawn} (too few Retained parcels, or no room in the red line)`
+      )
+    }
+  }
 }
 
 /**

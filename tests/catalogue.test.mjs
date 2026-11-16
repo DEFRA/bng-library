@@ -164,6 +164,79 @@ describe('parseScenarioCatalogue', () => {
     ).toEqual([expect.stringMatching(rule)])
   })
 
+  it('accepts worseHabitats and siteChanges on a BNG Service only scenario', () => {
+    expect(
+      problems(
+        catalogue(
+          scenario({
+            formats: ['bng-service'],
+            worseHabitats: { hedge: 1, 'partly-worse-parcel': 2 },
+            siteChanges: ['realigned-watercourse', 'shorter-watercourse']
+          })
+        )
+      )
+    ).toEqual([])
+  })
+
+  it('requires worseHabitats and siteChanges to be BNG Service only, with known kinds and counts', () => {
+    expect(
+      problems(
+        catalogue(
+          scenario({
+            worseHabitats: { hedge: 1 },
+            siteChanges: ['shorter-watercourse']
+          })
+        )
+      )
+    ).toEqual([
+      expect.stringMatching(
+        /formats: a scenario giving worseHabitats must list \["bng-service"\] only/
+      ),
+      expect.stringMatching(
+        /formats: a scenario giving siteChanges must list \["bng-service"\] only/
+      )
+    ])
+    expect(
+      problems(
+        catalogue(
+          scenario({
+            formats: ['bng-service'],
+            worseHabitats: { hedges: 1, parcel: 0 },
+            siteChanges: ['meandered', 'meandered']
+          })
+        )
+      )
+    ).toEqual([
+      expect.stringMatching(/worseHabitats\.hedges: "hedges" is not one of/),
+      expect.stringMatching(/worseHabitats\.parcel: must be a whole number/),
+      expect.stringMatching(/siteChanges\[0\]: "meandered" is not one of/),
+      expect.stringMatching(/siteChanges\[1\]: "meandered" is not one of/),
+      expect.stringMatching(/siteChanges: "meandered" is listed twice/)
+    ])
+  })
+
+  it('rejects worseHabitats or siteChanges on a layer the scenario leaves empty', () => {
+    expect(
+      problems(
+        catalogue(
+          scenario({
+            formats: ['bng-service'],
+            emptyLayers: ['hedgerows', 'rivers'],
+            worseHabitats: { hedge: 1, parcel: 1 },
+            siteChanges: ['realigned-watercourse']
+          })
+        )
+      )
+    ).toEqual([
+      expect.stringMatching(
+        /worseHabitats\.hedge: is drawn on hedgerows, which emptyLayers leaves empty/
+      ),
+      expect.stringMatching(
+        /siteChanges: is drawn on rivers, which emptyLayers leaves empty/
+      )
+    ])
+  })
+
   it('accepts sameLineAs naming an earlier feature of the same layer', () => {
     const doc = catalogue(
       scenario({

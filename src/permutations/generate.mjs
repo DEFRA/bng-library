@@ -105,12 +105,20 @@ function scenarioWorkbook(piPath, entry, workbook) {
 
 /** The generateOne plan a scenario describes, less its seed. */
 export function scenarioPlan(scenario, size = scenario.size ?? DEFAULT_SIZE) {
-  return {
+  const plan = {
     numParcels: size,
     numTrees: scenario.treeCount,
     emptyLayers: new Set(scenario.emptyLayers ?? []),
     attributeOverrides: scenario.overrides ?? {}
   }
+  // Only a BNG Service scenario holds them (catalogue.mjs, checkChangeFormats).
+  if (scenario.worseHabitats || scenario.siteChanges) {
+    plan.scenarioChanges = {
+      worseHabitats: scenario.worseHabitats ?? {},
+      siteChanges: scenario.siteChanges ?? []
+    }
+  }
+  return plan
 }
 
 /**

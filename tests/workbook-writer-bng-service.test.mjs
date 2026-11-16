@@ -239,6 +239,43 @@ describe('the edge cases a user’s file can hold', () => {
     expect(baseline.enhanced).toBeLessThan(baseline.size)
   })
 
+  it('counts the rest of a shorter Retained watercourse as lost', () => {
+    const [short] = rows(
+      WATERCOURSES,
+      `"Retention Category" = 'Retained' AND Length < "Baseline Length"`
+    )
+    const { rows: sheets } = workbookRowsFromBngService(file)
+    const baseline = sheets.watercourseBaseline.find(
+      (r) => r.reference === short['Parent Ref']
+    )
+    expect(baseline.size).toBeCloseTo(short['Baseline Length'] / 1000, 9)
+    expect(baseline.retained).toBeCloseTo(short.Length / 1000, 9)
+  })
+
+  it('retains a watercourse drawn with no line by its baseline length, and notes it', () => {
+    const [short] = rows(
+      WATERCOURSES,
+      `"Retention Category" = 'Retained' AND Length < "Baseline Length"`
+    )
+    const unmapped = edited(
+      'no-retained-watercourse-line',
+      `UPDATE "${WATERCOURSES}" SET geom = NULL
+         WHERE "Habitat Ref" = '${short['Habitat Ref']}'`
+    )
+    const { rows: sheets, notes } = workbookRowsFromBngService(unmapped)
+    const baseline = sheets.watercourseBaseline.find(
+      (r) => r.reference === short['Parent Ref']
+    )
+    expect(baseline.retained).toBeCloseTo(baseline.size, 9)
+    expect(notes).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `${short['Habitat Ref']}: Retained watercourse with no length drawn`
+        )
+      )
+    ])
+  })
+
   it('enhances a watercourse drawn with no line by its baseline length, and notes it', () => {
     const [realigned] = rows(
       WATERCOURSES,

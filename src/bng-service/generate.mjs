@@ -32,6 +32,10 @@ import {
   addWorseHabitats,
   applyTemplateOverrides,
   clearIrreplaceable,
+  WORSE,
+  WORSE_KINDS,
+  WORSE_KIND_LAYERS,
+  ZERO_YEARS,
   defaultVerticalCount,
   resolveWorseCounts
 } from './template-features.mjs'
@@ -43,7 +47,7 @@ import {
 } from './flaws.mjs'
 import { siteFromLegacyFile, siteFromLegacyPair } from './from-legacy.mjs'
 import { normaliseOverrides } from './native/overrides.mjs'
-import { addSiteChanges } from './site-changes.mjs'
+import { addNamedSiteChanges, addSiteChanges } from './site-changes.mjs'
 import { drawSyntheticSite } from './native/synthetic-site.mjs'
 import { siteFromWorkbookDraw } from './native/site-from-workbook.mjs'
 import { moveVerticalHabitats } from './vertical-from-area.mjs'
@@ -57,6 +61,7 @@ import {
   VALID_STAGES
 } from './schema.mjs'
 import { writeSite } from './site.mjs'
+import { TIMING_COLUMNS } from './site-features.mjs'
 import { checkTemplateValues } from './check-values.mjs'
 import { YES } from './vocabulary.mjs'
 
@@ -146,6 +151,7 @@ function finishSite(site, outPath, chooser, options) {
     worseHabitats = false,
     worseHabitatCounts = {},
     siteChanges = false,
+    scenarioChanges = null,
     emptyLayers = new Set(),
     lineageFlaws = [],
     degradeFlaws = [],
@@ -162,6 +168,9 @@ function finishSite(site, outPath, chooser, options) {
   if (siteChanges) {
     addSiteChanges(site, chooser, emptyLayers, overrides)
   }
+  if (scenarioChanges) {
+    addScenarioChanges(site, chooser, emptyLayers, scenarioChanges)
+  }
   applyDegradeFlaws(site, degradeFlaws)
   if (comments) {
     addComments(site, chooser)
@@ -174,6 +183,63 @@ function finishSite(site, outPath, chooser, options) {
       versionRecords: versionRecordsFor(versionFlaws, templateVersion)
     })
   )
+}
+
+/**
+ * Add only the habitats that get worse and the watercourse changes a
+ * scenario names, as template features would draw them: none of a kind it
+ * does not name.
+ *
+ * A scenario holds complete data, so a watercourse whose condition gets
+ * worse, whose years in advance and of delay the template leaves blank for
+ * the surveyor to choose, is given 0 for each, as a surveyor records it.
+ * The service saves a blank timing Incomplete, where the Metric reads it
+ * as 0.
+ *
+ * @param {{ worseHabitats?: Record<string, number>, siteChanges?: string[] }} changes
+ */
+function addScenarioChanges(site, chooser, emptyLayers, changes) {
+  const { worseHabitats = {}, siteChanges = [] } = changes
+  const counts = Object.fromEntries(
+    WORSE_KINDS.map((kind) => [kind, worseHabitats[kind] ?? 0])
+  )
+  for (const kind of Object.keys(worseHabitats)) {
+    if (emptyLayers.has(WORSE_KIND_LAYERS[kind])) {
+      throw new Error(
+        `worseHabitats ${kind} is drawn on ${WORSE_KIND_LAYERS[kind]}, which the site leaves empty`
+      )
+    }
+  }
+  addWorseHabitats(site, chooser, emptyLayers, counts)
+  assertWorseDrawn(site, worseHabitats)
+  const timing = TIMING_COLUMNS.rivers ?? TIMING_COLUMNS.default
+  for (const feature of site.layers.rivers.postIntervention) {
+    if (feature.worse === WORSE.worseWatercourse) {
+      for (const column of timing) {
+        feature.values[column] ??= ZERO_YEARS
+      }
+    }
+  }
+  addNamedSiteChanges(site, chooser, siteChanges, emptyLayers)
+}
+
+/**
+ * Refuse a site that drew fewer habitats that get worse of a kind than it
+ * asked for: `addWorseHabitats` draws fewer where a site has too few
+ * Retained parcels, or a red line no room for a line, and says nothing.
+ * A part-worse feature is counted by its worse part.
+ */
+function assertWorseDrawn(site, asked) {
+  for (const [kind, count] of Object.entries(asked)) {
+    const drawn = site.layers[WORSE_KIND_LAYERS[kind]].postIntervention.filter(
+      (f) => f.worse === kind
+    ).length
+    if (drawn < count) {
+      throw new Error(
+        `worseHabitats ${kind}: asked for ${count}, the site drew ${drawn} (too few Retained parcels, or no room in the red line)`
+      )
+    }
+  }
 }
 
 /**
@@ -361,7 +427,11 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  * @param {[number, number]} centre
  * @param {object} plan  as for `generateOne`, plus `lineageFlawNames`,
  *   `degradeFlawNames` and `versionFlawNames`; `attributeOverrides` may also hold a
- *   `verticalHabitats` layer and the template-only row fields
+ *   `verticalHabitats` layer and the template-only row fields; and
+ *   `scenarioChanges`, `{ worseHabitats, siteChanges }`, the habitats that
+ *   get worse (counts by kind, as WORSE_KINDS names them) and the watercourse
+ *   changes (NAMED_SITE_CHANGES) a scenario holds, drawn only without
+ *   template features, which draw their own
  * @param {object} [options]
  * @param {string} [options.stage]
  * @param {string} [options.templateVersion]
@@ -405,10 +475,16 @@ export function generateBngServiceSynthetic(
     geometricFlawNames = [],
     lineageFlawNames = [],
     degradeFlawNames = [],
-    versionFlawNames = []
+    versionFlawNames = [],
+    scenarioChanges = null
   } = plan
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
   const enrich = templateFeatures && geometricFlawNames.length === 0
+  if (scenarioChanges && (templateFeatures || geometricFlawNames.length > 0)) {
+    throw new Error(
+      'scenarioChanges are drawn only without template features, which draw their own, and on a site with no geometric flaw'
+    )
+  }
   const worseHabitats = enrich || degradeFlawNames.length > 0
   if (worseHabitatCounts !== undefined) {
     if (!worseHabitats) {
@@ -444,6 +520,7 @@ export function generateBngServiceSynthetic(
     worseHabitats,
     worseHabitatCounts,
     siteChanges: enrich,
+    scenarioChanges,
     emptyLayers,
     verticalHabitats:
       enrich && !emptyLayers.has('verticalHabitats')

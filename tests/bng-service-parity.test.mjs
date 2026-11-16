@@ -168,9 +168,16 @@ function withoutVerticalRows(rows, scenario) {
   )
 }
 
+// A scenario's habitats that get worse and watercourse changes are drawn
+// only in the BNG Service format, which alone links them to their baseline
+// feature, so its file holds features the legacy one cannot.
+const DRAWS_BNG_SERVICE_CHANGES = (s) => s.worseHabitats || s.siteChanges
+
 describe('a scenario’s workbook reads the same from either format', () => {
   it.each(
-    SCENARIOS.filter((s) => scenarioInFormat(s, 'bng-service')).map((s) => s.id)
+    SCENARIOS.filter(
+      (s) => scenarioInFormat(s, 'bng-service') && !DRAWS_BNG_SERVICE_CHANGES(s)
+    ).map((s) => s.id)
   )('%s', (id) => {
     const scenario = SCENARIOS.find((s) => s.id === id)
     const plan = {

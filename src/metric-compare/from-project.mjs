@@ -156,28 +156,78 @@ function stageOf(retentionCategory) {
 }
 
 /**
+ * The baseline parent's ref a Retained part of it is compared under, or
+ * null. Every Retained part of one baseline feature (H003a, Retained, of
+ * H003, or a part that keeps the ref H003) is the metric's retained share of
+ * that feature's own row, so they go under its ref, summed. A legacy
+ * feature names no parent, so goes under its own ref.
+ */
+function retainedParentRef(feature, stage, parentRefs) {
+  return stage === 'retained'
+    ? (parentRefs.get(feature.parentFeatureId) ?? null)
+    : null
+}
+
+/** Each baseline feature's ref, by its featureId, for one feature list. */
+function refsById(baseline, listName) {
+  return new Map(
+    (baseline?.[listName] ?? []).map((f) => [f.featureId, String(f.ref)])
+  )
+}
+
+/**
  * Only features the service gave units to are figures. A feature it priced
  * at nothing where the metric prices it is caught as missing from the
- * service; one neither side prices is not a figure at all.
+ * service; one neither side prices is not a figure at all. The Retained
+ * parts of one baseline feature are one figure, under its ref, their units
+ * and sizes summed, as the metric has them on the baseline row.
  */
-function addFeatures(list, document, stageFor) {
+function addFeatures(list, document, stageFor, baseline) {
   for (const module of MODULES) {
     for (const listName of FEATURE_LISTS[module]) {
-      for (const feature of document?.[listName] ?? []) {
-        const stage = stageFor(feature)
-        if (stage && isNumber(feature.units)) {
-          list.add({
-            category: CATEGORY.featureUnits,
-            module,
-            parts: [stage, String(feature.ref)],
-            label: `${feature.ref} ${stage} units`,
-            value: feature.units,
-            size: pricedSize(module, feature)
-          })
-        }
+      for (const figure of listFigures(module, document?.[listName], {
+        stageFor,
+        parentRefs: refsById(baseline, listName)
+      })) {
+        list.add(figure)
       }
     }
   }
+}
+
+/** One feature list's figures, in order, split parts merged (addFeatures). */
+function listFigures(module, features = [], { stageFor, parentRefs }) {
+  const figures = []
+  const byParent = new Map()
+  for (const feature of features) {
+    const stage = stageFor(feature)
+    if (!stage || !isNumber(feature.units)) {
+      continue
+    }
+    const parentRef = retainedParentRef(feature, stage, parentRefs)
+    const ref = parentRef ?? String(feature.ref)
+    const size = pricedSize(module, feature)
+    const merged = parentRef === null ? undefined : byParent.get(parentRef)
+    if (merged) {
+      merged.value += feature.units
+      merged.size =
+        isNumber(merged.size) && isNumber(size) ? merged.size + size : null
+      continue
+    }
+    const figure = {
+      category: CATEGORY.featureUnits,
+      module,
+      parts: [stage, ref],
+      label: `${ref} ${stage} units`,
+      value: feature.units,
+      size
+    }
+    if (parentRef !== null) {
+      byParent.set(parentRef, figure)
+    }
+    figures.push(figure)
+  }
+  return figures
 }
 
 /**
@@ -324,8 +374,11 @@ export function figuresFromProject(response) {
   const list = new FigureList()
   const present = modulesPresent(baseline, postIntervention)
   addFeatures(list, baseline, () => 'baseline')
-  addFeatures(list, postIntervention, (feature) =>
-    stageOf(feature.retentionCategory)
+  addFeatures(
+    list,
+    postIntervention,
+    (feature) => stageOf(feature.retentionCategory),
+    baseline
   )
   addTotals(list, baseline, postIntervention, present)
   addTradingFigures(list, postIntervention?.tradingRules)

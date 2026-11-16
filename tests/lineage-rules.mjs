@@ -17,11 +17,15 @@ function all(file, sql) {
   }
 }
 
-/** The Created area rows in their parent's own type, by Habitat Ref. */
+/**
+ * The Created area rows in their parent's own type, by Habitat Ref, with
+ * their years created in advance.
+ */
 export function ownTypeCreations(file) {
   return all(
     file,
-    `SELECT p."Habitat Ref" AS ref, p."Comment" AS comment
+    `SELECT p."Habitat Ref" AS ref, p."Comment" AS comment,
+            p."Habitat created in advance/years" AS advance
        FROM "Area Habitats Post-Intervention" p
        JOIN "Area Habitats Baseline" b ON b.feature_uuid = p.parent_uuid
       WHERE p."Retention Category" = 'Created'

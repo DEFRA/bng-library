@@ -269,6 +269,59 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     ).toThrow(/needs a site that draws habitats that get worse/)
   })
 
+  describe('scenarioChanges: only what a scenario names', () => {
+    const scenario = (scenarioChanges, plan = {}) =>
+      synthetic({ templateFeatures: false }, { scenarioChanges, ...plan })
+
+    it('draws exactly the kinds and counts named, and nothing else', () => {
+      const file = scenario({
+        worseHabitats: { hedge: 2, 'partly-worse-hedge': 1 }
+      })
+      expect(wholeWorseHedges(file)).toHaveLength(2)
+      expect(
+        hedgerows(file).filter((r) => /b$/.test(r['Habitat Ref']) && isWorse(r))
+      ).toHaveLength(1)
+      const others = [
+        'Area Habitats Post-Intervention',
+        'Vertical Area Habitats Post-Intervention',
+        'Watercourses Post-Intervention'
+      ].flatMap((table) => rows(file, table))
+      expect(
+        others.filter((r) =>
+          [
+            WORSE_HABITAT_COMMENT,
+            ENCROACHED_WATERCOURSE_COMMENT,
+            WORSE_WATERCOURSE_COMMENT
+          ].includes(r.Comment)
+        )
+      ).toEqual([])
+    })
+
+    it('refuses a kind or a site change on a layer the site leaves empty', () => {
+      const emptyLayers = new Set(['hedgerows', 'rivers'])
+      expect(() =>
+        scenario({ worseHabitats: { hedge: 1 } }, { emptyLayers })
+      ).toThrow(/hedge is drawn on hedgerows, which the site leaves empty/)
+      expect(() =>
+        scenario({ siteChanges: ['shorter-watercourse'] }, { emptyLayers })
+      ).toThrow(
+        /shorter-watercourse is drawn on rivers, which the site leaves empty/
+      )
+    })
+
+    it('refuses a site that draws fewer than it asks for', () => {
+      expect(() =>
+        scenario({ worseHabitats: { parcel: 1 } }, { numParcels: 1 })
+      ).toThrow(/parcel: asked for 1, the site drew 0/)
+    })
+
+    it('is taken only without template features', () => {
+      expect(() =>
+        synthetic({}, { scenarioChanges: { worseHabitats: { hedge: 1 } } })
+      ).toThrow(/scenarioChanges are drawn only without template features/)
+    })
+  })
+
   describe('with a degrade flaw', () => {
     const DEGRADE_FLAWS = Object.entries(BNG_SERVICE_FLAWS)
       .filter(([, flaw]) => flaw.category === CATEGORY_DEGRADE)

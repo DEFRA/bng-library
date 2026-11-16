@@ -8,6 +8,12 @@ import {
   scenarioInFormat
 } from '../src/permutations/catalogue.mjs'
 import * as library from '../index.mjs'
+import {
+  calculateAreaHabitatBaseline,
+  calculateCreatedAreaHabitatPostIntervention,
+  calculateEnhancedAreaHabitatPostIntervention,
+  getIndividualTreeAreaHectares
+} from '../src/metric/index.mjs'
 import { generatePermutations } from '../index.mjs'
 
 const shipped = JSON.parse(
@@ -668,6 +674,101 @@ describe('the vertical area habitat scenario (BMD-1084)', () => {
       'Created',
       'Lost'
     ])
+  })
+})
+
+describe('the trees-size-and-setting scenario', () => {
+  const trees = SCENARIOS.find((s) => s.id === 'trees-size-and-setting')
+    .overrides.trees
+  const SIZES = ['Small', 'Medium', 'Large', 'Very large']
+  const SETTINGS = ['Urban', 'Rural']
+  const kept = trees.filter((tree) => tree.retention !== 'Created')
+  const planted = trees.filter((tree) => tree.retention === 'Created')
+  const everyPair = SIZES.flatMap((size) =>
+    SETTINGS.map((setting) => `${size}|${setting}`)
+  )
+  const pairsOf = (rows) =>
+    rows.map((tree) => `${tree.treeSize}|${tree.ruralOrUrban}`).sort()
+
+  it('keeps one baseline tree, and plants one, of every size class in each setting', () => {
+    expect(pairsOf(kept)).toEqual([...everyPair].sort())
+    expect(pairsOf(planted)).toEqual([...everyPair].sort())
+  })
+
+  /** A tree's gain in units, as the metric prices it: what it nets. */
+  function gain(tree, setting = tree.ruralOrUrban) {
+    const habitat = `Individual trees - ${setting} tree`
+    const size = getIndividualTreeAreaHectares(tree.treeSize)
+    const years = (value) => Number(value ?? 0)
+    if (tree.retention === 'Retained') {
+      return 0
+    }
+    if (tree.retention === 'Created') {
+      return calculateCreatedAreaHabitatPostIntervention(
+        size,
+        habitat,
+        tree.proposedCondition,
+        years(tree.advanceYears),
+        years(tree.delayYears),
+        tree.proposedStrategicSignificance
+      ).units
+    }
+    const baseline = calculateAreaHabitatBaseline(
+      size,
+      habitat,
+      tree.baselineCondition
+    ).units
+    return (
+      calculateEnhancedAreaHabitatPostIntervention(
+        size,
+        habitat,
+        habitat,
+        tree.baselineCondition,
+        tree.proposedCondition,
+        years(tree.advanceYears),
+        years(tree.delayYears),
+        tree.proposedStrategicSignificance
+      ).units - baseline
+    )
+  }
+
+  /** The trading summary's urban and rural tree lines: each setting's gain. */
+  function lines(settings) {
+    const total = { Urban: 0, Rural: 0 }
+    trees.forEach((tree, i) => {
+      total[settings[i]] += gain(tree, settings[i])
+    })
+    return total
+  }
+
+  // An urban and a rural tree of one size and condition have the same units,
+  // so the comparison sees a tree in the wrong setting only on the urban and
+  // rural tree lines. Swapping the settings of an urban and a rural tree of
+  // one size, kept or planted, must move units between those lines, priced
+  // with the metric's own multipliers, or a service could make the swap
+  // unseen. A Retained tree gains nothing, so a pair of them is left out.
+  it('moves units between the urban and rural tree lines when any pair that gains swaps settings', () => {
+    const settings = trees.map((tree) => tree.ruralOrUrban)
+    const asDrawn = lines(settings)
+    const pairs = SIZES.flatMap((size) =>
+      [kept, planted].map((group) =>
+        group
+          .filter((tree) => tree.treeSize === size)
+          .map((tree) => trees.indexOf(tree))
+      )
+    ).filter(([urban, rural]) =>
+      [trees[urban], trees[rural]].some((tree) => tree.retention !== 'Retained')
+    )
+    expect(pairs.length).toBeGreaterThan(0)
+    for (const [first, second] of pairs) {
+      const swapped = [...settings]
+      ;[swapped[first], swapped[second]] = [settings[second], settings[first]]
+      const after = lines(swapped)
+      expect(
+        Math.abs(after.Urban - asDrawn.Urban),
+        `${trees[first].treeSize} ${trees[first].retention}/${trees[second].retention}`
+      ).toBeGreaterThan(0)
+    }
   })
 })
 

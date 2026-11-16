@@ -3894,7 +3894,7 @@
       "id": "trees-size-and-setting",
       "purpose": "trees",
       "title": "Individual trees — every size class, urban and rural",
-      "description": "Each of the tree helper's four size classes (Small 0.0041 ha, Medium 0.0163 ha, Large 0.0366 ha, Very large 0.0765 ha), urban and rural, at baseline and newly planted. T001 to T008 are the baseline trees, one of each size in each setting, kept: Retained, or Enhanced to a better condition. T009 to T016 are newly planted, one of each size in each setting. A service that prices a size class at the wrong area differs from the metric on that tree. An urban and a rural tree of one size and condition have the same units, so a service that puts an Enhanced or newly planted tree in the wrong setting differs instead on the trading summary, whose urban and rural tree lines it moves that tree's gain between; a Retained tree gains nothing, so its setting shows in neither.",
+      "description": "Each of the tree helper's four size classes (Small 0.0041 ha, Medium 0.0163 ha, Large 0.0366 ha, Very large 0.0765 ha), urban and rural, at baseline and newly planted. T001 to T008 are the baseline trees, one of each size in each setting, kept: Retained, or Enhanced to a better condition. T009 to T016 are newly planted, one of each size in each setting. A service that prices a size class at the wrong area differs from the metric on that tree. An urban and a rural tree of one size and condition have the same units, so a service that puts an Enhanced or newly planted tree in the wrong setting differs instead on the trading summary, whose urban and rural tree lines it moves that tree's gain between. No two Enhanced or newly planted trees of one size differ only in their setting (the rural ones are planted in Poor condition, and T004 is enhanced to Good), so even swapping a pair's settings moves units between the lines. A Retained tree gains nothing, so its setting shows in neither.",
       "size": 1,
       "treeCount": 16,
       "emptyLayers": ["hedgerows", "rivers"],
@@ -3944,13 +3944,13 @@
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
           },
           {
-            "$comment": "Enhanced: 0.0163 ha, rural.",
+            "$comment": "Enhanced: 0.0163 ha, rural, to Good where T003 goes to Moderate, so the two cannot swap settings unseen.",
             "retention": "Enhanced",
             "treeSize": "Medium",
             "treeType": "Native",
             "ruralOrUrban": "Rural",
             "baselineCondition": "Poor",
-            "proposedCondition": "Moderate",
+            "proposedCondition": "Good",
             "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
           },
@@ -4007,14 +4007,14 @@
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "0",
             "delayYears": "0",
-            "$comment": "T009 to T016: newly planted, each size class in each setting."
+            "$comment": "T009 to T016: newly planted, each size class in each setting, the urban trees in Moderate condition and the rural ones in Poor, so no pair can swap settings unseen."
           },
           {
             "retention": "Created",
             "treeSize": "Small",
             "treeType": "Native",
             "ruralOrUrban": "Rural",
-            "proposedCondition": "Moderate",
+            "proposedCondition": "Poor",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "0",
             "delayYears": "0"
@@ -4034,7 +4034,7 @@
             "treeSize": "Medium",
             "treeType": "Native",
             "ruralOrUrban": "Rural",
-            "proposedCondition": "Moderate",
+            "proposedCondition": "Poor",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "0",
             "delayYears": "0"
@@ -4054,7 +4054,7 @@
             "treeSize": "Large",
             "treeType": "Native",
             "ruralOrUrban": "Rural",
-            "proposedCondition": "Moderate",
+            "proposedCondition": "Poor",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "0",
             "delayYears": "0"
@@ -4074,7 +4074,7 @@
             "treeSize": "Very large",
             "treeType": "Native",
             "ruralOrUrban": "Rural",
-            "proposedCondition": "Moderate",
+            "proposedCondition": "Poor",
             "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
             "advanceYears": "0",
             "delayYears": "0"

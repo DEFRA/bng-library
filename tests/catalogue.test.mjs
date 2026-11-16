@@ -671,6 +671,38 @@ describe('the vertical area habitat scenario (BMD-1084)', () => {
   })
 })
 
+describe('the trees-size-and-setting scenario', () => {
+  const trees = SCENARIOS.find((s) => s.id === 'trees-size-and-setting')
+    .overrides.trees
+  const SIZES = ['Small', 'Medium', 'Large', 'Very large']
+  const SETTINGS = ['Urban', 'Rural']
+  const kept = trees.filter((tree) => tree.retention !== 'Created')
+  const planted = trees.filter((tree) => tree.retention === 'Created')
+  const everyPair = SIZES.flatMap((size) =>
+    SETTINGS.map((setting) => `${size}|${setting}`)
+  )
+  const pairsOf = (rows) =>
+    rows.map((tree) => `${tree.treeSize}|${tree.ruralOrUrban}`).sort()
+
+  it('keeps one baseline tree, and plants one, of every size class in each setting', () => {
+    expect(pairsOf(kept)).toEqual([...everyPair].sort())
+    expect(pairsOf(planted)).toEqual([...everyPair].sort())
+  })
+
+  // An urban and a rural tree that are otherwise the same have the same
+  // units, so two that differ only in their setting could swap settings
+  // without the comparison seeing it. A Retained tree gains nothing either
+  // way, so only the trees that gain are held to this.
+  it('has no two trees that gain units and differ only in their setting', () => {
+    const gaining = trees.filter((tree) => tree.retention !== 'Retained')
+    const withoutSetting = gaining.map((tree) => {
+      const { ruralOrUrban, $comment, ...rest } = tree
+      return JSON.stringify(rest)
+    })
+    expect(new Set(withoutSetting).size).toBe(gaining.length)
+  })
+})
+
 describe('the formats rule, for consumers of the catalogue', () => {
   it('is exported from the package, as the catalogue is', () => {
     expect(library.scenarioInFormat).toBe(scenarioInFormat)

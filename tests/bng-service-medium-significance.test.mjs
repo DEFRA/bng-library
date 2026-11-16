@@ -5,8 +5,16 @@
  * in before a Local Nature Recovery Strategy was published, is written as
  * Low with a warning: left blank, the service would price it at zero.
  */
-import { describe, expect, it } from 'vitest'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import Database from 'better-sqlite3'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import {
+  generateBngServiceFromWorkbook,
+  generateBngServiceSynthetic
+} from '../index.mjs'
 import { captureMessages } from '../src/log.mjs'
 import { HABITAT_REF } from '../src/bng-service/schema.mjs'
 import { layerFromSources } from '../src/bng-service/site-features.mjs'
@@ -86,6 +94,97 @@ describe('a proposed Medium strategic significance', () => {
     )
     expect(warnings).toHaveLength(1)
     expect(warnings[0].message).toMatch(/^\s*habitats P0: .*written as Low/)
+  })
+})
+
+describe('a proposed Medium strategic significance in a generated file', () => {
+  const CENTRE = [530000, 180000]
+  let dir
+  beforeAll(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'bng-medium-'))
+  })
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  // The file's Area Habitats Post-Intervention rows, and the Medium warnings.
+  function generated(name, generate) {
+    const file = path.join(dir, name)
+    const { messages } = captureMessages(() => generate(file))
+    const db = new Database(file, { readonly: true })
+    try {
+      const rows = db
+        .prepare(
+          `SELECT "Habitat Ref" AS ref, "Retention Category" AS retention,
+            "Proposed Strategic Significance" AS significance
+          FROM "Area Habitats Post-Intervention" ORDER BY "Habitat Ref"`
+        )
+        .all()
+      const warnings = messages
+        .filter(
+          (m) => m.level === 'warn' && m.message.includes(MEDIUM_SIGNIFICANCE)
+        )
+        .map((m) => m.message.trim())
+      return { rows, warnings }
+    } finally {
+      db.close()
+    }
+  }
+
+  it('is written as Low from a native override', () => {
+    const { rows, warnings } = generated('native.gpkg', (file) =>
+      generateBngServiceSynthetic(
+        file,
+        CENTRE,
+        {
+          numParcels: 2,
+          seed: 1,
+          attributeOverrides: {
+            habitats: [
+              {
+                retention: 'Enhanced',
+                proposedStrategicSignificance: MEDIUM_SIGNIFICANCE
+              },
+              { retention: 'Created', proposedStrategicSignificance: 'High' }
+            ]
+          }
+        },
+        { templateFeatures: false }
+      )
+    )
+    expect(rows).toEqual([
+      { ref: 'H001', retention: 'Enhanced', significance: 'Low' },
+      { ref: 'H002', retention: 'Created', significance: 'High' }
+    ])
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toMatch(/^habitats H001: .*written as Low/)
+  })
+
+  it('is written as Low from Created and Enhanced workbook rows', () => {
+    const workbook = structuredClone(
+      JSON.parse(
+        readFileSync(
+          new URL('./fixtures/scenario-workbooks.json', import.meta.url),
+          'utf8'
+        )
+      )['strategic-significance/spread']
+    )
+    workbook.habitats.created[0].strategicSignificance = MEDIUM_SIGNIFICANCE
+    workbook.habitats.enhancements[0].proposedStrategicSignificance = `2. ${MEDIUM_SIGNIFICANCE}`
+    const { rows, warnings } = generated('workbook.gpkg', (file) =>
+      generateBngServiceFromWorkbook(file, workbook, 'medium.xlsx', {
+        centre: CENTRE,
+        seed: 2
+      })
+    )
+    expect(rows).toEqual([
+      { ref: 'H001', retention: 'Created', significance: 'Low' },
+      { ref: 'H002', retention: 'Created', significance: 'High' },
+      { ref: 'H003', retention: 'Enhanced', significance: 'Low' }
+    ])
+    expect(warnings).toHaveLength(2)
+    expect(warnings[0]).toMatch(/^habitats H001: .*written as Low/)
+    expect(warnings[1]).toMatch(/^habitats H003: .*written as Low/)
   })
 })
 

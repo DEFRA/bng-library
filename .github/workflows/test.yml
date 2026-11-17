@@ -34,3 +34,40 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+
+  # The writer and readers against the real metric workbook, the release
+  # PUBLISHED_METRIC_TEMPLATE pins: downloaded on every run, not cached,
+  # checking the pinned checksum, so a pin GOV.UK no longer serves fails here;
+  # then written, and recalculated with LibreOffice to the verdict each
+  # scenario expects. The unit job skips these tests, as it has no template.
+  published-template:
+    name: Published metric template
+    runs-on: ubuntu-latest
+    steps:
+      # Set by a step, since the runner context is not available to job env.
+      - name: Locate the metric template
+        run: echo "METRIC_TEMPLATE=$RUNNER_TEMP/metric-template.xlsx" >> "$GITHUB_ENV"
+
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install LibreOffice
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libreoffice-calc
+          soffice --version
+
+      - name: Download the pinned metric template
+        run: node scripts/download-metric-template.mjs "$METRIC_TEMPLATE"
+
+      - name: Run the real-template tests
+        run: npm run test:template

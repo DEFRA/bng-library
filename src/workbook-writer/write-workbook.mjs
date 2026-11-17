@@ -10,7 +10,12 @@
 
 import { METRIC_CORRECTIONS, applyCorrections } from './corrections.mjs'
 import { MetricTemplate } from './metric-template.mjs'
-import { ENHANCEMENT_OF, METRIC_SHEETS, capacity } from './template-layout.mjs'
+import {
+  ENHANCEMENT_OF,
+  METRIC_SHEETS,
+  capacity,
+  inputLastRows
+} from './template-layout.mjs'
 
 function assertLayout(template) {
   const mismatches = template.layoutMismatches()
@@ -27,14 +32,29 @@ function assertLayout(template) {
   }
 }
 
-function assertFits(rows) {
+/**
+ * The last data row of each sheet, from the template's own layout, so a
+ * template from before 1.1.0 is filled and cleared only up to its own rows.
+ */
+function templateLastRows(template) {
+  const found = inputLastRows((sheet, ref) => template.text(sheet, ref))
+  if (!found) {
+    throw new Error(
+      `The workbook's ${METRIC_SHEETS.habitatBaseline.sheet} rows are not numbered as any Statutory Biodiversity Metric release this writer knows lays them out`
+    )
+  }
+  return found.lastRows
+}
+
+function assertFits(rows, lastRows) {
   for (const [key, sheetRows] of Object.entries(rows)) {
     if (!METRIC_SHEETS[key]) {
       throw new Error(`Unknown workbook sheet key: ${key}`)
     }
-    if (sheetRows.length > capacity(key)) {
+    const holds = capacity(key, lastRows)
+    if (sheetRows.length > holds) {
       throw new Error(
-        `${METRIC_SHEETS[key].sheet} holds ${capacity(key)} rows; ${sheetRows.length} were given`
+        `${METRIC_SHEETS[key].sheet} holds ${holds} rows; ${sheetRows.length} were given`
       )
     }
   }
@@ -65,10 +85,10 @@ function overridable(layout, field) {
  * Empty every input cell. A default formula is left in place: it is what a
  * blank template holds there, and it yields nothing on an empty row.
  */
-function clearInputs(template) {
-  for (const layout of Object.values(METRIC_SHEETS)) {
+function clearInputs(template, lastRows) {
+  for (const [key, layout] of Object.entries(METRIC_SHEETS)) {
     const sheet = template.sheet(layout.sheet)
-    for (let row = layout.firstRow; row <= layout.lastRow; row += 1) {
+    for (let row = layout.firstRow; row <= lastRows[key]; row += 1) {
       for (const [field, column] of Object.entries(layout.columns)) {
         const ref = `${column}${row}`
         if (!(overridable(layout, field) && sheet.cell(ref)?.formula)) {
@@ -115,9 +135,10 @@ export function writeMetricWorkbook({
 }) {
   const template = new MetricTemplate(templateBuffer)
   assertLayout(template)
-  assertFits(rows)
+  const lastRows = templateLastRows(template)
+  assertFits(rows, lastRows)
   assertEnhancementsPaired(rows)
-  clearInputs(template)
+  clearInputs(template, lastRows)
   applyCorrections(template, corrections)
   for (const [key, sheetRows] of Object.entries(rows)) {
     writeRows(template, key, sheetRows)

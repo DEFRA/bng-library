@@ -287,24 +287,24 @@ function mergedEnhancement(enhanced, context) {
 }
 
 /**
- * The Enhanced parts of a split watercourse that are drawn. One with no
- * length (an empty or missing line) enhances nothing, as the service prices
- * none for it, so it is noted and left out before the parent is placed: its
- * parent then has the rest of its length lost, not a section or an
- * enhancement row that would go unpaired. A hedgerow's parts are kept as
- * they are.
+ * The Retained or Enhanced parts of a split watercourse that are drawn. One
+ * with no length (an empty or missing line) keeps or enhances nothing, as
+ * the service counts none for it, so it is noted and left out before the
+ * parent is placed: its parent then has the rest of its length lost, not a
+ * section of no length, or an enhancement row that would go unpaired. A
+ * hedgerow's parts are kept as they are.
  */
-function drawnEnhancedParts(layer, enhanced, baseline, context) {
+function drawnParts(layer, parts, { label, does }, baseline, context) {
   if (!layer.sizedAsDrawn) {
-    return enhanced
+    return parts
   }
-  const undrawn = enhanced.filter((part) => !(part.size > 0))
+  const undrawn = parts.filter((part) => !(part.size > 0))
   if (undrawn.length > 0) {
     context.notes.push(
-      `${context.table} ${undrawn.map((p) => p.reference).join(', ')}: Enhanced parts of ${baseline.reference} with no length drawn; left out, as they enhance nothing`
+      `${context.table} ${undrawn.map((p) => p.reference).join(', ')}: ${label} parts of ${baseline.reference} with no length drawn; left out, as they ${does} nothing`
     )
   }
-  return enhanced.filter((part) => part.size > 0)
+  return parts.filter((part) => part.size > 0)
 }
 
 /**
@@ -327,7 +327,7 @@ function needsSections(layer, retained, enhanced) {
  * parent's; the Enhanced parts share the rest, by their drawn lengths, and
  * each is enhanced by its whole drawn length. A share of nothing (Retained
  * parts as long as the parent) is noted. Its Enhanced parts are all drawn
- * (drawnEnhancedParts), so the sections cover the whole parent.
+ * (drawnParts), so the sections cover the whole parent.
  */
 function sectionedWatercourse(baseline, retained, enhanced, context) {
   const retainedSize = Math.min(sizeOf(retained), baseline.size)
@@ -369,10 +369,17 @@ function placeParts(layer, baseline, parts, context) {
     parts
       .filter((p, i) => retentions[i] === retention)
       .map((p) => proposedRow(layer, p))
-  const retained = byRetention(RETAINED)
-  const enhanced = drawnEnhancedParts(
+  const retained = drawnParts(
+    layer,
+    byRetention(RETAINED),
+    { label: RETAINED, does: 'keep' },
+    baseline,
+    context
+  )
+  const enhanced = drawnParts(
     layer,
     byRetention(ENHANCED),
+    { label: ENHANCED, does: 'enhance' },
     baseline,
     context
   )

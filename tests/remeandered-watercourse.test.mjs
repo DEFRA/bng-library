@@ -305,6 +305,27 @@ describe('the workbook rows for a re-meandered watercourse', () => {
     ])
   })
 
+  it('writes no section of no length when the Retained part has no line', () => {
+    const { subject, notes } = editedSplit(
+      'undrawn-retained',
+      `UPDATE "${WATERCOURSES}" SET geom = NULL
+         WHERE "Habitat Ref" = '${SUBJECT_PARENT}a'`
+    )
+    expect(notes).toEqual([
+      `${WATERCOURSES} ${SUBJECT_PARENT}a: Retained parts of ${SUBJECT_PARENT} with no length drawn; left out, as they keep nothing`
+    ])
+    expect(
+      subject.map((r) => [r.reference, r.size, r.retained, r.enhanced])
+    ).toEqual([
+      [
+        SUBJECT_PARENT,
+        expect.closeTo(km(100), 9),
+        undefined,
+        expect.closeTo(km(90), 9)
+      ]
+    ])
+  })
+
   it('keeps the parent’s baseline row, all of it lost, when none of its Enhanced parts has a line', () => {
     const { subject, rows } = editedSplit(
       'all-undrawn',

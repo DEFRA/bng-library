@@ -23,6 +23,9 @@ import Database from 'better-sqlite3'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
+  BNG_SERVICE_FLAWS,
+  CATEGORY_CHANGE,
+  STAGE_BASELINE,
   generateBngServiceSynthetic,
   generateSyntheticGpkg,
   setMode
@@ -331,5 +334,46 @@ describe('the remeandered-watercourse-outside flaw', () => {
         expect(pointInRing(point, ring)).toBe(true)
       }
     }
+  })
+})
+
+describe('a change flaw on a site that cannot hold it', () => {
+  const FLAW = 'remeandered-watercourse-outside'
+  const generate = (options) => () =>
+    generateSyntheticGpkg({
+      format: 'bng-service',
+      flaws: [FLAW],
+      seed: SEED,
+      ...options
+    })
+
+  it('is refused before drawing without template features', () => {
+    expect(generate({ templateFeatures: false })).toThrow(
+      /remeandered-watercourse-outside breaks a change the default site draws, so it needs template features on and no geometric flaw/
+    )
+  })
+
+  it('is refused before drawing on a geometrically bad site', () => {
+    expect(generate({ bad: true })).toThrow(
+      /needs template features on and no geometric flaw/
+    )
+  })
+
+  it('is refused for a baseline-only file, which could not hold it', () => {
+    expect(generate({ stage: STAGE_BASELINE })).toThrow(
+      /cannot be written to a baseline-only file/
+    )
+  })
+
+  it('says the red line had no room when the site drew no re-meander', () => {
+    const site = { layers: { rivers: { postIntervention: [] } } }
+
+    expect(() => BNG_SERVICE_FLAWS[FLAW].applyToSite(site)).toThrow(
+      /found no re-meandered watercourse to move: the red line had no room for one on this site/
+    )
+  })
+
+  it('is exported with its category, so a caller can sort it', () => {
+    expect(BNG_SERVICE_FLAWS[FLAW].category).toBe(CATEGORY_CHANGE)
   })
 })

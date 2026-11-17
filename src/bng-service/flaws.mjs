@@ -521,7 +521,7 @@ function remeanderOutside(site) {
   )
   if (!feature) {
     throw new Error(
-      'remeandered-watercourse-outside needs the re-meandered watercourse the default site draws (template features on)'
+      'remeandered-watercourse-outside found no re-meandered watercourse to move: the red line had no room for one on this site (try another seed)'
     )
   }
   const ring = site.redline.geometry.coordinates[0]

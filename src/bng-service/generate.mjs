@@ -423,6 +423,31 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
 }
 
 /**
+ * A change flaw breaks a change the default site draws (the re-meandered
+ * watercourse, for one), on its post-intervention layer. So it needs that
+ * site, with template features and no geometric flaw, and a file with a
+ * post-intervention stage. Checked before anything is drawn, so a caller is
+ * told at once, rather than after the site is drawn, or handed a baseline
+ * file whose name promises a flaw it does not hold.
+ */
+function assertChangeFlawsDrawn(changeFlawNames, { enrich, stage }) {
+  if (changeFlawNames.length === 0) {
+    return
+  }
+  const names = changeFlawNames.join(', ')
+  if (!enrich) {
+    throw new Error(
+      `${names} breaks a change the default site draws, so it needs template features on and no geometric flaw`
+    )
+  }
+  if (stage === STAGE_BASELINE) {
+    throw new Error(
+      `${names} breaks a post-intervention change, so it cannot be written to a baseline-only file`
+    )
+  }
+}
+
+/**
  * Generate one synthetic site in the BNG Service template format, drawn
  * natively: the same plan `generateOne` takes, plus the new format's flaws
  * and options. No legacy file is written.
@@ -458,7 +483,8 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *   place of one each (none of `partly-worse-parcel`):
  *   `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more hedgerows that get
  *   worse. Taken only where the site draws habitats that
- *   get worse: with template features, or a degrade flaw
+ *   get worse: with template features, or a degrade flaw. A change flaw
+ *   needs template features, no geometric flaw and a post-intervention stage
  */
 export function generateBngServiceSynthetic(
   outPath,
@@ -492,6 +518,7 @@ export function generateBngServiceSynthetic(
       'scenarioChanges are drawn only without template features, which draw their own, and on a site with no geometric flaw'
     )
   }
+  assertChangeFlawsDrawn(changeFlawNames, { enrich, stage })
   const worseHabitats = enrich || degradeFlawNames.length > 0
   if (worseHabitatCounts !== undefined) {
     if (!worseHabitats) {

@@ -107,8 +107,9 @@ describe('a proposed Medium strategic significance in a generated file', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  // The file's Area Habitats Post-Intervention rows, and the Medium warnings.
-  function generated(name, generate) {
+  // The file's Post-Intervention rows of a table (Area Habitats unless
+  // named), and the Medium warnings.
+  function generated(name, generate, table = 'Area Habitats') {
     const file = path.join(dir, name)
     const { messages } = captureMessages(() => generate(file))
     const db = new Database(file, { readonly: true })
@@ -117,7 +118,7 @@ describe('a proposed Medium strategic significance in a generated file', () => {
         .prepare(
           `SELECT "Habitat Ref" AS ref, "Retention Category" AS retention,
             "Proposed Strategic Significance" AS significance
-          FROM "Area Habitats Post-Intervention" ORDER BY "Habitat Ref"`
+          FROM "${table} Post-Intervention" ORDER BY "Habitat Ref"`
         )
         .all()
       const warnings = messages
@@ -159,6 +160,52 @@ describe('a proposed Medium strategic significance in a generated file', () => {
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toMatch(/^habitats H001: .*written as Low/)
   })
+
+  it.each([
+    ['hedgerows', 'Hedgerows', 'HG'],
+    ['rivers', 'Watercourses', 'R'],
+    ['trees', 'Individual Trees', 'T']
+  ])(
+    'is written as Low on %s from a native override',
+    (layerKey, table, prefix) => {
+      const { rows, warnings } = generated(
+        `native-${layerKey}.gpkg`,
+        (file) =>
+          generateBngServiceSynthetic(
+            file,
+            CENTRE,
+            {
+              numParcels: 2,
+              seed: 1,
+              attributeOverrides: {
+                [layerKey]: [
+                  {
+                    retention: 'Enhanced',
+                    proposedStrategicSignificance: MEDIUM_SIGNIFICANCE
+                  },
+                  {
+                    retention: 'Created',
+                    proposedStrategicSignificance: 'High'
+                  }
+                ]
+              }
+            },
+            { templateFeatures: false }
+          ),
+        table
+      )
+      // The overridden rows come first; the rest are drawn.
+      expect(rows.slice(0, 2)).toEqual([
+        { ref: `${prefix}001`, retention: 'Enhanced', significance: 'Low' },
+        { ref: `${prefix}002`, retention: 'Created', significance: 'High' }
+      ])
+      expect(warnings).toEqual([
+        expect.stringMatching(
+          new RegExp(`^${layerKey} ${prefix}001: .*written as Low`)
+        )
+      ])
+    }
+  )
 
   it('is written as Low from Created and Enhanced workbook rows', () => {
     const workbook = structuredClone(

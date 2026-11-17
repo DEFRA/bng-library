@@ -15,6 +15,16 @@
  * - Split into parts (a hedge that gets worse in part): each part placed by
  *   its own retention and size, the rest lost. A hedgerow is always placed
  *   by its parts' lengths, so a shorter hedge loses the rest.
+ * - A watercourse split into a Retained part and an Enhanced one, or into
+ *   several Enhanced parts: one baseline section per part, as the metric
+ *   asks (user guide, Watercourse enhancement: "split the baseline section
+ *   into a retained and enhanced sections"; one row with both refuses,
+ *   "Split retained and enhanced into separate entries"). The Retained
+ *   parts' section is their length; the Enhanced parts share what is left of
+ *   the parent in proportion to their lengths, each enhanced by its whole
+ *   length as drawn, so a re-meandered part longer than its share loses
+ *   nothing (BMD-1212). The sections are referenced `<ref> (section n)`
+ *   (sectionReference), which the comparison reads back as the parent's.
  * - No post-intervention feature: lost.
  * - A post-intervention feature with no parent: a creation if Created;
  *   otherwise noted and left out, as nothing can be kept from no parent.
@@ -44,6 +54,7 @@ import {
   workbookSpelling,
   years
 } from './workbook-values.mjs'
+import { sectionReference } from './sections.mjs'
 
 const SQ_METRES_PER_HECTARE = 10_000
 const METRES_PER_KM = 1000
@@ -276,9 +287,59 @@ function mergedEnhancement(enhanced, context) {
 }
 
 /**
+ * Whether a watercourse's parts need it split into sections for the metric:
+ * a Retained part beside an Enhanced one, or several Enhanced parts. One
+ * baseline row cannot be both retained and enhanced, and an enhanced row
+ * pairs with one enhancement row.
+ */
+function needsSections(layer, retained, enhanced) {
+  return (
+    layer.sizedAsDrawn &&
+    enhanced.length > 0 &&
+    (retained.length > 0 || enhanced.length > 1)
+  )
+}
+
+/**
+ * A watercourse split into sections, one baseline row each (see the module
+ * comment). The Retained parts' section is their length, up to the
+ * parent's; the Enhanced parts share the rest, by their drawn lengths, and
+ * each is enhanced by its whole drawn length. A share of nothing (Retained
+ * parts as long as the parent) is noted.
+ */
+function sectionedWatercourse(baseline, retained, enhanced, context) {
+  const retainedSize = Math.min(sizeOf(retained), baseline.size)
+  const remainder = Math.max(0, baseline.size - retainedSize)
+  const drawn = sizeOf(enhanced)
+  if (remainder === 0) {
+    context.notes.push(
+      `${context.table} ${enhanced.map((p) => p.reference).join(', ')}: Enhanced parts of ${baseline.reference} with no baseline length left beside its Retained parts`
+    )
+  }
+  let number = 0
+  const section = (fields) => ({
+    ...baseline,
+    reference: sectionReference(baseline.reference, ++number),
+    ...fields
+  })
+  const sections = []
+  if (retained.length > 0) {
+    sections.push(section({ size: retainedSize, retained: retainedSize }))
+  }
+  for (const part of enhanced) {
+    const share = drawn > 0 ? (remainder * part.size) / drawn : 0
+    sections.push(
+      section({ size: share, enhanced: part.size, enhancement: part })
+    )
+  }
+  return sections
+}
+
+/**
  * Where a baseline feature goes by its parts' own sizes: its Retained parts
  * are retained, its Enhanced parts enhanced, and each Created part a
- * creation; the rest is lost.
+ * creation; the rest is lost. A watercourse whose parts the metric needs in
+ * sections is split into them (sectionedWatercourse).
  */
 function placeParts(layer, baseline, parts, context) {
   const retentions = parts.map((p) => retentionOf(p, context))
@@ -288,6 +349,14 @@ function placeParts(layer, baseline, parts, context) {
       .map((p) => proposedRow(layer, p))
   const retained = byRetention(RETAINED)
   const enhanced = byRetention(ENHANCED)
+  const creations = byRetention(CREATED)
+  if (needsSections(layer, retained, enhanced)) {
+    const sections = sectionedWatercourse(baseline, retained, enhanced, context)
+    return [
+      ...sections.map((section) => ({ baseline: section })),
+      { creations }
+    ]
+  }
   const placed = { ...baseline }
   if (retained.length > 0) {
     placed.retained = sizeOf(retained)
@@ -296,7 +365,7 @@ function placeParts(layer, baseline, parts, context) {
     placed.enhanced = sizeOf(enhanced)
     placed.enhancement = mergedEnhancement(enhanced, context)
   }
-  return { baseline: placed, creations: byRetention(CREATED) }
+  return [{ baseline: placed, creations }]
 }
 
 /**
@@ -312,10 +381,10 @@ function placeParts(layer, baseline, parts, context) {
 function placeBaseline(layer, parent, parts, context) {
   const baseline = baselineRow(layer, parent)
   if (parts.length === 0) {
-    return { baseline }
+    return [{ baseline }]
   }
   return parts.length === 1 && !layer.byParts
-    ? placeWhole(layer, baseline, parts[0], context)
+    ? [placeWhole(layer, baseline, parts[0], context)]
     : placeParts(layer, baseline, parts, context)
 }
 
@@ -362,7 +431,7 @@ function layerEntries(db, layerKey, notes) {
     children.filter((c) => uuids.has(c.parent_uuid)),
     (c) => c.parent_uuid
   )
-  const kept = parents.map((parent) =>
+  const kept = parents.flatMap((parent) =>
     placeBaseline(
       layer,
       parent,

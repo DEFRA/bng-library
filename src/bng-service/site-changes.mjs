@@ -6,6 +6,12 @@
  *   route, so it keeps its link to the baseline, Enhanced by Realignment
  *   (template guide, Watercourses). Its Baseline Length stays the surveyed
  *   one.
+ * - A re-meandered watercourse drawn to set lengths, for a scenario that
+ *   checks the figures the Metric gives them (BMD-1212): a 100 m ditch,
+ *   Moderate, re-meandered whole onto a 130 m route, Good, by Realignment or
+ *   by Standard Enhancement; split into a 40 m Retained part and a part
+ *   re-meandered onto 90 m; or Enhanced onto a shorter, 80 m line. Named
+ *   only, never drawn on the default site.
  * - A watercourse that is only shorter: the copied line shortened, kept
  *   Retained, as the template guide records a shorter hedge. The service
  *   cannot measure part loss of a watercourse from the map, so it counts
@@ -48,6 +54,18 @@ import { LOW, NOT_APPLICABLE, YES, distinctiveness } from './vocabulary.mjs'
 const ENHANCED = 'Enhanced'
 const CREATED = 'Created'
 const REALIGNMENT = 'Enhanced by Realignment'
+const STANDARD_ENHANCEMENT = 'Standard Enhancement'
+// The set lengths' watercourse: a ditch, Moderate to Good, unencroached.
+const SET_RIVER_TYPE = 'Ditches'
+const SET_FROM_CONDITION = 'Moderate'
+const SET_TO_CONDITION = 'Good'
+const NO_ENCROACHMENT = 'No Encroachment'
+const NO_RIPARIAN_ENCROACHMENT = 'No Encroachment/ No Encroachment'
+const SET_BASELINE_M = 100
+const SET_REMEANDERED_M = 130
+const SET_SPLIT_RETAINED_M = 40
+const SET_SPLIT_REMEANDERED_M = 90
+const SET_SHORTER_M = 80
 const DELAY = 'Delay in starting habitat creation/years'
 const IRREPLACEABLE = 'Irreplaceable Habitat'
 // A meander's bend sits off the straight line by this share of its length.
@@ -68,6 +86,8 @@ const THIRTY_PLUS_DELAY = '30+'
 
 export const REALIGNED_WATERCOURSE_COMMENT =
   'Re-meandered: the channel moves onto a longer route'
+export const SHORTER_ENHANCED_WATERCOURSE_COMMENT =
+  'Enhanced onto a shorter line: part of the stretch is culverted or filled'
 export const SHORTER_WATERCOURSE_COMMENT =
   'Shorter: part of the stretch is culverted or filled'
 export const THIRTY_PLUS_DELAY_COMMENT =
@@ -80,6 +100,10 @@ export const THIRTY_PLUS_DELAY_COMMENT =
 export const CHANGE = Object.freeze({
   realignedWatercourse: 'realigned-watercourse',
   shorterWatercourse: 'shorter-watercourse',
+  remeanderedWatercourse: 'remeandered-watercourse',
+  remeanderedWatercourseStandard: 'remeandered-watercourse-standard',
+  remeanderedWatercourseSplit: 'remeandered-watercourse-split',
+  shorterEnhancedWatercourse: 'shorter-enhanced-watercourse',
   repeatedRef: 'repeated-ref'
 })
 
@@ -207,6 +231,173 @@ function realignedWatercourse(site, chooser) {
       Length: lengthMetres(route),
       [COMMENT]: REALIGNED_WATERCOURSE_COMMENT
     }
+  })
+}
+
+/**
+ * The straight line `[start, end]` made `lengthM` long, inside the red line:
+ * bent once at its middle, to one side or the other, where it is to be
+ * longer; cut short from its start where it is to be shorter. Null if no
+ * bend fits.
+ */
+function lineOfLength([start, end], lengthM, ring, chooser) {
+  const dx = end[0] - start[0]
+  const dy = end[1] - start[1]
+  const chord = Math.hypot(dx, dy)
+  if (lengthM <= chord) {
+    const share = lengthM / chord
+    return {
+      type: 'LineString',
+      coordinates: [start, [start[0] + dx * share, start[1] + dy * share]]
+    }
+  }
+  const offset = Math.sqrt((lengthM / 2) ** 2 - (chord / 2) ** 2)
+  const first = chooser.chance(0.5) ? 1 : -1
+  for (const side of [first, -first]) {
+    const bend = [
+      (start[0] + end[0]) / 2 - (dy / chord) * side * offset,
+      (start[1] + end[1]) / 2 + (dx / chord) * side * offset
+    ]
+    if (
+      segmentInsideRing(start, bend, ring) &&
+      segmentInsideRing(bend, end, ring)
+    ) {
+      return { type: 'LineString', coordinates: [start, bend, end] }
+    }
+  }
+  return null
+}
+
+/** The proposed values of the set lengths' watercourse, Retained or Enhanced. */
+function setProposed(enhancementType, condition) {
+  return {
+    'Proposed River Type': SET_RIVER_TYPE,
+    'Proposed Distinctiveness': distinctiveness('rivers', SET_RIVER_TYPE, true),
+    'Proposed Condition': condition,
+    'Proposed Encroachment into Watercourse': NO_ENCROACHMENT,
+    'Proposed Encroachment into riparian zone': NO_RIPARIAN_ENCROACHMENT,
+    'Enhancement Type': enhancementType
+  }
+}
+
+/**
+ * A watercourse drawn to set lengths (see the module comment): a
+ * `SET_BASELINE_M` ditch whose first `retainedM` stay Retained, as part
+ * "a", and whose rest is Enhanced onto a line `enhancedM` long, as part "b",
+ * or whole, keeping the parent's ref, when nothing is Retained. Taken back
+ * out if the red line has no room for it, as `realignedWatercourse` is.
+ */
+function setLengthWatercourse(site, chooser, spec) {
+  const { change, retainedM = 0, enhancedM, enhancementType, comment } = spec
+  const pairs = enhancementPairs(WATERCOURSE, SET_RIVER_TYPE)
+  if (
+    !pairs.some(
+      ([from, to]) => from === SET_FROM_CONDITION && to === SET_TO_CONDITION
+    )
+  ) {
+    throw new Error(
+      `${change}: a ${SET_RIVER_TYPE} cannot be enhanced from ${SET_FROM_CONDITION} to ${SET_TO_CONDITION}`
+    )
+  }
+  const parent = drawnWatercourseBaseline(
+    site,
+    chooser,
+    change,
+    {
+      'Baseline River Type': SET_RIVER_TYPE,
+      'Baseline Condition': SET_FROM_CONDITION,
+      'Baseline Encroachment into Watercourse': NO_ENCROACHMENT,
+      'Baseline Encroachment into riparian zone': NO_RIPARIAN_ENCROACHMENT
+    },
+    { lengthM: SET_BASELINE_M }
+  )
+  if (!parent) {
+    return
+  }
+  const [kept, rest] =
+    retainedM > 0
+      ? splitLine(parent.geometry, retainedM / SET_BASELINE_M)
+      : [null, parent.geometry]
+  const route = lineOfLength(
+    rest.coordinates,
+    enhancedM,
+    site.redline.geometry.coordinates[0],
+    chooser
+  )
+  if (!route) {
+    const { baseline } = site.layers.rivers
+    baseline.splice(baseline.indexOf(parent), 1)
+    return
+  }
+  const ref = parent.values[HABITAT_REF]
+  const rows = site.layers.rivers.postIntervention
+  if (kept) {
+    const part = retainedPart(
+      parent,
+      kept,
+      `${ref}a`,
+      setProposed(NOT_APPLICABLE, SET_FROM_CONDITION)
+    )
+    part.change = change
+    rows.push(part)
+  }
+  rows.push({
+    geometry: route,
+    parent,
+    source: { index: parent.source.index, retention: ENHANCED },
+    change,
+    values: {
+      [HABITAT_REF]: kept ? `${ref}b` : ref,
+      [RETENTION]: ENHANCED,
+      ...setProposed(enhancementType, SET_TO_CONDITION),
+      'Proposed Strategic Significance': LOW,
+      [ADVANCE]: ZERO_YEARS,
+      [DELAY]: ZERO_YEARS,
+      'Spatial risk category': NOT_APPLICABLE,
+      Length: lengthMetres(route),
+      [COMMENT]: comment
+    }
+  })
+}
+
+/** A 100 m ditch re-meandered whole onto 130 m, by Realignment. */
+function remeanderedWatercourse(site, chooser) {
+  setLengthWatercourse(site, chooser, {
+    change: CHANGE.remeanderedWatercourse,
+    enhancedM: SET_REMEANDERED_M,
+    enhancementType: REALIGNMENT,
+    comment: REALIGNED_WATERCOURSE_COMMENT
+  })
+}
+
+/** As remeanderedWatercourse, recorded as a Standard Enhancement. */
+function remeanderedWatercourseStandard(site, chooser) {
+  setLengthWatercourse(site, chooser, {
+    change: CHANGE.remeanderedWatercourseStandard,
+    enhancedM: SET_REMEANDERED_M,
+    enhancementType: STANDARD_ENHANCEMENT,
+    comment: REALIGNED_WATERCOURSE_COMMENT
+  })
+}
+
+/** A 100 m ditch: 40 m Retained, the other 60 m re-meandered onto 90 m. */
+function remeanderedWatercourseSplit(site, chooser) {
+  setLengthWatercourse(site, chooser, {
+    change: CHANGE.remeanderedWatercourseSplit,
+    retainedM: SET_SPLIT_RETAINED_M,
+    enhancedM: SET_SPLIT_REMEANDERED_M,
+    enhancementType: REALIGNMENT,
+    comment: REALIGNED_WATERCOURSE_COMMENT
+  })
+}
+
+/** A 100 m ditch Enhanced onto a shorter, 80 m line. */
+function shorterEnhancedWatercourse(site, chooser) {
+  setLengthWatercourse(site, chooser, {
+    change: CHANGE.shorterEnhancedWatercourse,
+    enhancedM: SET_SHORTER_M,
+    enhancementType: STANDARD_ENHANCEMENT,
+    comment: SHORTER_ENHANCED_WATERCOURSE_COMMENT
   })
 }
 
@@ -376,13 +567,17 @@ export function addSiteChanges(
 /** The watercourse changes a scenario can ask for by name, and their draws. */
 const NAMED_CHANGE_DRAWS = {
   [CHANGE.realignedWatercourse]: realignedWatercourse,
-  [CHANGE.shorterWatercourse]: shorterWatercourse
+  [CHANGE.shorterWatercourse]: shorterWatercourse,
+  [CHANGE.remeanderedWatercourse]: remeanderedWatercourse,
+  [CHANGE.remeanderedWatercourseStandard]: remeanderedWatercourseStandard,
+  [CHANGE.remeanderedWatercourseSplit]: remeanderedWatercourseSplit,
+  [CHANGE.shorterEnhancedWatercourse]: shorterEnhancedWatercourse
 }
 
 /** The changes `addNamedSiteChanges` draws. */
 export const NAMED_SITE_CHANGES = Object.freeze(Object.keys(NAMED_CHANGE_DRAWS))
 
-/** The layer each named change is drawn on: both are watercourses. */
+/** The layer each named change is drawn on: all are watercourses. */
 export const NAMED_SITE_CHANGE_LAYER = 'rivers'
 
 /**

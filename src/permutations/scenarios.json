@@ -778,6 +778,222 @@
       }
     },
     {
+      "id": "intervention-watercourse-remeandered",
+      "purpose": "intervention",
+      "$comment": "Changes only the BNG Service template records on the map: the copied line moved, lengthened or shortened, linked to its baseline watercourse, at set lengths (BMD-1212).",
+      "formats": ["bng-service"],
+      "title": "Watercourse — re-meandered onto a longer route",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003, a 100 m ditch in Moderate condition with no encroachment, is re-meandered: its channel moves onto a 130 m route, Enhanced by Realignment to Good. As the metric user guide says, no length is lost and the whole 130 m is enhanced: the post-intervention value is priced on 130 m and the baseline value on 100 m. This checks the service counts a re-meandered watercourse as the metric does.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "siteChanges": ["remeandered-watercourse"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003",
+        "note": "the 100 m ditch re-meandered onto a 130 m route, Enhanced by Realignment"
+      }
+    },
+    {
+      "id": "intervention-watercourse-remeandered-standard",
+      "purpose": "intervention",
+      "$comment": "Changes only the BNG Service template records on the map: the copied line moved, lengthened or shortened, linked to its baseline watercourse, at set lengths (BMD-1212).",
+      "formats": ["bng-service"],
+      "title": "Watercourse — re-meandered, recorded as a Standard Enhancement",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003 is the re-meandered ditch of watercourse-remeandered, 100 m re-meandered onto 130 m, Moderate to Good, with Enhancement Type Standard Enhancement in place of Enhanced by Realignment. The Enhancement Type plays no part in the units, so its figures are the same.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "siteChanges": ["remeandered-watercourse-standard"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003",
+        "note": "the 100 m ditch re-meandered onto 130 m, recorded as a Standard Enhancement"
+      }
+    },
+    {
+      "id": "intervention-watercourse-remeandered-split",
+      "purpose": "intervention",
+      "$comment": "Changes only the BNG Service template records on the map: the copied line moved, lengthened or shortened, linked to its baseline watercourse, at set lengths (BMD-1212).",
+      "formats": ["bng-service"],
+      "title": "Watercourse — part retained, part re-meandered",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003, a 100 m ditch in Moderate condition, is split: R003a, its first 40 m, is Retained, and R003b, the other 60 m, is re-meandered onto a 90 m route, Enhanced by Realignment to Good. As the metric user guide says, the baseline section is split into a retained and an enhanced section, and no length is lost: the workbook records R003 as a 40 m retained section and a 60 m section enhanced by 90 m. This checks the service prices the Enhanced part's baseline value on the 60 m left beside the Retained part, not on the whole 100 m.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "siteChanges": ["remeandered-watercourse-split"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003b",
+        "note": "R003a, 40 m, Retained; R003b, the other 60 m re-meandered onto 90 m"
+      }
+    },
+    {
+      "id": "intervention-watercourse-enhanced-shorter",
+      "purpose": "intervention",
+      "$comment": "Changes only the BNG Service template records on the map: the copied line moved, lengthened or shortened, linked to its baseline watercourse, at set lengths (BMD-1212).",
+      "formats": ["bng-service"],
+      "title": "Watercourse — Enhanced onto a shorter line",
+      "description": "R001 and R002, ditches in Moderate condition with no encroachment, are retained as they are. R003, a 100 m ditch in Moderate condition, is Enhanced to Good on a line only 80 m long: part of the stretch is culverted or filled. A shorter Enhanced watercourse still loses the rest, so 20 m is lost. This checks a watercourse Enhanced onto a shorter line is priced as the metric does, its loss included.",
+      "size": 1,
+      "emptyLayers": ["hedgerows", "trees"],
+      "overrides": {
+        "habitats": [
+          {
+            "habitatFullName": "Grassland - Other neutral grassland",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ],
+        "rivers": [
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          },
+          {
+            "riverType": "Ditches",
+            "retention": "Retained",
+            "baselineCondition": "Moderate",
+            "proposedCondition": "Moderate",
+            "baselineWaterEncroachment": "No Encroachment",
+            "proposedWaterEncroachment": "No Encroachment",
+            "baselineRiparianEncroachment": "No Encroachment/No Encroachment",
+            "proposedRiparianEncroachment": "No Encroachment/No Encroachment",
+            "baselineStrategicSignificance": "Area/compensation not in local strategy/ no local strategy",
+            "proposedStrategicSignificance": "Area/compensation not in local strategy/ no local strategy"
+          }
+        ]
+      },
+      "siteChanges": ["shorter-enhanced-watercourse"],
+      "subject": {
+        "layer": "Rivers",
+        "ref": "R003",
+        "note": "the 100 m ditch Enhanced onto an 80 m line, 20 m lost"
+      }
+    },
+    {
       "id": "area-enhanced-medium-condition-na",
       "purpose": "intervention",
       "title": "Area habitat — enhancement of a Medium habitat in Condition Assessment N/A",

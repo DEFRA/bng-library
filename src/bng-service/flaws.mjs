@@ -21,8 +21,14 @@
  * it: section 5 for an area habitat or hedgerow (Created in its own type, in a
  * lower condition, 30 plus years in advance), section 7 for a watercourse.
  * Asking for one adds the habitats that get worse, if the site has none.
+ *
+ * The site-change flaws break one of the changes the default site draws
+ * (see site-changes.mjs): `remeandered-watercourse-outside` moves the bend of
+ * its re-meandered watercourse 5 m outside the red line (BMD-1212), which
+ * the service refuses as it refuses any watercourse outside it.
  */
 
+import { pointInRing } from '../geometry.mjs'
 import { error } from '../log.mjs'
 import { lengthMetres } from '../measure/index.mjs'
 import { geometryWkt } from './site.mjs'
@@ -38,15 +44,18 @@ import {
   splitLine
 } from './template-features.mjs'
 import { distinctiveness, NOT_APPLICABLE } from './vocabulary.mjs'
+import { CHANGE } from './site-changes.mjs'
 
 export const CATEGORY_LINEAGE = 'lineage'
 export const CATEGORY_VERSION = 'version'
 export const CATEGORY_DEGRADE = 'degrade'
+export const CATEGORY_CHANGE = 'site-change'
 
 const CATEGORY_LABELS = {
   [CATEGORY_LINEAGE]: 'lineage',
   [CATEGORY_VERSION]: 'template-version',
-  [CATEGORY_DEGRADE]: 'degraded-habitat'
+  [CATEGORY_DEGRADE]: 'degraded-habitat',
+  [CATEGORY_CHANGE]: 'site-change'
 }
 
 const ACCEPTED_PARENT_LINK_SOUND =
@@ -61,6 +70,11 @@ const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000'
 // The mismatched parent shape is the parent moved this far east: well over
 // the millimetre the service compares to, and clearly not a rounding slip.
 const SHIFT_M = 5
+// How far a re-meandered channel's bend is moved outside the red line: well
+// over the service's 0.1 m tolerance for a line outside it.
+const OUTSIDE_REDLINE_M = 5
+// Half a metre outside the edge tells its outward side from its inward one.
+const SIDE_PROBE_M = 0.5
 
 /** The legacy flaws the template cannot carry. */
 export const LEGACY_ONLY_FLAWS = new Set(['tree-count-not-whole'])
@@ -332,6 +346,14 @@ export const BNG_SERVICE_FLAWS = {
       )
     }
   },
+  'remeandered-watercourse-outside': {
+    description: `the re-meandered watercourse's new route goes ${OUTSIDE_REDLINE_M} m outside the red line: its bend is moved out across the boundary, while its baseline line stays inside`,
+    errorCode: 'WATERCOURSES_OUTSIDE_REDLINE',
+    category: CATEGORY_CHANGE,
+    applyToSite(site) {
+      remeanderOutside(site)
+    }
+  },
   'version-record-missing': {
     description: 'the GeoPackage has no template version record',
     errorCode: 'TEMPLATE_VERSION_MISSING',
@@ -376,13 +398,15 @@ export function listBngServiceFlaws() {
  * Split a flaw selection into the legacy flaws, for the legacy generator to
  * draw, and the BNG Service template flaws, applied to the converted site.
  * At most one version flaw: each says what the whole record is. At most one
- * lineage flaw and one degrade flaw: two of either would break the same row.
+ * lineage flaw, one degrade flaw and one site-change flaw: two of any would
+ * break the same row.
  */
 export function partitionFlaws(names = []) {
   const legacy = []
   const lineage = []
   const version = []
   const degrade = []
+  const change = []
   for (const name of names) {
     if (LEGACY_ONLY_FLAWS.has(name)) {
       error(
@@ -396,6 +420,8 @@ export function partitionFlaws(names = []) {
       lineage.push(name)
     } else if (flaw.category === CATEGORY_DEGRADE) {
       degrade.push(name)
+    } else if (flaw.category === CATEGORY_CHANGE) {
+      change.push(name)
     } else {
       version.push(name)
     }
@@ -413,7 +439,10 @@ export function partitionFlaws(names = []) {
       `Only one degraded-habitat flaw at a time, as some break the same row; got ${degrade.join(', ')}`
     )
   }
-  return { legacy, lineage, version, degrade }
+  if (change.length > 1) {
+    error(`Only one site-change flaw at a time; got ${change.join(', ')}`)
+  }
+  return { legacy, lineage, version, degrade, change }
 }
 
 /**
@@ -447,6 +476,70 @@ export function applyDegradeFlaws(site, names) {
   for (const name of names) {
     BNG_SERVICE_FLAWS[name].applyToSite(site)
   }
+}
+
+/** Apply site-change flaws to the site, after its site changes. */
+export function applyChangeFlaws(site, names) {
+  for (const name of names) {
+    BNG_SERVICE_FLAWS[name].applyToSite(site)
+  }
+}
+
+/** The point of `ring` nearest `point`, and the edge it is on. */
+function nearestOnRing(point, ring) {
+  let best = null
+  for (let i = 1; i < ring.length; i += 1) {
+    const a = ring[i - 1]
+    const b = ring[i]
+    const ex = b[0] - a[0]
+    const ey = b[1] - a[1]
+    const squared = ex * ex + ey * ey
+    if (squared === 0) {
+      continue
+    }
+    const t = Math.min(
+      1,
+      Math.max(0, ((point[0] - a[0]) * ex + (point[1] - a[1]) * ey) / squared)
+    )
+    const at = [a[0] + ex * t, a[1] + ey * t]
+    const distance = Math.hypot(point[0] - at[0], point[1] - at[1])
+    if (!best || distance < best.distance) {
+      best = { at, a, b, distance }
+    }
+  }
+  return best
+}
+
+/**
+ * Move the bend of the default site's re-meandered watercourse out across
+ * the red line: to `OUTSIDE_REDLINE_M` beyond the edge nearest it, square
+ * to that edge. Its ends, and its baseline line, stay inside.
+ */
+function remeanderOutside(site) {
+  const feature = site.layers.rivers.postIntervention.find(
+    (f) => f.change === CHANGE.realignedWatercourse
+  )
+  if (!feature) {
+    throw new Error(
+      'remeandered-watercourse-outside needs the re-meandered watercourse the default site draws (template features on)'
+    )
+  }
+  const ring = site.redline.geometry.coordinates[0]
+  const [start, bend, end] = feature.geometry.coordinates
+  const { at, a, b } = nearestOnRing(bend, ring)
+  const edge = Math.hypot(b[0] - a[0], b[1] - a[1])
+  const normal = [(a[1] - b[1]) / edge, (b[0] - a[0]) / edge]
+  const probe = [
+    at[0] + normal[0] * SIDE_PROBE_M,
+    at[1] + normal[1] * SIDE_PROBE_M
+  ]
+  const side = pointInRing(probe, ring) ? -1 : 1
+  const outside = [
+    at[0] + normal[0] * side * OUTSIDE_REDLINE_M,
+    at[1] + normal[1] * side * OUTSIDE_REDLINE_M
+  ]
+  feature.geometry = { type: 'LineString', coordinates: [start, outside, end] }
+  feature.values.Length = lengthMetres(feature.geometry)
 }
 
 /** Apply lineage flaws to the site. */

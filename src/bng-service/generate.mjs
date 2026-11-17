@@ -40,6 +40,7 @@ import {
   resolveWorseCounts
 } from './template-features.mjs'
 import {
+  applyChangeFlaws,
   applyDegradeFlaws,
   assertDegradeSubjectsDrawn,
   applyLineageFlaws,
@@ -156,6 +157,7 @@ function finishSite(site, outPath, chooser, options) {
     lineageFlaws = [],
     degradeFlaws = [],
     versionFlaws = [],
+    changeFlaws = [],
     replaceableLayers = []
   } = options
   applyTemplateOverrides(site, overrides)
@@ -171,6 +173,7 @@ function finishSite(site, outPath, chooser, options) {
   if (scenarioChanges) {
     addScenarioChanges(site, chooser, emptyLayers, scenarioChanges)
   }
+  applyChangeFlaws(site, changeFlaws)
   applyDegradeFlaws(site, degradeFlaws)
   if (comments) {
     addComments(site, chooser)
@@ -410,6 +413,7 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
   for (const name of [
     ...(plan.lineageFlawNames ?? []),
     ...(plan.degradeFlawNames ?? []),
+    ...(plan.changeFlawNames ?? []),
     ...(plan.versionFlawNames ?? [])
   ]) {
     info(`  flaw: ${name}`)
@@ -426,7 +430,9 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  * @param {string} outPath
  * @param {[number, number]} centre
  * @param {object} plan  as for `generateOne`, plus `lineageFlawNames`,
- *   `degradeFlawNames` and `versionFlawNames`; `attributeOverrides` may also hold a
+ *   `degradeFlawNames`, `changeFlawNames` (each breaks a change the default
+ *   site draws, so it needs template features) and `versionFlawNames`;
+ *   `attributeOverrides` may also hold a
  *   `verticalHabitats` layer and the template-only row fields; and
  *   `scenarioChanges`, `{ worseHabitats, siteChanges }`, the habitats that
  *   get worse (counts by kind, as WORSE_KINDS names them) and the watercourse
@@ -476,6 +482,7 @@ export function generateBngServiceSynthetic(
     lineageFlawNames = [],
     degradeFlawNames = [],
     versionFlawNames = [],
+    changeFlawNames = [],
     scenarioChanges = null
   } = plan
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
@@ -529,6 +536,7 @@ export function generateBngServiceSynthetic(
     lineageFlaws: lineageFlawNames,
     degradeFlaws: degradeFlawNames,
     versionFlaws: versionFlawNames,
+    changeFlaws: changeFlawNames,
     // Drawn irreplaceable as the default site draws them, so the rest of the
     // site is the same, then marked No on the layers not named.
     replaceableLayers: enrich

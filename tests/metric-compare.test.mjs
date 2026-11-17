@@ -224,6 +224,36 @@ describe('figuresFromWorkbook', () => {
     expect(valueOf(figures, 'totals|hedgerow|baseline')).toBe(0)
   })
 
+  it('reads the sections of a split watercourse as their parent, units and sizes summed (BMD-1212)', () => {
+    const results = workbookResults()
+    const section = (stage, reference, units, size) => ({
+      module: 'watercourse',
+      stage,
+      reference,
+      units,
+      size,
+      sheet: 'watercourseBaseline',
+      cell: 'R10'
+    })
+    results.features.push(
+      section('baseline', 'R1 (section 1)', 0.32, 0.04),
+      section('retained', 'R1 (section 1)', 0.32, 0.04),
+      section('baseline', 'R1 (section 2)', 0.48, 0.06),
+      {
+        ...section('enhanced', 'R1b', 1, 0.09),
+        sheet: 'watercourseEnhancement'
+      }
+    )
+    const merged = figuresFromWorkbook(results).filter(
+      (f) => f.module === 'watercourse' && f.category === 'feature-units'
+    )
+    expect(merged.map((f) => [f.key, f.value, f.size])).toEqual([
+      ['feature-units|watercourse|baseline|R1', 0.8, expect.closeTo(0.1, 12)],
+      ['feature-units|watercourse|retained|R1', 0.32, 0.04],
+      ['feature-units|watercourse|enhanced|R1b', 1, 0.09]
+    ])
+  })
+
   it('gives a module whose baseline is zero no net gain verdict', () => {
     const results = workbookResults()
     results.headline.netPercentChange.area = 'N/A'

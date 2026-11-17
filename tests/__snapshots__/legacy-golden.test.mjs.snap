@@ -66,6 +66,8 @@ exports[`BNG Service output is pinned > flaw redline-not-in-england 1`] = `"874c
 
 exports[`BNG Service output is pinned > flaw redline-too-large 1`] = `"2a57c9364f1e00014dd0ab63d3ffa037c3a935b1959c2eb863915aea9a9f8f44"`;
 
+exports[`BNG Service output is pinned > flaw remeandered-watercourse-outside 1`] = `"5d394b790d2e9248d1b145a335b573a27bd6d0fd0d4e8e2f3dc61c1b6c137c6c"`;
+
 exports[`BNG Service output is pinned > flaw self-intersecting-redline 1`] = `"739a2f18b12cb0c74d98f49c7d90d40b13c2b57e7d86610f20defaf384a5eeaa"`;
 
 exports[`BNG Service output is pinned > flaw tiny-gap 1`] = `"4a055b98ff6f07908136794bd396d57a6372c1063d4c3a996344fd1e76353e02"`;
@@ -108,7 +110,11 @@ exports[`BNG Service output is pinned > the scenario catalogue 1`] = `
   "intervention-watercourse-created": "582c553e05ede086fd72b9f9aa928b694c08fb9a84ae537eb971c722386dfc05",
   "intervention-watercourse-degraded": "1f9e7dc83bdd1393443fc12d675e1bc7a2dbc96fa494c14f7b9d6ace51457069",
   "intervention-watercourse-enhanced": "23cadb143683f620e7a11fcc13819890f7e9a3783bb04081f25979f6eb629a28",
+  "intervention-watercourse-enhanced-shorter": "276d44338fd21ae4a35492221ade74e06f92d4321acd00d1ec007688c619efb9",
   "intervention-watercourse-realigned-and-shorter": "5a9f2a95c725680dcb3b87b9ef605de8f4e7cfd943dde83d1fd89871df719bf0",
+  "intervention-watercourse-remeandered": "47a47173c49691987a63a35d608cd08d242ebccf82aecf4e708c1b342776e7f9",
+  "intervention-watercourse-remeandered-split": "68d273c52e045c8b8a733d9a20059c33461da25d6b19ce552ceca555b55255fa",
+  "intervention-watercourse-remeandered-standard": "c8484ef618067329d2af7e28daea13f991e105804ba2db3367a0ef9a6b4080e9",
   "intervention-watercourse-retained": "de922edbec26ef9baafc773124a7b62ba32ee354e177bcfaa50a021fdebf47a6",
   "invalid-area-advance-and-delay": "fa92549d4928bdb69abf12f0851515af38d562c96f52528b3d2ed0113e9255fd",
   "invalid-area-condition-reduced": "56e8d63406f0769c5ec38171f1a7b7220826fa0ba260fc2fc6a89f0de1cfd4c9",

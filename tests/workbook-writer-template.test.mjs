@@ -101,7 +101,7 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     write('invalid-tree-good-enhanced')
     write('invalid-hedgerow-medium-good-enhanced')
     write('invalid-watercourse-medium-good-enhanced')
-  })
+  }, GENERATE_TIMEOUT_MS)
 
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true })

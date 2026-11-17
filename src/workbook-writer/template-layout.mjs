@@ -19,7 +19,8 @@
  *
  * The enhancement sheets (A-3, B-3, C-3) derive their baseline half from the
  * baseline sheet: row k is the k-th baseline row, in line order, that has an
- * enhanced area or length. Only their proposed half is input. *
+ * enhanced area or length. Only their proposed half is input.
+ *
  * `lastRow` is the last data row in the pinned release (1.1.1), where every
  * sheet has 350. Releases before 1.1.0 have fewer: `inputLastRows` tells them
  * apart from the workbook itself, so a 1.0.4 workbook is still written and

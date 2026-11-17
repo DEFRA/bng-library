@@ -251,8 +251,13 @@ Count column, and its own:
 | `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment              |
 | `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                              |
 | `degrade-watercourse-retained-and-created`     | one baseline watercourse with a Retained part and a Created part                                                            |
+| `remeandered-watercourse-outside`              | the default site's re-meandered watercourse, its bend moved 5 m outside the red line                                        |
 
-At most one lineage flaw and one degrade flaw at a time. A degrade flaw adds
+At most one lineage flaw, one degrade flaw and one site-change flaw at a
+time. The site-change flaw, `remeandered-watercourse-outside`, breaks the
+re-meandered watercourse the default site draws, so it needs template
+features; the service refuses it as any watercourse outside the red line,
+`WATERCOURSES_OUTSIDE_REDLINE` (BMD-1212). A degrade flaw adds
 the habitats that get worse, if the site has none, and breaks one of them.
 The service gives each degrade flaw the outcome its `errorCode` records:
 
@@ -610,6 +615,17 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `expectTimeToTarget`   |          | A list of `{ stage, references, years, multiplier }`: the final time to target condition (whole years from 0, or else `"30+"`) and its multiplier the metric must give each created or enhanced feature listed, checked against the metric's rows                                                                             |
 | `expectMetricWarnings` |          | `invalid-` only. Text of warnings the metric must raise on the subject                                                                                                                                                                                                                                                        |
 | `expectRejectedInputs` |          | `invalid-` only. `sheetKey.field` inputs the workbook's drop-down lists must not offer                                                                                                                                                                                                                                        |
+
+`siteChanges` also takes four changes drawn at set lengths, for comparing a
+re-meandered watercourse with the Metric (BMD-1212), each from a 100 m
+Moderate ditch: `remeandered-watercourse` (re-meandered whole onto 130 m,
+Good, Enhanced by Realignment), `remeandered-watercourse-standard` (the same,
+Standard Enhancement), `remeandered-watercourse-split` (its first 40 m
+Retained, the other 60 m re-meandered onto 90 m) and
+`shorter-enhanced-watercourse` (Enhanced onto an 80 m line). The workbook
+writer records a watercourse partly Retained and partly Enhanced, or Enhanced
+in several parts, as one baseline section per part, `<ref> (section n)`, as
+the Metric asks; the comparison reads the sections back as their parent.
 
 A scenario's `formats` is a rule for every consumer of the catalogue, not
 just this library: whatever builds files from `PERMUTATION_SCENARIOS` itself

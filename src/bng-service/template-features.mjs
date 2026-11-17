@@ -1012,9 +1012,16 @@ export function riverTypes(test) {
 /**
  * A baseline watercourse drawn for the purpose inside the red line, with
  * the baseline values given, added to the layer; null if none fits. Its type
- * must be in the service scope, as riverTypes gives.
+ * must be in the service scope, as riverTypes gives. `lengthM` draws it at
+ * exactly that length, in place of a length drawn between the usual bounds.
  */
-export function drawnWatercourseBaseline(site, chooser, key, baselineValues) {
+export function drawnWatercourseBaseline(
+  site,
+  chooser,
+  key,
+  baselineValues,
+  { lengthM } = {}
+) {
   const type = baselineValues['Baseline River Type']
   if (!inServiceScope('rivers', type)) {
     throw new Error(
@@ -1025,8 +1032,8 @@ export function drawnWatercourseBaseline(site, chooser, key, baselineValues) {
   const geometry = drawnLine(
     site,
     chooser,
-    MIN_RIVER_LENGTH_M,
-    MAX_RIVER_LENGTH_M
+    lengthM ?? MIN_RIVER_LENGTH_M,
+    lengthM ?? MAX_RIVER_LENGTH_M
   )
   if (!geometry) {
     return null

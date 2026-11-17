@@ -5,6 +5,7 @@
  */
 
 import { MERGED_INTERTIDAL_BROAD_HABITAT } from '../metric/area-trading-rules.mjs'
+import { sectionParentReference } from '../workbook-writer/sections.mjs'
 import {
   CATEGORY,
   FigureList,
@@ -85,8 +86,53 @@ function netGainVerdict(fraction, target) {
   return fraction >= target ? MET : NOT_MET
 }
 
-function addFeatures(list, features = []) {
+const isNumber = (v) => typeof v === 'number' && Number.isFinite(v)
+
+/**
+ * Two sections' units summed. A section the metric gave no number for (a
+ * cell error, or nothing) makes the whole feature that value, the first such,
+ * so the comparison shows the metric's error rather than a plausible part sum.
+ */
+function summedUnits(a, b) {
+  if (!isNumber(a)) {
+    return a
+  }
+  return isNumber(b) ? a + b : b
+}
+
+/**
+ * The sections of one baseline watercourse that the workbook writer split
+ * for the metric (sectionReference) are one feature in the service: their
+ * baseline and retained units, and sizes, summed under the parent's ref.
+ * A section with no number for its units or size leaves none for the whole.
+ * Any other feature is its own.
+ */
+function mergedSections(features) {
+  const merged = []
+  const bySection = new Map()
   for (const f of features) {
+    const reference = sectionParentReference(f.reference)
+    if (reference === f.reference) {
+      merged.push(f)
+      continue
+    }
+    const key = `${f.module}|${f.stage}|${reference}`
+    const first = bySection.get(key)
+    if (!first) {
+      const entry = { ...f, reference }
+      bySection.set(key, entry)
+      merged.push(entry)
+      continue
+    }
+    first.units = summedUnits(first.units, f.units)
+    first.size =
+      isNumber(first.size) && isNumber(f.size) ? first.size + f.size : null
+  }
+  return merged
+}
+
+function addFeatures(list, features = []) {
+  for (const f of mergedSections(features)) {
     list.add({
       category: CATEGORY.featureUnits,
       module: f.module,

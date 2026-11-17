@@ -40,6 +40,7 @@ import {
   resolveWorseCounts
 } from './template-features.mjs'
 import {
+  applyChangeFlaws,
   applyDegradeFlaws,
   assertDegradeSubjectsDrawn,
   applyLineageFlaws,
@@ -156,6 +157,7 @@ function finishSite(site, outPath, chooser, options) {
     lineageFlaws = [],
     degradeFlaws = [],
     versionFlaws = [],
+    changeFlaws = [],
     replaceableLayers = []
   } = options
   applyTemplateOverrides(site, overrides)
@@ -171,6 +173,7 @@ function finishSite(site, outPath, chooser, options) {
   if (scenarioChanges) {
     addScenarioChanges(site, chooser, emptyLayers, scenarioChanges)
   }
+  applyChangeFlaws(site, changeFlaws)
   applyDegradeFlaws(site, degradeFlaws)
   if (comments) {
     addComments(site, chooser)
@@ -410,12 +413,47 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
   for (const name of [
     ...(plan.lineageFlawNames ?? []),
     ...(plan.degradeFlawNames ?? []),
+    ...(plan.changeFlawNames ?? []),
     ...(plan.versionFlawNames ?? [])
   ]) {
     info(`  flaw: ${name}`)
   }
   info(`  centre: ${centre[0]},${centre[1]} (BNG)`)
   info(`  → ${outPath}`)
+}
+
+/**
+ * A change flaw breaks a change the default site draws (the re-meandered
+ * watercourse, for one), on its post-intervention layer. So it needs that
+ * site, with template features and no geometric flaw, a watercourse layer
+ * to draw the change on, and a file with a post-intervention stage. Checked
+ * before anything is drawn, so a caller is told at once, rather than after
+ * the site is drawn, or handed a baseline file whose name promises a flaw it
+ * does not hold.
+ */
+function assertChangeFlawsDrawn(
+  changeFlawNames,
+  { enrich, stage, emptyLayers }
+) {
+  if (changeFlawNames.length === 0) {
+    return
+  }
+  const names = changeFlawNames.join(', ')
+  if (!enrich) {
+    throw new Error(
+      `${names} breaks a change the default site draws, so it needs template features on and no geometric flaw`
+    )
+  }
+  if (emptyLayers.has('rivers')) {
+    throw new Error(
+      `${names} breaks a watercourse change, so it cannot be drawn with the rivers layer empty`
+    )
+  }
+  if (stage === STAGE_BASELINE) {
+    throw new Error(
+      `${names} breaks a post-intervention change, so it cannot be written to a baseline-only file`
+    )
+  }
 }
 
 /**
@@ -426,7 +464,9 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  * @param {string} outPath
  * @param {[number, number]} centre
  * @param {object} plan  as for `generateOne`, plus `lineageFlawNames`,
- *   `degradeFlawNames` and `versionFlawNames`; `attributeOverrides` may also hold a
+ *   `degradeFlawNames`, `changeFlawNames` (each breaks a change the default
+ *   site draws, so it needs template features) and `versionFlawNames`;
+ *   `attributeOverrides` may also hold a
  *   `verticalHabitats` layer and the template-only row fields; and
  *   `scenarioChanges`, `{ worseHabitats, siteChanges }`, the habitats that
  *   get worse (counts by kind, as WORSE_KINDS names them) and the watercourse
@@ -452,7 +492,8 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
  *   place of one each (none of `partly-worse-parcel`):
  *   `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more hedgerows that get
  *   worse. Taken only where the site draws habitats that
- *   get worse: with template features, or a degrade flaw
+ *   get worse: with template features, or a degrade flaw. A change flaw
+ *   needs template features, no geometric flaw and a post-intervention stage
  */
 export function generateBngServiceSynthetic(
   outPath,
@@ -476,6 +517,7 @@ export function generateBngServiceSynthetic(
     lineageFlawNames = [],
     degradeFlawNames = [],
     versionFlawNames = [],
+    changeFlawNames = [],
     scenarioChanges = null
   } = plan
   // A geometric flaw draws the minimal bad fixture, which holds nothing else.
@@ -485,6 +527,7 @@ export function generateBngServiceSynthetic(
       'scenarioChanges are drawn only without template features, which draw their own, and on a site with no geometric flaw'
     )
   }
+  assertChangeFlawsDrawn(changeFlawNames, { enrich, stage, emptyLayers })
   const worseHabitats = enrich || degradeFlawNames.length > 0
   if (worseHabitatCounts !== undefined) {
     if (!worseHabitats) {
@@ -529,6 +572,7 @@ export function generateBngServiceSynthetic(
     lineageFlaws: lineageFlawNames,
     degradeFlaws: degradeFlawNames,
     versionFlaws: versionFlawNames,
+    changeFlaws: changeFlawNames,
     // Drawn irreplaceable as the default site draws them, so the rest of the
     // site is the same, then marked No on the layers not named.
     replaceableLayers: enrich

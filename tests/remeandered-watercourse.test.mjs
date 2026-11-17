@@ -255,12 +255,72 @@ describe('the workbook rows for a re-meandered watercourse', () => {
     expect(rows.watercourseBaseline.filter((r) => r.enhanced > 0)).toHaveLength(
       rows.watercourseEnhancement.length
     )
-    const sections = rows.watercourseBaseline.filter((r) =>
-      r.reference.startsWith(`${SUBJECT_PARENT} (section`)
-    )
-    expect(sections.map((r) => [r.size, r.enhanced])).toEqual([
-      [expect.closeTo(km(100), 9), expect.closeTo(km(90), 9)]
+    // One drawn Enhanced part and no Retained one: the parent needs no
+    // sections, and is enhanced by the 90 m drawn, the rest lost.
+    expect(
+      rows.watercourseBaseline
+        .filter((r) => r.reference.startsWith(SUBJECT_PARENT))
+        .map((r) => [r.reference, r.size, r.enhanced])
+    ).toEqual([
+      [SUBJECT_PARENT, expect.closeTo(km(100), 9), expect.closeTo(km(90), 9)]
     ])
+  })
+
+  /** A copy of the split file, `sql` run on it, and its rows for R003. */
+  function editedSplit(name, sql) {
+    const copy = path.join(dir, `${name}.gpkg`)
+    copyFileSync(files.split, copy)
+    const edit = new Database(copy)
+    edit.exec(sql)
+    edit.close()
+    const { rows, notes } = workbookRowsFromBngService(copy)
+    return {
+      notes,
+      rows,
+      subject: rows.watercourseBaseline.filter((r) =>
+        r.reference.startsWith(SUBJECT_PARENT)
+      )
+    }
+  }
+
+  it('keeps the whole parent, the rest lost, when its only Enhanced part has no line', () => {
+    // The 90 m Enhanced part loses its line; the 40 m Retained part stays.
+    const { subject, notes } = editedSplit(
+      'undrawn-beside-retained',
+      `UPDATE "${WATERCOURSES}" SET geom = NULL
+         WHERE "Habitat Ref" = '${SUBJECT_PARENT}b'`
+    )
+    expect(notes).toEqual([
+      `${WATERCOURSES} ${SUBJECT_PARENT}b: Enhanced parts of ${SUBJECT_PARENT} with no length drawn; left out, as they enhance nothing`
+    ])
+    expect(
+      subject.map((r) => [r.reference, r.size, r.retained, r.enhanced])
+    ).toEqual([
+      [
+        SUBJECT_PARENT,
+        expect.closeTo(km(100), 9),
+        expect.closeTo(km(40), 9),
+        undefined
+      ]
+    ])
+  })
+
+  it('keeps the parent’s baseline row, all of it lost, when none of its Enhanced parts has a line', () => {
+    const { subject, rows } = editedSplit(
+      'all-undrawn',
+      `UPDATE "${WATERCOURSES}" SET "Retention Category" = 'Enhanced',
+         "Proposed Condition" = 'Good', "Enhancement Type" = 'Standard Enhancement',
+         geom = NULL
+         WHERE "Habitat Ref" LIKE '${SUBJECT_PARENT}_'`
+    )
+    expect(
+      subject.map((r) => [r.reference, r.size, r.retained, r.enhanced])
+    ).toEqual([
+      [SUBJECT_PARENT, expect.closeTo(km(100), 9), undefined, undefined]
+    ])
+    expect(rows.watercourseBaseline.filter((r) => r.enhanced > 0)).toHaveLength(
+      rows.watercourseEnhancement.length
+    )
   })
 
   it.skipIf(!canRecalculate)(

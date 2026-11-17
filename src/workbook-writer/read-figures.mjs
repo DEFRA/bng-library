@@ -8,7 +8,7 @@
  * computes it in and nothing is derived here.
  */
 
-import { METRIC_SHEETS } from './template-layout.mjs'
+import { METRIC_SHEETS, workbookLastRows } from './template-layout.mjs'
 
 const TRADING_AREA = 'Trading Summary Area Habitats'
 const TRADING_HEDGEROW = 'Trading Summary Hedgerows'
@@ -216,10 +216,11 @@ function rowFeatures(sheet, layout, unitColumns, row) {
  */
 export function readFeatureUnits(workbook) {
   const features = []
+  const lastRows = workbookLastRows(workbook)
   for (const [key, unitColumns] of Object.entries(ROW_UNITS)) {
     const layout = METRIC_SHEETS[key]
     const sheet = workbook.Sheets[layout.sheet]
-    for (let row = layout.firstRow; row <= layout.lastRow; row += 1) {
+    for (let row = layout.firstRow; row <= lastRows[key]; row += 1) {
       for (const feature of rowFeatures(sheet, layout, unitColumns, row)) {
         features.push({ ...feature, sheet: key })
       }

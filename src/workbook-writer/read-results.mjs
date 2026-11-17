@@ -14,7 +14,7 @@ import {
 } from './read-figures.mjs'
 import { readWorkbookValues } from './read-values.mjs'
 import { columnIndex, columnLetters } from './sheet-xml.mjs'
-import { METRIC_SHEETS } from './template-layout.mjs'
+import { METRIC_SHEETS, workbookLastRows } from './template-layout.mjs'
 
 const HEADLINE = 'Headline Results'
 const TRADING_AREA = 'Trading Summary Area Habitats'
@@ -176,6 +176,7 @@ function scanRows(sheet, from, to, visit) {
 function readWarnings(workbook) {
   const rowWarnings = []
   const sheetWarnings = []
+  const lastRows = workbookLastRows(workbook)
   for (const [key, layout] of Object.entries(METRIC_SHEETS)) {
     const sheet = workbook.Sheets[layout.sheet]
     scanRows(sheet, 1, layout.firstRow - 1, (row, cell, message) => {
@@ -184,7 +185,7 @@ function readWarnings(workbook) {
       }
     })
     const defects = TEMPLATE_DEFECT_COLUMNS[key] ?? new Set()
-    scanRows(sheet, layout.firstRow, layout.lastRow, (row, cell, message) => {
+    scanRows(sheet, layout.firstRow, lastRows[key], (row, cell, message) => {
       if (defects.has(cell.replace(/\d+$/, ''))) {
         return
       }

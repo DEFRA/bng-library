@@ -35,6 +35,16 @@ import {
   recalculateWorkbooks,
   workbookFromGeoPackage
 } from '../src/workbook-writer/index.mjs'
+import { MetricTemplate } from '../src/workbook-writer/metric-template.mjs'
+import {
+  PUBLISHED_METRIC_TEMPLATE,
+  isPublishedTemplate
+} from '../src/workbook-writer/published-template.mjs'
+import {
+  capacity,
+  inputLastRows
+} from '../src/workbook-writer/template-layout.mjs'
+import { writeMetricWorkbook } from '../src/workbook-writer/write-workbook.mjs'
 import { readZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const require = createRequire(import.meta.url)
@@ -44,9 +54,9 @@ const TEMPLATE = process.env.METRIC_TEMPLATE
 const hasTemplate = Boolean(TEMPLATE) && existsSync(TEMPLATE)
 const CENTRE = [530000, 180000]
 const SEED = 11
-// The template is ~3.6MB; re-serialising it with a spreadsheet library takes
-// it to ~82MB. Editing in place must keep it near its original size.
-const MAX_WORKBOOK_BYTES = 4_000_000
+// Re-serialising the template with a spreadsheet library takes it from a few
+// MB to over 80MB. Editing in place must keep it near its original size.
+const MAX_GROWTH = 1.1
 // LibreOffice takes a few seconds a workbook.
 const RECALC_TIMEOUT_MS = 180_000
 // Writing a purpose's worth of GeoPackages and workbooks.
@@ -108,9 +118,34 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
     )
   })
 
+  it('finds the template’s own last data row on every sheet', () => {
+    const found = inputLastRows((sheet, ref) =>
+      new MetricTemplate(template).text(sheet, ref)
+    )
+    expect(found).not.toBeNull()
+    if (isPublishedTemplate(template)) {
+      expect(found.release).toBe(PUBLISHED_METRIC_TEMPLATE.version)
+    }
+    for (const key of Object.keys(METRIC_SHEETS)) {
+      expect(capacity(key, found.lastRows), key).toBeGreaterThan(0)
+    }
+  })
+
+  it('clears an input left on the template’s last data row', () => {
+    const marked = new MetricTemplate(template)
+    const { lastRows } = inputLastRows((sheet, ref) => marked.text(sheet, ref))
+    const { sheet, columns } = METRIC_SHEETS.habitatBaseline
+    const ref = `${columns.size}${lastRows.habitatBaseline}`
+    marked.sheet(sheet).setValue(ref, 2.5)
+    const cleared = new MetricTemplate(
+      writeMetricWorkbook({ templateBuffer: marked.toBuffer(), rows: {} })
+    )
+    expect(cleared.text(sheet, ref)).toBeNull()
+  })
+
   it('keeps the workbook the size the template was', () => {
     const { buffer } = written['invalid-area-condition-reduced']
-    expect(buffer.length).toBeLessThan(MAX_WORKBOOK_BYTES)
+    expect(buffer.length).toBeLessThan(template.length * MAX_GROWTH)
   })
 
   it('puts inputs in the input cells and clears the example’s own rows', () => {
@@ -225,7 +260,9 @@ describe.skipIf(!hasTemplate)('workbook writer — real metric template', () => 
       })
       for (const s of scenarios) {
         expect(s.workbook.path).toBe(`trading-rules/${s.id}.xlsx`)
-        expect(s.workbook.buffer.length).toBeLessThan(MAX_WORKBOOK_BYTES)
+        expect(s.workbook.buffer.length).toBeLessThan(
+          template.length * MAX_GROWTH
+        )
         expect(Array.isArray(s.workbook.issues)).toBe(true)
       }
       expect(manifest.scenarios[0].files.workbook).toMatch(/\.xlsx$/)

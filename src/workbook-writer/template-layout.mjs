@@ -19,7 +19,11 @@
  *
  * The enhancement sheets (A-3, B-3, C-3) derive their baseline half from the
  * baseline sheet: row k is the k-th baseline row, in line order, that has an
- * enhanced area or length. Only their proposed half is input.
+ * enhanced area or length. Only their proposed half is input. *
+ * `lastRow` is the last data row in the pinned release (1.1.1), where every
+ * sheet has 350. Releases before 1.1.0 have fewer: `inputLastRows` tells them
+ * apart from the workbook itself, so a 1.0.4 workbook is still written and
+ * read up to its own last row, and never into its totals row.
  */
 
 export const METRIC_SHEETS = {
@@ -27,7 +31,7 @@ export const METRIC_SHEETS = {
     sheet: 'A-1 On-Site Habitat Baseline',
     titleCell: 'D3',
     firstRow: 11,
-    lastRow: 258,
+    lastRow: 360,
     fingerprint: {
       E10: 'Broad Habitat',
       H10: 'Area (hectares)',
@@ -54,7 +58,7 @@ export const METRIC_SHEETS = {
     sheet: 'A-2 On-Site Habitat Creation',
     titleCell: 'D3',
     firstRow: 11,
-    lastRow: 256,
+    lastRow: 360,
     fingerprint: {
       D9: 'Broad Habitat',
       G9: 'Area (hectares)',
@@ -78,7 +82,7 @@ export const METRIC_SHEETS = {
     sheet: 'A-3 On-Site Habitat Enhancement',
     titleCell: 'E3',
     firstRow: 12,
-    lastRow: 257,
+    lastRow: 361,
     fingerprint: {
       E11: 'Baseline ref',
       Q11: 'Proposed Broad Habitat',
@@ -103,7 +107,7 @@ export const METRIC_SHEETS = {
     sheet: 'B-1 On-Site Hedge Baseline',
     titleCell: 'B3',
     firstRow: 10,
-    lastRow: 257,
+    lastRow: 359,
     fingerprint: {
       D9: 'Habitat type',
       E9: 'Length (km)',
@@ -127,7 +131,7 @@ export const METRIC_SHEETS = {
     sheet: 'B-2 On-Site Hedge Creation',
     titleCell: 'B3',
     firstRow: 12,
-    lastRow: 259,
+    lastRow: 361,
     fingerprint: {
       D11: 'Habitat type',
       E11: 'Length (km)',
@@ -150,7 +154,7 @@ export const METRIC_SHEETS = {
     sheet: 'B-3 On-Site Hedge Enhancement',
     titleCell: 'B3',
     firstRow: 12,
-    lastRow: 257,
+    lastRow: 361,
     fingerprint: {
       B11: 'Baseline ref',
       Y11: 'Habitat enhanced in advance (years)'
@@ -170,7 +174,7 @@ export const METRIC_SHEETS = {
     sheet: "C-1 On-Site WaterC' Baseline",
     titleCell: 'B3',
     firstRow: 10,
-    lastRow: 257,
+    lastRow: 359,
     fingerprint: {
       D9: 'Watercourse type',
       E9: 'Length (km)',
@@ -198,7 +202,7 @@ export const METRIC_SHEETS = {
     sheet: "C-2 On-Site WaterC' Creation",
     titleCell: 'B3',
     firstRow: 12,
-    lastRow: 259,
+    lastRow: 361,
     fingerprint: {
       C11: 'Watercourse type',
       D11: 'Length (km)',
@@ -223,7 +227,7 @@ export const METRIC_SHEETS = {
     sheet: "C-3 On-Site WaterC' Enhancement",
     titleCell: 'B3',
     firstRow: 12,
-    lastRow: 257,
+    lastRow: 361,
     fingerprint: {
       B11: 'Baseline ref',
       AI10: 'Watercourse encroachment',
@@ -251,7 +255,78 @@ export const ENHANCEMENT_OF = {
   watercourseEnhancement: 'watercourseBaseline'
 }
 
-export function capacity(key) {
-  const { firstRow, lastRow } = METRIC_SHEETS[key]
-  return lastRow - firstRow + 1
+/** The last data row of each sheet in the pinned release. */
+export const PINNED_LAST_ROWS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(METRIC_SHEETS).map(([key, { lastRow }]) => [key, lastRow])
+  )
+)
+
+/**
+ * The last data row of each sheet, by release, newest first. Each release
+ * lays out a fixed number of rows; 1.1.0 raised every sheet to 350.
+ */
+export const RELEASE_LAST_ROWS = Object.freeze({
+  '1.1.1': PINNED_LAST_ROWS,
+  '1.0.4': Object.freeze({
+    habitatBaseline: 258,
+    habitatCreation: 256,
+    habitatEnhancement: 257,
+    hedgerowBaseline: 257,
+    hedgerowCreation: 259,
+    hedgerowEnhancement: 257,
+    watercourseBaseline: 257,
+    watercourseCreation: 259,
+    watercourseEnhancement: 257
+  })
+})
+
+// The habitat baseline sheet numbers its data rows, 1 upwards, in this
+// column, and the totals row follows the last: so the number on a release's
+// last row, and none after it, says which release a workbook is.
+const ROW_NUMBER_COLUMN = 'D'
+
+function isRelease(cellValue, lastRows) {
+  const { sheet, firstRow } = METRIC_SHEETS.habitatBaseline
+  const last = lastRows.habitatBaseline
+  const numberAt = (row) =>
+    Number(cellValue(sheet, `${ROW_NUMBER_COLUMN}${row}`))
+  return (
+    numberAt(last) === last - firstRow + 1 &&
+    numberAt(last + 1) !== last - firstRow + 2
+  )
+}
+
+/**
+ * The last data row of each sheet for the release a workbook is laid out as,
+ * or null when it is laid out as none of them.
+ *
+ * @param {(sheet: string, ref: string) => unknown} cellValue reads one cell
+ * @returns {{ release: string, lastRows: Record<string, number> } | null}
+ */
+export function inputLastRows(cellValue) {
+  for (const [release, lastRows] of Object.entries(RELEASE_LAST_ROWS)) {
+    if (isRelease(cellValue, lastRows)) {
+      return { release, lastRows }
+    }
+  }
+  return null
+}
+
+/**
+ * The last data row of each sheet in a recalculated workbook's values: its
+ * release's, or the pinned release's when its rows carry no numbers to read
+ * (a workbook holding only some of its sheets, say).
+ *
+ * @param {{ Sheets: object }} workbook
+ * @returns {Record<string, number>}
+ */
+export function workbookLastRows(workbook) {
+  const found = inputLastRows((sheet, ref) => workbook.Sheets[sheet]?.[ref]?.v)
+  return found?.lastRows ?? PINNED_LAST_ROWS
+}
+
+/** How many data rows a sheet holds, in the pinned release by default. */
+export function capacity(key, lastRows = PINNED_LAST_ROWS) {
+  return lastRows[key] - METRIC_SHEETS[key].firstRow + 1
 }

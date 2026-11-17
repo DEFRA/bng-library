@@ -233,6 +233,36 @@ describe('the workbook rows for a re-meandered watercourse', () => {
     ).toEqual([`${SUBJECT_PARENT}a`, `${SUBJECT_PARENT}b`])
   })
 
+  it('leaves out an Enhanced part with no line drawn, so every enhancement row stays paired', () => {
+    const undrawn = path.join(dir, 'undrawn-enhanced-part.gpkg')
+    copyFileSync(files.split, undrawn)
+    const edit = new Database(undrawn)
+    // The Retained part becomes a second Enhanced part with no line, as an
+    // empty or deleted shape leaves it: it has no length to enhance.
+    edit
+      .prepare(
+        `UPDATE "${WATERCOURSES}" SET "Retention Category" = 'Enhanced',
+           "Proposed Condition" = 'Good', "Enhancement Type" = 'Standard Enhancement',
+           geom = NULL
+           WHERE "Habitat Ref" = ?`
+      )
+      .run(`${SUBJECT_PARENT}a`)
+    edit.close()
+    const { rows, notes } = workbookRowsFromBngService(undrawn)
+    expect(notes).toEqual([
+      `${WATERCOURSES} ${SUBJECT_PARENT}a: Enhanced parts of ${SUBJECT_PARENT} with no length drawn; left out, as they enhance nothing`
+    ])
+    expect(rows.watercourseBaseline.filter((r) => r.enhanced > 0)).toHaveLength(
+      rows.watercourseEnhancement.length
+    )
+    const sections = rows.watercourseBaseline.filter((r) =>
+      r.reference.startsWith(`${SUBJECT_PARENT} (section`)
+    )
+    expect(sections.map((r) => [r.size, r.enhanced])).toEqual([
+      [expect.closeTo(km(100), 9), expect.closeTo(km(90), 9)]
+    ])
+  })
+
   it.skipIf(!canRecalculate)(
     'recalculates the split with no "Split retained and enhanced" warning, compared under the parent',
     async () => {
@@ -356,6 +386,12 @@ describe('a change flaw on a site that cannot hold it', () => {
   it('is refused before drawing on a geometrically bad site', () => {
     expect(generate({ bad: true })).toThrow(
       /needs template features on and no geometric flaw/
+    )
+  })
+
+  it('is refused before drawing with the rivers layer empty', () => {
+    expect(generate({ flaws: ['no-rivers', FLAW] })).toThrow(
+      /cannot be drawn with the rivers layer empty/
     )
   })
 

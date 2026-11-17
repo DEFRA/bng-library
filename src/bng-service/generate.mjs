@@ -425,12 +425,16 @@ function logSyntheticBanner(outPath, centre, plan, stage, templateVersion) {
 /**
  * A change flaw breaks a change the default site draws (the re-meandered
  * watercourse, for one), on its post-intervention layer. So it needs that
- * site, with template features and no geometric flaw, and a file with a
- * post-intervention stage. Checked before anything is drawn, so a caller is
- * told at once, rather than after the site is drawn, or handed a baseline
- * file whose name promises a flaw it does not hold.
+ * site, with template features and no geometric flaw, a watercourse layer
+ * to draw the change on, and a file with a post-intervention stage. Checked
+ * before anything is drawn, so a caller is told at once, rather than after
+ * the site is drawn, or handed a baseline file whose name promises a flaw it
+ * does not hold.
  */
-function assertChangeFlawsDrawn(changeFlawNames, { enrich, stage }) {
+function assertChangeFlawsDrawn(
+  changeFlawNames,
+  { enrich, stage, emptyLayers }
+) {
   if (changeFlawNames.length === 0) {
     return
   }
@@ -438,6 +442,11 @@ function assertChangeFlawsDrawn(changeFlawNames, { enrich, stage }) {
   if (!enrich) {
     throw new Error(
       `${names} breaks a change the default site draws, so it needs template features on and no geometric flaw`
+    )
+  }
+  if (emptyLayers.has('rivers')) {
+    throw new Error(
+      `${names} breaks a watercourse change, so it cannot be drawn with the rivers layer empty`
     )
   }
   if (stage === STAGE_BASELINE) {
@@ -518,7 +527,7 @@ export function generateBngServiceSynthetic(
       'scenarioChanges are drawn only without template features, which draw their own, and on a site with no geometric flaw'
     )
   }
-  assertChangeFlawsDrawn(changeFlawNames, { enrich, stage })
+  assertChangeFlawsDrawn(changeFlawNames, { enrich, stage, emptyLayers })
   const worseHabitats = enrich || degradeFlawNames.length > 0
   if (worseHabitatCounts !== undefined) {
     if (!worseHabitats) {

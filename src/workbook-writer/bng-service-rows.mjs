@@ -305,13 +305,23 @@ function needsSections(layer, retained, enhanced) {
  * comment). The Retained parts' section is their length, up to the
  * parent's; the Enhanced parts share the rest, by their drawn lengths, and
  * each is enhanced by its whole drawn length. A share of nothing (Retained
- * parts as long as the parent) is noted.
+ * parts as long as the parent) is noted. An Enhanced part with no length
+ * drawn (an empty or missing line) enhances nothing, as the service prices
+ * none for it, so it is noted and given no section or enhancement row, which
+ * would otherwise go unpaired.
  */
-function sectionedWatercourse(baseline, retained, enhanced, context) {
+function sectionedWatercourse(baseline, retained, parts, context) {
+  const enhanced = parts.filter((part) => part.size > 0)
+  const undrawn = parts.filter((part) => !(part.size > 0))
+  if (undrawn.length > 0) {
+    context.notes.push(
+      `${context.table} ${undrawn.map((p) => p.reference).join(', ')}: Enhanced parts of ${baseline.reference} with no length drawn; left out, as they enhance nothing`
+    )
+  }
   const retainedSize = Math.min(sizeOf(retained), baseline.size)
   const remainder = Math.max(0, baseline.size - retainedSize)
   const drawn = sizeOf(enhanced)
-  if (remainder === 0) {
+  if (remainder === 0 && enhanced.length > 0) {
     context.notes.push(
       `${context.table} ${enhanced.map((p) => p.reference).join(', ')}: Enhanced parts of ${baseline.reference} with no baseline length left beside its Retained parts`
     )

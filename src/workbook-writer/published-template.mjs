@@ -8,15 +8,20 @@
  * gives results identical to the filled-in example workbook the work began
  * with. A newer release gets a new entry here once it has been checked the
  * same way.
+ *
+ * 1.1.1 replaced 1.0.4, which GOV.UK no longer serves (its URL redirects to
+ * 1.1.1). 1.1.0 gave each entry tab 350 rows and 1.1.1 fixed an off-site
+ * summary formula; the data sheets are unchanged, and every scenario in the
+ * harness's two corpora gives the same results on 1.1.1 as on 1.0.4.
  */
 
 import { createHash } from 'node:crypto'
 
 export const PUBLISHED_METRIC_TEMPLATE = Object.freeze({
-  version: '1.0.4',
-  fileName: 'The_Statutory_Metric_Macro_Disabled_1.0.4.xlsx',
-  url: 'https://assets.publishing.service.gov.uk/media/6867e62810d550c668de3b4e/The_Statutory_Metric_Macro_Disabled_1.0.4.xlsx',
-  sha256: 'ecf81786e8c6d540ae1469f8f159226ae9e437ca0cff04fdd13820b1a321d3e8',
+  version: '1.1.1',
+  fileName: 'The_Statutory_Metric_Macro_Disabled_1.1.1.xlsx',
+  url: 'https://assets.publishing.service.gov.uk/media/6af2e02a8b63641b15a5c8bb/The_Statutory_Metric_Macro_Disabled_1.1.1.xlsx',
+  sha256: '2ee1413bf5fb81537867d01de96c94e37be8f00d6d95da47f56656fedd1415a2',
   page: 'https://www.gov.uk/government/publications/statutory-biodiversity-metric-tools-and-guides'
 })
 

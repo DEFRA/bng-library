@@ -415,7 +415,7 @@ its repair rules, so this catches the faults a writer that edits worksheet XML
 can introduce, not every file Excel might refuse.
 
 No template to hand? `downloadPublishedTemplate()` fetches the calculation
-tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.0.4,
+tool Defra publishes on GOV.UK (`PUBLISHED_METRIC_TEMPLATE`: release 1.1.1,
 checksum-pinned), the release the scenarios were validated against.
 
 `saveRecalculatedWorkbooks(files, { workDir })` recalculates and saves each

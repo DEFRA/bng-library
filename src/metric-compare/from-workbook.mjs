@@ -89,9 +89,22 @@ function netGainVerdict(fraction, target) {
 const isNumber = (v) => typeof v === 'number' && Number.isFinite(v)
 
 /**
+ * Two sections' units summed. A section the metric gave no number for (a
+ * cell error, or nothing) makes the whole feature that value, the first such,
+ * so the comparison shows the metric's error rather than a plausible part sum.
+ */
+function summedUnits(a, b) {
+  if (!isNumber(a)) {
+    return a
+  }
+  return isNumber(b) ? a + b : b
+}
+
+/**
  * The sections of one baseline watercourse that the workbook writer split
  * for the metric (sectionReference) are one feature in the service: their
  * baseline and retained units, and sizes, summed under the parent's ref.
+ * A section with no number for its units or size leaves none for the whole.
  * Any other feature is its own.
  */
 function mergedSections(features) {
@@ -111,10 +124,7 @@ function mergedSections(features) {
       merged.push(entry)
       continue
     }
-    first.units =
-      isNumber(first.units) && isNumber(f.units)
-        ? first.units + f.units
-        : first.units
+    first.units = summedUnits(first.units, f.units)
     first.size =
       isNumber(first.size) && isNumber(f.size) ? first.size + f.size : null
   }

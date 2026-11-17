@@ -254,6 +254,34 @@ describe('figuresFromWorkbook', () => {
     ])
   })
 
+  it.each([
+    ['the second section', 0.32, '#VALUE!', '#VALUE!'],
+    ['the first section', '#VALUE!', 0.48, '#VALUE!'],
+    ['a section with no units', 0.32, null, null]
+  ])(
+    'keeps what the metric gave, not a part sum, for a split watercourse when %s is not a number',
+    (_, firstUnits, secondUnits, expected) => {
+      const results = workbookResults()
+      const section = (reference, units, size) => ({
+        module: 'watercourse',
+        stage: 'baseline',
+        reference,
+        units,
+        size,
+        sheet: 'watercourseBaseline',
+        cell: 'R10'
+      })
+      results.features.push(
+        section('R1 (section 1)', firstUnits, 0.04),
+        section('R1 (section 2)', secondUnits, 0.06)
+      )
+      const [merged] = figuresFromWorkbook(results).filter(
+        (f) => f.key === 'feature-units|watercourse|baseline|R1'
+      )
+      expect(merged.value).toBe(expected)
+    }
+  )
+
   it('gives a module whose baseline is zero no net gain verdict', () => {
     const results = workbookResults()
     results.headline.netPercentChange.area = 'N/A'

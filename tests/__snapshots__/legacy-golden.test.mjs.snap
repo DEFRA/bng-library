@@ -14,11 +14,7 @@ exports[`BNG Service output is pinned > flaw area-sum-mismatch 1`] = `"88c58757c
 
 exports[`BNG Service output is pinned > flaw bowtie-parcel 1`] = `"6a690817b2e926e12b16097842ca5065fd1f3023bf6894a18329b89fcfb3a7d2"`;
 
-exports[`BNG Service output is pinned > flaw degrade-advance-missing 1`] = `"1f8d9c1a801e46e10eba6a4c359c9cc96ef2badd1e9017c34a7467964fe77562"`;
-
 exports[`BNG Service output is pinned > flaw degrade-habitat-ref-blank 1`] = `"b81417ad77bfb813e8bc6f07bd25860a329445e5578b3d2b1308c74b39a4903e"`;
-
-exports[`BNG Service output is pinned > flaw degrade-not-worse 1`] = `"ee7beb8a8af071240c366cb1b9d5b5cdc9d530099616e5133826234f6748d1e9"`;
 
 exports[`BNG Service output is pinned > flaw degrade-watercourse-advance-not-encroachment 1`] = `"3efcd1bd49292b4cc2e4bd2399c999c1bde6da7f27123a1bd81bfa17937aea54"`;
 

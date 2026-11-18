@@ -1135,38 +1135,8 @@ describe('AC6: flaws in the new format', () => {
     return out
   }
 
-  const wholeWorseHedge = (out) =>
-    rows(out, PI('Hedgerows')).find(
-      (r) =>
-        r.Comment === WORSE_HABITAT_COMMENT &&
-        r['Habitat Ref'] === r['Parent Ref']
-    )
   const watercourseWith = (out, comment) =>
     rows(out, PI('Watercourses')).find((r) => r.Comment === comment)
-  const CONDITION_ORDER = [
-    'Good',
-    'Fairly Good',
-    'Moderate',
-    'Fairly Poor',
-    'Poor'
-  ]
-
-  it('degrade-advance-missing: a hedge that gets worse with no years in advance', () => {
-    const row = wholeWorseHedge(flawed('degrade-advance-missing'))
-    expect(row['Retention Category']).toBe('Created')
-    expect(row['Habitat created in advance/years']).toBeNull()
-    expect(CONDITION_ORDER.indexOf(row['Proposed Condition'])).toBeGreaterThan(
-      CONDITION_ORDER.indexOf(row['Baseline Condition'])
-    )
-  })
-
-  it('degrade-not-worse: a hedge recorded as getting worse, in its baseline condition', () => {
-    const row = wholeWorseHedge(flawed('degrade-not-worse'))
-    expect(row['Retention Category']).toBe('Created')
-    expect(row['Proposed Hedge Type']).toBe(row['Baseline Hedge Type'])
-    expect(row['Proposed Condition']).toBe(row['Baseline Condition'])
-    expect(row['Habitat created in advance/years']).toBe('30+')
-  })
 
   it('degrade-habitat-ref-blank: an area habitat that gets worse, its ref empty on its post-intervention row only', () => {
     // A site large enough to draw an area habitat that gets worse.
@@ -1264,26 +1234,33 @@ describe('AC6: flaws in the new format', () => {
         numParcels: 6,
         seed: 3,
         ...resolveFlawSelection({ bad: false, flaws: [], numParcels: 6 }),
-        degradeFlawNames: ['degrade-advance-missing']
+        degradeFlawNames: ['degrade-watercourse-encroachment-no-advance']
       },
       { templateFeatures: false }
     )
-    expect(wholeWorseHedge(out)['Habitat created in advance/years']).toBeNull()
+    expect(
+      watercourseWith(out, ENCROACHED_WATERCOURSE_COMMENT)[
+        'Habitat created in advance/years'
+      ]
+    ).toBeNull()
   })
 
   it('refuses two degrade flaws, and one whose layer is empty', () => {
     expect(() =>
       generateSyntheticGpkg({
         format: 'bng-service',
-        flaws: ['degrade-advance-missing', 'degrade-not-worse']
+        flaws: [
+          'degrade-watercourse-advance-not-encroachment',
+          'degrade-watercourse-encroachment-no-advance'
+        ]
       })
     ).toThrow(/Only one degraded-habitat flaw/)
     expect(() =>
       generateSyntheticGpkg({
         format: 'bng-service',
-        flaws: ['no-hedgerows', 'degrade-advance-missing']
+        flaws: ['no-rivers', 'degrade-watercourse-encroachment-no-advance']
       })
-    ).toThrow(/needs a hedge that gets worse/)
+    ).toThrow(/needs a .* that gets worse/)
   })
 
   const firstContinuing = (out) =>

@@ -96,10 +96,10 @@ export function habitatPools(
 /**
  * The habitats a creation in `broad` can pick for a parcel of `baseline`.
  * The BNG Service template reads a creation in the parcel's own type as a
- * habitat that gets worse, or one that is not worse at all, and the service
- * refuses either unless it is drawn for the purpose (`addWorseHabitats`). So
- * pools built with `excludeOwnTypeCreation` leave the parcel's own type out;
- * the default pools keep it, so a legacy site draws exactly as before.
+ * habitat that gets worse, which a site draws only for the purpose
+ * (`addWorseHabitats`), so that every such row is one it means. So pools
+ * built with `excludeOwnTypeCreation` leave the parcel's own type out; the
+ * default pools keep it, so a legacy site draws exactly as before.
  */
 export function creatableFor(pools, broad, baseline) {
   const pool = pools.creatableByBroad[broad] ?? []

@@ -362,14 +362,14 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     it('exports the check, for a caller to run before generating', () => {
       expect(() =>
         assertDegradeSubjectsDrawn(
-          ['degrade-not-worse'],
-          resolveWorseCounts({ hedge: 0 })
+          ['degrade-watercourse-advance-not-encroachment'],
+          resolveWorseCounts({ 'worse-watercourse': 0 })
         )
-      ).toThrow(/cannot set hedge to 0/)
+      ).toThrow(/cannot set worse-watercourse to 0/)
       expect(() =>
         assertDegradeSubjectsDrawn(
-          ['degrade-not-worse'],
-          resolveWorseCounts({ hedge: 2 })
+          ['degrade-watercourse-advance-not-encroachment'],
+          resolveWorseCounts({ 'worse-watercourse': 2 })
         )
       ).not.toThrow()
     })
@@ -388,15 +388,17 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
 
     it('takes a zero count for a kind the flaw does not break', () => {
       const file = synthetic(
-        { worseHabitatCounts: { 'worse-watercourse': 0 } },
-        { degradeFlawNames: ['degrade-not-worse'] }
+        { worseHabitatCounts: { hedge: 0 } },
+        { degradeFlawNames: ['degrade-watercourse-encroachment-no-advance'] }
       )
       expect(
-        hedgerows(file).filter(
+        rows(file, 'Watercourses Post-Intervention').filter(
           (r) =>
             r['Retention Category'] === 'Created' &&
-            r['Habitat created in advance/years'] === '30+' &&
-            r['Proposed Condition'] === r['Baseline Condition']
+            r['Habitat created in advance/years'] === null &&
+            r['Proposed Condition'] === r['Baseline Condition'] &&
+            r['Proposed Encroachment into Watercourse'] !==
+              r['Baseline Encroachment into Watercourse']
         )
       ).toHaveLength(1)
     })

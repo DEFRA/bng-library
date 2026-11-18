@@ -270,29 +270,6 @@ export const BNG_SERVICE_FLAWS = {
       }
     }
   },
-  'degrade-advance-missing': {
-    description:
-      'a hedgerow that gets worse (Created in its own type, linked to its parent, in a lower condition) has no years created in advance, where the Metric asks for 30 plus',
-    errorCode: 'STAGED_DEGRADE_ADVANCE_NOT_30_PLUS',
-    category: CATEGORY_DEGRADE,
-    worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
-    applyToSite(site) {
-      const feature = worseSubject(site, 'degrade-advance-missing')
-      feature.values[ADVANCE] = null
-    }
-  },
-  'degrade-not-worse': {
-    description:
-      'a same-type creation that is not worse: a hedgerow Created in its own type, linked to its parent, with 30+ years in advance, in its baseline condition (a 30+ on a row that does not get worse overstates its units)',
-    errorCode: 'STAGED_DEGRADE_NOT_WORSE',
-    category: CATEGORY_DEGRADE,
-    worse: { layerKey: 'hedgerows', kind: WORSE.hedge },
-    applyToSite(site) {
-      const feature = worseSubject(site, 'degrade-not-worse')
-      feature.values['Proposed Condition'] =
-        feature.parent.values['Baseline Condition']
-    }
-  },
   'degrade-habitat-ref-blank': {
     description:
       'an area habitat that gets worse has an empty Habitat Ref on its post-intervention row only; its baseline row keeps its ref, so only a check of the post-intervention tables finds it',

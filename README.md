@@ -245,8 +245,6 @@ Count column, and its own:
 | `version-record-missing`                       | no template version record                                                                                                  |
 | `version-record-duplicated`                    | two records                                                                                                                 |
 | `version-unsupported`                          | one record naming the next major version, which the service does not support yet                                            |
-| `degrade-advance-missing`                      | a hedgerow that gets worse with no years created in advance, where the Metric asks for 30+                                  |
-| `degrade-not-worse`                            | a same-type creation that is not worse: a hedgerow Created in its own type, linked, 30+, in its baseline condition          |
 | `degrade-habitat-ref-blank`                    | an area habitat that gets worse (on a small site, a linked one) with an empty Habitat Ref on its post-intervention row only |
 | `degrade-watercourse-advance-not-encroachment` | a watercourse worse in condition only, 10 years in advance, which the Metric allows only for more encroachment              |
 | `degrade-watercourse-encroachment-no-advance`  | a watercourse whose only change is more encroachment, with no years in advance                                              |
@@ -261,8 +259,6 @@ features; the service refuses it as any watercourse outside the red line,
 the habitats that get worse, if the site has none, and breaks one of them.
 The service gives each degrade flaw the outcome its `errorCode` records:
 
-- `degrade-advance-missing`: refused, `STAGED_DEGRADE_ADVANCE_NOT_30_PLUS`;
-- `degrade-not-worse`: refused, `STAGED_DEGRADE_NOT_WORSE`;
 - `degrade-watercourse-retained-and-created`: refused,
   `STAGED_WATERCOURSE_RETAINED_AND_CREATED`;
 - `degrade-habitat-ref-blank`: refused, as any blank Habitat Ref is

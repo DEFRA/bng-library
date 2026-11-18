@@ -1135,21 +1135,8 @@ describe('AC6: flaws in the new format', () => {
     return out
   }
 
-  const wholeWorseHedge = (out) =>
-    rows(out, PI('Hedgerows')).find(
-      (r) =>
-        r.Comment === WORSE_HABITAT_COMMENT &&
-        r['Habitat Ref'] === r['Parent Ref']
-    )
   const watercourseWith = (out, comment) =>
     rows(out, PI('Watercourses')).find((r) => r.Comment === comment)
-  const CONDITION_ORDER = [
-    'Good',
-    'Fairly Good',
-    'Moderate',
-    'Fairly Poor',
-    'Poor'
-  ]
 
   it('degrade-habitat-ref-blank: an area habitat that gets worse, its ref empty on its post-intervention row only', () => {
     // A site large enough to draw an area habitat that gets worse.

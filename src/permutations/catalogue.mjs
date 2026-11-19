@@ -185,14 +185,17 @@ function checkSameLineAs(layer, row, index, where) {
   return problems
 }
 
-// What a tree that `worsens` keeps of the tree it is: the Metric prices its
-// created row at its own size, type and setting, and the service at the
-// baseline tree's, so the two agree only when they are the same.
+// What a tree that `worsens` keeps of the tree it is: the guide records the
+// same habitat created again in a lower condition, so the created row is the
+// tree's own size, type and setting. The Metric and the service both price it
+// from its own values, so these keep the scenario to what it is named for.
 const WORSENED_TREE_KEEPS = ['treeSize', 'treeType', 'ruralOrUrban']
 
-// `replants` names an earlier tree, by its ref, that a Created tree is
-// planted in place of; `worsens` one it is, recorded as lost and created
-// again in a lower condition. Either way the earlier tree must be lost, and
+// `replants` names an earlier tree, by its row's position ("T001" is the
+// first trees row), that a Created tree is planted in place of; `worsens` one
+// it is, recorded as lost and created again in a lower condition. It names a
+// position, not a drawn Habitat Ref: a tree that worsens takes the ref of the
+// tree it is, so the ref its own position would give is in no file. Either way the earlier tree must be lost, and
 // the row takes its point; a tree that worsens also keeps its size, type and
 // setting, and is a degrade (checkWorsenedTrees).
 function checkReplants(layer, rows, row, index, where) {
@@ -214,7 +217,7 @@ function checkReplants(layer, rows, row, index, where) {
   const target = replantedTreeIndex(row[link]) ?? -1
   if (target < 0 || target >= index || rows[target]?.retention !== 'Lost') {
     problems.push(
-      `${where}.${link}: must be the ref of an earlier trees row that is Lost, T001 to the row before this one`
+      `${where}.${link}: must name an earlier trees row that is Lost, by its position, T001 to the row before this one`
     )
     return problems
   }
@@ -445,17 +448,27 @@ function checkSubjectLayer(layer, scenario, where) {
   ]
 }
 
+/**
+ * The stage a subject may name, where its ref is at both: a tree that worsens
+ * keeps the ref of the tree it is, so only its post-intervention row shows it
+ * was drawn. With none, the subject may be at either stage.
+ */
+const SUBJECT_STAGES = ['baseline', 'post-intervention']
+
 function checkSubject(subject, scenario, where) {
   if (!isObject(subject)) {
     return [`${where}: must be an object with layer, ref and note`]
   }
   const fields = ['layer', 'ref', 'note']
   return [
-    ...unknownKeys(subject, fields, where),
+    ...unknownKeys(subject, [...fields, 'stage'], where),
     ...fields
       .filter((field) => !isText(subject[field]))
       .map((field) => `${where}.${field}: is required text`),
-    ...checkSubjectLayer(subject.layer, scenario, `${where}.layer`)
+    ...checkSubjectLayer(subject.layer, scenario, `${where}.layer`),
+    ...(subject.stage === undefined
+      ? []
+      : checkOneOf(subject.stage, SUBJECT_STAGES, `${where}.stage`))
   ]
 }
 

@@ -38,6 +38,23 @@ function gainCheck(scenario, headline) {
   }
 }
 
+/** The stage a workbook sheet's rows are at: its Baseline sheet, or not. */
+const sheetStage = (sheet) =>
+  /Baseline$/.test(sheet ?? '') ? 'baseline' : 'post-intervention'
+
+/**
+ * Whether a workbook row is the scenario's subject: its reference, on a sheet
+ * of the stage the subject names, if it names one. A tree that worsens keeps
+ * the ref of the tree it is, so that ref is on both a baseline and a creation
+ * sheet, and only its stage says which row is meant.
+ */
+function isSubjectRow(subject, { sheet, reference }) {
+  return (
+    reference === subject?.ref &&
+    (subject.stage === undefined || sheetStage(sheet) === subject.stage)
+  )
+}
+
 /**
  * A warning is on the subject when a row carrying its reference shows it, or
  * when the sheet it sits on shows it in its summary block.
@@ -45,7 +62,9 @@ function gainCheck(scenario, headline) {
 function warningCheck(text, scenario, results) {
   const ref = scenario.subject?.ref
   const onSubject = results.rowWarnings
-    .filter((w) => w.reference === ref && w.message.includes(text))
+    .filter(
+      (w) => isSubjectRow(scenario.subject, w) && w.message.includes(text)
+    )
     .map((w) => `${w.sheet}!${w.cell}`)
   const onSheet = results.sheetWarnings
     .filter((w) => w.message.includes(text))
@@ -81,7 +100,10 @@ function rejectedInputCheck(target, scenario, issues) {
   const ref = scenario.subject?.ref
   const [sheet, field] = target.split('.')
   const found = issues.find(
-    (i) => i.sheet === sheet && i.field === field && i.reference === ref
+    (i) =>
+      i.sheet === sheet &&
+      i.field === field &&
+      isSubjectRow(scenario.subject, i)
   )
   return {
     check: `input rejected on ${ref}`,

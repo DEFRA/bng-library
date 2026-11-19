@@ -426,16 +426,18 @@ function writeLayers(db, site) {
  *                                      baseline stays "N/A"); count — the
  *                                      "Count" column, the number of trees
  *                                      the point stands for (default 1)
- *                          trees       replants — on a Created tree, the
- *                                      ref of an earlier Lost tree ("T001"),
+ *                          trees       replants — on a Created tree, an
+ *                                      earlier Lost tree, by its row's
+ *                                      position ("T001" is the first),
  *                                      whose point the row takes: a tree
  *                                      planted where another is felled,
  *                                      linked to it in the BNG Service format
- *                          trees       worsens — on a Created tree, the ref
- *                                      of an earlier Lost tree it is,
- *                                      recorded as lost and created again in
- *                                      a lower condition: it takes the
- *                                      point, and in the BNG Service format
+ *                          trees       worsens — on a Created tree, an
+ *                                      earlier Lost tree it is, by its row's
+ *                                      position, recorded as lost and
+ *                                      created again in a lower condition:
+ *                                      it takes the point and the Habitat
+ *                                      Ref, and in the BNG Service format
  *                                      is linked to it, Category Existing
  *                        `incomplete: true` blanks the row's proposed-side
  *                        condition, strategic-significance and encroachment

@@ -737,6 +737,25 @@ describe('parseScenarioCatalogue', () => {
     ])
   })
 
+  it('takes a subject stage, baseline or post-intervention, and no other', () => {
+    const subject = (stage) => ({
+      layer: 'Urban Trees',
+      ref: 'T001',
+      note: 'a tree',
+      stage
+    })
+    for (const stage of ['baseline', 'post-intervention']) {
+      expect(
+        problems(catalogue(scenario({ subject: subject(stage) })))
+      ).toEqual([])
+    }
+    expect(
+      problems(catalogue(scenario({ subject: subject('proposed') })))
+    ).toEqual([
+      expect.stringMatching(/subject\.stage: "proposed" is not one of/)
+    ])
+  })
+
   it('names the subject layer by its legacy name, or the vertical layer in a BNG Service only scenario', () => {
     const vertical = {
       layer: 'Vertical Area Habitats',

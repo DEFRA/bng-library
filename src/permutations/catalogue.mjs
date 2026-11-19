@@ -445,17 +445,27 @@ function checkSubjectLayer(layer, scenario, where) {
   ]
 }
 
+/**
+ * The stage a subject may name, where its ref is at both: a tree that worsens
+ * keeps the ref of the tree it is, so only its post-intervention row shows it
+ * was drawn. With none, the subject may be at either stage.
+ */
+const SUBJECT_STAGES = ['baseline', 'post-intervention']
+
 function checkSubject(subject, scenario, where) {
   if (!isObject(subject)) {
     return [`${where}: must be an object with layer, ref and note`]
   }
   const fields = ['layer', 'ref', 'note']
   return [
-    ...unknownKeys(subject, fields, where),
+    ...unknownKeys(subject, [...fields, 'stage'], where),
     ...fields
       .filter((field) => !isText(subject[field]))
       .map((field) => `${where}.${field}: is required text`),
-    ...checkSubjectLayer(subject.layer, scenario, `${where}.layer`)
+    ...checkSubjectLayer(subject.layer, scenario, `${where}.layer`),
+    ...(subject.stage === undefined
+      ? []
+      : checkOneOf(subject.stage, SUBJECT_STAGES, `${where}.stage`))
   ]
 }
 

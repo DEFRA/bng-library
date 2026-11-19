@@ -171,9 +171,9 @@ function replacedTree(trees, tree, override) {
 
 /**
  * A Created tree that takes a Lost one's point. One that `worsens` is that
- * tree, so it also takes its size, type and setting, whatever the row drew:
- * taken after the draw, so the rest of the site draws as it would without
- * the pin.
+ * tree, so it also takes its Habitat Ref, as the template's copy button
+ * writes it, and its size, type and setting, whatever the row drew: taken
+ * after the draw, so the rest of the site draws as it would without the pin.
  */
 function linkedTree(tree, { link, replaced }) {
   const placed = { ...tree, point: replaced.point, [link]: replaced.ref }
@@ -182,6 +182,7 @@ function linkedTree(tree, { link, replaced }) {
   }
   return {
     ...placed,
+    ref: replaced.ref,
     size: replaced.size,
     proposedSize: replaced.size,
     type: replaced.type,

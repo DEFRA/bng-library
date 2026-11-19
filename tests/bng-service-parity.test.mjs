@@ -24,7 +24,6 @@ import { areaLayerOffers } from '../src/bng-service/vocabulary.mjs'
 import { SCENARIOS, scenarioInFormat } from '../src/permutations/catalogue.mjs'
 import { scenarioPlan } from '../src/permutations/generate.mjs'
 import { derivePermutationSeed } from '../src/permutations/seed.mjs'
-import { syntheticRef } from '../src/synthetic/draw/rules.mjs'
 import { workbookRowsFromGeoPackage } from '../src/workbook-writer/index.mjs'
 
 const CENTRE = [530000, 180000]
@@ -169,32 +168,6 @@ function withoutVerticalRows(rows, scenario) {
   )
 }
 
-// A tree that `worsens` an earlier one is that tree, created again: the BNG
-// Service file gives it that tree's Habitat Ref, as the template's copy
-// button does, where the legacy file, which links trees by ref, keeps its
-// own. Each legacy ref is read as the BNG Service file writes it.
-function withWorsenedTreeRefs(rows, scenario) {
-  const renamed = new Map(
-    (scenario.overrides?.trees ?? []).flatMap((row, i) =>
-      row?.worsens ? [[syntheticRef('T', i), row.worsens]] : []
-    )
-  )
-  if (renamed.size === 0) {
-    return rows
-  }
-  return Object.fromEntries(
-    Object.entries(rows).map(([sheet, list]) => [
-      sheet,
-      list
-        .map((row) => ({
-          ...row,
-          reference: renamed.get(row.reference) ?? row.reference
-        }))
-        .sort(byReference)
-    ])
-  )
-}
-
 // A scenario's habitats that get worse and watercourse changes are drawn
 // only in the BNG Service format, which alone links them to their baseline
 // feature, so its file holds features the legacy one cannot.
@@ -222,7 +195,7 @@ describe('a scenario’s workbook reads the same from either format', () => {
     generateBngServiceSynthetic(outPath, CENTRE, plan, {
       templateFeatures: false
     })
-    const legacy = withWorsenedTreeRefs(sortedRows(legacyPath), scenario)
+    const legacy = sortedRows(legacyPath)
     const native = withoutVerticalRows(sortedRows(outPath), scenario)
     for (const sheet of Object.keys(legacy)) {
       expect(native[sheet], sheet).toHaveLength(legacy[sheet].length)

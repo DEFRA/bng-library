@@ -185,9 +185,10 @@ function checkSameLineAs(layer, row, index, where) {
   return problems
 }
 
-// What a tree that `worsens` keeps of the tree it is: the Metric prices its
-// created row at its own size, type and setting, and the service at the
-// baseline tree's, so the two agree only when they are the same.
+// What a tree that `worsens` keeps of the tree it is: the guide records the
+// same habitat created again in a lower condition, so the created row is the
+// tree's own size, type and setting. The Metric and the service both price it
+// from its own values, so these keep the scenario to what it is named for.
 const WORSENED_TREE_KEEPS = ['treeSize', 'treeType', 'ruralOrUrban']
 
 // `replants` names an earlier tree, by its ref, that a Created tree is
@@ -668,12 +669,14 @@ const isLowerTreeCondition = (proposed, baseline) =>
     TREE_CONDITION_ORDER.indexOf(baseline)
 
 /**
- * A tree that `worsens` is a degrade, as the service reads it
- * (bng-metric-backend, lineage-rules.js, checkDegradedRow): in a lower
+ * A tree that `worsens` follows the guide's steps for a habitat that cannot
+ * keep its condition (User Guide, chapter 5, "Habitat retention"): in a lower
  * condition than the tree it is, and created 30+ years in advance, unless it
- * is put back after a delay, when it may be in any condition. Each is pinned,
- * as a drawn condition or advance would rarely make one. An `invalid-`
- * scenario may break them, to show the service refusing it.
+ * is put back after a delay, when it may be in any condition. The service
+ * accepts a Created tree over its baseline tree whatever its condition and
+ * timing, so nothing refuses one that breaks these; they keep the scenario to
+ * what it is named for. Each is pinned, as a drawn condition or advance would
+ * rarely make one. An `invalid-` scenario is not held to them.
  */
 function checkWorsenedTrees(scenario, where) {
   const rows = isObject(scenario.overrides) ? scenario.overrides.trees : null

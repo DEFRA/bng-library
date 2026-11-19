@@ -317,7 +317,7 @@ describe('parseScenarioCatalogue', () => {
         }
       })
     )
-    const earlierLost = /must be the ref of an earlier trees row that is Lost/
+    const earlierLost = /must name an earlier trees row that is Lost/
     expect(problems(doc)).toEqual([
       expect.stringMatching(
         /trees\[1\]\.replants: only a Created tree takes another's place/
@@ -401,7 +401,7 @@ describe('parseScenarioCatalogue', () => {
         /trees\[1\]\.treeSize: a tree that worsens keeps the treeSize of the tree it is \("Medium"\)/
       ),
       expect.stringMatching(
-        /trees\[2\]\.worsens: must be the ref of an earlier trees row that is Lost/
+        /trees\[2\]\.worsens: must name an earlier trees row that is Lost/
       ),
       expect.stringMatching(/trees\[3\]: takes replants or worsens, not both/),
       expect.stringMatching(

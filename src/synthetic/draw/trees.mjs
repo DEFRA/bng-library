@@ -126,8 +126,11 @@ function drawTree(point, i, override) {
 }
 
 /**
- * The index of the tree a `replants` ref names ("T001" is the first), or
- * null when it is not a tree ref. The catalogue reads refs with it too.
+ * The row index a `replants` or `worsens` value names ("T001" is the first
+ * trees row), or null when it is not of that form. The catalogue reads them
+ * with it too. It names a row by its position, as the generator numbers the
+ * rows, not a drawn Habitat Ref: a tree that worsens takes the ref of the
+ * tree it is, so the ref its own position would give is in no file.
  */
 export function replantedTreeIndex(ref) {
   const match = /^T(\d+)$/.exec(ref ?? '')
@@ -142,7 +145,8 @@ export function replantedTreeIndex(ref) {
 export const TREE_LINKS = Object.freeze(['replants', 'worsens'])
 
 /**
- * The earlier, Lost tree a row's `replants` or `worsens` names, and which of
+ * The earlier, Lost tree a row's `replants` or `worsens` names by its
+ * position (replantedTreeIndex), and which of
  * the two it is, or null when the row has neither. Throws where the pin
  * cannot mean either. A tree that worsens takes the Lost tree's size, type
  * and setting (`linkedTree`); its condition and timing are the caller's, which

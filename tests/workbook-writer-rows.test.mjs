@@ -326,6 +326,29 @@ describe('checkScenarioExpectations', () => {
     ])
   })
 
+  it('reads a warning on the subject at the stage it names only', () => {
+    const tree = (sheet) => ({
+      sheet,
+      cell: 'R11',
+      reference: 'T001',
+      message: 'Check details ⚠'
+    })
+    const check = (stage, sheet) =>
+      checkScenarioExpectations(
+        {
+          id: 'intervention-tree-condition-lowered',
+          subject: { ref: 'T001', stage },
+          expectMetricWarnings: ['Check details']
+        },
+        { ...results, rowWarnings: [tree(sheet)] }
+      )[0].passed
+
+    expect(check('post-intervention', 'habitatCreation')).toBe(true)
+    expect(check('post-intervention', 'habitatBaseline')).toBe(false)
+    expect(check('baseline', 'habitatBaseline')).toBe(true)
+    expect(check(undefined, 'habitatBaseline')).toBe(true)
+  })
+
   describe('unit order', () => {
     const order = { stage: 'created', references: ['T002', 'T001', 'T003'] }
     const created = (...units) => ({

@@ -380,7 +380,7 @@ describe('a tree recorded as lost and created again in a lower condition', () =>
     }
   ]
 
-  it('stands on its point, linked to it, Category Existing, with its Baseline columns', () => {
+  it('stands on its point, linked to it, Category Existing, with its Habitat Ref and Baseline columns', () => {
     const file = path.join(dir, 'worsened.gpkg')
     generateBngServiceSynthetic(
       file,
@@ -400,13 +400,14 @@ describe('a tree recorded as lost and created again in a lower condition', () =>
       lost = db.prepare('SELECT * FROM "Individual Trees Baseline"').get()
       created = db
         .prepare(
-          `SELECT * FROM "Individual Trees Post-Intervention" WHERE "Habitat Ref" = 'T002'`
+          `SELECT * FROM "Individual Trees Post-Intervention" WHERE "Habitat Ref" = 'T001'`
         )
         .get()
     } finally {
       db.close()
     }
     expect(created).toMatchObject({
+      'Habitat Ref': 'T001',
       'Parent Ref': 'T001',
       parent_uuid: lost.feature_uuid,
       'Retention Category': 'Created',
@@ -461,7 +462,7 @@ describe('a tree recorded as lost and created again in a lower condition', () =>
       lost = db.prepare('SELECT * FROM "Individual Trees Baseline"').get()
       created = db
         .prepare(
-          `SELECT * FROM "Individual Trees Post-Intervention" WHERE "Habitat Ref" = 'T002'`
+          `SELECT * FROM "Individual Trees Post-Intervention" WHERE "Habitat Ref" = 'T001'`
         )
         .get()
     } finally {

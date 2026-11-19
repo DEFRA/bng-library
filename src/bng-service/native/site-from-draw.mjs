@@ -116,8 +116,9 @@ const EXISTING_TREE = 'Existing'
  *   its Baseline columns "N/A".
  * - A tree that `worsens` is the baseline tree itself, recorded as lost and
  *   created again in a lower condition (guide, "Habitat retention"): it is
- *   Category Existing, and keeps the copied row's Baseline columns, as the
- *   template writes them when a baseline tree is copied.
+ *   Category Existing, and keeps the copied row's Habitat Ref and Baseline
+ *   columns, as the template writes them when a baseline tree is copied, so
+ *   a user can see it is the same tree.
  */
 function linkReplantedTrees(drawnTrees, layer) {
   drawnTrees.forEach((tree, index) => {
@@ -148,6 +149,7 @@ function linkReplantedTrees(drawnTrees, layer) {
         }
       }
       created.values.Category = EXISTING_TREE
+      created.values[HABITAT_REF] = named
     }
   })
 }

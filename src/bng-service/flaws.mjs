@@ -9,11 +9,10 @@
  * no Count column, so the flaw cannot be expressed.
  *
  * Each flaw's `errorCode` is the code the backend refuses its file with
- * (bng-metric-backend#541 for the lineage and degrade flaws), or, in
- * parentheses, what the service does where it accepts the file:
- * `lineage-parent-wrong`, whose parent link is sound, as the service compares
- * the parent's shape with the copy the row recorded, not with the row's own;
- * and the two degrade-watercourse flaws, saved Incomplete
+ * (bng-metric-backend#541 for the lineage and degrade flaws, #693 for
+ * `lineage-parent-wrong`, refused once the area habitat lies outside the
+ * parent it names), or, in parentheses, what the service does where it
+ * accepts the file: the two degrade-watercourse flaws, saved Incomplete
  * (bng-metric-backend#542).
  *
  * The degrade flaws break one rule of a habitat that gets worse (see
@@ -58,8 +57,6 @@ const CATEGORY_LABELS = {
   [CATEGORY_CHANGE]: 'site-change'
 }
 
-const ACCEPTED_PARENT_LINK_SOUND =
-  "(accepted; the service checks the parent's shape against the row's copy, not the row's own shape)"
 const SAVED_INCOMPLETE_ADVANCE_CLEARED =
   '(accepted; saved Incomplete with the advance cleared)'
 const SAVED_INCOMPLETE_NO_ADVANCE =
@@ -224,7 +221,7 @@ export const BNG_SERVICE_FLAWS = {
   'lineage-parent-wrong': {
     description:
       'a Retained area habitat names another baseline parcel as its parent, so it lies outside the parent it names',
-    errorCode: ACCEPTED_PARENT_LINK_SOUND,
+    errorCode: 'STAGED_OUTSIDE_PARENT',
     category: CATEGORY_LINEAGE,
     applyToSite(site) {
       const feature = lineageSubject(site)

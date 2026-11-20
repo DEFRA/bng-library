@@ -1319,6 +1319,24 @@ describe('AC6: flaws in the new format', () => {
     expect(row.parent_geom).toBeNull()
   })
 
+  // The codes bng-metric-backend refuses each lineage flaw's file with
+  // (service-template/lineage/parent-links.js), so the flaws cannot drift
+  // from the backend unseen.
+  const LINEAGE_CODES = {
+    'lineage-parent-missing': 'STAGED_PARENT_LINK_MISSING',
+    'lineage-parent-unknown': 'STAGED_UNKNOWN_PARENT_REF',
+    'lineage-parent-wrong': 'STAGED_OUTSIDE_PARENT',
+    'lineage-parent-geom-mismatch': 'STAGED_BASELINE_DRIFTED',
+    'lineage-parent-geom-missing': 'STAGED_BASELINE_DRIFTED'
+  }
+
+  it('gives every lineage flaw the code the backend refuses its file with', () => {
+    const lineage = bngFlaws.filter((f) => f.category === 'lineage')
+    expect(
+      Object.fromEntries(lineage.map((f) => [f.name, f.errorCode]))
+    ).toEqual(LINEAGE_CODES)
+  })
+
   it.each([
     ['version-record-missing', [], 'TEMPLATE_VERSION_MISSING'],
     [

@@ -163,15 +163,25 @@ that pins one can draw it, and the service refuses that file anyway.
 
 There is one of each by default, but for `partly-worse-parcel`: an area
 parcel split into a Retained part a and a worse Created part b, of which a
-site draws none unless asked. **`worseHabitatCounts`** asks for more or
+site draws none unless asked. Nor does it draw a `split-parcel` unless
+asked: an area parcel split with no part getting worse, into a Retained
+part a, a part b Enhanced to a better condition in its own type, and a part
+c lost to development, mapped as the Developed land; sealed surface Created
+in its place. It is not a habitat that gets worse, but `worseHabitatCounts`
+(and a scenario's `worseHabitats`) counts it too, as nothing else takes a
+count of a change, and its parts are kept from later draws as a habitat that
+gets worse is. **`worseHabitatCounts`** asks for more or
 fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,
 `hedge`, `partly-worse-hedge`, `encroached-watercourse`,
-`worse-watercourse`, `partly-worse-parcel`), 0 to `MAX_WORSE_COUNT` each:
+`worse-watercourse`, `partly-worse-parcel`, `split-parcel`), 0 to
+`MAX_WORSE_COUNT` each:
 `{ hedge: 4, 'partly-worse-hedge': 3 }` draws a site that shows hedgerows
 getting worse, and `{ 'partly-worse-parcel': 3 }` one that shows area
-habitats only partly retained. Each further feature is drawn as the first is, with its own
+habitats only partly retained; `{ 'split-parcel': 2 }` shows parcels
+retained, enhanced and lost in part. Each further feature is drawn as the first is, with its own
 identity, and a default site keeps its bytes. Area parcels get worse only
-while another Retained parcel stays, so a site may give fewer than it asks
+while another Retained parcel stays, and a parcel is split only where its
+habitat can be enhanced from its condition, so a site may give fewer than it asks
 for. It is refused for a site that draws no habitats that get worse
 (`templateFeatures: false` with no degrade flaw, or a geometric flaw).
 
@@ -601,7 +611,7 @@ The file holds `defaultSize`, the habitat parcel count for a scenario with no
 | `formats`              |          | The output formats the scenario is generated in (`legacy`, `bng-service`); every format when absent. Only a scenario holding what a format cannot express lists them                                                                                                                                                                                                                                                                                                                                                                                          |
 | `overrides`            |          | Features to pin, as `{ habitats, hedgerows, rivers, trees, verticalHabitats }` lists of rows. The first row pins the first feature, and so on; anything a row leaves out, and every feature past the list, is drawn at random                                                                                                                                                                                                                                                                                                                                 |
 | `emptyLayers`          |          | Layers generated empty (`habitats`, `hedgerows`, `rivers`, `trees`), so random features cannot add warnings or trading breaches of their own                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `worseHabitats`        |          | BNG Service only. Habitats that get worse to draw, by kind (`WORSE_KINDS`: `parcel`, `partly-worse-parcel`, `vertical`, `hedge`, `partly-worse-hedge`, `encroached-watercourse`, `worse-watercourse`), as `{ "hedge": 1 }`; each is drawn as `--worse` draws it, linked to its baseline feature, and none of a kind not named                                                                                                                                                                                                                                 |
+| `worseHabitats`        |          | BNG Service only. Habitats that get worse to draw, by kind (`WORSE_KINDS`: `parcel`, `partly-worse-parcel`, `split-parcel`, `vertical`, `hedge`, `partly-worse-hedge`, `encroached-watercourse`, `worse-watercourse`), as `{ "hedge": 1 }`; each is drawn as `--worse` draws it, linked to its baseline feature, and none of a kind not named                                                                                                                                                                                                                 |
 | `siteChanges`          |          | BNG Service only. Watercourse changes to draw: `realigned-watercourse` (re-meandered, Enhanced by Realignment onto a longer route) and `shorter-watercourse` (Retained, its line shortened), each linked to its baseline watercourse                                                                                                                                                                                                                                                                                                                          |
 | `expectGain`           |          | `met` or `unmet`: the area net gain against 10%, checked through the engine and, with workbooks, the metric                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `expectTrading`        |          | `{ area \| hedgerow \| watercourse: { band: "met" \| "breached" } }`, checked against the metric's trading summaries                                                                                                                                                                                                                                                                                                                                                                                                                                          |

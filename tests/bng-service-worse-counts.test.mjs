@@ -30,9 +30,10 @@ import { SEALED_SURFACE } from '../src/bng-service/vocabulary.mjs'
 const CENTRE = [530000, 180000]
 const SEED = 6
 const PARCELS = 15
-// The smallest share of its parent a split parcel's part may have: the
-// split's shares, 0.3 of the whole kept and 0.4 of the rest enhanced, give
-// each part 0.18 or more.
+// The smallest share of its parent a split parcel's part may have. The
+// split keeps 0.3 to 0.4 of the whole and enhances 0.4 to 0.6 of the rest,
+// so part a has 0.3 or more, and parts b and c 0.24 or more; the bound is
+// lower, as a carve meets its target area only approximately.
 const MIN_SPLIT_PART_SHARE = 0.15
 
 let dir

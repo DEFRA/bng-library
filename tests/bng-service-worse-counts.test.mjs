@@ -25,6 +25,7 @@ import {
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT
 } from '../src/bng-service/template-features.mjs'
+import { SEALED_SURFACE } from '../src/bng-service/vocabulary.mjs'
 
 const CENTRE = [530000, 180000]
 const SEED = 6
@@ -273,6 +274,36 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     expect(parcels(file).filter(isWorse)).toHaveLength(1)
     expect(checkLineage(file)).toEqual([])
     expect(checkTemplateValues(file)).toEqual([])
+  })
+
+  it('keeps a post-intervention comment an override pins on a split parcel', () => {
+    const large = { seed: 1, numParcels: 30 }
+    const counts = { worseHabitatCounts: { 'split-parcel': 1 } }
+    const parcels = (file) => rows(file, 'Area Habitats Post-Intervention')
+    const lostRef = (file) =>
+      parcels(file).find(
+        (r) =>
+          r['Proposed Habitat Type'] === SEALED_SURFACE.type &&
+          /c$/.test(r['Habitat Ref'])
+      )?.['Parent Ref']
+    const ref = lostRef(synthetic(counts, large))
+    expect(ref).toMatch(/^H\d+$/)
+    const index = Number(ref.slice(1)) - 1
+    const habitats = Array.from({ length: index + 1 }, (_, i) =>
+      i === index ? { postInterventionComment: 'Pinned PI note' } : {}
+    )
+    const file = synthetic(counts, {
+      ...large,
+      attributeOverrides: { habitats }
+    })
+    expect(lostRef(file)).toBe(ref)
+    for (const letter of ['a', 'b', 'c']) {
+      expect(
+        parcels(file).find((r) => r['Habitat Ref'] === `${ref}${letter}`)
+          ?.Comment,
+        `${ref}${letter}`
+      ).toBe('Pinned PI note')
+    }
   })
 
   it('is byte-identical for the same seed and counts', () => {

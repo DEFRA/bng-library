@@ -39,6 +39,7 @@ import {
   LOW,
   NO,
   NOT_APPLICABLE,
+  SEALED_SURFACE,
   TO_BE_CREATED,
   YES,
   distinctiveness,
@@ -529,12 +530,6 @@ const MIN_SPLIT_KEPT_SHARE = 0.3
 const MAX_SPLIT_KEPT_SHARE = 0.4
 const MIN_SPLIT_ENHANCED_SHARE = 0.4
 const MAX_SPLIT_ENHANCED_SHARE = 0.6
-// What a part of a parcel lost to development is built as.
-const SEALED_SURFACE = {
-  broad: 'Urban',
-  type: 'Developed land; sealed surface',
-  condition: 'N/A - Other'
-}
 // Chord angles tried before a parcel is left whole, as carveTargetArea tries.
 const CARVE_TRIES = 8
 // The lineage flaws take the first Retained parcel, and one stays whole.
@@ -762,9 +757,9 @@ function parcelEnhancements(feature) {
 function setParcelEnhanced(feature, chooser) {
   Object.assign(feature.values, {
     [RETENTION]: ENHANCED,
-    'Proposed Condition': chooser.pick(parcelEnhancements(feature)),
-    [COMMENT]: ENHANCED_PART_COMMENT
+    'Proposed Condition': chooser.pick(parcelEnhancements(feature))
   })
+  feature.values[COMMENT] ??= ENHANCED_PART_COMMENT
 }
 
 /**
@@ -786,9 +781,9 @@ function setParcelDeveloped(feature) {
     'Proposed Condition': SEALED_SURFACE.condition,
     'Proposed Strategic Significance': LOW,
     [ADVANCE]: ZERO_YEARS,
-    [DELAY]: ZERO_YEARS,
-    [COMMENT]: LOST_TO_DEVELOPMENT_COMMENT
+    [DELAY]: ZERO_YEARS
   })
+  feature.values[COMMENT] ??= LOST_TO_DEVELOPMENT_COMMENT
 }
 
 /**

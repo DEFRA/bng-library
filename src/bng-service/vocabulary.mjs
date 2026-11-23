@@ -16,6 +16,12 @@ export const NOT_APPLICABLE = 'N/A'
 export const TO_BE_CREATED = 'To be created'
 export const YES = 'Yes'
 export const NO = 'No'
+/** Built ground: the area habitat under a structure, or that replaces one lost to development. */
+export const SEALED_SURFACE = Object.freeze({
+  broad: 'Urban',
+  type: 'Developed land; sealed surface',
+  condition: 'N/A - Other'
+})
 
 // The legacy wordings of strategic significance, as the plugin translates
 // them (the template's plugin/README.md). "Location ecologically desirable

@@ -27,16 +27,12 @@ import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   LOW,
   NO,
+  SEALED_SURFACE,
   distinctiveness,
   irreplaceableAnswers,
   verticalHabitatNames
 } from './vocabulary.mjs'
 
-const SEALED_SURFACE = {
-  broad: 'Urban',
-  type: 'Developed land; sealed surface',
-  condition: 'N/A - Other'
-}
 const RETAINED = 'Retained'
 const CREATED = 'Created'
 // Kept ground is Retained, so nothing is created in advance or late.

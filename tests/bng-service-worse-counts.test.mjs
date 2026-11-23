@@ -26,6 +26,10 @@ import {
   WORSE_WATERCOURSE_COMMENT
 } from '../src/bng-service/template-features.mjs'
 import { SEALED_SURFACE } from '../src/bng-service/vocabulary.mjs'
+import { pointInRing } from '../src/geometry.mjs'
+import { wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
+import { areaSquareMetres } from '../src/measure/index.mjs'
+import { AREA, enhancementPairs } from '../src/synthetic/valid-draws.mjs'
 
 const CENTRE = [530000, 180000]
 const SEED = 6
@@ -35,6 +39,13 @@ const PARCELS = 15
 // so part a has 0.3 or more, and parts b and c 0.24 or more; the bound is
 // lower, as a carve meets its target area only approximately.
 const MIN_SPLIT_PART_SHARE = 0.15
+const SQ_M_PER_HECTARE = 10_000
+// Points sampled across a split parcel's envelope, on each side, to check
+// its parts cover it once.
+const COVERAGE_GRID = 40
+// A sampled point this close to an edge, in metres, is skipped: which side
+// of a shared edge it falls is a matter of rounding.
+const EDGE_TOLERANCE_M = 0.01
 
 let dir
 let counter = 0
@@ -257,6 +268,60 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
       })
   }
 
+  /** A parcel row's outer ring, from its stored geometry. */
+  function ringOf(row) {
+    const geometry = wkbToGeoJSON(row.geom)
+    expect(geometry.type, row['Habitat Ref']).toBe('Polygon')
+    expect(geometry.coordinates, row['Habitat Ref']).toHaveLength(1)
+    return geometry.coordinates[0]
+  }
+
+  function nearEdge(point, ring) {
+    for (let i = 1; i < ring.length; i += 1) {
+      const [[x1, y1], [x2, y2]] = [ring[i - 1], ring[i]]
+      const [dx, dy] = [x2 - x1, y2 - y1]
+      const t = Math.max(
+        0,
+        Math.min(
+          1,
+          ((point[0] - x1) * dx + (point[1] - y1) * dy) / (dx * dx + dy * dy)
+        )
+      )
+      const gap = Math.hypot(point[0] - (x1 + t * dx), point[1] - (y1 + t * dy))
+      if (gap < EDGE_TOLERANCE_M) {
+        return true
+      }
+    }
+    return false
+  }
+
+  /**
+   * The parts' shapes cover their parent once: each point sampled inside
+   * the parent lies in exactly one part, and each point outside it in none.
+   */
+  function expectPartsTileParent(parentRing, partRings) {
+    const xs = parentRing.map(([x]) => x)
+    const ys = parentRing.map(([, y]) => y)
+    const [minX, maxX] = [Math.min(...xs), Math.max(...xs)]
+    const [minY, maxY] = [Math.min(...ys), Math.max(...ys)]
+    let inside = 0
+    for (let i = 0; i < COVERAGE_GRID; i += 1) {
+      for (let j = 0; j < COVERAGE_GRID; j += 1) {
+        const point = [
+          minX + ((i + 0.5) / COVERAGE_GRID) * (maxX - minX),
+          minY + ((j + 0.5) / COVERAGE_GRID) * (maxY - minY)
+        ]
+        if (![parentRing, ...partRings].some((r) => nearEdge(point, r))) {
+          const inParent = pointInRing(point, parentRing)
+          const covering = partRings.filter((r) => pointInRing(point, r))
+          expect(covering.length, `at ${point}`).toBe(inParent ? 1 : 0)
+          inside += inParent ? 1 : 0
+        }
+      }
+    }
+    expect(inside).toBeGreaterThan(0)
+  }
+
   function expectSplit({ ref, kept, enhanced, lost, parent }) {
     expect(kept, `${ref}a`).toBeDefined()
     expect(enhanced, `${ref}b`).toBeDefined()
@@ -272,9 +337,17 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     expect(enhanced['Proposed Habitat Type']).toBe(
       parent['Baseline Habitat Type']
     )
-    expect(enhanced['Proposed Condition']).not.toBe(
-      parent['Baseline Condition']
-    )
+    // A condition the Metric lets the habitat be enhanced to from its own.
+    expect(
+      enhancementPairs(
+        AREA,
+        `${parent['Baseline Broad Habitat Type']} - ${parent['Baseline Habitat Type']}`
+      ),
+      ref
+    ).toContainEqual([
+      parent['Baseline Condition'],
+      enhanced['Proposed Condition']
+    ])
     expect(lost['Retention Category']).toBe('Created')
     expect(lost['Proposed Broad Habitat Type']).toBe(SEALED_SURFACE.broad)
     expect(lost['Proposed Habitat Type']).toBe(SEALED_SURFACE.type)
@@ -287,6 +360,19 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
       )
     }
     expect(kept.Area + enhanced.Area + lost.Area).toBeCloseTo(parent.Area, 6)
+    // Each part's Area is its own shape's, and the shapes tile the parent.
+    const partRings = [kept, enhanced, lost].map(ringOf)
+    for (const [row, ring] of [kept, enhanced, lost].map((r, i) => [
+      r,
+      partRings[i]
+    ])) {
+      expect(
+        areaSquareMetres({ type: 'Polygon', coordinates: [ring] }) /
+          SQ_M_PER_HECTARE,
+        row['Habitat Ref']
+      ).toBeCloseTo(row.Area, 6)
+    }
+    expectPartsTileParent(ringOf(parent), partRings)
   }
 
   /** The Retained parcels no split took: their ref is their parent's. */

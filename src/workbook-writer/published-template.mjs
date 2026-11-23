@@ -9,12 +9,11 @@
  * with. A newer release gets a new entry here once it has been checked the
  * same way.
  *
- * 1.1.1 replaced 1.0.4, which GOV.UK no longer serves (its URL redirects to
- * 1.1.1). 1.1.0 gave each entry tab 350 rows and 1.1.1 fixed an off-site
- * summary formula. The data sheets are unchanged, and the harness's two
- * scenario corpora, rebuilt on 1.1.1, gave the same results as their
- * committed 1.0.4 workbooks (checked 2026-11-17); the harness regenerates
- * them when it repins this release.
+ * 1.1.1 is the release GOV.UK serves. 1.1.0 gave each entry tab 350 rows and
+ * 1.1.1 fixed an off-site summary formula. The data sheets are unchanged from
+ * the release before, and the harness's two scenario corpora, rebuilt on
+ * 1.1.1, gave the same results as the workbooks they replaced (checked
+ * 2026-11-17); the harness regenerates them when it repins this release.
  */
 
 import { createHash } from 'node:crypto'

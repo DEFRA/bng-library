@@ -500,7 +500,7 @@ describe('lookupHabitatDifficultyLabel', () => {
     )
   })
 
-  // Statutory Metric 1.0.4, G-1 All Habitats row 134 (see the reference
+  // Statutory Metric 1.1.1, G-1 All Habitats row 134 (see the reference
   // README's Corrections): found by the metric comparison (BMD-1084).
   it.each(['Creation', 'Enhancement'])(
     'gives an IGGI Medium %s difficulty, as the Statutory Metric does',

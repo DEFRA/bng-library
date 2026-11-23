@@ -489,7 +489,7 @@ function assertChangeFlawsDrawn(
  *   Taken only with template features
  * @param {Record<string, number>} [options.worseHabitatCounts]  how many of
  *   each kind of habitat that gets worse to draw, by kind (WORSE_KINDS), in
- *   place of one each (none of `partly-worse-parcel`):
+ *   place of one each (none of `partly-worse-parcel` or `split-parcel`):
  *   `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more hedgerows that get
  *   worse. Taken only where the site draws habitats that
  *   get worse: with template features, or a degrade flaw. A change flaw

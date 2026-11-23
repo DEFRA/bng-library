@@ -20,6 +20,8 @@ import {
 } from '../index.mjs'
 import {
   ENCROACHED_WATERCOURSE_COMMENT,
+  ENHANCED_PART_COMMENT,
+  LOST_TO_DEVELOPMENT_COMMENT,
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT
 } from '../src/bng-service/template-features.mjs'
@@ -90,16 +92,18 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
       'partly-worse-hedge',
       'encroached-watercourse',
       'worse-watercourse',
-      'partly-worse-parcel'
+      'partly-worse-parcel',
+      'split-parcel'
     ])
   })
 
-  it('draws one of each by default, but no part-worse parcel, so a default site keeps its bytes', () => {
+  it('draws one of each by default, but no part-worse or split parcel, so a default site keeps its bytes', () => {
     const plain = readFileSync(synthetic())
     const defaults = resolveWorseCounts()
     expect(defaults).toEqual({
       ...Object.fromEntries(WORSE_KINDS.map((k) => [k, 1])),
-      'partly-worse-parcel': 0
+      'partly-worse-parcel': 0,
+      'split-parcel': 0
     })
     expect(readFileSync(synthetic({ worseHabitatCounts: {} }))).toEqual(plain)
     expect(readFileSync(synthetic({ worseHabitatCounts: defaults }))).toEqual(
@@ -223,6 +227,50 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
           !/[ab]$/.test(r['Habitat Ref'])
       ).length
     ).toBeGreaterThanOrEqual(1)
+    expect(checkLineage(file)).toEqual([])
+    expect(checkTemplateValues(file)).toEqual([])
+  })
+
+  it('splits area parcels into a Retained part a, an Enhanced part b and a part c lost to development, none worse', () => {
+    const large = { seed: 1, numParcels: 30 }
+    const parcels = (file) => rows(file, 'Area Habitats Post-Intervention')
+    const baseline = (file) => rows(file, 'Area Habitats Baseline')
+    const file = synthetic({ worseHabitatCounts: { 'split-parcel': 2 } }, large)
+    const lostParts = parcels(file).filter(
+      (r) => r.Comment === LOST_TO_DEVELOPMENT_COMMENT
+    )
+    expect(lostParts).toHaveLength(2)
+    for (const lost of lostParts) {
+      const ref = lost['Parent Ref']
+      const part = (letter) =>
+        parcels(file).find((r) => r['Habitat Ref'] === `${ref}${letter}`)
+      const [kept, enhanced] = [part('a'), part('b')]
+      const parent = baseline(file).find(
+        (r) => r.feature_uuid === lost.parent_uuid
+      )
+      expect(lost['Habitat Ref']).toBe(`${ref}c`)
+      expect(kept?.['Retention Category'], ref).toBe('Retained')
+      expect(kept['Proposed Condition']).toBe(parent['Baseline Condition'])
+      expect(enhanced?.['Retention Category'], ref).toBe('Enhanced')
+      expect(enhanced.Comment).toBe(ENHANCED_PART_COMMENT)
+      expect(enhanced['Proposed Habitat Type']).toBe(
+        parent['Baseline Habitat Type']
+      )
+      expect(enhanced['Proposed Condition']).not.toBe(
+        parent['Baseline Condition']
+      )
+      expect(lost['Retention Category']).toBe('Created')
+      expect(lost['Proposed Habitat Type']).toBe(
+        'Developed land; sealed surface'
+      )
+      expect(lost['Habitat created in advance/years']).toBe('0')
+      for (const row of [kept, enhanced]) {
+        expect(row.parent_uuid).toBe(lost.parent_uuid)
+        expect(row.Area).toBeLessThan(parent.Area)
+      }
+      expect(kept.Area + enhanced.Area + lost.Area).toBeCloseTo(parent.Area, 6)
+    }
+    expect(parcels(file).filter(isWorse)).toHaveLength(1)
     expect(checkLineage(file)).toEqual([])
     expect(checkTemplateValues(file)).toEqual([])
   })

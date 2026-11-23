@@ -25,7 +25,7 @@ import {
 } from './template-vocabulary.mjs'
 import { writeMetricWorkbook } from './write-workbook.mjs'
 
-export { METRIC_SHEETS } from './template-layout.mjs'
+export { METRIC_SHEETS, PROJECT_DETAILS } from './template-layout.mjs'
 export { WORKBOOK_SPELLINGS, workbookRowsFromGeoPackage } from './gpkg-rows.mjs'
 export { workbookRowsFromBngService } from './bng-service-rows.mjs'
 export {

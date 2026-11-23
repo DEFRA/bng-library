@@ -249,6 +249,34 @@ export const METRIC_SHEETS = {
   }
 }
 
+/**
+ * The project details on the Start sheet, each a free-text cell beside its
+ * label. The labels are its fingerprint, checked before a detail is written.
+ * Target % net gain (F22) is not among them: it holds the metric's default,
+ * for the user alone to change.
+ */
+export const PROJECT_DETAILS = Object.freeze({
+  sheet: 'Start',
+  fingerprint: Object.freeze({
+    D11: 'Planning authority:',
+    D12: 'Project name:',
+    D13: 'Applicant:',
+    D14: 'Application type:',
+    D15: 'Planning application reference:',
+    D16: 'Completed by:',
+    D17: 'Date of metric completion:'
+  }),
+  cells: Object.freeze({
+    planningAuthority: 'F11',
+    projectName: 'F12',
+    applicant: 'F13',
+    applicationType: 'F14',
+    planningApplicationReference: 'F15',
+    completedBy: 'F16',
+    completionDate: 'F17'
+  })
+})
+
 /** Each baseline sheet and the enhancement sheet that follows its rows. */
 export const ENHANCEMENT_OF = {
   habitatEnhancement: 'habitatBaseline',

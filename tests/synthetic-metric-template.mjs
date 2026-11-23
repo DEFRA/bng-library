@@ -11,7 +11,10 @@
  */
 
 import { columnIndex, splitRef } from '../src/workbook-writer/sheet-xml.mjs'
-import { METRIC_SHEETS } from '../src/workbook-writer/template-layout.mjs'
+import {
+  METRIC_SHEETS,
+  PROJECT_DETAILS
+} from '../src/workbook-writer/template-layout.mjs'
 import { createZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const CONTENT_TYPES =
@@ -99,11 +102,28 @@ function sheetCells(key, layout, lastRow, extraCells) {
  * @param {Record<string, number>} lastRows each sheet's last data row, keyed
  *   as METRIC_SHEETS
  * @param {Record<string, Record<string, string | number>>} [inputs] values
- *   already in a sheet's cells, keyed by sheet key then cell reference
+ *   already in a sheet's cells, keyed by sheet key then cell reference; the
+ *   Start sheet's under `start`, over its labels
  * @returns {Buffer} the .xlsx bytes
  */
 export function syntheticMetricTemplate(lastRows, inputs = {}) {
-  const layouts = Object.entries(METRIC_SHEETS)
+  const inputSheets = Object.entries(METRIC_SHEETS).map(([key, layout]) => [
+    layout.sheet,
+    worksheet(sheetCells(key, layout, lastRows[key], inputs[key] ?? {}))
+  ])
+  const startCells = { ...PROJECT_DETAILS.fingerprint, ...inputs.start }
+  const sheets = [
+    ...inputSheets,
+    [
+      PROJECT_DETAILS.sheet,
+      worksheet(
+        Object.entries(startCells).map(([ref, value]) => [
+          ref,
+          typeof value === 'number' ? number(ref, value) : inline(ref, value)
+        ])
+      )
+    ]
+  ]
   const files = new Map([
     ['[Content_Types].xml', CONTENT_TYPES],
     [
@@ -112,16 +132,16 @@ export function syntheticMetricTemplate(lastRows, inputs = {}) {
     ],
     [
       'xl/workbook.xml',
-      `<workbook xmlns:r="r"><sheets>${layouts
+      `<workbook xmlns:r="r"><sheets>${sheets
         .map(
-          ([, layout], i) =>
-            `<sheet name="${escapeXml(layout.sheet)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`
+          ([name], i) =>
+            `<sheet name="${escapeXml(name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`
         )
         .join('')}</sheets></workbook>`
     ],
     [
       'xl/_rels/workbook.xml.rels',
-      `<Relationships>${layouts
+      `<Relationships>${sheets
         .map(
           (_, i) =>
             `<Relationship Id="rId${i + 1}" Target="worksheets/sheet${i + 1}.xml"/>`
@@ -129,11 +149,8 @@ export function syntheticMetricTemplate(lastRows, inputs = {}) {
         .join('')}</Relationships>`
     ]
   ])
-  layouts.forEach(([key, layout], i) => {
-    files.set(
-      `xl/worksheets/sheet${i + 1}.xml`,
-      worksheet(sheetCells(key, layout, lastRows[key], inputs[key] ?? {}))
-    )
+  sheets.forEach(([, xml], i) => {
+    files.set(`xl/worksheets/sheet${i + 1}.xml`, xml)
   })
   return createZip(files)
 }

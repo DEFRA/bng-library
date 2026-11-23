@@ -13,12 +13,17 @@ import { MetricTemplate } from './metric-template.mjs'
 import {
   ENHANCEMENT_OF,
   METRIC_SHEETS,
+  PROJECT_DETAILS,
   capacity,
   inputLastRows
 } from './template-layout.mjs'
 
-function assertLayout(template) {
-  const mismatches = template.layoutMismatches()
+const MS_PER_DAY = 86_400_000
+// Day 0 of Excel's 1900 date system, as its serial numbers count it.
+const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30)
+
+function assertLayout(template, layouts) {
+  const mismatches = template.layoutMismatches(layouts)
   if (mismatches.length > 0) {
     const detail = mismatches
       .map(
@@ -118,6 +123,41 @@ function writeRows(template, key, sheetRows) {
   })
 }
 
+/** A date as the serial day number Excel holds in a date-formatted cell. */
+function excelDate(date) {
+  const day = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  )
+  return (day - EXCEL_EPOCH_MS) / MS_PER_DAY
+}
+
+function assertKnownDetails(details) {
+  for (const field of Object.keys(details)) {
+    if (!Object.hasOwn(PROJECT_DETAILS.cells, field)) {
+      throw new Error(`Unknown project detail: ${field}`)
+    }
+  }
+}
+
+/**
+ * Fill the Start sheet's project details. A detail left out, or null, leaves
+ * its cell as the template has it, for the user to fill in.
+ */
+function writeDetails(template, details) {
+  const sheet = template.sheet(PROJECT_DETAILS.sheet)
+  for (const [field, value] of Object.entries(details)) {
+    if (value === undefined || value === null) {
+      continue
+    }
+    sheet.setValue(
+      PROJECT_DETAILS.cells[field],
+      value instanceof Date ? excelDate(value) : value
+    )
+  }
+}
+
 /**
  * @param {object} options
  * @param {Buffer} options.templateBuffer a Statutory Biodiversity Metric v4
@@ -125,16 +165,24 @@ function writeRows(template, key, sheetRows) {
  * @param {Record<string, object[]>} options.rows keyed as METRIC_SHEETS
  * @param {readonly object[]} [options.corrections] the known bugs to correct;
  *   every one by default, and `[]` for the metric exactly as published
+ * @param {Partial<Record<keyof typeof PROJECT_DETAILS.cells, string | number | Date | null>>} [options.details]
+ *   the Start sheet's project details, keyed as PROJECT_DETAILS.cells; a
+ *   Date is written as its day, as the date-formatted cell expects
  * @returns {Buffer} the new workbook, with every formula's cached value
  *   removed so it must be recalculated before its answers can be read
  */
 export function writeMetricWorkbook({
   templateBuffer,
   rows,
-  corrections = METRIC_CORRECTIONS
+  corrections = METRIC_CORRECTIONS,
+  details
 }) {
   const template = new MetricTemplate(templateBuffer)
-  assertLayout(template)
+  const layouts = Object.values(METRIC_SHEETS)
+  assertLayout(template, details ? [...layouts, PROJECT_DETAILS] : layouts)
+  if (details) {
+    assertKnownDetails(details)
+  }
   const lastRows = templateLastRows(template)
   assertFits(rows, lastRows)
   assertEnhancementsPaired(rows)
@@ -142,6 +190,9 @@ export function writeMetricWorkbook({
   applyCorrections(template, corrections)
   for (const [key, sheetRows] of Object.entries(rows)) {
     writeRows(template, key, sheetRows)
+  }
+  if (details) {
+    writeDetails(template, details)
   }
   template.stripCachedValues()
   template.setFullCalcOnLoad()

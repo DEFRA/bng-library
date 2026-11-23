@@ -103,10 +103,13 @@ export class MetricTemplate {
   /**
    * Check every layout fingerprint and return the mismatches. An empty list
    * means the template is laid out the way `METRIC_SHEETS` expects.
+   *
+   * @param {Iterable<{ sheet: string, fingerprint: Record<string, string> }>} [layouts]
+   *   the layouts to check, the input sheets' by default
    */
-  layoutMismatches() {
+  layoutMismatches(layouts = Object.values(METRIC_SHEETS)) {
     const mismatches = []
-    for (const layout of Object.values(METRIC_SHEETS)) {
+    for (const layout of layouts) {
       for (const [ref, expected] of Object.entries(layout.fingerprint)) {
         const actual = normaliseHeader(this.text(layout.sheet, ref))
         if (actual !== normaliseHeader(expected)) {

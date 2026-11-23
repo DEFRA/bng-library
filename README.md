@@ -167,7 +167,10 @@ site draws none unless asked. Nor does it draw a `split-parcel` unless
 asked: an area parcel split with no part getting worse, into a Retained
 part a, a part b Enhanced to a better condition in its own type, and a part
 c lost to development, mapped as the Developed land; sealed surface Created
-in its place. **`worseHabitatCounts`** asks for more or
+in its place. It is not a habitat that gets worse, but `worseHabitatCounts`
+(and a scenario's `worseHabitats`) counts it too, as nothing else takes a
+count of a change, and its parts are kept from later draws as a habitat that
+gets worse is. **`worseHabitatCounts`** asks for more or
 fewer of a kind, by the names `WORSE_KINDS` lists (`parcel`, `vertical`,
 `hedge`, `partly-worse-hedge`, `encroached-watercourse`,
 `worse-watercourse`, `partly-worse-parcel`, `split-parcel`), 0 to

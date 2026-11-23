@@ -27,6 +27,7 @@ import { COMMENT, HABITAT_REF } from './schema.mjs'
 import {
   LOW,
   NO,
+  SEALED_PROPOSED,
   SEALED_SURFACE,
   distinctiveness,
   irreplaceableAnswers,
@@ -77,17 +78,6 @@ const SEALED_BASELINE = () => ({
   'Baseline Distinctiveness': distinctiveness('habitats', SEALED_SURFACE.type),
   'Baseline Condition': SEALED_SURFACE.condition,
   'Irreplaceable Habitat': singleIrreplaceable(SEALED_SURFACE.type)
-})
-
-const SEALED_PROPOSED = () => ({
-  'Proposed Broad Habitat Type': SEALED_SURFACE.broad,
-  'Proposed Habitat Type': SEALED_SURFACE.type,
-  'Proposed Distinctiveness': distinctiveness(
-    'habitats',
-    SEALED_SURFACE.type,
-    true
-  ),
-  'Proposed Condition': SEALED_SURFACE.condition
 })
 
 function verticalBaseline(feature, uuid) {

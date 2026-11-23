@@ -113,7 +113,11 @@ function assertFormat(format) {
  *                should accept, as it refuses an irreplaceable habitat
  *   worseHabitatCounts BNG Service format only: how many of each kind of
  *                habitat that gets worse to draw, by kind (WORSE_KINDS), in
- *                place of one each, e.g. { hedge: 4 }
+ *                place of the default: one each, but none of
+ *                'partly-worse-parcel' or 'split-parcel' (a parcel split
+ *                into Retained, Enhanced and lost parts, which is not a
+ *                habitat that gets worse but is counted here too),
+ *                e.g. { hedge: 4 }
  */
 export function generateSyntheticGpkg(options = {}) {
   const {

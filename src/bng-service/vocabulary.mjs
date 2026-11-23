@@ -22,6 +22,17 @@ export const SEALED_SURFACE = Object.freeze({
   type: 'Developed land; sealed surface',
   condition: 'N/A - Other'
 })
+/** A post-intervention area habitat's proposed columns for a sealed surface. */
+export const SEALED_PROPOSED = () => ({
+  'Proposed Broad Habitat Type': SEALED_SURFACE.broad,
+  'Proposed Habitat Type': SEALED_SURFACE.type,
+  'Proposed Distinctiveness': distinctiveness(
+    'habitats',
+    SEALED_SURFACE.type,
+    true
+  ),
+  'Proposed Condition': SEALED_SURFACE.condition
+})
 
 // The legacy wordings of strategic significance, as the plugin translates
 // them (the template's plugin/README.md). "Location ecologically desirable

@@ -61,14 +61,18 @@ describe('writing the project details onto the Start sheet', () => {
     expect(Number(workbook.text(START, cells.completionDate))).toBe(45443)
   })
 
-  it.each([['01/06/2024'], ['2024-6-1'], ['2024-13-01'], [45444]])(
-    'refuses a completion date of %j',
-    (completionDate) => {
-      expect(() => write(template, { completionDate })).toThrow(
-        'completionDate must be a Date or a YYYY-MM-DD day'
-      )
-    }
-  )
+  it.each([
+    ['01/06/2024'],
+    ['2024-6-1'],
+    ['2024-13-01'],
+    ['2024-02-30'],
+    ['2023-02-29'],
+    [45444]
+  ])('refuses a completion date of %j', (completionDate) => {
+    expect(() => write(template, { completionDate })).toThrow(
+      'completionDate must be a Date or a YYYY-MM-DD day'
+    )
+  })
 
   it('leaves a detail it is not given, null or undefined as the template has it', () => {
     const filledIn = syntheticMetricTemplate(PINNED_LAST_ROWS, {
@@ -117,9 +121,38 @@ const TEMPLATE = process.env.METRIC_TEMPLATE
 describe.skipIf(!TEMPLATE || !existsSync(TEMPLATE))(
   'writing the project details into the real metric template',
   () => {
-    it('finds the Start sheet laid out as PROJECT_DETAILS expects', () => {
-      const workbook = write(readFileSync(TEMPLATE), DETAILS)
-      expect(workbook.text(START, cells.projectName)).toBe(DETAILS.projectName)
+    // Literal addresses, not PROJECT_DETAILS.cells: the writer reads those,
+    // so a wrong one would pass a test that reads them too.
+    it('writes every detail into F11 to F17 of the published Start sheet', () => {
+      const templateBuffer = readFileSync(TEMPLATE)
+      const workbook = write(templateBuffer, {
+        ...DETAILS,
+        completedBy: 'A. Ecologist',
+        completionDate: '2024-01-01'
+      })
+
+      expect(
+        ['F11', 'F12', 'F13', 'F14', 'F15', 'F16'].map((ref) =>
+          workbook.text('Start', ref)
+        )
+      ).toEqual([
+        'Riverside District Council',
+        'Riverside Farm',
+        'Riverside Homes Ltd',
+        'Outline',
+        'RDC/24/0001',
+        'A. Ecologist'
+      ])
+      expect(Number(workbook.text('Start', 'F17'))).toBe(NEW_YEAR_2024)
+    })
+
+    it('leaves the target net gain in F22 as published', () => {
+      const templateBuffer = readFileSync(TEMPLATE)
+      const before = new MetricTemplate(templateBuffer).text('Start', 'F22')
+
+      const workbook = write(templateBuffer, DETAILS)
+
+      expect(workbook.text('Start', 'F22')).toBe(before)
     })
   }
 )

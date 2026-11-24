@@ -144,16 +144,24 @@ function excelDate(day) {
   return (utcDay - EXCEL_EPOCH_MS) / MS_PER_DAY
 }
 
+/**
+ * A real YYYY-MM-DD day. V8 checks a day only against 1–31, so 2024-02-30
+ * parses as 1 March: the day must read back as itself.
+ */
+function isIsoDay(value) {
+  if (typeof value !== 'string' || !ISO_DAY.test(value)) {
+    return false
+  }
+  const date = new Date(value)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+}
+
 /** completionDate is a date however it is given; any other detail, if a Date. */
 function isDateDetail(field, value) {
   if (field !== 'completionDate') {
     return value instanceof Date
   }
-  const isDay =
-    value instanceof Date ||
-    (typeof value === 'string' &&
-      ISO_DAY.test(value) &&
-      !isNaN(new Date(value)))
+  const isDay = value instanceof Date || isIsoDay(value)
   if (!isDay) {
     throw new Error(
       `completionDate must be a Date or a YYYY-MM-DD day, not ${JSON.stringify(value)}`

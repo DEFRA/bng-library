@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 import { MetricTemplate } from '../src/workbook-writer/metric-template.mjs'
 import {
@@ -7,6 +8,9 @@ import {
 } from '../src/workbook-writer/template-layout.mjs'
 import { writeMetricWorkbook } from '../src/workbook-writer/write-workbook.mjs'
 import { syntheticMetricTemplate } from './synthetic-metric-template.mjs'
+
+const require = createRequire(import.meta.url)
+const XLSX = require('xlsx')
 
 const { sheet: START, cells } = PROJECT_DETAILS
 // 1 January 2024 is day 45292 in Excel's 1900 date system.
@@ -117,9 +121,13 @@ describe('writing the project details onto the Start sheet', () => {
 })
 
 const TEMPLATE = process.env.METRIC_TEMPLATE
+// Each test reads and writes the multi-MB published workbook, about 2s
+// locally; a slow CI runner gets room.
+const REAL_TEMPLATE_TIMEOUT_MS = 30_000
 
 describe.skipIf(!TEMPLATE || !existsSync(TEMPLATE))(
   'writing the project details into the real metric template',
+  { timeout: REAL_TEMPLATE_TIMEOUT_MS },
   () => {
     // Literal addresses, not PROJECT_DETAILS.cells: the writer reads those,
     // so a wrong one would pass a test that reads them too.
@@ -143,7 +151,36 @@ describe.skipIf(!TEMPLATE || !existsSync(TEMPLATE))(
         'RDC/24/0001',
         'A. Ecologist'
       ])
-      expect(Number(workbook.text('Start', 'F17'))).toBe(NEW_YEAR_2024)
+    })
+
+    // Read by SheetJS, so the check is of the cell's type and number format,
+    // which a serial written as text would fail.
+    it('writes the completion date into F17 as a number, in the template’s date format', () => {
+      const templateBuffer = readFileSync(TEMPLATE)
+      const read = (buffer) =>
+        XLSX.read(buffer, {
+          type: 'buffer',
+          cellNF: true,
+          sheetStubs: true,
+          sheets: 'Start'
+        }).Sheets.Start.F17
+      const published = read(templateBuffer)
+
+      const written = read(
+        writeMetricWorkbook({
+          templateBuffer,
+          rows: {},
+          corrections: [],
+          details: { completionDate: '2024-01-01' }
+        })
+      )
+
+      expect(published.z).toMatch(/yyyy/)
+      expect(written).toMatchObject({
+        t: 'n',
+        v: NEW_YEAR_2024,
+        z: published.z
+      })
     })
 
     it('leaves the target net gain in F22 as published', () => {

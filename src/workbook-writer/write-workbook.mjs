@@ -123,14 +123,43 @@ function writeRows(template, key, sheetRows) {
   })
 }
 
-/** A date as the serial day number Excel holds in a date-formatted cell. */
-function excelDate(date) {
-  const day = Date.UTC(
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * A day as the serial day number Excel holds in a date-formatted cell.
+ *
+ * A `YYYY-MM-DD` string is that day, with no time zone to get wrong. A Date
+ * is its UTC day: `new Date(2024, 5, 1)` built in London during British
+ * Summer Time is 23:00 UTC on 31 May, and is written as 31 May. A caller
+ * with a local day in mind passes it as a string.
+ */
+function excelDate(day) {
+  // Date parses a bare YYYY-MM-DD as UTC midnight of that day.
+  const date = typeof day === 'string' ? new Date(day) : day
+  const utcDay = Date.UTC(
     date.getUTCFullYear(),
     date.getUTCMonth(),
     date.getUTCDate()
   )
-  return (day - EXCEL_EPOCH_MS) / MS_PER_DAY
+  return (utcDay - EXCEL_EPOCH_MS) / MS_PER_DAY
+}
+
+/** completionDate is a date however it is given; any other detail, if a Date. */
+function isDateDetail(field, value) {
+  if (field !== 'completionDate') {
+    return value instanceof Date
+  }
+  const isDay =
+    value instanceof Date ||
+    (typeof value === 'string' &&
+      ISO_DAY.test(value) &&
+      !isNaN(new Date(value)))
+  if (!isDay) {
+    throw new Error(
+      `completionDate must be a Date or a YYYY-MM-DD day, not ${JSON.stringify(value)}`
+    )
+  }
+  return true
 }
 
 function assertKnownDetails(details) {
@@ -153,7 +182,7 @@ function writeDetails(template, details) {
     }
     sheet.setValue(
       PROJECT_DETAILS.cells[field],
-      value instanceof Date ? excelDate(value) : value
+      isDateDetail(field, value) ? excelDate(value) : value
     )
   }
 }
@@ -167,7 +196,10 @@ function writeDetails(template, details) {
  *   every one by default, and `[]` for the metric exactly as published
  * @param {Partial<Record<keyof typeof PROJECT_DETAILS.cells, string | number | Date | null>>} [options.details]
  *   the Start sheet's project details, keyed as PROJECT_DETAILS.cells; a
- *   Date is written as its day, as the date-formatted cell expects
+ *   date is written as its day, as the date-formatted cell expects. Pass
+ *   `completionDate` as a `YYYY-MM-DD` string for a local day: a Date is
+ *   taken as its UTC calendar day, which in British Summer Time can be the
+ *   day before the local one
  * @returns {Buffer} the new workbook, with every formula's cached value
  *   removed so it must be recalculated before its answers can be read
  */

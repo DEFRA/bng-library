@@ -45,13 +45,48 @@ describe('writing the project details onto the Start sheet', () => {
     )
   })
 
-  it('leaves a detail it is not given as the template has it', () => {
+  it('writes a YYYY-MM-DD day as that day, whatever the time zone', () => {
+    const workbook = write(template, { completionDate: '2024-01-01' })
+    expect(Number(workbook.text(START, cells.completionDate))).toBe(
+      NEW_YEAR_2024
+    )
+  })
+
+  it('takes a Date as its UTC day, which in British Summer Time can be the local day before', () => {
+    // new Date(2024, 5, 1) built in London is this instant: 1 June locally,
+    // 31 May in UTC. 1 June 2024 is day 45444, so 31 May is 45443.
     const workbook = write(template, {
-      projectName: 'Riverside Farm',
-      applicant: null
+      completionDate: new Date('2024-05-31T23:00:00Z')
     })
-    expect(workbook.text(START, cells.applicant)).toBeNull()
-    expect(workbook.text(START, cells.completedBy)).toBeNull()
+    expect(Number(workbook.text(START, cells.completionDate))).toBe(45443)
+  })
+
+  it.each([['01/06/2024'], ['2024-6-1'], ['2024-13-01'], [45444]])(
+    'refuses a completion date of %j',
+    (completionDate) => {
+      expect(() => write(template, { completionDate })).toThrow(
+        'completionDate must be a Date or a YYYY-MM-DD day'
+      )
+    }
+  )
+
+  it('leaves a detail it is not given, null or undefined as the template has it', () => {
+    const filledIn = syntheticMetricTemplate(PINNED_LAST_ROWS, {
+      start: {
+        [cells.applicant]: 'Existing applicant',
+        [cells.applicationType]: 'Existing type',
+        [cells.completedBy]: 'Existing completer'
+      }
+    })
+    const workbook = write(filledIn, {
+      projectName: 'Riverside Farm',
+      applicant: null,
+      applicationType: undefined
+    })
+    expect(workbook.text(START, cells.projectName)).toBe('Riverside Farm')
+    expect(workbook.text(START, cells.applicant)).toBe('Existing applicant')
+    expect(workbook.text(START, cells.applicationType)).toBe('Existing type')
+    expect(workbook.text(START, cells.completedBy)).toBe('Existing completer')
   })
 
   it('refuses a detail it has no cell for', () => {

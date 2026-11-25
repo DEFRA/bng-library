@@ -36,11 +36,9 @@ import {
   workbookFromGeoPackage
 } from '../src/workbook-writer/index.mjs'
 import { MetricTemplate } from '../src/workbook-writer/metric-template.mjs'
+import { isPublishedTemplate } from '../src/workbook-writer/published-template.mjs'
 import {
-  PUBLISHED_METRIC_TEMPLATE,
-  isPublishedTemplate
-} from '../src/workbook-writer/published-template.mjs'
-import {
+  PINNED_LAST_ROWS,
   capacity,
   inputLastRows
 } from '../src/workbook-writer/template-layout.mjs'
@@ -129,7 +127,7 @@ describe.skipIf(!hasTemplate)(
       )
       expect(found).not.toBeNull()
       if (isPublishedTemplate(template)) {
-        expect(found.release).toBe(PUBLISHED_METRIC_TEMPLATE.version)
+        expect(found.lastRows).toBe(PINNED_LAST_ROWS)
       }
       for (const key of Object.keys(METRIC_SHEETS)) {
         expect(capacity(key, found.lastRows), key).toBeGreaterThan(0)

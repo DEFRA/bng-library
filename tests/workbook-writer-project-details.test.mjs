@@ -71,7 +71,8 @@ describe('writing the project details onto the Start sheet', () => {
     ['2024-13-01'],
     ['2024-02-30'],
     ['2023-02-29'],
-    [45444]
+    [45444],
+    [new Date('not a date')]
   ])('refuses a completion date of %j', (completionDate) => {
     expect(() => write(template, { completionDate })).toThrow(
       'completionDate must be a Date or a YYYY-MM-DD day'

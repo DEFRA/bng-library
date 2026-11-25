@@ -161,7 +161,8 @@ function isDateDetail(field, value) {
   if (field !== 'completionDate') {
     return value instanceof Date
   }
-  const isDay = value instanceof Date || isIsoDay(value)
+  const isDay =
+    (value instanceof Date && !Number.isNaN(value.getTime())) || isIsoDay(value)
   if (!isDay) {
     throw new Error(
       `completionDate must be a Date or a YYYY-MM-DD day, not ${JSON.stringify(value)}`

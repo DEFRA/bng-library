@@ -47,7 +47,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:template": "vitest run tests/workbook-writer-template.test.mjs tests/remeandered-watercourse.test.mjs tests/valid-draws.test.mjs",
+    "test:template": "vitest run tests/workbook-writer-template.test.mjs tests/workbook-writer-project-details.test.mjs tests/remeandered-watercourse.test.mjs tests/valid-draws.test.mjs",
     "format": "prettier --write \"**/*.{mjs,js,cjs,json,md}\"",
     "format:check": "prettier --check \"**/*.{mjs,js,cjs,json,md}\"",
     "postinstall": "node scripts/postinstall.mjs",

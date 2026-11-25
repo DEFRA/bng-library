@@ -13,12 +13,17 @@ import { MetricTemplate } from './metric-template.mjs'
 import {
   ENHANCEMENT_OF,
   METRIC_SHEETS,
+  PROJECT_DETAILS,
   capacity,
   inputLastRows
 } from './template-layout.mjs'
 
-function assertLayout(template) {
-  const mismatches = template.layoutMismatches()
+const MS_PER_DAY = 86_400_000
+// Day 0 of Excel's 1900 date system, as its serial numbers count it.
+const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30)
+
+function assertLayout(template, layouts) {
+  const mismatches = template.layoutMismatches(layouts)
   if (mismatches.length > 0) {
     const detail = mismatches
       .map(
@@ -118,6 +123,79 @@ function writeRows(template, key, sheetRows) {
   })
 }
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * A day as the serial day number Excel holds in a date-formatted cell.
+ *
+ * A `YYYY-MM-DD` string is that day, with no time zone to get wrong. A Date
+ * is its UTC day: `new Date(2024, 5, 1)` built in London during British
+ * Summer Time is 23:00 UTC on 31 May, and is written as 31 May. A caller
+ * with a local day in mind passes it as a string.
+ */
+function excelDate(day) {
+  // Date parses a bare YYYY-MM-DD as UTC midnight of that day.
+  const date = typeof day === 'string' ? new Date(day) : day
+  const utcDay = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  )
+  return (utcDay - EXCEL_EPOCH_MS) / MS_PER_DAY
+}
+
+/**
+ * A real YYYY-MM-DD day. V8 checks a day only against 1–31, so 2024-02-30
+ * parses as 1 March: the day must read back as itself.
+ */
+function isIsoDay(value) {
+  if (typeof value !== 'string' || !ISO_DAY.test(value)) {
+    return false
+  }
+  const date = new Date(value)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+}
+
+/** completionDate is a date however it is given; any other detail, if a Date. */
+function isDateDetail(field, value) {
+  if (field !== 'completionDate') {
+    return value instanceof Date
+  }
+  const isDay =
+    (value instanceof Date && !Number.isNaN(value.getTime())) || isIsoDay(value)
+  if (!isDay) {
+    throw new Error(
+      `completionDate must be a Date or a YYYY-MM-DD day, not ${JSON.stringify(value)}`
+    )
+  }
+  return true
+}
+
+function assertKnownDetails(details) {
+  for (const field of Object.keys(details)) {
+    if (!Object.hasOwn(PROJECT_DETAILS.cells, field)) {
+      throw new Error(`Unknown project detail: ${field}`)
+    }
+  }
+}
+
+/**
+ * Fill the Start sheet's project details. A detail left out, or null, leaves
+ * its cell as the template has it, for the user to fill in.
+ */
+function writeDetails(template, details) {
+  const sheet = template.sheet(PROJECT_DETAILS.sheet)
+  for (const [field, value] of Object.entries(details)) {
+    if (value === undefined || value === null) {
+      continue
+    }
+    sheet.setValue(
+      PROJECT_DETAILS.cells[field],
+      isDateDetail(field, value) ? excelDate(value) : value
+    )
+  }
+}
+
 /**
  * @param {object} options
  * @param {Buffer} options.templateBuffer a Statutory Biodiversity Metric v4
@@ -125,16 +203,27 @@ function writeRows(template, key, sheetRows) {
  * @param {Record<string, object[]>} options.rows keyed as METRIC_SHEETS
  * @param {readonly object[]} [options.corrections] the known bugs to correct;
  *   every one by default, and `[]` for the metric exactly as published
+ * @param {Partial<Record<keyof typeof PROJECT_DETAILS.cells, string | number | Date | null>>} [options.details]
+ *   the Start sheet's project details, keyed as PROJECT_DETAILS.cells; a
+ *   date is written as its day, as the date-formatted cell expects. Pass
+ *   `completionDate` as a `YYYY-MM-DD` string for a local day: a Date is
+ *   taken as its UTC calendar day, which in British Summer Time can be the
+ *   day before the local one
  * @returns {Buffer} the new workbook, with every formula's cached value
  *   removed so it must be recalculated before its answers can be read
  */
 export function writeMetricWorkbook({
   templateBuffer,
   rows,
-  corrections = METRIC_CORRECTIONS
+  corrections = METRIC_CORRECTIONS,
+  details
 }) {
   const template = new MetricTemplate(templateBuffer)
-  assertLayout(template)
+  const layouts = Object.values(METRIC_SHEETS)
+  assertLayout(template, details ? [...layouts, PROJECT_DETAILS] : layouts)
+  if (details) {
+    assertKnownDetails(details)
+  }
   const lastRows = templateLastRows(template)
   assertFits(rows, lastRows)
   assertEnhancementsPaired(rows)
@@ -142,6 +231,9 @@ export function writeMetricWorkbook({
   applyCorrections(template, corrections)
   for (const [key, sheetRows] of Object.entries(rows)) {
     writeRows(template, key, sheetRows)
+  }
+  if (details) {
+    writeDetails(template, details)
   }
   template.stripCachedValues()
   template.setFullCalcOnLoad()

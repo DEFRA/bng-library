@@ -4,14 +4,14 @@ import { readMetricResults } from '../src/workbook-writer/read-results.mjs'
 import {
   METRIC_SHEETS,
   PINNED_LAST_ROWS,
-  RELEASE_LAST_ROWS,
+  LAYOUT_LAST_ROWS,
   capacity,
   inputLastRows,
   workbookLastRows
 } from '../src/workbook-writer/template-layout.mjs'
 
 const BASELINE = METRIC_SHEETS.habitatBaseline
-// Rows the 1.1.1 sheets hold that 1.0.4's did not.
+// Rows the 1.1.1 sheets hold that earlier releases' did not.
 const NEW_ROW = 300
 const ROWS_FROM_1_1_0 = 350
 
@@ -40,24 +40,28 @@ describe('the input rows of each metric release', () => {
   it('gives every 1.1.1 sheet 350 data rows', () => {
     for (const key of Object.keys(METRIC_SHEETS)) {
       expect(capacity(key), key).toBe(ROWS_FROM_1_1_0)
-      expect(capacity(key, RELEASE_LAST_ROWS['1.1.1']), key).toBe(
+      expect(capacity(key, LAYOUT_LAST_ROWS['from 1.1.0']), key).toBe(
         ROWS_FROM_1_1_0
       )
     }
   })
 
-  it('keeps 1.0.4’s fewer rows, ending before its totals rows', () => {
-    expect(capacity('habitatBaseline', RELEASE_LAST_ROWS['1.0.4'])).toBe(248)
-    expect(capacity('habitatCreation', RELEASE_LAST_ROWS['1.0.4'])).toBe(246)
+  it('keeps the fewer rows of releases before 1.1.0, ending before their totals rows', () => {
+    expect(capacity('habitatBaseline', LAYOUT_LAST_ROWS['before 1.1.0'])).toBe(
+      248
+    )
+    expect(capacity('habitatCreation', LAYOUT_LAST_ROWS['before 1.1.0'])).toBe(
+      246
+    )
   })
 
   it.each([
-    ['1.1.1', PINNED_LAST_ROWS.habitatBaseline],
-    ['1.0.4', RELEASE_LAST_ROWS['1.0.4'].habitatBaseline]
-  ])('tells a %s workbook by its numbered rows', (release, lastRow) => {
+    ['from 1.1.0', PINNED_LAST_ROWS.habitatBaseline],
+    ['before 1.1.0', LAYOUT_LAST_ROWS['before 1.1.0'].habitatBaseline]
+  ])('tells a workbook laid out %s by its numbered rows', (layout, lastRow) => {
     const found = inputLastRows(cellOf(workbookOf(lastRow)))
-    expect(found.release).toBe(release)
-    expect(found.lastRows).toBe(RELEASE_LAST_ROWS[release])
+    expect(found.layout).toBe(layout)
+    expect(found.lastRows).toBe(LAYOUT_LAST_ROWS[layout])
   })
 
   it('reads numbers stored as text, as a template’s raw cells hold them', () => {
@@ -65,7 +69,7 @@ describe('the input rows of each metric release', () => {
       const v = cellOf(workbookOf(PINNED_LAST_ROWS.habitatBaseline))(sheet, ref)
       return v === undefined ? null : String(v)
     }
-    expect(inputLastRows(text).release).toBe('1.1.1')
+    expect(inputLastRows(text).layout).toBe('from 1.1.0')
   })
 
   it('knows no release whose rows end anywhere else', () => {
@@ -79,7 +83,7 @@ describe('the input rows of each metric release', () => {
 })
 
 describe('reading features by the workbook’s own rows', () => {
-  it('reads a 1.1.1 feature on a row 1.0.4 did not have', () => {
+  it('reads a 1.1.1 feature on a row earlier releases did not have', () => {
     const workbook = workbookOf(PINNED_LAST_ROWS.habitatBaseline, {
       [`AB${NEW_ROW}`]: { t: 's', v: 'H300' },
       [`Q${NEW_ROW}`]: { t: 'n', v: 4 }
@@ -91,8 +95,8 @@ describe('reading features by the workbook’s own rows', () => {
     ])
   })
 
-  it('reads a 1.0.4 workbook only up to its last data row, never its totals', () => {
-    const lastRow = RELEASE_LAST_ROWS['1.0.4'].habitatBaseline
+  it('reads an earlier workbook only up to its last data row, never its totals', () => {
+    const lastRow = LAYOUT_LAST_ROWS['before 1.1.0'].habitatBaseline
     const workbook = workbookOf(lastRow, {
       // A reference typed beside the totals is not a feature.
       [`AB${lastRow + 1}`]: { t: 's', v: 'not a feature' },
@@ -132,9 +136,9 @@ function recalculated(lastRow, extra = {}) {
   }
 }
 
-describe.each(Object.entries(RELEASE_LAST_ROWS))(
+describe.each(Object.entries(LAYOUT_LAST_ROWS))(
   'reading a recalculated %s workbook',
-  (release, lastRows) => {
+  (layout, lastRows) => {
     const lastRow = lastRows.habitatBaseline
     const results = readMetricResults(recalculated(lastRow))
     const baselineWarnings = results.rowWarnings.filter(
@@ -155,7 +159,7 @@ describe.each(Object.entries(RELEASE_LAST_ROWS))(
   }
 )
 
-it('reads a warning on a 1.1.1 row that 1.0.4 did not have', () => {
+it('reads a warning on a 1.1.1 row that earlier releases did not have', () => {
   const results = readMetricResults(
     recalculated(PINNED_LAST_ROWS.habitatBaseline, {
       [`${BASELINE.columns.reference}${NEW_ROW}`]: { t: 's', v: 'H300' },

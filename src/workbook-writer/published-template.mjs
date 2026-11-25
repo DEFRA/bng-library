@@ -10,11 +10,11 @@
  * same way.
  *
  * 1.1.1 was the release GOV.UK served when it was pinned (2026-11-17), and it
- * replaced 1.0.4. 1.1.0 gave each entry tab 350 rows and 1.1.1 fixed an
- * off-site summary formula. The data sheets are unchanged from 1.0.4, and the
- * harness's two scenario corpora, rebuilt on 1.1.1, gave the same results as
- * their committed 1.0.4 workbooks (checked 2026-11-17); the harness
- * regenerates them when it repins this release.
+ * replaced the earlier release GOV.UK no longer serves. 1.1.0 gave each entry
+ * tab 350 rows and 1.1.1 fixed an off-site summary formula. The data sheets
+ * are unchanged, and the harness's two scenario corpora, rebuilt on 1.1.1,
+ * gave the same results as the workbooks first committed (checked
+ * 2026-11-17); the harness regenerates them when it repins this release.
  */
 
 import { createHash } from 'node:crypto'

@@ -23,7 +23,7 @@
  *
  * `lastRow` is the last data row in the pinned release (1.1.1), where every
  * sheet has 350. Releases before 1.1.0 have fewer: `inputLastRows` tells them
- * apart from the workbook itself, so a 1.0.4 workbook is still written and
+ * apart from the workbook itself, so an earlier workbook is still written and
  * read up to its own last row, and never into its totals row.
  */
 
@@ -292,12 +292,13 @@ export const PINNED_LAST_ROWS = Object.freeze(
 )
 
 /**
- * The last data row of each sheet, by release, newest first. Each release
- * lays out a fixed number of rows; 1.1.0 raised every sheet to 350.
+ * The last data row of each sheet, by layout, newest first. Each release
+ * lays out a fixed number of rows; 1.1.0 raised every sheet to 350, so the
+ * pinned release (1.1.1) shares its layout with 1.1.0.
  */
-export const RELEASE_LAST_ROWS = Object.freeze({
-  '1.1.1': PINNED_LAST_ROWS,
-  '1.0.4': Object.freeze({
+export const LAYOUT_LAST_ROWS = Object.freeze({
+  'from 1.1.0': PINNED_LAST_ROWS,
+  'before 1.1.0': Object.freeze({
     habitatBaseline: 258,
     habitatCreation: 256,
     habitatEnhancement: 257,
@@ -311,11 +312,11 @@ export const RELEASE_LAST_ROWS = Object.freeze({
 })
 
 // The habitat baseline sheet numbers its data rows, 1 upwards, in this
-// column, and the totals row follows the last: so the number on a release's
-// last row, and none after it, says which release a workbook is.
+// column, and the totals row follows the last: so the number on a layout's
+// last row, and none after it, says which layout a workbook has.
 const ROW_NUMBER_COLUMN = 'D'
 
-function isRelease(cellValue, lastRows) {
+function isLayout(cellValue, lastRows) {
   const { sheet, firstRow } = METRIC_SHEETS.habitatBaseline
   const last = lastRows.habitatBaseline
   const numberAt = (row) =>
@@ -327,16 +328,17 @@ function isRelease(cellValue, lastRows) {
 }
 
 /**
- * The last data row of each sheet for the release a workbook is laid out as,
- * or null when it is laid out as none of them.
+ * The last data row of each sheet in the layout a workbook has, named for the
+ * releases that share it (`'from 1.1.0'`, `'before 1.1.0'`), or null when it
+ * has none of them.
  *
  * @param {(sheet: string, ref: string) => unknown} cellValue reads one cell
- * @returns {{ release: string, lastRows: Record<string, number> } | null}
+ * @returns {{ layout: string, lastRows: Record<string, number> } | null}
  */
 export function inputLastRows(cellValue) {
-  for (const [release, lastRows] of Object.entries(RELEASE_LAST_ROWS)) {
-    if (isRelease(cellValue, lastRows)) {
-      return { release, lastRows }
+  for (const [layout, lastRows] of Object.entries(LAYOUT_LAST_ROWS)) {
+    if (isLayout(cellValue, lastRows)) {
+      return { layout, lastRows }
     }
   }
   return null

@@ -226,11 +226,25 @@ function addScenarioChanges(site, chooser, emptyLayers, changes) {
   addNamedSiteChanges(site, chooser, siteChanges, emptyLayers)
 }
 
+// Why a site may draw fewer of a kind than it asks for: an area parcel is
+// taken from the Retained parcels there are, and a line needs room in the
+// red line.
+const SHORTFALL_REASON_LINE = 'no room in the red line'
+const SHORTFALL_REASONS = {
+  [WORSE.parcel]:
+    'too few Retained parcels that can get worse, while another stays whole',
+  [WORSE.partlyWorseParcel]:
+    'too few Retained parcels that can get worse and be cut in two, while another stays whole',
+  [WORSE.splitParcel]:
+    'too few Retained parcels that can be enhanced from their condition and cut in three, while another stays whole'
+}
+
 /**
  * Refuse a site that drew fewer habitats that get worse of a kind than it
  * asked for: `addWorseHabitats` draws fewer where a site has too few
  * Retained parcels, or a red line no room for a line, and says nothing.
- * A part-worse feature is counted by its worse part.
+ * A part-worse feature is counted by its worse part, a split parcel by its
+ * lost part.
  */
 function assertWorseDrawn(site, asked) {
   for (const [kind, count] of Object.entries(asked)) {
@@ -239,7 +253,7 @@ function assertWorseDrawn(site, asked) {
     ).length
     if (drawn < count) {
       throw new Error(
-        `worseHabitats ${kind}: asked for ${count}, the site drew ${drawn} (too few Retained parcels, or no room in the red line)`
+        `worseHabitats ${kind}: asked for ${count}, the site drew ${drawn} (${SHORTFALL_REASONS[kind] ?? SHORTFALL_REASON_LINE})`
       )
     }
   }
@@ -489,7 +503,7 @@ function assertChangeFlawsDrawn(
  *   Taken only with template features
  * @param {Record<string, number>} [options.worseHabitatCounts]  how many of
  *   each kind of habitat that gets worse to draw, by kind (WORSE_KINDS), in
- *   place of one each (none of `partly-worse-parcel`):
+ *   place of one each (none of `partly-worse-parcel` or `split-parcel`):
  *   `{ hedge: 4, 'partly-worse-hedge': 3 }` shows more hedgerows that get
  *   worse. Taken only where the site draws habitats that
  *   get worse: with template features, or a degrade flaw. A change flaw

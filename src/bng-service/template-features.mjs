@@ -39,6 +39,7 @@ import {
   LOW,
   NO,
   NOT_APPLICABLE,
+  SEALED_PROPOSED,
   TO_BE_CREATED,
   YES,
   distinctiveness,
@@ -523,6 +524,12 @@ const MAX_SPLIT_SHARE = 0.7
 // Where a parcel that gets worse in part is split: its Retained part's share.
 const MIN_PARCEL_KEPT_SHARE = 0.35
 const MAX_PARCEL_KEPT_SHARE = 0.65
+// Where a parcel kept, enhanced and lost in part is split: its Retained
+// part's share of the whole, then its Enhanced part's share of the rest.
+const MIN_SPLIT_KEPT_SHARE = 0.3
+const MAX_SPLIT_KEPT_SHARE = 0.4
+const MIN_SPLIT_ENHANCED_SHARE = 0.4
+const MAX_SPLIT_ENHANCED_SHARE = 0.6
 // Chord angles tried before a parcel is left whole, as carveTargetArea tries.
 const CARVE_TRIES = 8
 // The lineage flaws take the first Retained parcel, and one stays whole.
@@ -530,7 +537,12 @@ const MIN_RETAINED_PARCELS = 3
 const NUMBERED_REF = /^([A-Za-z]+)(\d+)$/
 /**
  * What each habitat that gets worse is, held on the feature as `worse` and
- * never written, so the degrade flaws can find the row they break.
+ * never written, so the degrade flaws can find the row they break. It also
+ * marks the row as taken, so no later draw (another split, a 30+ delay, a
+ * repeated ref) changes it. A split parcel's parts carry it too, though none
+ * gets worse: `worseHabitatCounts` is the one way to ask for a count of a
+ * change, and a split parcel's parts must be kept from later draws as
+ * these are.
  */
 export const WORSE = Object.freeze({
   parcel: 'parcel',
@@ -540,6 +552,9 @@ export const WORSE = Object.freeze({
   hedge: 'hedge',
   partlyKeptHedge: 'partly-kept-hedge',
   partlyWorseHedge: 'partly-worse-hedge',
+  splitKeptParcel: 'split-kept-parcel',
+  splitEnhancedParcel: 'split-enhanced-parcel',
+  splitParcel: 'split-parcel',
   encroachedWatercourse: 'encroached-watercourse',
   worseWatercourse: 'worse-watercourse'
 })
@@ -550,6 +565,10 @@ export const ENCROACHED_WATERCOURSE_COMMENT =
   'Encroachment increases, with no other impact'
 export const WORSE_WATERCOURSE_COMMENT =
   'Condition gets worse: recorded as lost and created again in a lower condition'
+export const ENHANCED_PART_COMMENT =
+  'Part of the parcel managed to a better condition'
+export const LOST_TO_DEVELOPMENT_COMMENT =
+  'Part of the parcel lost to development: built on as sealed surface'
 
 /** The baseline conditions of a type from which it can get worse. */
 function worseningFrom(kind, type) {
@@ -626,13 +645,18 @@ function worseParcel(site, chooser) {
   feature.worse = WORSE.parcel
 }
 
+/** A parcel's baseline habitat by full name, "Broad - Type", as the draw tables key it. */
+function parcelHabitatName(feature) {
+  const base = feature.parent.values
+  return `${base['Baseline Broad Habitat Type']} - ${base['Baseline Habitat Type']}`
+}
+
 /** The conditions a Retained parcel's baseline habitat can get worse to. */
 function worseParcelConditions(feature) {
-  const base = feature.parent.values
   return worseCreationConditions(
     AREA,
-    `${base['Baseline Broad Habitat Type']} - ${base['Baseline Habitat Type']}`,
-    base['Baseline Condition']
+    parcelHabitatName(feature),
+    feature.parent.values['Baseline Condition']
   )
 }
 
@@ -686,15 +710,12 @@ export function parcelPart(feature, ring, ref) {
 }
 
 /**
- * An area parcel of which part gets worse: the surveyor splits the copied
- * row, keeps one part Retained and sets the other to Created in a worse
- * condition, as a hedge that gets worse in part. Both parts keep the parent
- * and take the template's tidied refs, "H006a" and "H006b". The last
- * Retained parcel that can get worse and is whole, never the first, which
- * the lineage flaws take; only while another Retained parcel stays whole.
+ * The Retained parcels a split may take, the last first: whole, linked to a
+ * parent that is not irreplaceable, and passing `canSplit`. Never the first
+ * Retained parcel, which the lineage flaws take, and none unless another
+ * Retained parcel stays whole.
  */
-function partlyWorseParcel(site, chooser) {
-  const rows = site.layers.habitats.postIntervention
+function splittableParcels(rows, canSplit) {
   const retained = rows.filter(
     (f) =>
       f.parent &&
@@ -703,29 +724,140 @@ function partlyWorseParcel(site, chooser) {
       f.parent.values[IRREPLACEABLE] !== YES
   )
   if (retained.length < MIN_RETAINED_PARCELS) {
-    return
+    return []
   }
-  const feature = retained
-    .slice(1)
-    .findLast((f) => worseParcelConditions(f).length > 0)
-  const parts =
-    feature &&
-    carvedParts(
+  return retained.slice(1).filter(canSplit).reverse()
+}
+
+/**
+ * Split the first of `candidates` that `carve` can cut, replacing its row
+ * with the parts `carve` returns. A parcel it cannot cut, such as a thin
+ * sliver, is passed over for the next, so one awkward shape does not stop
+ * every later split.
+ */
+function splitFirstCarvable(rows, candidates, carve) {
+  for (const feature of candidates) {
+    const parts = carve(feature)
+    if (parts) {
+      rows.splice(rows.indexOf(feature), 1, ...parts)
+      return
+    }
+  }
+}
+
+/**
+ * An area parcel of which part gets worse: the surveyor splits the copied
+ * row, keeps one part Retained and sets the other to Created in a worse
+ * condition, as a hedge that gets worse in part. Both parts keep the parent
+ * and take the template's tidied refs, "H006a" and "H006b". A parcel that
+ * can get worse, taken as `splittableParcels` orders them.
+ */
+function partlyWorseParcel(site, chooser) {
+  const rows = site.layers.habitats.postIntervention
+  const candidates = splittableParcels(
+    rows,
+    (f) => worseParcelConditions(f).length > 0
+  )
+  splitFirstCarvable(rows, candidates, (feature) => {
+    const parts = carvedParts(
       feature.geometry.coordinates[0],
       chooser,
       MIN_PARCEL_KEPT_SHARE,
       MAX_PARCEL_KEPT_SHARE
     )
-  if (!parts) {
-    return
-  }
-  const ref = feature.values[HABITAT_REF]
-  const keptPart = parcelPart(feature, parts.piece, `${ref}a`)
-  keptPart.worse = WORSE.partlyKeptParcel
-  const worsePart = parcelPart(feature, parts.rest, `${ref}b`)
-  setParcelWorse(worsePart, chooser)
-  worsePart.worse = WORSE.partlyWorseParcel
-  rows.splice(rows.indexOf(feature), 1, keptPart, worsePart)
+    if (!parts) {
+      return null
+    }
+    const ref = feature.values[HABITAT_REF]
+    const keptPart = parcelPart(feature, parts.piece, `${ref}a`)
+    keptPart.worse = WORSE.partlyKeptParcel
+    const worsePart = parcelPart(feature, parts.rest, `${ref}b`)
+    setParcelWorse(worsePart, chooser)
+    worsePart.worse = WORSE.partlyWorseParcel
+    return [keptPart, worsePart]
+  })
+}
+
+/** The better conditions a Retained parcel's baseline habitat can be enhanced to. */
+function parcelEnhancements(feature) {
+  const from = feature.parent.values['Baseline Condition']
+  return enhancementPairs(AREA, parcelHabitatName(feature))
+    .filter(([pairFrom]) => pairFrom === from)
+    .map(([, to]) => to)
+}
+
+/** Set a parcel's row to Enhanced in its own type, to one of `conditions`. */
+function setParcelEnhanced(feature, chooser, conditions) {
+  Object.assign(feature.values, {
+    [RETENTION]: ENHANCED,
+    'Proposed Condition': chooser.pick(conditions)
+  })
+  feature.values[COMMENT] ??= ENHANCED_PART_COMMENT
+}
+
+/**
+ * Set a parcel's row to the development that replaces it: its baseline
+ * habitat lost, and Developed land; sealed surface Created in its place, as
+ * the Metric records ground that is built on. Area ground tiles the site, so
+ * the lost ground is still mapped, as what it becomes.
+ */
+function setParcelDeveloped(feature) {
+  Object.assign(feature.values, {
+    [RETENTION]: CREATED,
+    ...SEALED_PROPOSED(),
+    'Proposed Strategic Significance': LOW,
+    [ADVANCE]: ZERO_YEARS,
+    [DELAY]: ZERO_YEARS
+  })
+  feature.values[COMMENT] ??= LOST_TO_DEVELOPMENT_COMMENT
+}
+
+/**
+ * An area parcel split three ways, with no part getting worse: the surveyor
+ * splits the copied row, keeps part a Retained, enhances part b to a better
+ * condition in its own type, and builds on part c, which is lost and mapped
+ * as the Developed land; sealed surface Created in its place. All three keep
+ * the parent and take the template's tidied refs, "H006a", "H006b" and
+ * "H006c". A parcel that can be enhanced from its condition, taken as
+ * `splittableParcels` orders them. A sealed surface cannot be enhanced, so
+ * the parcel is never one already built on.
+ */
+function splitParcel(site, chooser) {
+  const rows = site.layers.habitats.postIntervention
+  const enhancements = new Map()
+  const candidates = splittableParcels(rows, (f) => {
+    enhancements.set(f, parcelEnhancements(f))
+    return enhancements.get(f).length > 0
+  })
+  splitFirstCarvable(rows, candidates, (feature) => {
+    const kept = carvedParts(
+      feature.geometry.coordinates[0],
+      chooser,
+      MIN_SPLIT_KEPT_SHARE,
+      MAX_SPLIT_KEPT_SHARE
+    )
+    const changed =
+      kept &&
+      carvedParts(
+        kept.rest,
+        chooser,
+        MIN_SPLIT_ENHANCED_SHARE,
+        MAX_SPLIT_ENHANCED_SHARE
+      )
+    if (!changed) {
+      return null
+    }
+    const ref = feature.values[HABITAT_REF]
+    const keptPart = parcelPart(feature, kept.piece, `${ref}a`)
+    keptPart.worse = WORSE.splitKeptParcel
+    const enhancedPart = parcelPart(feature, changed.piece, `${ref}b`)
+    setParcelEnhanced(enhancedPart, chooser, enhancements.get(feature))
+    enhancedPart.worse = WORSE.splitEnhancedParcel
+    const lostPart = parcelPart(feature, changed.rest, `${ref}c`)
+    setParcelDeveloped(lostPart)
+    lostPart.worse = WORSE.splitParcel
+    return [keptPart, enhancedPart, lostPart]
+  })
 }
 
 /**
@@ -1207,6 +1339,14 @@ const WORSE_DRAWS = [
     layerKey: 'habitats',
     draw: partlyWorseParcel,
     defaultCount: 0
+  },
+  // Not a habitat that gets worse, but counted and drawn the same way (see
+  // WORSE): last, and none by default.
+  {
+    kind: WORSE.splitParcel,
+    layerKey: 'habitats',
+    draw: splitParcel,
+    defaultCount: 0
   }
 ]
 
@@ -1229,7 +1369,7 @@ export const MAX_WORSE_COUNT = 50
 
 /**
  * How many of each kind of habitat that gets worse to draw: one of each
- * (none of a part-worse parcel), but for the kinds `counts` names. Refuses a kind it does not know, and a
+ * (none of a part-worse or split parcel), but for the kinds `counts` names. Refuses a kind it does not know, and a
  * count that is not a whole number from 0 to MAX_WORSE_COUNT.
  *
  * @param {Record<string, number>} [counts]  by kind, as WORSE_KINDS names them
@@ -1272,6 +1412,10 @@ export function resolveWorseCounts(counts = {}) {
  *   is split into a Retained part a and a worse Created part b, as the
  *   second hedgerow is (see `partlyWorseParcel`). A site draws none by
  *   default, and draws them last, so a default site keeps its bytes.
+ * - Likewise only when `counts` asks for one, an area parcel is split with
+ *   no part getting worse: a Retained part a, an Enhanced part b and a part
+ *   c lost to development (see `splitParcel`). Drawn after the part-worse
+ *   parcels.
  *
  * The area habitat is the last Retained parcel that can get worse, clear of
  * the lineage flaws, which take the first, and only when another Retained
@@ -1282,7 +1426,7 @@ export function resolveWorseCounts(counts = {}) {
  * empty.
  *
  * `counts` asks for more or fewer of a kind than the one each, or the none
- * of a part-worse parcel (see `resolveWorseCounts`). Each further feature is drawn as the first was,
+ * of a part-worse or split parcel (see `resolveWorseCounts`). Each further feature is drawn as the first was,
  * with its own identity. An area parcel is set worse only while another
  * Retained parcel stays, so a site may give fewer than it asks for; so may
  * a red line too small for every line drawn.

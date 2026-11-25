@@ -3,7 +3,7 @@ import { MetricTemplate } from '../src/workbook-writer/metric-template.mjs'
 import {
   ENHANCEMENT_OF,
   METRIC_SHEETS,
-  RELEASE_LAST_ROWS,
+  LAYOUT_LAST_ROWS,
   capacity
 } from '../src/workbook-writer/template-layout.mjs'
 import { writeMetricWorkbook } from '../src/workbook-writer/write-workbook.mjs'
@@ -52,9 +52,9 @@ function expectTotalsKept(workbook, key, lastRow) {
   }
 }
 
-describe.each(Object.entries(RELEASE_LAST_ROWS))(
+describe.each(Object.entries(LAYOUT_LAST_ROWS))(
   'writing a workbook laid out as %s',
-  (release, lastRows) => {
+  (layout, lastRows) => {
     const template = syntheticMetricTemplate(lastRows)
 
     it.each(SHEET_KEYS)(
@@ -92,7 +92,7 @@ describe.each(Object.entries(RELEASE_LAST_ROWS))(
         const { sheet, columns } = METRIC_SHEETS[key]
         expect(
           workbook.text(sheet, `${columns.reference}${lastRows[key]}`),
-          `${release} ${sheet}`
+          `${layout} ${sheet}`
         ).toBeNull()
         expectTotalsKept(workbook, key, lastRows[key])
       }

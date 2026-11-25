@@ -20,13 +20,32 @@ import {
 } from '../index.mjs'
 import {
   ENCROACHED_WATERCOURSE_COMMENT,
+  ENHANCED_PART_COMMENT,
+  LOST_TO_DEVELOPMENT_COMMENT,
   WORSE_HABITAT_COMMENT,
   WORSE_WATERCOURSE_COMMENT
 } from '../src/bng-service/template-features.mjs'
+import { SEALED_SURFACE } from '../src/bng-service/vocabulary.mjs'
+import { pointInRing } from '../src/geometry.mjs'
+import { wkbToGeoJSON } from '../src/gpkg-io/index.mjs'
+import { areaSquareMetres } from '../src/measure/index.mjs'
+import { AREA, enhancementPairs } from '../src/synthetic/valid-draws.mjs'
 
 const CENTRE = [530000, 180000]
 const SEED = 6
 const PARCELS = 15
+// The smallest share of its parent a split parcel's part may have. The
+// split keeps 0.3 to 0.4 of the whole and enhances 0.4 to 0.6 of the rest,
+// so part a has 0.3 or more, and parts b and c 0.24 or more; the bound is
+// lower, as a carve meets its target area only approximately.
+const MIN_SPLIT_PART_SHARE = 0.15
+const SQ_M_PER_HECTARE = 10_000
+// Points sampled across a split parcel's envelope, on each side, to check
+// its parts cover it once.
+const COVERAGE_GRID = 40
+// A sampled point this close to an edge, in metres, is skipped: which side
+// of a shared edge it falls is a matter of rounding.
+const EDGE_TOLERANCE_M = 0.01
 
 let dir
 let counter = 0
@@ -90,16 +109,18 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
       'partly-worse-hedge',
       'encroached-watercourse',
       'worse-watercourse',
-      'partly-worse-parcel'
+      'partly-worse-parcel',
+      'split-parcel'
     ])
   })
 
-  it('draws one of each by default, but no part-worse parcel, so a default site keeps its bytes', () => {
+  it('draws one of each by default, but no part-worse or split parcel, so a default site keeps its bytes', () => {
     const plain = readFileSync(synthetic())
     const defaults = resolveWorseCounts()
     expect(defaults).toEqual({
       ...Object.fromEntries(WORSE_KINDS.map((k) => [k, 1])),
-      'partly-worse-parcel': 0
+      'partly-worse-parcel': 0,
+      'split-parcel': 0
     })
     expect(readFileSync(synthetic({ worseHabitatCounts: {} }))).toEqual(plain)
     expect(readFileSync(synthetic({ worseHabitatCounts: defaults }))).toEqual(
@@ -227,6 +248,203 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
     expect(checkTemplateValues(file)).toEqual([])
   })
 
+  /** Each split parcel's parts and baseline parent, found by its lost part c. */
+  function splitParcels(file) {
+    const parcels = rows(file, 'Area Habitats Post-Intervention')
+    const baseline = rows(file, 'Area Habitats Baseline')
+    return parcels
+      .filter((r) => r.Comment === LOST_TO_DEVELOPMENT_COMMENT)
+      .map((lost) => {
+        const ref = lost['Parent Ref']
+        const part = (letter) =>
+          parcels.find((r) => r['Habitat Ref'] === `${ref}${letter}`)
+        return {
+          ref,
+          kept: part('a'),
+          enhanced: part('b'),
+          lost,
+          parent: baseline.find((r) => r.feature_uuid === lost.parent_uuid)
+        }
+      })
+  }
+
+  /** A parcel row's outer ring, from its stored geometry. */
+  function ringOf(row) {
+    const geometry = wkbToGeoJSON(row.geom)
+    expect(geometry.type, row['Habitat Ref']).toBe('Polygon')
+    expect(geometry.coordinates, row['Habitat Ref']).toHaveLength(1)
+    return geometry.coordinates[0]
+  }
+
+  function nearEdge(point, ring) {
+    for (let i = 1; i < ring.length; i += 1) {
+      const [[x1, y1], [x2, y2]] = [ring[i - 1], ring[i]]
+      const [dx, dy] = [x2 - x1, y2 - y1]
+      const t = Math.max(
+        0,
+        Math.min(
+          1,
+          ((point[0] - x1) * dx + (point[1] - y1) * dy) / (dx * dx + dy * dy)
+        )
+      )
+      const gap = Math.hypot(point[0] - (x1 + t * dx), point[1] - (y1 + t * dy))
+      if (gap < EDGE_TOLERANCE_M) {
+        return true
+      }
+    }
+    return false
+  }
+
+  /**
+   * The parts' shapes cover their parent once: each point sampled inside
+   * the parent lies in exactly one part, and each point outside it in none.
+   */
+  function expectPartsTileParent(parentRing, partRings) {
+    const xs = parentRing.map(([x]) => x)
+    const ys = parentRing.map(([, y]) => y)
+    const [minX, maxX] = [Math.min(...xs), Math.max(...xs)]
+    const [minY, maxY] = [Math.min(...ys), Math.max(...ys)]
+    let inside = 0
+    for (let i = 0; i < COVERAGE_GRID; i += 1) {
+      for (let j = 0; j < COVERAGE_GRID; j += 1) {
+        const point = [
+          minX + ((i + 0.5) / COVERAGE_GRID) * (maxX - minX),
+          minY + ((j + 0.5) / COVERAGE_GRID) * (maxY - minY)
+        ]
+        if (![parentRing, ...partRings].some((r) => nearEdge(point, r))) {
+          const inParent = pointInRing(point, parentRing)
+          const covering = partRings.filter((r) => pointInRing(point, r))
+          expect(covering.length, `at ${point}`).toBe(inParent ? 1 : 0)
+          inside += inParent ? 1 : 0
+        }
+      }
+    }
+    expect(inside).toBeGreaterThan(0)
+  }
+
+  function expectSplit({ ref, kept, enhanced, lost, parent }) {
+    expect(kept, `${ref}a`).toBeDefined()
+    expect(enhanced, `${ref}b`).toBeDefined()
+    expect(parent, ref).toBeDefined()
+    expect(lost['Habitat Ref']).toBe(`${ref}c`)
+    expect(kept['Retention Category']).toBe('Retained')
+    expect(kept['Proposed Condition']).toBe(parent['Baseline Condition'])
+    expect(enhanced['Retention Category']).toBe('Enhanced')
+    expect(enhanced.Comment).toBe(ENHANCED_PART_COMMENT)
+    expect(enhanced['Proposed Broad Habitat Type']).toBe(
+      parent['Baseline Broad Habitat Type']
+    )
+    expect(enhanced['Proposed Habitat Type']).toBe(
+      parent['Baseline Habitat Type']
+    )
+    // A condition the Metric lets the habitat be enhanced to from its own.
+    expect(
+      enhancementPairs(
+        AREA,
+        `${parent['Baseline Broad Habitat Type']} - ${parent['Baseline Habitat Type']}`
+      ),
+      ref
+    ).toContainEqual([
+      parent['Baseline Condition'],
+      enhanced['Proposed Condition']
+    ])
+    expect(lost['Retention Category']).toBe('Created')
+    expect(lost['Proposed Broad Habitat Type']).toBe(SEALED_SURFACE.broad)
+    expect(lost['Proposed Habitat Type']).toBe(SEALED_SURFACE.type)
+    expect(lost['Habitat created in advance/years']).toBe('0')
+    for (const row of [kept, enhanced, lost]) {
+      expect(row.parent_uuid).toBe(lost.parent_uuid)
+      // No part takes all but a sliver of the parent.
+      expect(row.Area, row['Habitat Ref']).toBeGreaterThan(
+        parent.Area * MIN_SPLIT_PART_SHARE
+      )
+    }
+    expect(kept.Area + enhanced.Area + lost.Area).toBeCloseTo(parent.Area, 6)
+    // Each part's Area is its own shape's, and the shapes tile the parent.
+    const partRings = [kept, enhanced, lost].map(ringOf)
+    for (const [row, ring] of [kept, enhanced, lost].map((r, i) => [
+      r,
+      partRings[i]
+    ])) {
+      expect(
+        areaSquareMetres({ type: 'Polygon', coordinates: [ring] }) /
+          SQ_M_PER_HECTARE,
+        row['Habitat Ref']
+      ).toBeCloseTo(row.Area, 6)
+    }
+    expectPartsTileParent(ringOf(parent), partRings)
+  }
+
+  /** The Retained parcels no split took: their ref is their parent's. */
+  const wholeRetained = (file) =>
+    rows(file, 'Area Habitats Post-Intervention').filter(
+      (r) =>
+        r['Retention Category'] === 'Retained' &&
+        r['Habitat Ref'] === r['Parent Ref']
+    )
+
+  it('splits area parcels into a Retained part a, an Enhanced part b and a part c lost to development, none worse', () => {
+    const file = synthetic(
+      { worseHabitatCounts: { 'split-parcel': 2 } },
+      { seed: 1, numParcels: 30 }
+    )
+    const splits = splitParcels(file)
+    expect(splits).toHaveLength(2)
+    splits.forEach(expectSplit)
+    expect(wholeRetained(file).length).toBeGreaterThanOrEqual(1)
+    expect(
+      rows(file, 'Area Habitats Post-Intervention').filter(isWorse)
+    ).toHaveLength(1)
+    expect(checkLineage(file)).toEqual([])
+    expect(checkTemplateValues(file)).toEqual([])
+  })
+
+  it.each([2, 5, 7, 11])(
+    'splits parcels the same way on seed %i, and keeps a Retained parcel whole',
+    (seed) => {
+      const file = synthetic(
+        { worseHabitatCounts: { 'split-parcel': MAX_WORSE_COUNT } },
+        { seed, numParcels: 30 }
+      )
+      const splits = splitParcels(file)
+      expect(splits.length).toBeGreaterThanOrEqual(1)
+      splits.forEach(expectSplit)
+      expect(wholeRetained(file).length).toBeGreaterThanOrEqual(1)
+      expect(checkLineage(file)).toEqual([])
+      expect(checkTemplateValues(file)).toEqual([])
+    }
+  )
+
+  it('keeps a post-intervention comment an override pins on a split parcel', () => {
+    const large = { seed: 1, numParcels: 30 }
+    const counts = { worseHabitatCounts: { 'split-parcel': 1 } }
+    const parcels = (file) => rows(file, 'Area Habitats Post-Intervention')
+    const lostRef = (file) =>
+      parcels(file).find(
+        (r) =>
+          r['Proposed Habitat Type'] === SEALED_SURFACE.type &&
+          /c$/.test(r['Habitat Ref'])
+      )?.['Parent Ref']
+    const ref = lostRef(synthetic(counts, large))
+    expect(ref).toMatch(/^H\d+$/)
+    const index = Number(ref.slice(1)) - 1
+    const habitats = Array.from({ length: index + 1 }, (_, i) =>
+      i === index ? { postInterventionComment: 'Pinned PI note' } : {}
+    )
+    const file = synthetic(counts, {
+      ...large,
+      attributeOverrides: { habitats }
+    })
+    expect(lostRef(file)).toBe(ref)
+    for (const letter of ['a', 'b', 'c']) {
+      expect(
+        parcels(file).find((r) => r['Habitat Ref'] === `${ref}${letter}`)
+          ?.Comment,
+        `${ref}${letter}`
+      ).toBe('Pinned PI note')
+    }
+  })
+
   it('is byte-identical for the same seed and counts', () => {
     const counts = { hedge: 3, 'partly-worse-hedge': 2 }
     expect(readFileSync(synthetic({ worseHabitatCounts: counts }))).toEqual(
@@ -295,6 +513,25 @@ describe('worseHabitatCounts: how many habitats that get worse a site draws', ()
           ].includes(r.Comment)
         )
       ).toEqual([])
+    })
+
+    it('draws a split parcel a scenario names, counted by its lost part', () => {
+      const file = scenario(
+        { worseHabitats: { 'split-parcel': 1 } },
+        { seed: 1, numParcels: 30 }
+      )
+      const splits = splitParcels(file)
+      expect(splits).toHaveLength(1)
+      splits.forEach(expectSplit)
+      expect(checkLineage(file)).toEqual([])
+    })
+
+    it('refuses a split parcel a scenario cannot draw, saying why', () => {
+      expect(() =>
+        scenario({ worseHabitats: { 'split-parcel': 1 } }, { numParcels: 1 })
+      ).toThrow(
+        /split-parcel: asked for 1, the site drew 0 \(too few Retained parcels that can be enhanced/
+      )
     })
 
     it('refuses a kind or a site change on a layer the site leaves empty', () => {

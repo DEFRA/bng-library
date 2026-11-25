@@ -170,7 +170,11 @@ describe('parseScenarioCatalogue', () => {
         catalogue(
           scenario({
             formats: ['bng-service'],
-            worseHabitats: { hedge: 1, 'partly-worse-parcel': 2 },
+            worseHabitats: {
+              hedge: 1,
+              'partly-worse-parcel': 2,
+              'split-parcel': 1
+            },
             siteChanges: ['realigned-watercourse', 'shorter-watercourse']
           })
         )

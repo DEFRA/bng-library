@@ -89,22 +89,51 @@ const SPEC_LIST_FOLDER = 'CSV References/'
 
 /**
  * A column's drop-down, as the specification describes it, in this shape.
- * Throws, naming the column, on a kind this library does not know or a list
- * outside the template's CSV References, rather than misread either.
+ * Throws, naming the column, rather than misread one: a kind this library
+ * does not know, a fixed list without a stored value for every choice, or a
+ * reference list outside the template's CSV References, without the column
+ * it stores, or with a filter that is not text.
  */
 function dropDownOf(table, column, dropDown) {
-  const { kind, values, list, storedColumn, filter } = dropDown
-  if (kind === SPEC_FIXED_LIST) {
-    return { kind: 'list', values: values.map(({ stored }) => stored) }
-  }
   const label = `"${table}"."${column}"`
-  if (kind !== SPEC_REFERENCE_LIST) {
-    throw new Error(`${label} has a drop-down of unknown kind "${kind}"`)
+  if (dropDown.kind === SPEC_FIXED_LIST) {
+    return fixedListOf(label, dropDown)
   }
-  if (!list?.startsWith(SPEC_LIST_FOLDER)) {
+  if (dropDown.kind === SPEC_REFERENCE_LIST) {
+    return referenceListOf(label, dropDown)
+  }
+  throw new Error(`${label} has a drop-down of unknown kind "${dropDown.kind}"`)
+}
+
+const isText = (value) => typeof value === 'string' && value !== ''
+
+/** A fixed list: the value each choice stores, in the template's order. */
+function fixedListOf(label, { values }) {
+  if (
+    !Array.isArray(values) ||
+    !values.every(({ stored } = {}) => isText(stored))
+  ) {
+    throw new Error(
+      `${label} has a fixed list without a stored value for every choice`
+    )
+  }
+  return { kind: 'list', values: values.map(({ stored }) => stored) }
+}
+
+/** A reference list: its file in CSV References, its key column and filter. */
+function referenceListOf(label, { list, storedColumn, filter }) {
+  if (typeof list !== 'string' || !list.startsWith(SPEC_LIST_FOLDER)) {
     throw new Error(
       `${label} reads a list outside ${SPEC_LIST_FOLDER}: ${list}`
     )
+  }
+  if (!isText(storedColumn)) {
+    throw new Error(
+      `${label} reads ${list} without naming the column it stores`
+    )
+  }
+  if (filter != null && typeof filter !== 'string') {
+    throw new Error(`${label} reads ${list} with a filter that is not text`)
   }
   return {
     kind: 'reference',

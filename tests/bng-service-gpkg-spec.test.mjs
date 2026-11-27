@@ -72,6 +72,29 @@ describe('reading a specification’s drop-downs', () => {
     )
   })
 
+  it('refuses a fixed list without a stored value for every choice, naming the column', () => {
+    expect(() =>
+      templateDropDowns(
+        specWith({ kind: 'fixed list', values: [{ shown: 'A' }] })
+      )
+    ).toThrow(
+      '"Hedgerows Baseline"."Type" has a fixed list without a stored value for every choice'
+    )
+    expect(() => templateDropDowns(specWith({ kind: 'fixed list' }))).toThrow(
+      'has a fixed list without a stored value for every choice'
+    )
+  })
+
+  it('refuses a reference list that names no stored column, naming the column', () => {
+    expect(() =>
+      templateDropDowns(
+        specWith({ kind: 'list', list: 'CSV References/Hedgerows/Types.csv' })
+      )
+    ).toThrow(
+      '"Hedgerows Baseline"."Type" reads CSV References/Hedgerows/Types.csv without naming the column it stores'
+    )
+  })
+
   it('refuses a list outside the CSV References, naming the column', () => {
     expect(() =>
       templateDropDowns(

@@ -13,7 +13,8 @@ import {
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE,
   referenceList,
-  templateDropDowns
+  templateDropDowns,
+  templateVersion
 } from '../src/bng-service/reference.mjs'
 
 const FID = 'fid'
@@ -82,6 +83,26 @@ describe('reading a specification’s drop-downs', () => {
       )
     ).toThrow(
       '"Hedgerows Baseline"."Type" reads a list outside CSV References/: Other/Types.csv'
+    )
+  })
+})
+
+describe('reading a specification’s version record', () => {
+  it('reads it as TEMPLATE_SOURCE holds it', () => {
+    expect(TEMPLATE_SOURCE).toMatchObject(templateVersion(GPKG_SPEC))
+  })
+
+  it('refuses a record without a field, naming it', () => {
+    const { mimeType, ...versionRecord } = GPKG_SPEC.versionRecord
+    expect(mimeType).toEqual(expect.any(String))
+    expect(() => templateVersion({ ...GPKG_SPEC, versionRecord })).toThrow(
+      'the version record has no versionRecord.mimeType'
+    )
+  })
+
+  it('refuses a specification with no version record', () => {
+    expect(() => templateVersion({ tables: [] })).toThrow(
+      'the version record has no versionRecord.metadata.format'
     )
   })
 })

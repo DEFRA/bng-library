@@ -24,7 +24,36 @@ const readJson = (name) =>
  */
 export const GPKG_SPEC = Object.freeze(readJson('gpkg-spec.json'))
 
-const { versionRecord } = GPKG_SPEC
+/** Each field of TEMPLATE_SOURCE → where the version record holds it. */
+const VERSION_RECORD_FIELDS = Object.freeze([
+  ['format', ['metadata', 'format']],
+  ['version', ['metadata', 'version']],
+  ['metadataUri', ['mdStandardUri']],
+  ['metadataMimeType', ['mimeType']]
+])
+
+/**
+ * The format name and version a specification's version record names, with
+ * the record's metadata URI and MIME type. Throws, naming the field, when the
+ * record lacks one. Exported so the sync script can check a new
+ * specification before it copies it.
+ *
+ * @param {{ versionRecord?: object }} spec
+ * @returns {{ format: string, version: string, metadataUri: string, metadataMimeType: string }}
+ */
+export function templateVersion(spec) {
+  return Object.fromEntries(
+    VERSION_RECORD_FIELDS.map(([field, keys]) => {
+      const value = keys.reduce((held, key) => held?.[key], spec.versionRecord)
+      if (typeof value !== 'string' || value === '') {
+        throw new Error(
+          `the version record has no versionRecord.${keys.join('.')}`
+        )
+      }
+      return [field, value]
+    })
+  )
+}
 
 /**
  * The template commit the copy came from, and the format name and version
@@ -32,10 +61,7 @@ const { versionRecord } = GPKG_SPEC
  */
 export const TEMPLATE_SOURCE = Object.freeze({
   ...readJson('source.json'),
-  format: versionRecord.metadata.format,
-  version: versionRecord.metadata.version,
-  metadataUri: versionRecord.mdStandardUri,
-  metadataMimeType: versionRecord.mimeType
+  ...templateVersion(GPKG_SPEC)
 })
 
 const FID = 'fid'

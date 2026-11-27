@@ -18,6 +18,13 @@ export const TEMPLATE_SOURCE = Object.freeze(readJson('source.json'))
 /** Every table of the template's GeoPackage, with its columns in order. */
 export const TEMPLATE_SCHEMA = Object.freeze(readJson('schema.json'))
 
+/**
+ * The template's GeoPackage specification, as bng-metric-template publishes
+ * it: every table, at its stage, with every column, fid and geometry
+ * included, and what the template does with each.
+ */
+export const GPKG_SPEC = Object.freeze(readJson('gpkg-spec.json'))
+
 /** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
 export const TEMPLATE_DROP_DOWNS = Object.freeze(readJson('drop-downs.json'))
 

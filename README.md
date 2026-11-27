@@ -4,7 +4,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI, in the legacy Natural England layout (the default) or the [BNG Service template format](#bng-service-template-format).
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
-- **Reading the BNG Service template** (`bng-library/bng-service`) — the template's schema, table and column names, version record and file checks, for a consumer that reads uploads.
+- **Reading the BNG Service template** (`bng-library/bng-service`) — the template's schema and its published GeoPackage specification, table and column names, version record and file checks, for a consumer that reads uploads.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.

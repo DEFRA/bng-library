@@ -33,6 +33,7 @@ export {
   versionRecordText
 } from './schema.mjs'
 export {
+  GPKG_SPEC,
   TEMPLATE_ALLOWED_VALUES,
   TEMPLATE_DROP_DOWNS,
   TEMPLATE_SCHEMA,

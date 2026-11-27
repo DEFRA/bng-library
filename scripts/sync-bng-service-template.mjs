@@ -19,6 +19,9 @@
  *                    which the service checks an upload's values against
  *   source.json      the template commit these came from, and the format and
  *                    version its GeoPackage records
+ *   gpkg-spec.json   the template's GeoPackage specification, copied byte for
+ *                    byte: every table at its stage, and every column of it,
+ *                    fid and geometry included
  *   reference/       the template's CSV References, copied byte for byte
  *
  * The generator writes files to schema.json, and checks every value it writes
@@ -49,6 +52,7 @@ const TEMPLATE_DIR = path.join('templates', 'bng-service')
 const PROJECT_FILE = 'BNG Service Habitat Mapping.qgz'
 const LAYERS_FILE = path.join('Layers', 'BNG Service Layers.gpkg')
 const REFERENCE_DIR = 'CSV References'
+const SPEC_FILE = path.join('spec', 'gpkg-spec.json')
 const LEGACY_DIR = path.join('templates', 'legacy-ne')
 const LEGACY_PROJECT_FILE = 'Net Gain Habitat Mapping.qgz'
 const DISTINCTIVENESS_COLUMNS = [
@@ -420,6 +424,10 @@ function main() {
       referenceDir: path.join(legacy, REFERENCE_DIR)
     }
   ])
+  const spec = path.resolve(checkout, SPEC_FILE)
+  if (!existsSync(spec)) {
+    fail(`no GeoPackage specification at ${spec}`)
+  }
   const { tables, metadata } = readSchema(path.join(template, LAYERS_FILE))
   if (metadata.length !== 1) {
     fail(`expected one template version record, found ${metadata.length}`)
@@ -431,6 +439,7 @@ function main() {
   cpSync(path.join(template, REFERENCE_DIR), path.join(OUT_DIR, 'reference'), {
     recursive: true
   })
+  cpSync(spec, path.join(OUT_DIR, 'gpkg-spec.json'))
   writeJson('schema.json', { tables })
   writeJson('drop-downs.json', dropDowns)
   writeJson('allowed-values.json', allowedValues)
@@ -443,7 +452,7 @@ function main() {
     metadataMimeType: metadata[0].mime_type
   })
   console.log(
-    `Wrote ${tables.length} tables, the drop-downs of ${Object.keys(dropDowns).length} layers and the reference lists to ${OUT_DIR}`
+    `Wrote ${tables.length} tables, the drop-downs of ${Object.keys(dropDowns).length} layers, the reference lists and the GeoPackage specification to ${OUT_DIR}`
   )
 }
 

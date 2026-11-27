@@ -1,8 +1,11 @@
 /**
- * The BNG Service template's schema and reference lists, as copied into
- * `template/` by `scripts/sync-bng-service-template.mjs`. Read once, on first
- * use. Nothing here restates a template value: the generator and the value
- * check both read the template's own lists.
+ * The BNG Service template's GeoPackage specification and reference lists, as
+ * copied into `template/` by `scripts/sync-bng-service-template.mjs`. The
+ * specification and the allowed values are read once, when this module loads,
+ * since the schema, drop-downs and version below are derived from them; each
+ * reference list is read once, on first use. Nothing here restates a template
+ * value: the generator and the value check both read the template's own
+ * lists.
  */
 
 import { readFileSync } from 'node:fs'
@@ -55,12 +58,27 @@ export const TEMPLATE_SCHEMA = Object.freeze({
 })
 
 const SPEC_FIXED_LIST = 'fixed list'
+const SPEC_REFERENCE_LIST = 'list'
 const SPEC_LIST_FOLDER = 'CSV References/'
 
-/** A column's drop-down, as the specification describes it, in this shape. */
-function dropDownOf({ kind, values, list, storedColumn, filter }) {
+/**
+ * A column's drop-down, as the specification describes it, in this shape.
+ * Throws, naming the column, on a kind this library does not know or a list
+ * outside the template's CSV References, rather than misread either.
+ */
+function dropDownOf(table, column, dropDown) {
+  const { kind, values, list, storedColumn, filter } = dropDown
   if (kind === SPEC_FIXED_LIST) {
     return { kind: 'list', values: values.map(({ stored }) => stored) }
+  }
+  const label = `"${table}"."${column}"`
+  if (kind !== SPEC_REFERENCE_LIST) {
+    throw new Error(`${label} has a drop-down of unknown kind "${kind}"`)
+  }
+  if (!list?.startsWith(SPEC_LIST_FOLDER)) {
+    throw new Error(
+      `${label} reads a list outside ${SPEC_LIST_FOLDER}: ${list}`
+    )
   }
   return {
     kind: 'reference',
@@ -70,19 +88,30 @@ function dropDownOf({ kind, values, list, storedColumn, filter }) {
   }
 }
 
-/** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
-export const TEMPLATE_DROP_DOWNS = Object.freeze(
-  Object.fromEntries(
-    GPKG_SPEC.tables.map((table) => [
+/**
+ * table → column → drop-down, from a GeoPackage specification. Exported so
+ * the sync script can check a new specification before it copies it.
+ *
+ * @param {{ tables: Array<{ name: string, columns: Array<{ name: string, dropDown?: object }> }> }} spec
+ */
+export function templateDropDowns(spec) {
+  return Object.fromEntries(
+    spec.tables.map((table) => [
       table.name,
       Object.fromEntries(
         table.columns
           .filter(({ dropDown }) => dropDown)
-          .map(({ name, dropDown }) => [name, dropDownOf(dropDown)])
+          .map(({ name, dropDown }) => [
+            name,
+            dropDownOf(table.name, name, dropDown)
+          ])
       )
     ])
   )
-)
+}
+
+/** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
+export const TEMPLATE_DROP_DOWNS = Object.freeze(templateDropDowns(GPKG_SPEC))
 
 /**
  * column → every value that a drop-down or filled-in column offers, in this

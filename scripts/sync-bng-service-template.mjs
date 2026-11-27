@@ -41,7 +41,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import path from 'node:path'
-import { parseCsv } from '../src/bng-service/reference.mjs'
+import { parseCsv, templateDropDowns } from '../src/bng-service/reference.mjs'
 import { readZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const TEMPLATE_DIR = path.join('templates', 'bng-service')
@@ -353,7 +353,15 @@ function main() {
       referenceDir: path.join(legacy, REFERENCE_DIR)
     }
   ])
-  const { tables } = JSON.parse(readFileSync(spec, 'utf8'))
+  const specification = JSON.parse(readFileSync(spec, 'utf8'))
+  // Read the new specification's drop-downs as the library will, so one it
+  // cannot read stops the sync before anything is copied.
+  try {
+    templateDropDowns(specification)
+  } catch (error) {
+    fail(`the GeoPackage specification cannot be read: ${error.message}`)
+  }
+  const { tables } = specification
 
   rmSync(OUT_DIR, { recursive: true, force: true })
   mkdirSync(OUT_DIR, { recursive: true })

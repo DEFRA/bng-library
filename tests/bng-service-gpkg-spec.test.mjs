@@ -12,7 +12,8 @@ import {
   TEMPLATE_DROP_DOWNS,
   TEMPLATE_SCHEMA,
   TEMPLATE_SOURCE,
-  referenceList
+  referenceList,
+  templateDropDowns
 } from '../src/bng-service/reference.mjs'
 
 const FID = 'fid'
@@ -51,4 +52,36 @@ describe('the GeoPackage specification', () => {
       expect(Object.keys(rows[0])).toContain(key)
     }
   )
+})
+
+describe('reading a specification’s drop-downs', () => {
+  const specWith = (dropDown) => ({
+    tables: [
+      { name: 'Hedgerows Baseline', columns: [{ name: 'Type', dropDown }] }
+    ]
+  })
+
+  it('reads them as TEMPLATE_DROP_DOWNS holds them', () => {
+    expect(templateDropDowns(GPKG_SPEC)).toEqual(TEMPLATE_DROP_DOWNS)
+  })
+
+  it('refuses a kind it does not know, naming the column', () => {
+    expect(() => templateDropDowns(specWith({ kind: 'range' }))).toThrow(
+      '"Hedgerows Baseline"."Type" has a drop-down of unknown kind "range"'
+    )
+  })
+
+  it('refuses a list outside the CSV References, naming the column', () => {
+    expect(() =>
+      templateDropDowns(
+        specWith({
+          kind: 'list',
+          list: 'Other/Types.csv',
+          storedColumn: 'Type'
+        })
+      )
+    ).toThrow(
+      '"Hedgerows Baseline"."Type" reads a list outside CSV References/: Other/Types.csv'
+    )
+  })
 })

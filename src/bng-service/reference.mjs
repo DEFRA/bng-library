@@ -1,8 +1,11 @@
 /**
- * The BNG Service template's schema and reference lists, as copied into
- * `template/` by `scripts/sync-bng-service-template.mjs`. Read once, on first
- * use. Nothing here restates a template value: the generator and the value
- * check both read the template's own lists.
+ * The BNG Service template's GeoPackage specification and reference lists, as
+ * copied into `template/` by `scripts/sync-bng-service-template.mjs`. The
+ * specification and the allowed values are read once, when this module loads,
+ * since the schema, drop-downs and version below are derived from them; each
+ * reference list is read once, on first use. Nothing here restates a template
+ * value: the generator and the value check both read the template's own
+ * lists.
  */
 
 import { readFileSync } from 'node:fs'
@@ -12,14 +15,158 @@ const TEMPLATE_DIR = new URL('./template/', import.meta.url)
 const readJson = (name) =>
   JSON.parse(readFileSync(new URL(name, TEMPLATE_DIR), 'utf8'))
 
-/** The template commit, format name and version the copy came from. */
-export const TEMPLATE_SOURCE = Object.freeze(readJson('source.json'))
+/**
+ * The template's GeoPackage specification, as bng-metric-template publishes
+ * it: every table, at its stage, with every column, fid and geometry
+ * included, each column's drop-down, and the version record. The schema,
+ * the drop-downs and the version below are read from it, so the library
+ * holds one description of the template.
+ */
+export const GPKG_SPEC = Object.freeze(readJson('gpkg-spec.json'))
+
+/** Each field of TEMPLATE_SOURCE → where the version record holds it. */
+const VERSION_RECORD_FIELDS = Object.freeze([
+  ['format', ['metadata', 'format']],
+  ['version', ['metadata', 'version']],
+  ['metadataUri', ['mdStandardUri']],
+  ['metadataMimeType', ['mimeType']]
+])
+
+/**
+ * The format name and version a specification's version record names, with
+ * the record's metadata URI and MIME type. Throws, naming the field, when the
+ * record lacks one. Exported so the sync script can check a new
+ * specification before it copies it.
+ *
+ * @param {{ versionRecord?: object }} spec
+ * @returns {{ format: string, version: string, metadataUri: string, metadataMimeType: string }}
+ */
+export function templateVersion(spec) {
+  return Object.fromEntries(
+    VERSION_RECORD_FIELDS.map(([field, keys]) => {
+      const value = keys.reduce((held, key) => held?.[key], spec.versionRecord)
+      if (typeof value !== 'string' || value === '') {
+        throw new Error(
+          `the version record has no versionRecord.${keys.join('.')}`
+        )
+      }
+      return [field, value]
+    })
+  )
+}
+
+/**
+ * The template commit the copy came from, and the format name and version
+ * its GeoPackage records, with the record's metadata URI and MIME type.
+ */
+export const TEMPLATE_SOURCE = Object.freeze({
+  ...readJson('source.json'),
+  ...templateVersion(GPKG_SPEC)
+})
+
+const FID = 'fid'
+
+/** A table's columns besides fid and the geometry, as `{ name, type }`. */
+const attributeColumns = (table) =>
+  table.columns
+    .filter(({ name }) => name !== FID && name !== table.geometryColumn)
+    .map(({ name, type }) => ({ name, type }))
 
 /** Every table of the template's GeoPackage, with its columns in order. */
-export const TEMPLATE_SCHEMA = Object.freeze(readJson('schema.json'))
+export const TEMPLATE_SCHEMA = Object.freeze({
+  tables: GPKG_SPEC.tables.map((table) => ({
+    name: table.name,
+    geometryColumn: table.geometryColumn,
+    geometryType: table.geometryType,
+    srsId: table.srsId,
+    columns: attributeColumns(table)
+  }))
+})
+
+const SPEC_FIXED_LIST = 'fixed list'
+const SPEC_REFERENCE_LIST = 'list'
+const SPEC_LIST_FOLDER = 'CSV References/'
+
+/**
+ * A column's drop-down, as the specification describes it, in this shape.
+ * Throws, naming the column, rather than misread one: a kind this library
+ * does not know, a fixed list without a stored value for every choice, or a
+ * reference list outside the template's CSV References, without the column
+ * it stores, or with a filter that is not text.
+ */
+function dropDownOf(table, column, dropDown) {
+  const label = `"${table}"."${column}"`
+  if (dropDown.kind === SPEC_FIXED_LIST) {
+    return fixedListOf(label, dropDown)
+  }
+  if (dropDown.kind === SPEC_REFERENCE_LIST) {
+    return referenceListOf(label, dropDown)
+  }
+  throw new Error(`${label} has a drop-down of unknown kind "${dropDown.kind}"`)
+}
+
+const isText = (value) => typeof value === 'string' && value !== ''
+
+/** A fixed list: the value each choice stores, in the template's order. */
+function fixedListOf(label, { values }) {
+  if (
+    !Array.isArray(values) ||
+    !values.every(({ stored } = {}) => isText(stored))
+  ) {
+    throw new Error(
+      `${label} has a fixed list without a stored value for every choice`
+    )
+  }
+  return { kind: 'list', values: values.map(({ stored }) => stored) }
+}
+
+/** A reference list: its file in CSV References, its key column and filter. */
+function referenceListOf(label, { list, storedColumn, filter }) {
+  if (typeof list !== 'string' || !list.startsWith(SPEC_LIST_FOLDER)) {
+    throw new Error(
+      `${label} reads a list outside ${SPEC_LIST_FOLDER}: ${list}`
+    )
+  }
+  if (!isText(storedColumn)) {
+    throw new Error(
+      `${label} reads ${list} without naming the column it stores`
+    )
+  }
+  if (filter != null && typeof filter !== 'string') {
+    throw new Error(`${label} reads ${list} with a filter that is not text`)
+  }
+  return {
+    kind: 'reference',
+    list: list.slice(SPEC_LIST_FOLDER.length),
+    key: storedColumn,
+    ...(filter ? { filter } : {})
+  }
+}
+
+/**
+ * table → column → drop-down, from a GeoPackage specification. Exported so
+ * the sync script can check a new specification before it copies it.
+ *
+ * @param {{ tables: Array<{ name: string, columns: Array<{ name: string, dropDown?: object }> }> }} spec
+ */
+export function templateDropDowns(spec) {
+  return Object.fromEntries(
+    spec.tables.map((table) => [
+      table.name,
+      Object.fromEntries(
+        table.columns
+          .filter(({ dropDown }) => dropDown)
+          .map(({ name, dropDown }) => [
+            name,
+            dropDownOf(table.name, name, dropDown)
+          ])
+      )
+    ])
+  )
+}
 
 /** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
-export const TEMPLATE_DROP_DOWNS = Object.freeze(readJson('drop-downs.json'))
+export const TEMPLATE_DROP_DOWNS = Object.freeze(templateDropDowns(GPKG_SPEC))
 
 /**
  * column → every value that a drop-down or filled-in column offers, in this

@@ -23,6 +23,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
   TEMPLATE_ALLOWED_VALUES,
+  TEMPLATE_DROP_DOWNS,
   generateFromWorkbook,
   generateOne,
   generatePermutations,
@@ -121,7 +122,7 @@ function flawPlan(selection) {
 
 // The checks above, and the service's, skip a column the catalogue has no
 // list for, so a column dropped from it would pass unseen. Every drop-down the
-// QGIS project declares (drop-downs.json, read from its widgets), and every
+// template's specification declares (TEMPLATE_DROP_DOWNS), and every
 // filled-in column named here, must have a list of its own.
 const FILLED_IN_COLUMNS = Object.freeze([
   'Baseline Distinctiveness',
@@ -133,14 +134,10 @@ const FILLED_IN_COLUMNS = Object.freeze([
 ])
 
 describe('the allowed-values catalogue', () => {
-  const dropDowns = JSON.parse(
-    readFileSync(
-      new URL('../src/bng-service/template/drop-downs.json', import.meta.url),
-      'utf8'
-    )
-  )
   const dropDownColumns = [
-    ...new Set(Object.values(dropDowns).flatMap((table) => Object.keys(table)))
+    ...new Set(
+      Object.values(TEMPLATE_DROP_DOWNS).flatMap((table) => Object.keys(table))
+    )
   ]
 
   it('finds the template drop-downs', () => {

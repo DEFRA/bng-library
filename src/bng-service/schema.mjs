@@ -1,7 +1,7 @@
 /**
  * The BNG Service template's GeoPackage: its tables, written from the copy of
- * the template's schema in `template/schema.json`, and the record that names
- * the format and its version (BMD-1096, and the template's MAINTAINERS.md).
+ * the template's GeoPackage specification in `template/gpkg-spec.json`, and
+ * the record that names the format and its version (BMD-1096, and the template's MAINTAINERS.md).
  */
 
 import {

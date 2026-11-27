@@ -12,21 +12,77 @@ const TEMPLATE_DIR = new URL('./template/', import.meta.url)
 const readJson = (name) =>
   JSON.parse(readFileSync(new URL(name, TEMPLATE_DIR), 'utf8'))
 
-/** The template commit, format name and version the copy came from. */
-export const TEMPLATE_SOURCE = Object.freeze(readJson('source.json'))
-
-/** Every table of the template's GeoPackage, with its columns in order. */
-export const TEMPLATE_SCHEMA = Object.freeze(readJson('schema.json'))
-
 /**
  * The template's GeoPackage specification, as bng-metric-template publishes
  * it: every table, at its stage, with every column, fid and geometry
- * included, and what the template does with each.
+ * included, each column's drop-down, and the version record. The schema,
+ * the drop-downs and the version below are read from it, so the library
+ * holds one description of the template.
  */
 export const GPKG_SPEC = Object.freeze(readJson('gpkg-spec.json'))
 
+const { versionRecord } = GPKG_SPEC
+
+/**
+ * The template commit the copy came from, and the format name and version
+ * its GeoPackage records, with the record's metadata URI and MIME type.
+ */
+export const TEMPLATE_SOURCE = Object.freeze({
+  ...readJson('source.json'),
+  format: versionRecord.metadata.format,
+  version: versionRecord.metadata.version,
+  metadataUri: versionRecord.mdStandardUri,
+  metadataMimeType: versionRecord.mimeType
+})
+
+const FID = 'fid'
+
+/** A table's columns besides fid and the geometry, as `{ name, type }`. */
+const attributeColumns = (table) =>
+  table.columns
+    .filter(({ name }) => name !== FID && name !== table.geometryColumn)
+    .map(({ name, type }) => ({ name, type }))
+
+/** Every table of the template's GeoPackage, with its columns in order. */
+export const TEMPLATE_SCHEMA = Object.freeze({
+  tables: GPKG_SPEC.tables.map((table) => ({
+    name: table.name,
+    geometryColumn: table.geometryColumn,
+    geometryType: table.geometryType,
+    srsId: table.srsId,
+    columns: attributeColumns(table)
+  }))
+})
+
+const SPEC_FIXED_LIST = 'fixed list'
+const SPEC_LIST_FOLDER = 'CSV References/'
+
+/** A column's drop-down, as the specification describes it, in this shape. */
+function dropDownOf({ kind, values, list, storedColumn, filter }) {
+  if (kind === SPEC_FIXED_LIST) {
+    return { kind: 'list', values: values.map(({ stored }) => stored) }
+  }
+  return {
+    kind: 'reference',
+    list: list.slice(SPEC_LIST_FOLDER.length),
+    key: storedColumn,
+    ...(filter ? { filter } : {})
+  }
+}
+
 /** table → column → { kind: 'list', values } | { kind: 'reference', list, key, filter? } */
-export const TEMPLATE_DROP_DOWNS = Object.freeze(readJson('drop-downs.json'))
+export const TEMPLATE_DROP_DOWNS = Object.freeze(
+  Object.fromEntries(
+    GPKG_SPEC.tables.map((table) => [
+      table.name,
+      Object.fromEntries(
+        table.columns
+          .filter(({ dropDown }) => dropDown)
+          .map(({ name, dropDown }) => [name, dropDownOf(dropDown)])
+      )
+    ])
+  )
+)
 
 /**
  * column → every value that a drop-down or filled-in column offers, in this

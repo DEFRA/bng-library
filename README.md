@@ -4,7 +4,7 @@ Shared library for the Biodiversity Net Gain (BNG) projects. Provides:
 
 - **Synthetic GeoPackage generation** — emit valid (or deliberately flawed) test gpkgs for development and CI, in the legacy Natural England layout (the default) or the [BNG Service template format](#bng-service-template-format).
 - **Workbook-driven generation** — read a BNG metric workbook (`.xlsx`) and produce baseline + post-intervention gpkgs that match it.
-- **Reading the BNG Service template** (`bng-library/bng-service`) — the template's schema and its published GeoPackage specification, table and column names, version record and file checks, for a consumer that reads uploads.
+- **Reading the BNG Service template** (`bng-library/bng-service`) — the template's GeoPackage specification, schema, table and column names, version record and file checks, for a consumer that reads uploads.
 - **Generic GeoPackage I/O** (`bng-library/gpkg-io`) — schema-agnostic helpers for reading and writing gpkg files.
 - **Feature size** (`bng-library/measure`) — the area and length a feature is priced on, the one definition both the service and the metric workbooks use.
 - **Statutory metric engine** (`bng-library/metric`) — the BNG reference lookup tables and the unit calculations built on them.
@@ -313,18 +313,21 @@ match. It returns
 `[]` for every generated site, scenario and workbook site, and exactly the one
 problem for a file made with a lineage flaw.
 
-**The template's schema and lists** are copied into
+**The template's specification and lists** are copied into
 `src/bng-service/template/` from a checkout of
-[bng-metric-template](https://github.com/DEFRA/bng-metric-template): the
-GeoPackage's tables and columns, each column's drop-down from the QGIS
-project, and the CSV reference lists, byte for byte. `allowed-values.json`
-holds every value that each drop-down or filled-in column offers, in this
-template and the Natural England template together (`TEMPLATE_ALLOWED_VALUES`):
-the service refuses an uploaded value that none of them offers.
-`source.json` names the template commit. When the template changes, run
-`npm run sync:template -- ../bng-metric-template` and review the diff. With
-`BNG_METRIC_TEMPLATE` pointing at a checkout, the tests also compare the copy
-with the template's own GeoPackage.
+[bng-metric-template](https://github.com/DEFRA/bng-metric-template), byte for
+byte: its GeoPackage specification (`gpkg-spec.json`, exported as
+`GPKG_SPEC`) and its CSV reference lists. The specification is the one
+description of the template the library holds: `TEMPLATE_SCHEMA` (each
+table's columns, fid and geometry aside), `TEMPLATE_DROP_DOWNS` and the
+format and version in `TEMPLATE_SOURCE` are read from it.
+`allowed-values.json` holds every value that each drop-down or filled-in
+column offers, in this template and the Natural England template together
+(`TEMPLATE_ALLOWED_VALUES`): the service refuses an uploaded value that none
+of them offers. `source.json` names the template commit. When the template
+changes, run `npm run sync:template -- ../bng-metric-template` and review the
+diff. With `BNG_METRIC_TEMPLATE` pointing at a checkout, the tests also
+compare the copy with the template's own GeoPackage.
 
 ### Statutory metric
 

@@ -1,33 +1,30 @@
 #!/usr/bin/env node
 
 /**
- * Copy the BNG Service QGIS template's schema and reference lists into this
- * library, from a checkout of the bng-metric-template repository.
+ * Copy the BNG Service QGIS template's GeoPackage specification and reference
+ * lists into this library, from a checkout of the bng-metric-template
+ * repository.
  *
  *   node scripts/sync-bng-service-template.mjs ../bng-metric-template
  *
  * Writes src/bng-service/template/:
  *
- *   schema.json      every table of the template's GeoPackage: its geometry
- *                    column and type, and its columns in order
- *   drop-downs.json  each column's drop-down, read from the QGIS project: a
- *                    fixed list, or a reference list with its key column and
- *                    the filter that narrows it by an earlier choice
+ *   gpkg-spec.json   the template's GeoPackage specification, copied byte for
+ *                    byte: every table at its stage, every column of it, each
+ *                    column's drop-down, and the version record. The library
+ *                    reads its schema, drop-downs and version from it
+ *                    (`src/bng-service/reference.mjs`)
+ *   reference/       the template's CSV References, copied byte for byte
  *   allowed-values.json
  *                    each drop-down or filled-in column's every value, in
  *                    this template and the Natural England template together,
  *                    which the service checks an upload's values against
- *   source.json      the template commit these came from, and the format and
- *                    version its GeoPackage records
- *   gpkg-spec.json   the template's GeoPackage specification, copied byte for
- *                    byte: every table at its stage, and every column of it,
- *                    fid and geometry included
- *   reference/       the template's CSV References, copied byte for byte
+ *   source.json      the template repository and the commit these came from
  *
- * The generator writes files to schema.json, and checks every value it writes
- * against drop-downs.json and the reference lists, so a change to the template
- * reaches the library by running this again and reviewing the diff. Nothing
- * here is edited by hand.
+ * The generator writes tables to the specification's schema, and checks
+ * every value it writes against its drop-downs and the reference lists, so a
+ * change to the template reaches the library by running this again and
+ * reviewing the diff. Nothing here is edited by hand.
  *
  * Importing this module runs nothing: `readAllowedValues` is exported for
  * its tests.
@@ -44,13 +41,11 @@ import {
   writeFileSync
 } from 'node:fs'
 import path from 'node:path'
-import Database from 'better-sqlite3'
 import { parseCsv } from '../src/bng-service/reference.mjs'
 import { readZip } from '../src/workbook-writer/xlsx-zip.mjs'
 
 const TEMPLATE_DIR = path.join('templates', 'bng-service')
 const PROJECT_FILE = 'BNG Service Habitat Mapping.qgz'
-const LAYERS_FILE = path.join('Layers', 'BNG Service Layers.gpkg')
 const REFERENCE_DIR = 'CSV References'
 const SPEC_FILE = path.join('spec', 'gpkg-spec.json')
 const LEGACY_DIR = path.join('templates', 'legacy-ne')
@@ -151,35 +146,6 @@ function referenceList(widget, layersById) {
     key: config.Key,
     ...(filter ? { filter } : {})
   }
-}
-
-/** table → field → drop-down, for every GeoPackage layer in the project. */
-function readDropDowns(projectXml) {
-  const layers = readLayers(projectXml)
-  const layersById = new Map(layers.map((layer) => [layer.id, layer]))
-  const dropDowns = {}
-  for (const layer of layers) {
-    const table = /layername=([^|]+)/.exec(layer.datasource)?.[1]
-    const fields = /<fieldConfiguration>([\s\S]*?)<\/fieldConfiguration>/.exec(
-      layer.xml
-    )
-    if (!table || !fields) {
-      continue
-    }
-    const columns = {}
-    for (const [, name, body] of fields[1].matchAll(
-      /<field name="([^"]*)"[^>]*>([\s\S]*?)<\/field>/g
-    )) {
-      const type = /<editWidget type="([^"]*)"/.exec(body)?.[1]
-      if (type === 'ValueMap') {
-        columns[decodeXml(name)] = fixedList(body)
-      } else if (type === 'ValueRelation') {
-        columns[decodeXml(name)] = referenceList(body, layersById)
-      }
-    }
-    dropDowns[table] = columns
-  }
-  return dropDowns
 }
 
 /**
@@ -338,44 +304,6 @@ export function readAllowedValues(templates) {
   )
 }
 
-function readSchema(gpkgPath) {
-  const db = new Database(gpkgPath, { readonly: true })
-  try {
-    const geometry = new Map(
-      db
-        .prepare(
-          'SELECT table_name, column_name, geometry_type_name, srs_id FROM gpkg_geometry_columns'
-        )
-        .all()
-        .map((row) => [row.table_name, row])
-    )
-    const tables = db
-      .prepare(
-        "SELECT table_name FROM gpkg_contents WHERE data_type = 'features' ORDER BY rowid"
-      )
-      .all()
-      .map(({ table_name: name }) => ({
-        name,
-        geometryColumn: geometry.get(name).column_name,
-        geometryType: geometry.get(name).geometry_type_name,
-        srsId: geometry.get(name).srs_id,
-        columns: db
-          .prepare(`PRAGMA table_info("${name}")`)
-          .all()
-          .filter(
-            (c) => c.name !== 'fid' && c.name !== geometry.get(name).column_name
-          )
-          .map((c) => ({ name: c.name, type: c.type }))
-      }))
-    const metadata = db
-      .prepare('SELECT md_standard_uri, mime_type, metadata FROM gpkg_metadata')
-      .all()
-    return { tables, metadata }
-  } finally {
-    db.close()
-  }
-}
-
 function templateCommit(checkout) {
   try {
     return execFileSync('git', ['rev-parse', 'HEAD'], {
@@ -405,15 +333,16 @@ function main() {
   if (!existsSync(path.join(template, PROJECT_FILE))) {
     fail(`no BNG Service template at ${template}`)
   }
-  console.log(`Reading the BNG Service template at ${template}`)
-
-  const dropDowns = readDropDowns(
-    readProjectXml(path.join(template, PROJECT_FILE))
-  )
+  const spec = path.resolve(checkout, SPEC_FILE)
+  if (!existsSync(spec)) {
+    fail(`no GeoPackage specification at ${spec}`)
+  }
   const legacy = path.resolve(checkout, LEGACY_DIR)
   if (!existsSync(path.join(legacy, LEGACY_PROJECT_FILE))) {
     fail(`no Natural England template at ${legacy}`)
   }
+  console.log(`Reading the BNG Service template at ${template}`)
+
   const allowedValues = readAllowedValues([
     {
       projectFile: path.join(template, PROJECT_FILE),
@@ -424,35 +353,21 @@ function main() {
       referenceDir: path.join(legacy, REFERENCE_DIR)
     }
   ])
-  const spec = path.resolve(checkout, SPEC_FILE)
-  if (!existsSync(spec)) {
-    fail(`no GeoPackage specification at ${spec}`)
-  }
-  const { tables, metadata } = readSchema(path.join(template, LAYERS_FILE))
-  if (metadata.length !== 1) {
-    fail(`expected one template version record, found ${metadata.length}`)
-  }
-  const record = JSON.parse(metadata[0].metadata)
+  const { tables } = JSON.parse(readFileSync(spec, 'utf8'))
 
   rmSync(OUT_DIR, { recursive: true, force: true })
   mkdirSync(OUT_DIR, { recursive: true })
+  cpSync(spec, path.join(OUT_DIR, 'gpkg-spec.json'))
   cpSync(path.join(template, REFERENCE_DIR), path.join(OUT_DIR, 'reference'), {
     recursive: true
   })
-  cpSync(spec, path.join(OUT_DIR, 'gpkg-spec.json'))
-  writeJson('schema.json', { tables })
-  writeJson('drop-downs.json', dropDowns)
   writeJson('allowed-values.json', allowedValues)
   writeJson('source.json', {
     repository: REPOSITORY,
-    commit: templateCommit(checkout),
-    format: record.format,
-    version: record.version,
-    metadataUri: metadata[0].md_standard_uri,
-    metadataMimeType: metadata[0].mime_type
+    commit: templateCommit(checkout)
   })
   console.log(
-    `Wrote ${tables.length} tables, the drop-downs of ${Object.keys(dropDowns).length} layers, the reference lists and the GeoPackage specification to ${OUT_DIR}`
+    `Wrote the GeoPackage specification of ${tables.length} tables, the reference lists and the allowed values to ${OUT_DIR}`
   )
 }
 
